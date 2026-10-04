@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../Merp.Modules.Platform.Application/Merp.Modules.Platform.Application.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- No tests yet: do not fail the run on "zero tests ran". Remove with the first test. -->
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --ignore-exit-code 8</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Host/Merp.Api/Merp.Api.csproj" />
+    <ProjectReference Include="../../src/Host/Merp.Migrator/Merp.Migrator.csproj" />
+  </ItemGroup>
+
+</Project>

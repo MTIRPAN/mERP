@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "merp.application.abstractions": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "merp.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )"
+        }
+      },
+      "merp.modules.platform.api": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Modules.Platform.Application": "[1.0.0, )",
+          "Merp.Modules.Platform.Infrastructure": "[1.0.0, )",
+          "Merp.Web": "[1.0.0, )"
+        }
+      },
+      "merp.modules.platform.application": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )",
+          "Merp.Modules.Platform.Contracts": "[1.0.0, )",
+          "Merp.Modules.Platform.Domain": "[1.0.0, )"
+        }
+      },
+      "merp.modules.platform.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )"
+        }
+      },
+      "merp.modules.platform.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "merp.modules.platform.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Infrastructure": "[1.0.0, )",
+          "Merp.Modules.Platform.Application": "[1.0.0, )"
+        }
+      },
+      "merp.sharedkernel": {
+        "type": "Project"
+      },
+      "merp.web": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

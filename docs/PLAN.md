@@ -54,7 +54,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 **Kabul kriterleri:**
 - Boş solution `dotnet build -warnaserror` ile derlenir.
 
-### [ ] 0.2 Solution ve proje yapısı — S
+### [x] 0.2 Solution ve proje yapısı — S
 
 **Yapılacaklar:**
 - `Merp.slnx` içinde `CLAUDE.md`'deki proje yapısı kurulur:

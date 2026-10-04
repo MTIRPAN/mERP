@@ -57,6 +57,8 @@ src/
 tests/
   Merp.Testing                       # ortak test altyapısı (WebApplicationFactory, Testcontainers, builder'lar)
   Merp.ArchitectureTests
+  Merp.BuildingBlocks.UnitTests      # SharedKernel, mediator, altyapı birim testleri
+  Merp.BuildingBlocks.IntegrationTests # EF, outbox/inbox, tenant altyapısı (Testcontainers)
   Merp.Modules.<Modül>.UnitTests
   Merp.Modules.<Modül>.IntegrationTests
 web/                                 # React + TS (Vite)

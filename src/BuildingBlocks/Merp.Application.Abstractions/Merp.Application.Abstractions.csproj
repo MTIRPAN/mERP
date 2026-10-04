@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../Merp.SharedKernel/Merp.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>
