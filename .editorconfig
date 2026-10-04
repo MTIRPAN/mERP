@@ -165,6 +165,6 @@ dotnet_diagnostic.CA2000.severity = none
 ###############################################################################
 # EF Core migrations are generated code
 ###############################################################################
-[**/Persistence/Migrations/*.cs]
+[**/Migrations/*.cs]
 generated_code = true
 dotnet_analyzer_diagnostic.severity = none

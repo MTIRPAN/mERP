@@ -1,26 +1,36 @@
-using Merp.Application.Abstractions.Context;
+using Merp.Api.Development;
 using Merp.Infrastructure;
+using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
-using Merp.Modules.Platform.Infrastructure;
+using Merp.Modules.Platform.Api;
+using Merp.Web.Modules;
+using Merp.Web.MultiTenancy;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMerpInfrastructure();
+builder.Services.AddMerpMultiTenancy(builder.Configuration);
 builder.Services.Configure<PersistenceOptions>(options =>
     options.EnforceSingleAggregatePerCommand = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"));
-builder.Services.AddPlatformInfrastructure();
+
+builder.Services.AddProblemDetails();
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
+
+builder.AddModule<PlatformModule>();
 
 var app = builder.Build();
 
+app.UseRouting();
+app.UseAuthentication();
+app.UseTenantResolution();
+app.UseAuthorization();
+
+app.MapModules();
+
 if (app.Environment.IsDevelopment())
 {
-    // Until the tenant catalog exists (PLAN 0.7) the development tenant database comes from configuration.
-    var connectionString = app.Configuration.GetConnectionString("DemoTenant");
-    if (!string.IsNullOrWhiteSpace(connectionString))
-    {
-        await app.Services.GetRequiredService<TenantDatabaseMigrator>()
-            .MigrateAsync(new TenantInfo(Guid.Empty, "demo", "Demo", "tr-TR"), connectionString, CancellationToken.None);
-    }
+    await DevelopmentSetup.RunAsync(app.Services, app.Configuration, app.Lifetime.ApplicationStopping);
 }
 
 await app.RunAsync();

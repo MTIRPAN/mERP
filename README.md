@@ -80,6 +80,10 @@ Keycloak istemcileri:
 cd web && npm run gen:api                      # API çalışırken OpenAPI'den istemci üret
 cd web && npm run lint && npm run typecheck && npm test
 
+# Catalog + tüm tenant veritabanlarını migrate et (Development'ta demo tenant'ı da kataloğa ekler)
+DOTNET_ENVIRONMENT=Development dotnet run --project src/Host/Merp.Migrator
+DOTNET_ENVIRONMENT=Development dotnet run --project src/Host/Merp.Migrator -- --tenant demo
+
 # Migration (modül başına ayrı DbContext ve şema)
 dotnet ef migrations add <Name> \
   -p src/Modules/HR/Merp.Modules.HR.Infrastructure \

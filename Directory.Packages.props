@@ -14,6 +14,18 @@
     <PackageVersion Include="Scrutor" Version="7.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Hosting">
+    <PackageVersion Include="Hangfire.Core" Version="1.8.25" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="10.10.0" />
+  </ItemGroup>
+
+  <!-- Transitive pins: override vulnerable versions requested by dependencies -->
+  <ItemGroup Label="Transitive pins">
+    <!-- Hangfire.Core asks for >= 11.0.1 (GHSA-5crp-9r3c-p9vr) -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
   <ItemGroup Label="Persistence">
     <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
@@ -24,6 +36,7 @@
 
   <ItemGroup Label="Testing">
     <PackageVersion Include="Bogus" Version="35.6.5" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
     <PackageVersion Include="coverlet.MTP" Version="10.1.0" />
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.1" />

@@ -24,5 +24,6 @@
   "common.errors.less_than_or_equal": "{comparisonValue} veya daha küçük olmalıdır.",
   "common.errors.between": "{from} ile {to} arasında olmalıdır.",
   "common.errors.invalid_value": "Geçersiz değer.",
-  "common.errors.invalid_format": "Biçim geçersiz."
+  "common.errors.invalid_format": "Biçim geçersiz.",
+  "common.errors.unknown_tenant": "Hesabınız tanımlı ve aktif bir müşteriye bağlı değil. Sistem yöneticinize başvurun."
 }

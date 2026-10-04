@@ -155,7 +155,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Test entity'si kaydedilince `created_by`, audit kaydı ve outbox kaydı oluşur.
 - Eşzamanlı güncellemede ikinci istek 409 alır.
 
-### [ ] 0.7 Çoklu kiracı (multi-tenancy) — M
+### [x] 0.7 Çoklu kiracı (multi-tenancy) — M
 
 **Yapılacaklar:**
 - Catalog DbContext (`tenants` tablosu), tenant cache, çözümleme middleware'i (claim veya route).

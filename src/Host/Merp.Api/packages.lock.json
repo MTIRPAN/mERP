@@ -117,11 +117,6 @@
           "System.CodeDom": "6.0.0"
         }
       },
-      "Newtonsoft.Json": {
-        "type": "Transitive",
-        "resolved": "13.0.4",
-        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
-      },
       "Npgsql": {
         "type": "Transitive",
         "resolved": "10.0.3",
@@ -191,7 +186,10 @@
         "type": "Project",
         "dependencies": {
           "EFCore.NamingConventions": "[10.0.1, )",
+          "Hangfire.Core": "[1.8.25, )",
           "Merp.Application.Abstractions": "[1.0.0, )",
+          "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.12, )",
+          "Microsoft.Extensions.Caching.Hybrid": "[10.10.0, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
           "Scrutor": "[7.0.0, )"
         }
@@ -237,7 +235,7 @@
       "merp.web": {
         "type": "Project",
         "dependencies": {
-          "Merp.Application.Abstractions": "[1.0.0, )"
+          "Merp.Infrastructure": "[1.0.0, )"
         }
       },
       "EFCore.NamingConventions": {
@@ -255,6 +253,24 @@
         "requested": "[12.1.1, )",
         "resolved": "12.1.1",
         "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
+      },
+      "Hangfire.Core": {
+        "type": "CentralTransitive",
+        "requested": "[1.8.25, )",
+        "resolved": "1.8.25",
+        "contentHash": "BxzXlHwXNrGPHJ7YfAVfeiXC+BHd6uPoyyfV+9bCJVPPGs4z0EQCW1X44Og/IUFM81ENCqAFP1r2rOkQhm4ydA==",
+        "dependencies": {
+          "Newtonsoft.Json": "11.0.1"
+        }
+      },
+      "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.12, )",
+        "resolved": "10.0.12",
+        "contentHash": "oV5g+PWxCFI3liFQcRNNEhYeS8Jz9+rcjREPDRK8kk0a1q+sf8UUlyFwGCBbxWoNVPpenljm8WEUVCH10k71Bw==",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "10.0.12"
+        }
       },
       "Microsoft.EntityFrameworkCore": {
         "type": "CentralTransitive",
@@ -274,6 +290,18 @@
         "dependencies": {
           "Microsoft.EntityFrameworkCore": "10.0.12"
         }
+      },
+      "Microsoft.Extensions.Caching.Hybrid": {
+        "type": "CentralTransitive",
+        "requested": "[10.10.0, )",
+        "resolved": "10.10.0",
+        "contentHash": "+16+e4EjjvBg8OedpucUqSFeI9liu0S5AQG2FHY7OnBOV1jGYduYBN8KNPh6noNRM1npF4RBWKONQoAR9nFDSA=="
+      },
+      "Newtonsoft.Json": {
+        "type": "CentralTransitive",
+        "requested": "[13.0.4, )",
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
       },
       "Npgsql.EntityFrameworkCore.PostgreSQL": {
         "type": "CentralTransitive",
