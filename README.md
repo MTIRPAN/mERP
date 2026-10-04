@@ -43,7 +43,36 @@ npm install
 npm run dev
 ```
 
-Geliştirme kullanıcıları (Keycloak realm importundan gelir): `admin / admin`, `ik / ik`, `yonetici / yonetici`, `calisan / calisan`.
+Geliştirme kullanıcıları (Keycloak realm importundan gelir): `admin / admin`, `ik / ik`, `yonetici / yonetici`, `calisan / calisan`. Hepsinde `tenant=demo` attribute'u vardır.
+
+## Geliştirme altyapısı
+
+| Servis | Adres | Not |
+|---|---|---|
+| PostgreSQL 18 | `localhost:5432` (`merp` / `merp`) | `merp_catalog` ve `merp_demo` veritabanları ilk açılışta oluşur |
+| Valkey 8 | `localhost:6379` | Redis uyumlu cache |
+| RabbitMQ 4 | `localhost:5672`, yönetim: http://localhost:15672 (`merp` / `merp`) | |
+| Keycloak 26 | http://localhost:8080 (master admin: `admin` / `admin`) | Realm `merp`, `deploy/keycloak/merp-realm.json`'dan import edilir |
+| Mailpit | http://localhost:8025, SMTP `localhost:1025` | Giden tüm e-postalar burada görünür |
+| Gotenberg 8 | http://localhost:3000 | HTML → PDF |
+| Aspire Dashboard | http://localhost:18888, OTLP gRPC `4317`, OTLP HTTP `4318` | Log, trace ve metrikler |
+
+Kontrol scriptleri (Windows için `.ps1` karşılıkları da var):
+
+```bash
+deploy/scripts/check-infra.sh    # tüm servisler healthy olana kadar bekler
+deploy/scripts/check-tokens.sh   # 4 geliştirme kullanıcısı için token alır, tenant claim'ini doğrular
+```
+
+Keycloak realm'i sadece ilk açılışta import edilir. `merp-realm.json` değişirse:
+
+```bash
+docker compose rm -sf keycloak && docker volume rm merp_keycloak-data && docker compose up -d keycloak
+```
+
+Keycloak istemcileri:
+- `merp-web`: public, PKCE (S256). Token'a `tenant` claim'i ve `merp-api` audience'ı eklenir. Geliştirme kolaylığı için password grant açıktır; üretim realm'inde kapatılmalıdır.
+- `merp-api`: confidential (geliştirme secret'ı `merp-api-dev-secret`). Servis hesabında `manage-users` ve `view-users` rolleri var.
 
 ## Sık kullanılan komutlar
 

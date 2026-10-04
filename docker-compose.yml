@@ -1,0 +1,130 @@
+# Development infrastructure for mERP. See README.md and docs/DECISIONS.md D19.
+# Usage: docker compose up -d
+name: merp
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-merp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-merp}
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18 images keep data under /var/lib/postgresql/<major>/docker
+      - postgres-data:/var/lib/postgresql
+      - ./deploy/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d merp_demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8
+    command: ["valkey-server", "--appendonly", "yes"]
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-merp}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-merp}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  keycloak:
+    image: keycloak/keycloak:26.8
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_PORT: "8080"
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      # The realm is imported only when it does not exist yet.
+      # To re-import after editing merp-realm.json: docker compose rm -sf keycloak && docker volume rm merp_keycloak-data
+      - keycloak-data:/opt/keycloak/data
+      - ./deploy/keycloak/merp-realm.json:/opt/keycloak/data/import/merp-realm.json:ro
+    depends_on:
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      # The image has no curl; query the management port (9000) with bash /dev/tcp
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"UP"' <&3
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    volumes:
+      - mailpit-data:/data
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    # Stateless: no volume needed
+    ports:
+      - "${GOTENBERG_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:13.6
+    # Stateless (telemetry is kept in memory): no volume needed
+    environment:
+      ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "${ASPIRE_UI_PORT:-18888}:18888"
+      - "${OTLP_GRPC_PORT:-4317}:18889"
+      - "${OTLP_HTTP_PORT:-4318}:18890"
+    # No healthcheck: the chiseled image has no shell or HTTP client to run one.
+    # deploy/scripts/check-infra.(sh|ps1) probes http://localhost:18888 from the host instead.
+
+volumes:
+  postgres-data:
+  valkey-data:
+  rabbitmq-data:
+  keycloak-data:
+  mailpit-data:

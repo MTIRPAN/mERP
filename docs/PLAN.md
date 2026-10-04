@@ -69,7 +69,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Build geçer.
 - Referans grafiği kurallara uygun (0.10'daki testler bunu da kontrol edecek).
 
-### [ ] 0.3 Geliştirme altyapısı (docker-compose) — M
+### [x] 0.3 Geliştirme altyapısı (docker-compose) — M
 
 **Yapılacaklar:**
 - Servisler:
