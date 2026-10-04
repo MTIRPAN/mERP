@@ -97,7 +97,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - `docker compose up -d` sonrası tüm servisler healthy.
 - 4 kullanıcının her biri için token alınır ve token'da `tenant` claim'i bulunur. Script: `deploy/scripts/check-tokens.(sh|ps1)`.
 
-### [ ] 0.4 SharedKernel — M
+### [x] 0.4 SharedKernel — M
 
 **Yapılacaklar:**
 - Temel tipler: `Entity<TId>`, `AggregateRoot<TId>` (domain event listesi), `IDomainEvent`.
