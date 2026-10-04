@@ -88,7 +88,9 @@ public static class JobsHostingExtensions
                 return Results.NoContent();
             })
             .RequirePermission(permission)
-            .ExcludeFromDescription();
+            .WithTags("platform")
+            .WithName("CreateJobsDashboardSession")
+            .WithSummary("Issues the short-lived cookie that opens the jobs dashboard");
 
         endpoints.MapHangfireDashboard(
                 DashboardPath,

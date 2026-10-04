@@ -88,6 +88,26 @@ Hata yanıtları ProblemDetails biçimindedir: yerelleştirilmiş `title` ve `de
 
 > **Geçici yetki davranışı (P2'ye kadar):** Roller ve atamalar henüz yok. Development ortamında oturum açmış her kullanıcı tüm yetkilere sahiptir; diğer ortamlarda hiçbir yetki verilmez.
 
+## Web
+
+```bash
+cd web
+cp .env.example .env.local   # isteğe bağlı: API ve Keycloak adresleri
+npm install
+npm run dev                  # http://localhost:5173 — /api, /hubs ve /admin/jobs API'ye proxy'lenir
+```
+
+- Giriş Keycloak üzerinden (PKCE) yapılır. Geliştirme kullanıcılarından `admin` "Sistem" menüsünü görür, `calisan` sadece ana sayfayı görür (yetkiler P2'ye kadar `appsettings.Development.json` → `Development:Permissions`).
+- Bütün metinler API'den (`/api/platform/localization/bundles/tr-TR`) gelir. JSX içinde metin literal'i lint hatasıdır.
+- API istemcisi orval ile üretilir: API Development'ta `http://localhost:5000`'de çalışırken `npm run gen:api`. Üretilen kod `src/shared/api/generated/` altındadır ve elle düzenlenmez.
+- Tema: üst bardaki seçiciyle Açık / Koyu / Sistem. Hızlı geçiş: Ctrl/⌘+K.
+
+| Klasör | İçerik |
+|---|---|
+| `src/app` | Uygulama kabuğu: tema, kimlik doğrulama, i18n, menü, üst bar, rotalar |
+| `src/shared` | API istemcisi, ortak bileşenler (`DataTable`, `FormDrawer`, `PageHeader`, `Can`, `StatusTag`), hata sayfaları |
+| `src/modules/<modül>` | Modül sayfaları |
+
 ## Sık kullanılan komutlar
 
 ```bash

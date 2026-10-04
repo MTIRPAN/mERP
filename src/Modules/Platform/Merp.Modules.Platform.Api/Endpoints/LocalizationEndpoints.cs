@@ -2,6 +2,7 @@ using System.Globalization;
 using Merp.Application.Abstractions.Localization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 
@@ -21,17 +22,21 @@ internal static class LocalizationEndpoints
             .WithName("GetLocalizationBundle")
             .WithSummary("Web client texts for a culture");
 
-    private static IResult GetBundle(string culture, ITextLocalizer localizer, IConfiguration configuration, HttpContext context)
+    private static Results<Ok<IReadOnlyDictionary<string, string>>, NotFound> GetBundle(
+        string culture,
+        ITextLocalizer localizer,
+        IConfiguration configuration,
+        HttpContext context)
     {
         var supported = configuration.GetSection("Localization:SupportedCultures").Get<string[]>() ?? ["tr-TR"];
         var match = supported.FirstOrDefault(c => string.Equals(c, culture, StringComparison.OrdinalIgnoreCase));
         if (match is null)
         {
-            return Results.NotFound();
+            return TypedResults.NotFound();
         }
 
         context.Response.Headers.CacheControl = "public, max-age=300";
         context.Response.Headers.ContentLanguage = CultureInfo.GetCultureInfo(match).Name;
-        return Results.Ok(localizer.GetAll(WebPrefix, match));
+        return TypedResults.Ok(localizer.GetAll(WebPrefix, match));
     }
 }
