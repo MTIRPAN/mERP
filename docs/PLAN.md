@@ -229,7 +229,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Kasıtlı bir kural ihlali mimari testi kırmızıya çevirir. İhlal örneği PR'da gösterilir, sonra kaldırılır.
 - Tüm testler CI'da 10 dakikanın altında biter.
 
-### [ ] 0.11 CI — S
+### [x] 0.11 CI — S
 
 **Yapılacaklar:**
 - `.github/workflows/ci.yml` (PR'da ve main'e push'ta çalışır):
