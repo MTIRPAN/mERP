@@ -167,7 +167,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 **Kabul kriterleri:**
 - İki tenant'lı integration test: A tenant'ının kullanıcısı B'nin verisine hiçbir endpoint'ten erişemez.
 
-### [ ] 0.8 Mesajlaşma: outbox, inbox, transport — L
+### [x] 0.8 Mesajlaşma: outbox, inbox, transport — L
 
 **Yapılacaklar:**
 - `IntegrationEvent` taban record'u, `IIntegrationEventHandler<T>`, olay tip kaydı.

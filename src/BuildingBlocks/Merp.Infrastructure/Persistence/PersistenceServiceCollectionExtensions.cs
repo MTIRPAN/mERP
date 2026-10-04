@@ -30,7 +30,7 @@ public static class PersistenceServiceCollectionExtensions
     /// Registers a module DbContext bound to the current tenant's database and makes it the unit of work for the
     /// commands in <paramref name="applicationAssembly"/>.
     /// </summary>
-    public static IServiceCollection AddModuleDbContext<TContext>(this IServiceCollection services, Assembly applicationAssembly)
+    public static IServiceCollection AddModuleDbContext<TContext>(this IServiceCollection services, Assembly applicationAssembly, string? namespacePrefix = null)
         where TContext : ModuleDbContext, IModuleSchema
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -46,8 +46,8 @@ public static class PersistenceServiceCollectionExtensions
         });
 
         services.AddScoped<ModuleUnitOfWork<TContext>>();
-        services.AddModuleUnitOfWork<ModuleUnitOfWork<TContext>>(applicationAssembly);
-        services.AddSingleton(new ModuleDatabase(typeof(TContext), TContext.SchemaName));
+        services.AddModuleUnitOfWork<ModuleUnitOfWork<TContext>>(applicationAssembly, namespacePrefix);
+        services.AddSingleton(new ModuleDatabase(typeof(TContext), TContext.SchemaName, new ModuleScope(applicationAssembly, namespacePrefix)));
         return services;
     }
 

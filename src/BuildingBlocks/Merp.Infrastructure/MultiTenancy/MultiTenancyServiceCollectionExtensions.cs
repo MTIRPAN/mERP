@@ -42,6 +42,7 @@ public static class MultiTenancyServiceCollectionExtensions
         services.TryAddSingleton<TenantConnectionStringProtector>();
         services.TryAddSingleton<ITenantStore, CatalogTenantStore>();
         services.TryAddSingleton<TenantCatalog>();
+        services.TryAddSingleton<TenantScopeFactory>();
         services.TryAddSingleton<ITenantJobRunner, TenantJobRunner>();
         return services;
     }

@@ -1,12 +1,10 @@
 using Merp.Application.Abstractions.Jobs;
-using Merp.Infrastructure.Security;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Merp.Infrastructure.MultiTenancy;
 
 public sealed partial class TenantJobRunner(
-    IServiceScopeFactory scopeFactory,
+    TenantScopeFactory scopeFactory,
     ITenantStore tenantStore,
     ILogger<TenantJobRunner> logger) : ITenantJobRunner
 {
@@ -50,9 +48,7 @@ public sealed partial class TenantJobRunner(
 
     private async Task RunAsync(TenantRecord tenant, Func<IServiceProvider, CancellationToken, Task> work, CancellationToken cancellationToken)
     {
-        await using var scope = scopeFactory.CreateAsyncScope();
-        scope.ServiceProvider.GetRequiredService<TenantContext>().Set(tenant.ToTenantInfo(), tenant.ConnectionString);
-        scope.ServiceProvider.GetRequiredService<CurrentUser>().SetSystem(tenant.Id);
+        await using var scope = scopeFactory.CreateScope(tenant);
         await work(scope.ServiceProvider, cancellationToken);
     }
 

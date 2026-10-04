@@ -42,8 +42,8 @@ public sealed class WidgetHarness : IAsyncDisposable
         services.AddLogging();
         services.AddSingleton<TimeProvider>(time);
         services.AddMerpInfrastructure();
-        services.AddModuleDbContext<WidgetDbContext>(typeof(WidgetHarness).Assembly);
-        services.AddRequestHandlersFromAssembly(typeof(WidgetHarness).Assembly);
+        services.AddModuleDbContext<WidgetDbContext>(typeof(WidgetHarness).Assembly, typeof(WidgetHarness).Namespace);
+        services.AddRequestHandlersFromAssembly(typeof(WidgetHarness).Assembly, typeof(WidgetHarness).Namespace);
         services.AddSingleton(permissions);
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
