@@ -281,3 +281,19 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 - Ayar: `Persistence:EnforceSingleAggregatePerCommand`. API'de Development ve Testing ortamlarında açık, diğer ortamlarda kapalıdır. Testler ihlali yakalar; üretimde kullanıcı hata görmez.
 
 **Gerekçe:** NetArchTest bağımlılıkları denetler, bir handler'ın kaç aggregate değiştirdiğini göremez. Kural integration testlerinde gerçek komutlarla doğrulanır.
+
+## D22 — Host altyapı endpoint'leri (öneri — onay bekliyor)
+
+**Durum:** Öneri. 0.12 incelemesinde kullanıcı onayına sunuldu.
+
+**Sorun:** D20 dışında `AllowAnonymous` yasak ve her endpoint bir yetki istiyor (kural 6). Ancak bazı host endpoint'leri modül endpoint'i değildir ve bu modele uymaz.
+
+**Öneri:** Aşağıdaki endpoint'ler mimari testte ayrı bir listeyle (D22) denetlenir:
+
+| Endpoint | Koruma | Gerekçe |
+|---|---|---|
+| `/openapi/*`, `/scalar/*` | Sadece `ApiDocs:Enabled = true` iken açılır (varsayılan sadece Development) | Scalar sayfası girişten önce yüklenmeli; `npm run gen:api` dokümanı tokensız okur |
+| `/admin/jobs/*` | Hangfire paneli kendi çerez yetkisini uygular: çerez `POST /api/platform/jobs/dashboard-session` (`platform.jobs.view`) ile 15 dakikalık alınır; sadece `Jobs:DashboardTenants` listesindeki tenant'lar | Tarayıcı panele bearer token gönderemez |
+| `/hubs/notifications` | Oturum zorunlu, yetki istenmez | Her kullanıcı kendi bildirimlerini alır |
+
+**Açık soru:** Hangfire paneli tüm tenant'ların işlerini gösterir. SaaS kurulumunda tenant'ın Sistem Yöneticisi değil, sadece operatör (barındıran ekip) görmeli. `Jobs:DashboardTenants` varsayılan olarak boştur (Development'ta `demo`).

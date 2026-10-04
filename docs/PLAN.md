@@ -212,7 +212,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Scalar'da Keycloak ile giriş yapılıp korumalı örnek endpoint çağrılabilir.
 - Hata yanıtları Türkçe ProblemDetails formatındadır.
 
-### [ ] 0.10 Test altyapısı ve mimari testler — M
+### [x] 0.10 Test altyapısı ve mimari testler — M
 
 **Yapılacaklar:**
 - `tests/Merp.Testing` ortak kütüphanesi:

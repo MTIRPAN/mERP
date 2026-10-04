@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Merp.Testing.Web;
@@ -22,6 +23,12 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
     private string _catalogConnectionString = null!;
 
     public PostgresFixture Postgres => postgres;
+
+    /// <summary>Clock of the host when <see cref="UseFakeTime"/> is true.</summary>
+    public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 1, 5, 9, 0, 0, TimeSpan.Zero));
+
+    /// <summary>Replace the system clock with <see cref="Time"/>.</summary>
+    protected virtual bool UseFakeTime => false;
 
     public virtual async ValueTask InitializeAsync()
     {
@@ -85,6 +92,11 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
             services.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
             services.AddScoped<IPermissionChecker, TestPermissionChecker>();
+            if (UseFakeTime)
+            {
+                services.AddSingleton<TimeProvider>(Time);
+            }
+
             ConfigureServices(services);
         });
     }
