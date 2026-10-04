@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <!--
+    Only packages whose licenses are allowed by docs/DECISIONS.md D19 may be added here.
+    Group by purpose and keep alphabetical order inside each group.
+  -->
+  <ItemGroup Label="Tooling">
+  </ItemGroup>
+</Project>

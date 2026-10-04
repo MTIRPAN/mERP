@@ -32,7 +32,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 
 ## Faz 0 — İskelet
 
-### [ ] 0.1 Repo temeli — S
+### [x] 0.1 Repo temeli — S
 
 **Yapılacaklar:**
 - Repo dosyaları:
