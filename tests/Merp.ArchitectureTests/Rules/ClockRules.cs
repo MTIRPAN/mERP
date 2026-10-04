@@ -21,6 +21,8 @@ public static class ClockRules
     {
         using var module = ModuleDefinition.ReadModule(assembly.Location);
         return [.. module.GetTypes()
+            // Code coverage instruments assemblies with its own tracker type, which reads the clock.
+            .Where(t => !t.FullName.StartsWith("Coverlet.", StringComparison.Ordinal))
             .Where(t => inNamespace is null || t.Namespace == inNamespace || (t.DeclaringType?.Namespace ?? string.Empty) == inNamespace)
             .SelectMany(t => t.Methods)
             .Where(m => m.HasBody && m.Body.Instructions.Any(i =>
