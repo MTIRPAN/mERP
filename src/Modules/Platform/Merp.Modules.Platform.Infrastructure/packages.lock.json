@@ -232,7 +232,8 @@
       "merp.modules.platform.domain": {
         "type": "Project",
         "dependencies": {
-          "Merp.SharedKernel": "[1.0.0, )"
+          "Merp.SharedKernel": "[1.0.0, )",
+          "Microsoft.EntityFrameworkCore": "[10.0.12, )"
         }
       },
       "merp.sharedkernel": {
