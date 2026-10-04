@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="appsettings*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
     <ProjectReference Include="../../Modules/Platform/Merp.Modules.Platform.Infrastructure/Merp.Modules.Platform.Infrastructure.csproj" />
   </ItemGroup>

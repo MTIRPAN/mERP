@@ -134,7 +134,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Yetkisiz istek `Forbidden` döner.
 - Handler exception fırlatırsa transaction geri alınır ve outbox'a kayıt düşmez.
 
-### [ ] 0.6 EF altyapısı — L
+### [x] 0.6 EF altyapısı — L
 
 **Yapılacaklar:**
 - `ModuleDbContext` tabanı:

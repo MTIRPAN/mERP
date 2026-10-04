@@ -72,12 +72,12 @@ public sealed class FakeUnitOfWork(Journal journal) : IUnitOfWork, IIntegrationE
         return Task.CompletedTask;
     }
 
-    public Task CommitAsync(CancellationToken cancellationToken)
+    public Task<Result> CommitAsync(CancellationToken cancellationToken)
     {
         journal.Write("commit");
         Outbox.AddRange(_pending);
         _pending.Clear();
-        return Task.CompletedTask;
+        return Task.FromResult(Result.Success());
     }
 
     public Task RollbackAsync(CancellationToken cancellationToken)

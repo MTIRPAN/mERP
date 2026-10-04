@@ -15,6 +15,7 @@ public static class MediatorServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddScoped<ISender, Sender>();
         services.TryAddSingleton(new UnitOfWorkRegistry());
+        services.TryAddScoped<UnitOfWorkAccessor>();
 
         // Order matters: the first registered behavior is the outermost (see docs/PLAN.md 0.5).
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
