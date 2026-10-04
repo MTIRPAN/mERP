@@ -71,6 +71,6 @@ public class ResultTests
         var field = error.Fields.Single();
         field.Field.ShouldBe("title");
         field.Code.ShouldBe("common.errors.max_length");
-        field.Args["max"].ShouldBe(50);
+        field.Args["maxLength"].ShouldBe(50);
     }
 }

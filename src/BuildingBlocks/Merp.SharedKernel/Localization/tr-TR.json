@@ -5,7 +5,7 @@
   "common.errors.concurrency_conflict": "Kayıt siz düzenlerken başka biri tarafından değiştirildi. Sayfayı yenileyip tekrar deneyin.",
   "common.errors.unexpected": "Beklenmeyen bir hata oluştu.",
   "common.errors.required": "Bu alan zorunludur.",
-  "common.errors.max_length": "En fazla {max} karakter girilebilir.",
+  "common.errors.max_length": "En fazla {maxLength} karakter girilebilir.",
   "common.errors.invalid_email": "Geçerli bir e-posta adresi girin.",
   "common.errors.invalid_phone_number": "Geçerli bir telefon numarası girin.",
   "common.errors.invalid_tckn": "T.C. kimlik numarası geçersiz.",
@@ -14,5 +14,15 @@
   "common.errors.invalid_date_range": "Bitiş tarihi başlangıç tarihinden önce olamaz.",
   "common.errors.invalid_postal_code": "Posta kodu geçersiz.",
   "common.errors.invalid_country_code": "Ülke kodu geçersiz.",
-  "common.errors.invalid_culture": "Dil kodu geçersiz."
+  "common.errors.invalid_culture": "Dil kodu geçersiz.",
+  "common.errors.min_length": "En az {minLength} karakter girilmelidir.",
+  "common.errors.length": "{minLength} ile {maxLength} karakter arasında olmalıdır.",
+  "common.errors.exact_length": "Tam olarak {maxLength} karakter olmalıdır.",
+  "common.errors.greater_than": "{comparisonValue} değerinden büyük olmalıdır.",
+  "common.errors.greater_than_or_equal": "{comparisonValue} veya daha büyük olmalıdır.",
+  "common.errors.less_than": "{comparisonValue} değerinden küçük olmalıdır.",
+  "common.errors.less_than_or_equal": "{comparisonValue} veya daha küçük olmalıdır.",
+  "common.errors.between": "{from} ile {to} arasında olmalıdır.",
+  "common.errors.invalid_value": "Geçersiz değer.",
+  "common.errors.invalid_format": "Biçim geçersiz."
 }

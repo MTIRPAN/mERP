@@ -22,5 +22,5 @@ public static class CommonErrors
     public static readonly Error InvalidCulture = Error.Validation("common.errors.invalid_culture");
 
     public static Error MaxLength(int max) =>
-        Error.Validation("common.errors.max_length", new Dictionary<string, object?> { ["max"] = max });
+        Error.Validation("common.errors.max_length", new Dictionary<string, object?> { ["maxLength"] = max });
 }

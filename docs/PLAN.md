@@ -116,7 +116,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 **Kabul kriterleri:**
 - Her value object için geçerli ve geçersiz örneklerle unit test yazıldı. TCKN, VKN ve IBAN için en az 5'er örnek.
 
-### [ ] 0.5 Uygulama soyutlamaları ve mediator — M
+### [x] 0.5 Uygulama soyutlamaları ve mediator — M
 
 **Yapılacaklar:**
 - Komut ve sorgu tipleri: `ICommand`, `ICommand<T>`, `IQuery<T>`, handler arayüzleri, `ISender`, `IPipelineBehavior`.

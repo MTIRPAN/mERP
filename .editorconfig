@@ -146,6 +146,8 @@ dotnet_diagnostic.CA2007.severity = none
 dotnet_diagnostic.CA1000.severity = none
 # Type names like Error/Result intentionally mirror common concepts
 dotnet_diagnostic.CA1716.severity = none
+# Names from the plan (IIntegrationEventHandler, IRequirePermission, RequestHandlerDelegate) end in reserved suffixes
+dotnet_diagnostic.CA1711.severity = none
 
 ###############################################################################
 # Tests
