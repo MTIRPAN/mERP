@@ -1,6 +1,6 @@
+using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Infrastructure;
 using Merp.Web.Modules;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +16,7 @@ public sealed class PlatformModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        // Platform endpoints are added by the Phase 1 tasks (P1...P13).
-        endpoints.MapGroup("/api/platform");
+        var group = endpoints.MapModuleGroup(this);
+        group.MapSystemEndpoints();
     }
 }

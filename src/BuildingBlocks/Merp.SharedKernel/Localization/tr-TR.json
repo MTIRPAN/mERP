@@ -25,5 +25,13 @@
   "common.errors.between": "{from} ile {to} arasında olmalıdır.",
   "common.errors.invalid_value": "Geçersiz değer.",
   "common.errors.invalid_format": "Biçim geçersiz.",
-  "common.errors.unknown_tenant": "Hesabınız tanımlı ve aktif bir müşteriye bağlı değil. Sistem yöneticinize başvurun."
+  "common.errors.unknown_tenant": "Hesabınız tanımlı ve aktif bir müşteriye bağlı değil. Sistem yöneticinize başvurun.",
+  "common.errors.unauthorized": "Bu işlem için oturum açmanız gerekiyor.",
+  "common.errors.invalid_request": "İstek okunamadı. Gönderilen verileri kontrol edin.",
+  "common.errors.too_many_requests": "Çok fazla istek gönderdiniz. Lütfen biraz bekleyip tekrar deneyin.",
+  "common.errors.method_not_allowed": "Bu işlem bu adres için desteklenmiyor.",
+  "common.errors.unsupported_media_type": "Gönderilen içerik türü desteklenmiyor.",
+  "common.errors.payload_too_large": "Gönderilen veri çok büyük.",
+  "common.errors.invalid_company_header": "Seçili şirket bilgisi geçersiz.",
+  "common.errors.service_unavailable": "Hizmet geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin."
 }

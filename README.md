@@ -74,6 +74,20 @@ Keycloak istemcileri:
 - `merp-web`: public, PKCE (S256). Token'a `tenant` claim'i ve `merp-api` audience'ı eklenir. Geliştirme kolaylığı için password grant açıktır; üretim realm'inde kapatılmalıdır.
 - `merp-api`: confidential (geliştirme secret'ı `merp-api-dev-secret`). Servis hesabında `manage-users` ve `view-users` rolleri var.
 
+## API
+
+| Adres | Not |
+|---|---|
+| `https://localhost:5001/scalar` | API dokümantasyonu (Development). "Authorize" ile Keycloak'a PKCE ile giriş yapılır |
+| `https://localhost:5001/openapi/v1.json` | OpenAPI dokümanı (web istemcisi bundan üretilir) |
+| `/health/live`, `/health/ready` | Canlılık ve bağımlılık (PostgreSQL, Valkey, RabbitMQ, Keycloak) kontrolleri |
+| `/admin/jobs` | Hangfire paneli (salt okunur). Önce `POST /api/platform/jobs/dashboard-session` ile oturum çerezi alınır; sadece `Jobs:DashboardTenants` listesindeki tenant'lar açabilir |
+| `/hubs/notifications` | SignalR bildirim kanalı |
+
+Hata yanıtları ProblemDetails biçimindedir: yerelleştirilmiş `title` ve `detail`, sabit `code`, `traceId`; doğrulama hatalarında `errors` (alan → mesajlar) ve `fieldErrors` (alan, kod, mesaj).
+
+> **Geçici yetki davranışı (P2'ye kadar):** Roller ve atamalar henüz yok. Development ortamında oturum açmış her kullanıcı tüm yetkilere sahiptir; diğer ortamlarda hiçbir yetki verilmez.
+
 ## Sık kullanılan komutlar
 
 ```bash

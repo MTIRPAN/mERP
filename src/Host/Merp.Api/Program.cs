@@ -1,33 +1,46 @@
 using Merp.Api.Development;
+using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure;
+using Merp.Infrastructure.Caching;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Api;
+using Merp.Modules.Platform.Application;
+using Merp.Web.Hosting;
 using Merp.Web.Modules;
-using Merp.Web.MultiTenancy;
+using Merp.Web.Observability;
+using Merp.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddMerpObservability();
 builder.Services.AddMerpInfrastructure();
 builder.Services.AddMerpMultiTenancy(builder.Configuration);
+builder.Services.AddMerpCaching(builder.Configuration);
 builder.Services.AddMerpMessaging(builder.Configuration);
+builder.AddMerpWebHost();
+
 builder.Services.Configure<PersistenceOptions>(options =>
     options.EnforceSingleAggregatePerCommand = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"));
 
-builder.Services.AddProblemDetails();
-builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
+// Until roles and assignments exist (PLAN P2): everything is allowed in Development, nothing elsewhere.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IPermissionChecker, DevelopmentPermissionChecker>();
+}
+else
+{
+    builder.Services.AddScoped<IPermissionChecker, DenyAllPermissionChecker>();
+}
 
+// Modules are registered explicitly (PLAN 0.9).
 builder.AddModule<PlatformModule>();
 
 var app = builder.Build();
 
-app.UseRouting();
-app.UseAuthentication();
-app.UseTenantResolution();
-app.UseAuthorization();
-
+app.UseMerpWebHost();
+app.MapMerpHostEndpoints(PlatformPermissions.Jobs.View);
 app.MapModules();
 
 if (app.Environment.IsDevelopment())

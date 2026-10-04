@@ -184,7 +184,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Aynı olay iki kez teslim edilirse handler bir kez çalışır.
 - RabbitMQ transport ile modüller arası olay ulaşır (Testcontainers RabbitMQ).
 
-### [ ] 0.9 Web host — M
+### [x] 0.9 Web host — M
 
 **Yapılacaklar:**
 - Loglama ve izleme: Serilog, OpenTelemetry (OTLP → Aspire Dashboard).

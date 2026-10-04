@@ -1,4 +1,5 @@
 using Merp.Application.Abstractions.Context;
+using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.MultiTenancy.Catalog;
 using Merp.Infrastructure.Persistence;
@@ -46,14 +47,19 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         return tenant.ToTenantInfo();
     }
 
-    /// <summary>HTTP client authenticated as <paramref name="subject"/> with the given tenant claim.</summary>
-    public HttpClient CreateClientFor(string subject, string? tenantCode)
+    /// <summary>HTTP client authenticated as <paramref name="subject"/> with the given tenant claim and permissions.</summary>
+    public HttpClient CreateClientFor(string subject, string? tenantCode, params string[] permissions)
     {
         var client = CreateClient();
         client.DefaultRequestHeaders.Add(TestAuthHandler.SubjectHeader, subject);
         if (tenantCode is not null)
         {
             client.DefaultRequestHeaders.Add(TestAuthHandler.TenantHeader, tenantCode);
+        }
+
+        if (permissions.Length > 0)
+        {
+            client.DefaultRequestHeaders.Add(TestPermissionChecker.PermissionsHeader, string.Join(',', permissions));
         }
 
         return client;
@@ -64,13 +70,27 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         ArgumentNullException.ThrowIfNull(builder);
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Catalog", _catalogConnectionString);
+        // Only PostgreSQL runs in integration tests; other dependencies are opt-in per test class.
+        builder.UseSetting("HealthChecks:Keycloak:Enabled", "false");
+        builder.UseSetting("Jobs:EnableServer", "false");
+        builder.UseSetting("Messaging:EnableBackgroundProcessing", "false");
+        builder.UseSetting("ApiDocs:Enabled", "true");
+        foreach (var (key, value) in Settings)
+        {
+            builder.UseSetting(key, value);
+        }
+
         builder.ConfigureTestServices(services =>
         {
             services.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+            services.AddScoped<IPermissionChecker, TestPermissionChecker>();
             ConfigureServices(services);
         });
     }
+
+    /// <summary>Configuration overrides for derived factories.</summary>
+    protected virtual IReadOnlyDictionary<string, string?> Settings => new Dictionary<string, string?>();
 
     /// <summary>Extra registrations for derived factories, e.g. a test module with test-only endpoints.</summary>
     protected virtual void ConfigureServices(IServiceCollection services)
