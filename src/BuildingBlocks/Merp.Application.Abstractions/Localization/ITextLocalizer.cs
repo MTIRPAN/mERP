@@ -8,4 +8,7 @@ public interface ITextLocalizer
 {
     /// <summary>Text for <paramref name="key"/>; the key itself when no text exists.</summary>
     string Get(string key, IReadOnlyDictionary<string, object?>? args = null, string? culture = null);
+
+    /// <summary>All texts whose key starts with <paramref name="prefix"/>, with default-culture fallback (web bundles).</summary>
+    IReadOnlyDictionary<string, string> GetAll(string prefix, string culture);
 }

@@ -31,4 +31,8 @@
     <EmbeddedResource Include="Localization/*.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Merp.BuildingBlocks.UnitTests" />
+  </ItemGroup>
+
 </Project>

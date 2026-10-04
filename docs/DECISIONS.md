@@ -295,5 +295,6 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/openapi/*`, `/scalar/*` | Sadece `ApiDocs:Enabled = true` iken açılır (varsayılan sadece Development) | Scalar sayfası girişten önce yüklenmeli; `npm run gen:api` dokümanı tokensız okur |
 | `/admin/jobs/*` | Hangfire paneli kendi çerez yetkisini uygular: çerez `POST /api/platform/jobs/dashboard-session` (`platform.jobs.view`) ile 15 dakikalık alınır; sadece `Jobs:DashboardTenants` listesindeki tenant'lar | Tarayıcı panele bearer token gönderemez |
 | `/hubs/notifications` | Oturum zorunlu, yetki istenmez | Her kullanıcı kendi bildirimlerini alır |
+| `/api/platform/me` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi bilgileri, menüsü ve yetkileri; hiç rolü olmayan kullanıcı da "erişiminiz yok" ekranını görebilmeli |
 
 **Açık soru:** Hangfire paneli tüm tenant'ların işlerini gösterir. SaaS kurulumunda tenant'ın Sistem Yöneticisi değil, sadece operatör (barındıran ekip) görmeli. `Jobs:DashboardTenants` varsayılan olarak boştur (Development'ta `demo`).

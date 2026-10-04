@@ -1,7 +1,7 @@
 namespace Merp.ArchitectureTests.Rules;
 
 /// <summary>An endpoint as the rules see it.</summary>
-public sealed record EndpointInfo(string Route, bool AllowsAnonymous, bool RequiresAuthorization, IReadOnlyList<string> Permissions);
+public sealed record EndpointInfo(string Route, bool AllowsAnonymous, bool RequiresAuthorization, IReadOnlyList<string> Permissions, bool AuthenticatedUserOnly = false);
 
 /// <summary>
 /// CLAUDE.md rule 6: every endpoint requires a permission. Anonymous endpoints must be on the D20 list; host
@@ -24,6 +24,9 @@ public static class EndpointRules
     /// <summary>docs/DECISIONS.md D22 (proposal): host infrastructure with its own protection.</summary>
     public static readonly string[] InfrastructurePrefixes = ["/openapi/", "/scalar", "/admin/jobs", "/hubs/notifications"];
 
+    /// <summary>docs/DECISIONS.md D22 (proposal): the caller's own data; a signed-in user is enough.</summary>
+    public static readonly string[] AuthenticatedUserRoutes = ["/api/platform/me"];
+
     public static IReadOnlyList<string> Violations(IEnumerable<EndpointInfo> endpoints) =>
         [.. endpoints.Select(Check).OfType<string>()];
 
@@ -37,6 +40,13 @@ public static class EndpointRules
         if (endpoint.AllowsAnonymous)
         {
             return IsAllowListed(endpoint.Route) ? null : $"{endpoint.Route}: anonymous but not on the D20 list";
+        }
+
+        if (endpoint.AuthenticatedUserOnly)
+        {
+            return endpoint.RequiresAuthorization && AuthenticatedUserRoutes.Contains(endpoint.Route, StringComparer.Ordinal)
+                ? null
+                : $"{endpoint.Route}: RequireAuthenticatedUser() is only allowed for the D22 routes";
         }
 
         return endpoint.RequiresAuthorization && endpoint.Permissions.Count > 0

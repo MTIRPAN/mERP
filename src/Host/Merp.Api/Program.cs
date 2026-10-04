@@ -24,7 +24,8 @@ builder.AddMerpWebHost();
 builder.Services.Configure<PersistenceOptions>(options =>
     options.EnforceSingleAggregatePerCommand = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"));
 
-// Until roles and assignments exist (PLAN P2): everything is allowed in Development, nothing elsewhere.
+// Until roles and assignments exist (PLAN P2): Development reads permissions per user from configuration
+// (Development:Permissions); other environments grant nothing.
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddScoped<IPermissionChecker, DevelopmentPermissionChecker>();

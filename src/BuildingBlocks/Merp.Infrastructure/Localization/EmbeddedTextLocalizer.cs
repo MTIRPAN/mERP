@@ -31,6 +31,23 @@ public sealed class EmbeddedTextLocalizer(LocalizationResources resources) : ITe
         return args is null || args.Count == 0 ? text : Format(text, args, CultureInfo.GetCultureInfo(culture));
     }
 
+    public IReadOnlyDictionary<string, string> GetAll(string prefix, string culture)
+    {
+        ArgumentNullException.ThrowIfNull(prefix);
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (key, value) in Texts(DefaultCulture).Where(t => t.Key.StartsWith(prefix, StringComparison.Ordinal)))
+        {
+            result[key] = value;
+        }
+
+        foreach (var (key, value) in Texts(culture).Where(t => t.Key.StartsWith(prefix, StringComparison.Ordinal)))
+        {
+            result[key] = value;
+        }
+
+        return result;
+    }
+
     private FrozenDictionary<string, string> Texts(string culture) => _cultures.GetOrAdd(culture, Load);
 
     private FrozenDictionary<string, string> Load(string culture)

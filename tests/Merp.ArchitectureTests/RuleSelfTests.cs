@@ -55,9 +55,11 @@ public class RuleSelfTests
             new("/api/platform/companies", AllowsAnonymous: false, RequiresAuthorization: true, ["platform.companies.read"]),
             new("/api/public/{tenantCode}/careers/jobs", AllowsAnonymous: true, RequiresAuthorization: false, []),
             new("/health/ready", AllowsAnonymous: true, RequiresAuthorization: false, []),
+            new("/api/platform/me", AllowsAnonymous: false, RequiresAuthorization: true, [], AuthenticatedUserOnly: true),
+            new("/api/hr/everything", AllowsAnonymous: false, RequiresAuthorization: true, [], AuthenticatedUserOnly: true),
         ]);
 
-        violations.Count.ShouldBe(3);
+        violations.Count.ShouldBe(4);
         violations.ShouldAllBe(v => v.StartsWith("/api/hr/", StringComparison.Ordinal));
     }
 }

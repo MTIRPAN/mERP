@@ -180,10 +180,13 @@ public sealed class EndpointArchitectureTests(PostgresFixture postgres) : IAsync
                 "/" + (e.RoutePattern.RawText ?? string.Empty).TrimStart('/'),
                 e.Metadata.GetMetadata<IAllowAnonymous>() is not null,
                 e.Metadata.GetOrderedMetadata<IAuthorizeData>().Count > 0,
-                [.. e.Metadata.GetOrderedMetadata<RequiredPermission>().Select(p => p.Permission)]))
+                [.. e.Metadata.GetOrderedMetadata<RequiredPermission>().Select(p => p.Permission)],
+                e.Metadata.GetMetadata<AuthenticatedUserOnly>() is not null))
             .ToList();
 
         endpoints.ShouldContain(e => e.Route == "/api/platform/system/info");
+        endpoints.ShouldContain(e => e.Route == "/api/platform/me" && e.AuthenticatedUserOnly);
+        endpoints.ShouldContain(e => e.Route == "/api/platform/localization/bundles/{culture}" && e.AllowsAnonymous);
         EndpointRules.Violations(endpoints).ShouldBeEmpty();
     }
 

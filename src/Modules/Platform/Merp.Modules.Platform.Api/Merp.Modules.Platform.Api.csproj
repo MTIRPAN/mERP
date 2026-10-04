@@ -10,4 +10,8 @@
     <ProjectReference Include="../../../BuildingBlocks/Merp.Web/Merp.Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Localization/*.json" />
+  </ItemGroup>
+
 </Project>
