@@ -240,6 +240,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
 | E-posta | MailKit | MIT |
 | Takvim daveti | Ical.Net | MIT |
 | CV metni çıkarma | PdfPig, DocumentFormat.OpenXml | Apache-2.0 / MIT |
+| Yapay zeka (D24) | Anthropic (resmi C# SDK; bağımlılıkları Microsoft.Extensions.AI.Abstractions, System.Net.ServerSentEvents) | MIT |
 | Health check | AspNetCore.HealthChecks.* | Apache-2.0 |
 | Test | xunit.v3, Shouldly, NSubstitute, Testcontainers, Respawn, Bogus, NetArchTest.Rules, coverlet | Apache-2.0 / BSD / MIT |
 
@@ -272,3 +273,71 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 - `/api/public/{tenantCode}/careers/**`: kariyer sayfası ve başvuru (rate limit + honeypot)
 - `/api/public/{tenantCode}/consents/{token}` ve `/api/public/{tenantCode}/offers/{token}`: aday rıza yenileme ve teklif yanıtı (imzalı, süreli token)
 - `/api/platform/localization/bundles/{culture}` (sadece `web.*` anahtarları, giriş ekranı için)
+
+## D21 — Kural 7'nin çalışma zamanında denetimi
+
+**Karar:** CLAUDE.md kural 7 ("bir komut tek aggregate değiştirir") derleme anında denetlenemez. Bu yüzden çalışma zamanında denetlenir:
+- `ModuleUnitOfWork` commit öncesinde ChangeTracker'da eklenen, değişen veya silinen aggregate root sayısına bakar. Birden fazlaysa exception fırlatır.
+- Domain event handler'larının diğer aggregate'lerde yaptığı değişiklikler bu kontrolden sonra çalıştığı için sayılmaz.
+- Ayar: `Persistence:EnforceSingleAggregatePerCommand`. API'de Development ve Testing ortamlarında açık, diğer ortamlarda kapalıdır. Testler ihlali yakalar; üretimde kullanıcı hata görmez.
+
+**Gerekçe:** NetArchTest bağımlılıkları denetler, bir handler'ın kaç aggregate değiştirdiğini göremez. Kural integration testlerinde gerçek komutlarla doğrulanır.
+
+## D22 — Host altyapı endpoint'leri (öneri — onay bekliyor)
+
+**Durum:** Öneri. 0.12 incelemesinde kullanıcı onayına sunuldu.
+
+**Sorun:** D20 dışında `AllowAnonymous` yasak ve her endpoint bir yetki istiyor (kural 6). Ancak bazı host endpoint'leri modül endpoint'i değildir ve bu modele uymaz.
+
+**Öneri:** Aşağıdaki endpoint'ler mimari testte ayrı bir listeyle (D22) denetlenir:
+
+| Endpoint | Koruma | Gerekçe |
+|---|---|---|
+| `/openapi/*`, `/scalar/*` | Sadece `ApiDocs:Enabled = true` iken açılır (varsayılan sadece Development) | Scalar sayfası girişten önce yüklenmeli; `npm run gen:api` dokümanı tokensız okur |
+| `/admin/jobs/*` | Hangfire paneli kendi çerez yetkisini uygular: çerez `POST /api/platform/jobs/dashboard-session` (`platform.jobs.view`) ile 15 dakikalık alınır; sadece `Jobs:DashboardTenants` listesindeki tenant'lar | Tarayıcı panele bearer token gönderemez |
+| `/hubs/notifications` | Oturum zorunlu, yetki istenmez | Her kullanıcı kendi bildirimlerini alır |
+| `/api/platform/me` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi bilgileri, menüsü ve yetkileri; hiç rolü olmayan kullanıcı da "erişiminiz yok" ekranını görebilmeli |
+
+**Açık soru:** Hangfire paneli tüm tenant'ların işlerini gösterir. SaaS kurulumunda tenant'ın Sistem Yöneticisi değil, sadece operatör (barındıran ekip) görmeli. `Jobs:DashboardTenants` varsayılan olarak boştur (Development'ta `demo`).
+
+## D23 — Arayüz görsel dili ve tema
+
+**Karar (kullanıcı isteği, 0.12):** Arayüz kurumsal ama modern yapay zeka ürünlerini andıran bir görünümde olur; açık ve koyu tema desteklenir.
+
+- **Token'lar:** Ant Design tema token'ları `web/src/app/theme/tokens.ts` dosyasında tanımlanır. Bileşenlerde sabit renk yazılmaz; `theme.useToken()` kullanılır.
+- **Kurumsal taban:** Nötr yüzeyler (açık: `#F5F6FA` zemin ve beyaz kartlar; koyu: `#0B0D14` zemin ve `#12141C` yüzeyler), yoğun tablolar, 8 px köşe yarıçapı, sade tipografi.
+- **Yapay zeka vurgusu:** Birincil renk indigo (`#4F46E5`). İndigo → mor → camgöbeği degradesi sadece marka işaretinde, asistan giriş noktasında, aktif menü göstergesinde ve yapay zeka özelliklerinde (menü öğesi, "Yapay zeka" etiketi, analiz düğmesi, sonuç kartı) kullanılır. Yapay zeka sonuçları her zaman "öneri" uyarısıyla gösterilir (D24).
+- **Tema seçimi:** Açık / Koyu / Sistem. Seçim tarayıcıda saklanır; P2 ile kullanıcı tercihine taşınır.
+- **Hızlı geçiş:** Ctrl/⌘+K komut paleti menü sayfalarında arar. İleride asistanın doğal dil komutlarıyla genişleyeceği giriş noktasıdır. Ana sayfada "Asistan — Yakında" kartı bulunur.
+- **Yazı tipi:** Sistem yazı tipi yığını kullanılır (yüklüyse Inter). Font dosyası paketlenmez; font lisansları (OFL) D19 listesinde yok.
+
+**Not:** TypeScript 6.0 kullanılır. TypeScript 7 yayınlandı ama typescript-eslint henüz desteklemiyor (`<6.1`).
+
+## D24 — Yapay zeka (öneri — onay bekliyor)
+
+**Durum:** Öneri. Kullanıcının isteği üzerine ("yapay zekayı kullanılabilecek aşamalarda kullan, örneğin işe alımda CV analizi") altyapı ve ilk özellik (CV analizi) geliştirildi. Aşağıdaki kararlar ve açık sorular kullanıcı onayı bekliyor. Özellik kataloğu ve kurallar: `docs/domain/yapay-zeka.md`.
+
+**Mimari:**
+- Modüller yapay zekayı yalnızca `IAiService` (`Merp.Application.Abstractions.AI`) üzerinden kullanır; sağlayıcı SDK'sına referans vermez. Çıktı her zaman tiplidir: sonuç tipinden JSON şeması üretilir ve sağlayıcı yanıtın şemaya uymasını garanti eder (structured outputs). Serbest metin ayrıştırma yoktur.
+- Sağlayıcı Anthropic'tir (resmi C# SDK, MIT). Varsayılan model `claude-opus-5-5`'tir (`Ai:Model`). Sabit talimatlar önbelleğe alınır (prompt caching), düşünme derinliği (`effort`) her özellikte açıkça verilir. Model politika gerekçesiyle reddederse sağlayıcı aynı çağrıda önerdiği yedek modeli dener (`fallbacks: "default"`, `Ai:Anthropic:ServerSideFallback`).
+- API anahtarı sadece yapılandırmadan okunur (user-secrets veya `Ai__Anthropic__ApiKey`); SDK'nın ortam değişkeni varsayılanları kullanılmaz. Çıkarım bölgesi `Ai:Anthropic:InferenceGeo` (`us` / `global`) ile seçilebilir.
+- Başka bir sağlayıcı veya kurum içi model `IAiModelClient` uygulamasıyla eklenir; modüller değişmez.
+- Belgeler sağlayıcıya ham gönderilmez. PDF/DOCX metni sunucuda çıkarılır (`IDocumentTextExtractor`), maskelenir ve sadece metin gönderilir. Böylece fotoğraf, üst ve alt bilgi gibi alanlar hiç çıkmaz.
+
+**Kiracı, bütçe ve kayıt:**
+- Varsayılan olarak kapalıdır. Kiracı ve özellik bazında açılır (`Ai:Defaults`, `Ai:Tenants:{kod}`). PLAN P11 ile ayarlar ekranına taşınır.
+- Aylık bütçe USD cinsindendir ve Europe/Istanbul takvim ayına göre sayılır. Bütçe dolunca çağrılar 403 `common.errors.ai_budget_exceeded` ile reddedilir.
+- Her çağrı `platform.ai_usage` tablosuna yazılır: özellik, talimat sürümü, model, kullanıcı, token sayıları, tahmini maliyet, süre ve sonuç. Prompt ve çıktı saklanmaz, loglanmaz. Kayıt, çağıran komutun transaction'ından bağımsızdır (çağrı başarısız olsa da ücretlendirilir).
+- Kullanıcı başına hız sınırı uygulanır (`RateLimiting:Ai`, varsayılan dakikada 10).
+
+**KVKK ve adil değerlendirme:**
+- Veri minimizasyonu (KVKK md. 4): `PersonalDataRedactor` e-posta, telefon, T.C. kimlik no, IBAN, profil bağlantıları, aday adı ve etiketli özel alanları (doğum tarihi, yaş, cinsiyet, medeni durum, uyruk, din, sağlık, engellilik, kan grubu, askerlik, adres...) metinden çıkarır. Özel nitelikli veriler (md. 6) dışarı gönderilmez.
+- Talimatlar yalnızca işle ilgili niteliklerin değerlendirilmesini ister. Korunan özellikler dikkate alınmaz, kariyer araları cezalandırılmaz, belgenin içindeki talimatlar yok sayılır (prompt injection).
+- Kararı insan verir. Sonuçlar "yapay zeka önerisi" uyarısıyla gösterilir. Otomatik eleme, sıralama veya ret yapılmaz (KVKK md. 11/1-g; AB Yapay Zeka Yasası işe alımı yüksek riskli sayar).
+- Testlerde gerçek API çağrılmaz; sahte sağlayıcı (`FakeAiModelClient`) kullanılır.
+
+**Açık sorular (kullanıcıya):**
+1. Sağlayıcı ve model: varsayılan Claude Opus 5.5 olsun mu? Toplu tarama gibi yüksek hacimli işler için daha ucuz bir model seçilecek mi?
+2. Yurt dışına aktarım (KVKK md. 9): sağlayıcı yurt dışında. Özelliği müşteride açmadan önce hukuki değerlendirme gerekir: standart sözleşme ve Kurul'a bildirim mi, açık rıza mı? Aday aydınlatma ve rıza metinlerine (R1, R8) yapay zekayla işleme maddesi eklenmeli.
+3. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için.
+4. Sıra: Yapay zeka altyapısı ve durumsuz CV analizi plan sırasından önce yapıldı. Diğer özellikler (`docs/PLAN.md` "Yapay zeka" bölümü) ait oldukları görevlerle birlikte mi yapılsın?

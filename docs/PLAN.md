@@ -28,11 +28,13 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
                                                                    → Faz 5 (X1…X6)
 ```
 
+Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır; bkz. "Yapay zeka" bölümü.
+
 ---
 
 ## Faz 0 — İskelet
 
-### [ ] 0.1 Repo temeli — S
+### [x] 0.1 Repo temeli — S
 
 **Yapılacaklar:**
 - Repo dosyaları:
@@ -54,7 +56,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 **Kabul kriterleri:**
 - Boş solution `dotnet build -warnaserror` ile derlenir.
 
-### [ ] 0.2 Solution ve proje yapısı — S
+### [x] 0.2 Solution ve proje yapısı — S
 
 **Yapılacaklar:**
 - `Merp.slnx` içinde `CLAUDE.md`'deki proje yapısı kurulur:
@@ -69,7 +71,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Build geçer.
 - Referans grafiği kurallara uygun (0.10'daki testler bunu da kontrol edecek).
 
-### [ ] 0.3 Geliştirme altyapısı (docker-compose) — M
+### [x] 0.3 Geliştirme altyapısı (docker-compose) — M
 
 **Yapılacaklar:**
 - Servisler:
@@ -97,7 +99,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - `docker compose up -d` sonrası tüm servisler healthy.
 - 4 kullanıcının her biri için token alınır ve token'da `tenant` claim'i bulunur. Script: `deploy/scripts/check-tokens.(sh|ps1)`.
 
-### [ ] 0.4 SharedKernel — M
+### [x] 0.4 SharedKernel — M
 
 **Yapılacaklar:**
 - Temel tipler: `Entity<TId>`, `AggregateRoot<TId>` (domain event listesi), `IDomainEvent`.
@@ -116,7 +118,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 **Kabul kriterleri:**
 - Her value object için geçerli ve geçersiz örneklerle unit test yazıldı. TCKN, VKN ve IBAN için en az 5'er örnek.
 
-### [ ] 0.5 Uygulama soyutlamaları ve mediator — M
+### [x] 0.5 Uygulama soyutlamaları ve mediator — M
 
 **Yapılacaklar:**
 - Komut ve sorgu tipleri: `ICommand`, `ICommand<T>`, `IQuery<T>`, handler arayüzleri, `ISender`, `IPipelineBehavior`.
@@ -134,7 +136,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Yetkisiz istek `Forbidden` döner.
 - Handler exception fırlatırsa transaction geri alınır ve outbox'a kayıt düşmez.
 
-### [ ] 0.6 EF altyapısı — L
+### [x] 0.6 EF altyapısı — L
 
 **Yapılacaklar:**
 - `ModuleDbContext` tabanı:
@@ -155,7 +157,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Test entity'si kaydedilince `created_by`, audit kaydı ve outbox kaydı oluşur.
 - Eşzamanlı güncellemede ikinci istek 409 alır.
 
-### [ ] 0.7 Çoklu kiracı (multi-tenancy) — M
+### [x] 0.7 Çoklu kiracı (multi-tenancy) — M
 
 **Yapılacaklar:**
 - Catalog DbContext (`tenants` tablosu), tenant cache, çözümleme middleware'i (claim veya route).
@@ -167,7 +169,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 **Kabul kriterleri:**
 - İki tenant'lı integration test: A tenant'ının kullanıcısı B'nin verisine hiçbir endpoint'ten erişemez.
 
-### [ ] 0.8 Mesajlaşma: outbox, inbox, transport — L
+### [x] 0.8 Mesajlaşma: outbox, inbox, transport — L
 
 **Yapılacaklar:**
 - `IntegrationEvent` taban record'u, `IIntegrationEventHandler<T>`, olay tip kaydı.
@@ -184,7 +186,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Aynı olay iki kez teslim edilirse handler bir kez çalışır.
 - RabbitMQ transport ile modüller arası olay ulaşır (Testcontainers RabbitMQ).
 
-### [ ] 0.9 Web host — M
+### [x] 0.9 Web host — M
 
 **Yapılacaklar:**
 - Loglama ve izleme: Serilog, OpenTelemetry (OTLP → Aspire Dashboard).
@@ -212,7 +214,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Scalar'da Keycloak ile giriş yapılıp korumalı örnek endpoint çağrılabilir.
 - Hata yanıtları Türkçe ProblemDetails formatındadır.
 
-### [ ] 0.10 Test altyapısı ve mimari testler — M
+### [x] 0.10 Test altyapısı ve mimari testler — M
 
 **Yapılacaklar:**
 - `tests/Merp.Testing` ortak kütüphanesi:
@@ -229,7 +231,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 - Kasıtlı bir kural ihlali mimari testi kırmızıya çevirir. İhlal örneği PR'da gösterilir, sonra kaldırılır.
 - Tüm testler CI'da 10 dakikanın altında biter.
 
-### [ ] 0.11 CI — S
+### [x] 0.11 CI — S
 
 **Yapılacaklar:**
 - `.github/workflows/ci.yml` (PR'da ve main'e push'ta çalışır):
@@ -242,7 +244,7 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
 **Kabul kriterleri:**
 - Örnek bir PR'da tüm job'lar yeşil.
 
-### [ ] 0.12 Web iskeleti 🔍 — L
+### [x] 0.12 Web iskeleti 🔍 — L
 
 **Yapılacaklar:**
 - Proje kurulumu: Vite + React + TS strict, ESLint (typescript-eslint, react-hooks, i18next/no-literal-string), Prettier, `@/` alias.
@@ -738,7 +740,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 ### [ ] R1 Modül iskeleti ve ayarlar — M
 
 **Yapılacaklar:**
-- Modül projeleri, şema `recruitment`, yetkiler, menü.
+- Modül projeleri, şema `recruitment`, yetkiler, menü. *(Projeler, şema, `RecruitmentDbContext` ve "İşe alım" menüsü A2 ile geldi; kalanlar bu görevde.)*
 - Ayarlar:
   - Aşama şablonları. Aşama alanları: ad, tip, sıra, SLA günü. Tipler: Applied / Screening / Interview / Assessment / Reference / Offer / Hired / Rejected / Withdrawn.
   - Red nedenleri, aday kaynakları, etiketler.
@@ -809,7 +811,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - **Arama:**
   - PostgreSQL tam metin arama (`turkish` konfigürasyonu)
   - Kapsam: ad, unvan, etiketler, notlar, CV metni
-  - CV metni çıkarma: PDF için PdfPig, DOCX için DocumentFormat.OpenXml
+  - CV metni çıkarma: PDF için PdfPig, DOCX için DocumentFormat.OpenXml *(`IDocumentTextExtractor` A1 ile hazır)*
 - **Web:**
   - İlan detayında kanban (@dnd-kit): sürükle-bırak, ret için neden modalı; ayrıca liste görünümü
   - Aday kartı: profil, başvurular, mülakatlar, değerlendirmeler, notlar, dosyalar, rıza durumu, zaman çizelgesi
@@ -917,6 +919,71 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 
 **Kabul kriterleri:**
 - Seed verisiyle dashboard rakamları elle hesaplanan değerlerle eşleşir (integration test).
+
+---
+
+## Yapay zeka (D24)
+
+Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka görevi için ek Definition of Done:
+- Kişisel veri maskelenmeden sağlayıcıya gitmez; entegrasyon testi sağlayıcıya giden metni doğrular.
+- Sonuç tipli (structured output), talimat sürümlü; kullanım kaydı yazılır.
+- Kiracıda özellik kapalıyken 403 testi var; ekranda "yapay zeka önerisi" uyarısı var.
+- CI gerçek API'yi çağırmaz (sahte sağlayıcı).
+
+### [x] A1 Yapay zeka altyapısı — M
+
+**Yapılanlar:** `IAiService`, Anthropic sağlayıcısı (resmi SDK; structured outputs, effort, prompt caching, sunucu tarafı yedek model), kiracı ve özellik bazında açma, aylık bütçe, `platform.ai_usage` kullanım kaydı ve `GET /api/platform/ai-usage/summary`, `Merp.AI` metrikleri, kullanıcı başına `ai` hız sınırı, `PersonalDataRedactor`, `IDocumentTextExtractor` (PDF/DOCX), `/me` içinde etkin özellikler, sahte sağlayıcı (`FakeAiModelClient`).
+
+**Kabul kriterleri:**
+- Sağlayıcı yapılandırılmamışsa veya kiracıda kapalıysa özellik çağrılamaz ve menüde görünmez.
+- Bütçe dolunca çağrı reddedilir; başarısız çağrılar da kullanım kaydına yazılır.
+- Sağlayıcı istek biçimi (model, şema, effort, önbellek, yedek model) birim testle doğrulanır.
+
+### [x] A2 CV analizi (durumsuz) ve kullanım ekranı — M
+
+**Yapılanlar:** `POST /api/recruitment/cv-analyses`, İşe alım → CV analizi ekranı, Sistem → Yapay zeka kullanımı ekranı. İşe alım modülünün iskeleti (projeler, şema, menü) bu görevle geldi.
+
+**Kabul kriterleri:**
+- PDF ve DOCX analiz edilir; sağlayıcıya giden metinde ad, e-posta, telefon, bağlantı ve özel alanlar yoktur.
+- Gereksinim verilmezse eşleşme döndürülmez.
+- Yetkisiz kullanıcı 403, kapalı kiracı 403 `ai_disabled`, sağlayıcı hatası 503 alır.
+
+### [ ] A3 Aday kartında CV analizi — M (R4 ile)
+
+- CV yüklendiğinde analiz arka plan işinde çalışır ve başvuruya kaydedilir (model, talimat sürümü, tarih). Yeniden analiz edilebilir.
+- Aday formu CV'den doldurulur. İletişim bilgileri yerelde (regex) çıkarılır, sağlayıcıya gönderilmez.
+- Kabul: analiz sonucu başvuru kartında görünür; aday anonimleşince (R8) analiz de silinir.
+
+### [ ] A4 İlan metni taslağı ve kapsayıcı dil kontrolü — S (R3 ile)
+
+- Personel talebinden ve kısa açıklamadan ilan taslağı; yaş, cinsiyet ve benzeri dışlayıcı ifadeler için uyarı listesi.
+- Kabul: taslak TipTap editörüne gelir, kullanıcı düzenlemeden yayınlanamaz.
+
+### [ ] A5 Mülakat soruları, geri bildirim özeti, aday e-posta taslakları — M (R5 ile)
+
+- Pozisyon ve değerlendirme şablonundan soru seti; mülakatçı formlarından ortak özet (kör geri bildirim kuralına uyar: özet herkes formunu gönderdikten sonra görünür).
+- Ret ve davet e-postası şablonunu adaya göre kişiselleştirme (gönderim her zaman kullanıcı onayıyla).
+
+### [ ] A6 Toplu ön tarama — M (R4 sonrası)
+
+- Bir ilanın başvurularını Batch API ile gece analiz eder (yarı maliyet). Bütçe ve kiracı ayarı gözetilir.
+- Kabul: sonuçlar sıralama değil, gereksinim bazında kanıt olarak gösterilir; otomatik ret yoktur.
+
+### [ ] A7 Çeviri taslakları — S (P4 ile)
+### [ ] A8 Onay özeti — S (P10 ile)
+### [ ] A9 İçe aktarma kolon eşleştirme önerisi — S (P11 ile)
+### [ ] A10 Belge şablonu taslağı — S (P12 ile)
+### [ ] A11 Doğal dille izin talebi taslağı — S (L4 ile)
+### [ ] A12 Asistan (Ctrl+K doğal dil, salt okunur, yetki ve veri kapsamına bağlı) — L (Faz 5)
+
+### [ ] A13 Değerlendirme seti (eval) — M
+
+- Anonimleştirilmiş örnek CV'ler, beklenen alanlar, eşleşme puanı aralıkları ve adalet kontrolleri (yalnızca ad veya cinsiyet değişince sonuç değişmemeli).
+- Talimat veya model değişikliği bu setle ölçülür; sonuç PR'da paylaşılır.
+
+### [ ] A14 Yapay zeka ayarları ekranı — S (P11 ile)
+
+- Kiracı yöneticisi özellikleri ve aylık bütçeyi ayarlar ekranından açar/kapatır; yapılandırma dosyasındaki `Ai:Tenants` buraya taşınır.
 
 ---
 

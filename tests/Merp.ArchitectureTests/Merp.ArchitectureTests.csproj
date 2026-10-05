@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Mono.Cecil" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Merp.Testing/Merp.Testing.csproj" />
+    <!-- Aliased: both hosts declare a top-level Program class -->
+    <ProjectReference Include="../../src/Host/Merp.Migrator/Merp.Migrator.csproj" Aliases="migrator" />
+  </ItemGroup>
+
+</Project>

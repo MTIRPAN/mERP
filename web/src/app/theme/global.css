@@ -1,0 +1,53 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+:root[data-theme='light'] body {
+  background: #f5f6fa;
+}
+
+:root[data-theme='dark'] body {
+  background: #0b0d14;
+}
+
+/* Brand gradient helpers (used sparingly) */
+.merp-gradient-text {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.merp-gradient-border {
+  position: relative;
+  border-radius: 12px;
+  background:
+    linear-gradient(var(--merp-card-bg, #fff), var(--merp-card-bg, #fff)) padding-box,
+    linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%) border-box;
+  border: 1px solid transparent;
+}
+
+:root[data-theme='dark'] .merp-gradient-border {
+  --merp-card-bg: #12141c;
+}
+
+/* Active menu item indicator */
+.merp-sider .ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #6366f1, #06b6d4);
+}

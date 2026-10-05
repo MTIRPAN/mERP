@@ -1,0 +1,7 @@
+{
+  "web.app.name": "mERP",
+  "web.common.loading": "Yükleniyor…",
+  "web.common.retry": "Tekrar dene",
+  "web.errors.network": "Sunucuya ulaşılamıyor. Bağlantınızı kontrol edin.",
+  "web.auth.signing_in": "Oturum açılıyor…"
+}

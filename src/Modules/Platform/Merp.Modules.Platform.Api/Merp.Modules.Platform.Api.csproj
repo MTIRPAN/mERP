@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Merp.Modules.Platform.Application/Merp.Modules.Platform.Application.csproj" />
+    <ProjectReference Include="../Merp.Modules.Platform.Infrastructure/Merp.Modules.Platform.Infrastructure.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Merp.Web/Merp.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Localization/*.json" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,48 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="CLAUDE.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+    <File Path="tests/Directory.Build.props" />
+    <File Path="tests/xunit.runner.json" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Merp.Application.Abstractions/Merp.Application.Abstractions.csproj" />
+    <Project Path="src/BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
+    <Project Path="src/BuildingBlocks/Merp.SharedKernel/Merp.SharedKernel.csproj" />
+    <Project Path="src/BuildingBlocks/Merp.Web/Merp.Web.csproj" />
+  </Folder>
+  <Folder Name="/src/Host/">
+    <Project Path="src/Host/Merp.Api/Merp.Api.csproj" />
+    <Project Path="src/Host/Merp.Migrator/Merp.Migrator.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Platform/">
+    <Project Path="src/Modules/Platform/Merp.Modules.Platform.Api/Merp.Modules.Platform.Api.csproj" />
+    <Project Path="src/Modules/Platform/Merp.Modules.Platform.Application/Merp.Modules.Platform.Application.csproj" />
+    <Project Path="src/Modules/Platform/Merp.Modules.Platform.Contracts/Merp.Modules.Platform.Contracts.csproj" />
+    <Project Path="src/Modules/Platform/Merp.Modules.Platform.Domain/Merp.Modules.Platform.Domain.csproj" />
+    <Project Path="src/Modules/Platform/Merp.Modules.Platform.Infrastructure/Merp.Modules.Platform.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Recruitment/">
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Api/Merp.Modules.Recruitment.Api.csproj" />
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Application/Merp.Modules.Recruitment.Application.csproj" />
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Contracts/Merp.Modules.Recruitment.Contracts.csproj" />
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Domain/Merp.Modules.Recruitment.Domain.csproj" />
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Infrastructure/Merp.Modules.Recruitment.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Merp.ArchitectureTests/Merp.ArchitectureTests.csproj" />
+    <Project Path="tests/Merp.BuildingBlocks.IntegrationTests/Merp.BuildingBlocks.IntegrationTests.csproj" />
+    <Project Path="tests/Merp.BuildingBlocks.UnitTests/Merp.BuildingBlocks.UnitTests.csproj" />
+    <Project Path="tests/Merp.Modules.Platform.IntegrationTests/Merp.Modules.Platform.IntegrationTests.csproj" />
+    <Project Path="tests/Merp.Modules.Platform.UnitTests/Merp.Modules.Platform.UnitTests.csproj" />
+    <Project Path="tests/Merp.Modules.Recruitment.IntegrationTests/Merp.Modules.Recruitment.IntegrationTests.csproj" />
+    <Project Path="tests/Merp.Modules.Recruitment.UnitTests/Merp.Modules.Recruitment.UnitTests.csproj" />
+    <Project Path="tests/Merp.Testing/Merp.Testing.csproj" />
+  </Folder>
+</Solution>

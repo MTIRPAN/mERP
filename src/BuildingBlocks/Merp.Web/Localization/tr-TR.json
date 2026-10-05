@@ -1,0 +1,14 @@
+{
+  "common.http.bad_request": "İstek geçersiz",
+  "common.http.unauthorized": "Oturum açmanız gerekiyor",
+  "common.http.forbidden": "Erişim reddedildi",
+  "common.http.not_found": "Bulunamadı",
+  "common.http.method_not_allowed": "İzin verilmeyen işlem",
+  "common.http.conflict": "Çakışma",
+  "common.http.payload_too_large": "Veri çok büyük",
+  "common.http.unsupported_media_type": "Desteklenmeyen içerik türü",
+  "common.http.too_many_requests": "Çok fazla istek",
+  "common.http.internal_server_error": "Sunucu hatası",
+  "common.http.service_unavailable": "Hizmet kullanılamıyor",
+  "common.http.error": "Hata"
+}

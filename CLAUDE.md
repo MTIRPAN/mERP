@@ -9,6 +9,7 @@ Holdingler ve büyük şirketler için ERP ürünü. Modüler monolit (.NET 10) 
 - `docs/DECISIONS.md` — mimari kararlar, izinli ve yasaklı kütüphaneler. Bunlara aykırı kod yazma.
 - `docs/domain/yetki-ve-onay.md` — yetki/rol/veri kapsamı modeli ve onay motoru kuralları.
 - `docs/domain/izin-kurallari.md` — izin mevzuatı varsayılanları, politika parametreleri, test senaryoları.
+- `docs/domain/yapay-zeka.md` — yapay zeka özellikleri, kişisel veri maskeleme ve "öneri, karar değil" kuralları (D24).
 
 ## Çalışma şekli
 
@@ -57,6 +58,8 @@ src/
 tests/
   Merp.Testing                       # ortak test altyapısı (WebApplicationFactory, Testcontainers, builder'lar)
   Merp.ArchitectureTests
+  Merp.BuildingBlocks.UnitTests      # SharedKernel, mediator, altyapı birim testleri
+  Merp.BuildingBlocks.IntegrationTests # EF, outbox/inbox, tenant altyapısı (Testcontainers)
   Merp.Modules.<Modül>.UnitTests
   Merp.Modules.<Modül>.IntegrationTests
 web/                                 # React + TS (Vite)
