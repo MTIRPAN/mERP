@@ -8,7 +8,8 @@ public sealed class AiOptions
     /// <summary>All features are off when <see cref="AiProvider.None"/>.</summary>
     public AiProvider Provider { get; set; } = AiProvider.None;
 
-    public string Model { get; set; } = "claude-opus-5-5";
+    /// <summary>Model for new calls. Claude Sonnet 5.5 by default (D24); Claude Opus 5.5 for the hardest work.</summary>
+    public string Model { get; set; } = "claude-sonnet-5-5";
 
     public int MaxOutputTokens { get; set; } = 16000;
 
@@ -19,14 +20,26 @@ public sealed class AiOptions
 
     public AnthropicOptions Anthropic { get; set; } = new();
 
-    /// <summary>List prices in USD per million tokens, used to estimate cost and enforce budgets.</summary>
-    public AiPricingOptions Pricing { get; set; } = new();
+    /// <summary>
+    /// List prices in USD per million tokens by model id, used to estimate cost and enforce budgets. Entries here
+    /// replace the built-in prices (<see cref="AiPricingOptions.Defaults"/>).
+    /// </summary>
+    public Dictionary<string, AiPricingOptions> Pricing { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Settings for tenants without an entry in <see cref="Tenants"/>.</summary>
     public AiTenantOptions Defaults { get; set; } = new();
 
     /// <summary>Per tenant settings keyed by tenant code; unset values fall back to <see cref="Defaults"/>.</summary>
     public Dictionary<string, AiTenantOptions> Tenants { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Prices of <paramref name="model"/>: configured, else built-in. An unknown model is priced like the most
+    /// expensive built-in model, so budgets are never underestimated.
+    /// </summary>
+    public AiPricingOptions PricingFor(string model) =>
+        Pricing.TryGetValue(model, out var configured) ? configured
+        : AiPricingOptions.Defaults.TryGetValue(model, out var known) ? known
+        : AiPricingOptions.MostExpensive;
 
     public AiTenantSettings ForTenant(string? tenantCode)
     {
@@ -63,13 +76,26 @@ public sealed class AnthropicOptions
 
 public sealed class AiPricingOptions
 {
-    public decimal InputPerMillionTokens { get; set; } = 4m;
+    /// <summary>List prices of the models the product is set up for (docs/domain/yapay-zeka.md §6).</summary>
+    public static IReadOnlyDictionary<string, AiPricingOptions> Defaults { get; } =
+        new Dictionary<string, AiPricingOptions>(StringComparer.OrdinalIgnoreCase)
+        {
+            // Claude Sonnet 5 serves server-side fallbacks of Claude Sonnet 5.5 at the same prices.
+            ["claude-sonnet-5-5"] = new() { InputPerMillionTokens = 2m, OutputPerMillionTokens = 10m, CacheReadPerMillionTokens = 0.2m, CacheWritePerMillionTokens = 2.5m },
+            ["claude-sonnet-5"] = new() { InputPerMillionTokens = 2m, OutputPerMillionTokens = 10m, CacheReadPerMillionTokens = 0.2m, CacheWritePerMillionTokens = 2.5m },
+            ["claude-opus-5-5"] = new() { InputPerMillionTokens = 4m, OutputPerMillionTokens = 20m, CacheReadPerMillionTokens = 0.2m, CacheWritePerMillionTokens = 5m },
+        };
 
-    public decimal OutputPerMillionTokens { get; set; } = 20m;
+    internal static AiPricingOptions MostExpensive { get; } = Defaults.Values.MaxBy(p => p.OutputPerMillionTokens)!;
 
-    public decimal CacheReadPerMillionTokens { get; set; } = 0.2m;
+    public decimal InputPerMillionTokens { get; set; }
 
-    public decimal CacheWritePerMillionTokens { get; set; } = 5m;
+    public decimal OutputPerMillionTokens { get; set; }
+
+    public decimal CacheReadPerMillionTokens { get; set; }
+
+    /// <summary>Price of writing the 5-minute prompt cache.</summary>
+    public decimal CacheWritePerMillionTokens { get; set; }
 
     public decimal Cost(long input, long output, long cacheRead, long cacheWrite) =>
         ((input * InputPerMillionTokens)

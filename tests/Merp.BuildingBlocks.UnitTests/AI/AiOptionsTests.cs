@@ -33,9 +33,27 @@ public sealed class AiOptionsTests
     }
 
     [Fact]
-    public void Pricing_ComputesCost_PerMillionTokens() =>
-        new AiPricingOptions().Cost(input: 1_000_000, output: 100_000, cacheRead: 500_000, cacheWrite: 200_000)
-            .ShouldBe(4m + 2m + 0.1m + 1m);
+    public void DefaultModel_IsSonnet() => new AiOptions().Model.ShouldBe("claude-sonnet-5-5");
+
+    [Theory]
+    [InlineData("claude-sonnet-5-5", 2 + 1 + 0.1 + 0.5)]
+    [InlineData("CLAUDE-SONNET-5-5", 2 + 1 + 0.1 + 0.5)]
+    [InlineData("claude-opus-5-5", 4 + 2 + 0.1 + 1)]
+    [InlineData("some-future-model", 4 + 2 + 0.1 + 1)]
+    public void Pricing_UsesBuiltInPrices_AndTheMostExpensiveForUnknownModels(string model, double expected) =>
+        new AiOptions().PricingFor(model).Cost(input: 1_000_000, output: 100_000, cacheRead: 500_000, cacheWrite: 200_000)
+            .ShouldBe((decimal)expected);
+
+    [Fact]
+    public void Pricing_FromConfiguration_ReplacesBuiltInPrices()
+    {
+        var options = new AiOptions
+        {
+            Pricing = { ["claude-sonnet-5-5"] = new AiPricingOptions { InputPerMillionTokens = 1, OutputPerMillionTokens = 5 } },
+        };
+
+        options.PricingFor("claude-sonnet-5-5").Cost(1_000_000, 1_000_000, 0, 0).ShouldBe(6m);
+    }
 
     [Fact]
     public void BudgetPeriod_StartsAtMidnight_InIstanbul()
