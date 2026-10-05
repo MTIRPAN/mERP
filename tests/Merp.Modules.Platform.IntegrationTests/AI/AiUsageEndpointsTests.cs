@@ -56,6 +56,7 @@ public sealed class AiUsageEndpointsTests(AiUsageFactory factory) : IClassFixtur
         summary.Month.ShouldBe($"{year:D4}-{month:D2}");
         summary.ProviderConfigured.ShouldBeTrue();
         summary.Enabled.ShouldBeTrue();
+        summary.TransferBasis.ShouldBe("StandardContract");
         summary.Model.ShouldBe("claude-sonnet-5-5");
         summary.MonthlyBudgetUsd.ShouldBe(25m);
         summary.CostUsd.ShouldBe(0.08m);

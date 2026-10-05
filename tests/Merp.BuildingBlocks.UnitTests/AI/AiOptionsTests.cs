@@ -12,11 +12,28 @@ public sealed class AiOptionsTests
     [InlineData("hr.*", "recruitment.cv_analysis", false)]
     [InlineData("recruitment.cv", "recruitment.cv_analysis", false)]
     public void Allows_MatchesFeaturePatterns(string pattern, string feature, bool expected) =>
-        new AiTenantSettings(true, [pattern], 0).Allows(feature).ShouldBe(expected);
+        new AiTenantSettings(true, [pattern], 0, AiTransferBasis.StandardContract).Allows(feature).ShouldBe(expected);
 
     [Fact]
     public void Allows_IsFalse_WhenTenantIsDisabled() =>
-        new AiTenantSettings(false, ["*"], 0).Allows("recruitment.cv_analysis").ShouldBeFalse();
+        new AiTenantSettings(false, ["*"], 0, AiTransferBasis.StandardContract).Allows("recruitment.cv_analysis").ShouldBeFalse();
+
+    [Fact]
+    public void Allows_IsFalse_WithoutKvkkTransferBasis() =>
+        new AiTenantSettings(true, ["*"], 0).Allows("recruitment.cv_analysis").ShouldBeFalse();
+
+    [Fact]
+    public void ForTenant_TakesTransferBasisFromDefaultsOrTenant()
+    {
+        var options = new AiOptions
+        {
+            Defaults = new AiTenantOptions { Enabled = true, Features = ["*"], TransferBasis = AiTransferBasis.StandardContract, TransferReference = "KEP 2026/1" },
+            Tenants = { ["acme"] = new AiTenantOptions { TransferBasis = AiTransferBasis.BindingCorporateRules } },
+        };
+
+        options.ForTenant("acme").TransferBasis.ShouldBe(AiTransferBasis.BindingCorporateRules);
+        options.ForTenant("other").TransferReference.ShouldBe("KEP 2026/1");
+    }
 
     [Fact]
     public void ForTenant_FallsBackToDefaults_PerValue()
