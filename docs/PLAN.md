@@ -343,6 +343,7 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §1.
   - HybridCache ve tag ile önbellek temizleme
 - **`GET /api/platform/me`:** kullanıcı, tenant, yetkili şirketler, düz yetki listesi, menü (modüller yetkiye bağlı menü öğesi kaydeder), tercihler.
 - **Bootstrap:** dev seed `admin` kullanıcısına Sistem Yöneticisi (Tenant kapsamı) verir. Üretim için `Merp.Migrator create-admin` komutu.
+- `platform.jobs.view` (Hangfire paneli) sadece Sistem Yöneticisi rolüne seed edilir (D22).
 - Yetkiler: `platform.users.read/manage`, `platform.roles.read/manage`.
 - **Web:**
   - Kullanıcılar: liste; detayda rol atamaları ve kapsam seçici
@@ -1032,6 +1033,15 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 ### [ ] A14 Yapay zeka ayarları ekranı — S (P11 ile)
 
 - Kiracı yöneticisi özellikleri ve aylık bütçeyi ayarlar ekranından açar/kapatır; yapılandırma dosyasındaki `Ai:Tenants` buraya taşınır.
+
+### [ ] A15 Kurum içi model sağlayıcısı — M (müşteri talebiyle)
+
+- Müşterinin kendi sunucusundaki açık lisanslı bir modele (D19 lisansları) OpenAI uyumlu HTTP API üzerinden bağlanan `IAiModelClient` uygulaması; şemaya uygun çıktı sunucunun JSON şema desteğiyle sağlanır.
+- Kabul: A13 değerlendirme setinde kalite ölçülür ve müşteriye raporlanır; kurulum ve donanım rehberi `docs/` altında.
+
+### [ ] A16 Müşterinin bulut hesabı üzerinden Claude — S (müşteri talebiyle)
+
+- Amazon Bedrock, Google Cloud veya Microsoft Foundry üzerinden Claude (resmi SDK'nın platform istemcileri). Sunucu tarafı yedek model ve Batch API bu platformlarda yoktur.
 
 ---
 

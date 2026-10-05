@@ -285,7 +285,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 
 ## D22 — Host altyapı endpoint'leri (öneri — onay bekliyor)
 
-**Durum:** Öneri. 0.12 incelemesinde kullanıcı onayına sunuldu.
+**Durum:** Öneri. 0.12 incelemesinde kullanıcı onayına sunuldu. Hangfire panelini kimlerin göreceği kararlaştırıldı (aşağıda); endpoint listesi onay bekliyor.
 
 **Sorun:** D20 dışında `AllowAnonymous` yasak ve her endpoint bir yetki istiyor (kural 6). Ancak bazı host endpoint'leri modül endpoint'i değildir ve bu modele uymaz.
 
@@ -300,7 +300,12 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/api/platform/locations/provinces`, `/api/platform/locations/provinces/{provinceCode}/districts` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kamuya açık referans veri (il/ilçe, `docs/reference-data.md`); her modülün adres formunda kullanılır. Kullanıcı onayıyla eklendi (P1). |
 | `/api/platform/me/preferences` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi tercihleri (dil); hiç rolü olmayan kullanıcı da değiştirebilmeli (P2). |
 
-**Açık soru:** Hangfire paneli tüm tenant'ların işlerini gösterir. SaaS kurulumunda tenant'ın Sistem Yöneticisi değil, sadece operatör (barındıran ekip) görmeli. `Jobs:DashboardTenants` varsayılan olarak boştur (Development'ta `demo`).
+**Karar — Hangfire paneli (kullanıcı, 2026-10-05):** Panel, şirketlerdeki yaygın uygulamaya uygun olarak sadece bilgi işlem / sistem yöneticilerine açıktır.
+- `platform.jobs.view` yetkisi sadece "Sistem Yöneticisi" sistem rolüne seed edilir (P2). İK ve diğer iş kullanıcıları paneli görmez.
+- Panel salt okunurdur: işler panelden silinemez, yeniden tetiklenemez.
+- Panel bütün tenant'ların işlerini gösterdiği için ayrıca tenant listesiyle sınırlanır (`Jobs:DashboardTenants`, varsayılan boş):
+  - Tek şirketli kurulumda (müşterinin kendi sunucusu) listeye o şirketin tenant'ı yazılır; şirketin sistem yöneticileri paneli görür.
+  - Çok kiracılı kurulumda (SaaS) listeye sadece barındıran ekibin (operatör) tenant'ı yazılır; müşteri yöneticileri paneli görmez.
 
 ## D23 — Arayüz görsel dili ve tema
 
@@ -321,7 +326,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 
 **Mimari:**
 - Modüller yapay zekayı yalnızca `IAiService` (`Merp.Application.Abstractions.AI`) üzerinden kullanır; sağlayıcı SDK'sına referans vermez. Çıktı her zaman tiplidir: sonuç tipinden JSON şeması üretilir ve sağlayıcı yanıtın şemaya uymasını garanti eder (structured outputs). Serbest metin ayrıştırma yoktur.
-- Sağlayıcı Anthropic'tir (resmi C# SDK, MIT). Varsayılan model `claude-opus-5-5`'tir (`Ai:Model`). Sabit talimatlar önbelleğe alınır (prompt caching), düşünme derinliği (`effort`) her özellikte açıkça verilir. Model politika gerekçesiyle reddederse sağlayıcı aynı çağrıda önerdiği yedek modeli dener (`fallbacks: "default"`, `Ai:Anthropic:ServerSideFallback`).
+- Sağlayıcı Anthropic'tir (resmi C# SDK, MIT). **Karar (kullanıcı, 2026-10-05):** varsayılan model Claude Sonnet 5.5'tir (`claude-sonnet-5-5`, `Ai:Model`). Maliyet model bazlı fiyatlarla hesaplanır (`Ai:Pricing:{model}`; yerleşik fiyatlar Sonnet 5.5 ve Opus 5.5 için). Fiyatı bilinmeyen model en pahalı yerleşik fiyattan hesaplanır, böylece bütçe hiçbir zaman eksik hesaplanmaz. Sabit talimatlar önbelleğe alınır (prompt caching), düşünme derinliği (`effort`) her özellikte açıkça verilir. Model politika gerekçesiyle reddederse sağlayıcı aynı çağrıda önerdiği yedek modeli dener (`fallbacks: "default"`, `Ai:Anthropic:ServerSideFallback`).
 - API anahtarı sadece yapılandırmadan okunur (user-secrets veya `Ai__Anthropic__ApiKey`); SDK'nın ortam değişkeni varsayılanları kullanılmaz. Çıkarım bölgesi `Ai:Anthropic:InferenceGeo` (`us` / `global`) ile seçilebilir.
 - Başka bir sağlayıcı veya kurum içi model `IAiModelClient` uygulamasıyla eklenir; modüller değişmez.
 - Belgeler sağlayıcıya ham gönderilmez. PDF/DOCX metni sunucuda çıkarılır (`IDocumentTextExtractor`), maskelenir ve sadece metin gönderilir. Böylece fotoğraf, üst ve alt bilgi gibi alanlar hiç çıkmaz.
@@ -339,9 +344,9 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 - Testlerde gerçek API çağrılmaz; sahte sağlayıcı (`FakeAiModelClient`) kullanılır.
 
 **Açık sorular (kullanıcıya):**
-1. Sağlayıcı ve model: varsayılan Claude Opus 5.5 olsun mu? Toplu tarama gibi yüksek hacimli işler için daha ucuz bir model seçilecek mi?
+1. ~~Sağlayıcı ve model~~ — karar verildi: Claude Sonnet 5.5.
 2. Yurt dışına aktarım (KVKK md. 9): sağlayıcı yurt dışında. Özelliği müşteride açmadan önce hukuki değerlendirme gerekir: standart sözleşme ve Kurul'a bildirim mi, açık rıza mı? Aday aydınlatma ve rıza metinlerine (R1, R8) yapay zekayla işleme maddesi eklenmeli.
-3. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için.
+3. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için. Gereksinimler ve seçenekler `docs/domain/yapay-zeka.md` §9'da. Öneri: talep eden ilk müşteriyle birlikte yapılsın (PLAN A15, A16).
 4. Sıra: Yapay zeka altyapısı ve durumsuz CV analizi plan sırasından önce yapıldı. Diğer özellikler (`docs/PLAN.md` "Yapay zeka" bölümü) ait oldukları görevlerle birlikte mi yapılsın?
 
 ## D25 — Uygulama katmanında veri erişimi
