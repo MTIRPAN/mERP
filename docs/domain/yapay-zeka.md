@@ -80,7 +80,7 @@ Modül handler'ı
 ```jsonc
 "Ai": {
   "Provider": "Anthropic",            // "None": tüm özellikler kapalı
-  "Model": "claude-opus-5-5",
+  "Model": "claude-sonnet-5-5",       // varsayılan; zor işler için "claude-opus-5-5"
   "MaxOutputTokens": 16000,
   "RequestTimeout": "00:05:00",
   "MaxRetries": 2,
@@ -90,7 +90,8 @@ Modül handler'ı
     "InferenceGeo": "",               // "", "global" veya "us"
     "ServerSideFallback": true
   },
-  "Pricing": { "InputPerMillionTokens": 4, "OutputPerMillionTokens": 20, "CacheReadPerMillionTokens": 0.2, "CacheWritePerMillionTokens": 5 },
+  // İsteğe bağlı: model bazlı liste fiyatı (USD / milyon token). Yazılmazsa yerleşik fiyatlar kullanılır.
+  "Pricing": { "claude-sonnet-5-5": { "InputPerMillionTokens": 2, "OutputPerMillionTokens": 10, "CacheReadPerMillionTokens": 0.2, "CacheWritePerMillionTokens": 2.5 } },
   "Defaults": { "Enabled": false, "Features": [ "*" ], "MonthlyBudgetUsd": 0 },   // 0: sınırsız
   "Tenants": { "demo": { "Enabled": true, "MonthlyBudgetUsd": 20 } }
 }
@@ -100,13 +101,13 @@ Modül handler'ı
 
 ## 6. Maliyet tahmini
 
-Liste fiyatı (Claude Opus 5.5): girdi 4 USD, çıktı 20 USD / milyon token; önbellekten okunan girdi 0,20 USD / milyon token.
+Varsayılan model Claude Sonnet 5.5'in liste fiyatı: girdi 2 USD, çıktı 10 USD / milyon token; önbellekten okunan girdi 0,20 USD / milyon token. Claude Opus 5.5 bunun iki katıdır (4 / 20 USD).
 
-| İş | Girdi | Çıktı (düşünme dahil) | Tahmini maliyet |
-|---|---|---|---|
-| Bir CV analizi | ~4.000–6.000 token | ~2.000–4.000 token | ~0,05–0,10 USD |
-| Ayda 1.000 CV | | | ~50–100 USD |
-| Toplu tarama (Batch API) | | | yaklaşık yarısı |
+| İş | Girdi | Çıktı (düşünme dahil) | Sonnet 5.5 (varsayılan) | Opus 5.5 |
+|---|---|---|---|---|
+| Bir CV analizi | ~4.000–6.000 token | ~2.000–4.000 token | ~0,03–0,05 USD | ~0,05–0,10 USD |
+| Ayda 1.000 CV | | | ~30–50 USD | ~50–100 USD |
+| Toplu tarama (Batch API) | | | yaklaşık yarısı | yaklaşık yarısı |
 
 Gerçek değerler kullanım ekranında (Sistem → Yapay zeka kullanımı) izlenir. Bütçe kiracı bazında sınırlanır.
 
@@ -129,3 +130,25 @@ Gerçek değerler kullanım ekranında (Sistem → Yapay zeka kullanımı) izlen
 - Entegrasyon testleri: sahte sağlayıcıyla (`FakeAiModelClient`) uçtan uca; sağlayıcıya giden metinde kişisel verinin bulunmadığı doğrulanır.
 - CI gerçek API'yi çağırmaz.
 - **Açık iş (A13):** Talimat kalitesi için değerlendirme seti. Anonimleştirilmiş örnek CV'ler, beklenen alanlar, eşleşme puanı aralığı ve adalet kontrolleri (ör. aynı CV'de yalnızca ad veya cinsiyet değişince puan değişmemeli). Talimat veya model değişikliği bu setle ölçülür.
+
+## 9. Kurum içi (on-prem) model seçeneği
+
+Bazı müşteriler verinin şirket dışına hiç çıkmamasını isteyebilir. İki ayrı konu vardır:
+
+- **mERP'in müşteri sunucusunda çalışması:** Zaten planda (Docker, PostgreSQL ve diğer bileşenler; PLAN X5). Ek bir iş gerektirmez.
+- **Yapay zeka modelinin müşteri sunucusunda çalışması:** Aşağıdaki gereksinimler bunun içindir.
+
+| Konu | Gereken |
+|---|---|
+| Donanım | GPU'lu sunucu. Küçük modeller (7–14 milyar parametre) için 24–48 GB belleğe sahip tek GPU yeterli olabilir, ancak Türkçe değerlendirme kalitesi belirgin şekilde düşer. Büyük modeller (~70 milyar parametre) için yaklaşık 2 adet 80 GB'lık veri merkezi GPU'su gerekir. Maliyet donanıma göre on binlerce dolara çıkabilir. |
+| Model | Lisansı D19'a uyan açık ağırlıklı bir model (Apache-2.0 veya MIT). Bazı popüler modellerin özel lisansları vardır ve listede değildir. |
+| Sunucu yazılımı | Modeli OpenAI uyumlu bir HTTP API ile sunan açık kaynak bir sunucu. Şemaya uygun çıktı için JSON şema desteği olmalıdır. |
+| Bizim tarafta geliştirme | Yeni bir `IAiModelClient` uygulaması (A15) ve testleri, değerlendirme setiyle (A13) kalite ölçümü, kurulum rehberi: yaklaşık 1–2 hafta. Modüller değişmez. |
+| Müşteri tarafında işletim | GPU kapasite planlaması (eş zamanlı kullanıcı), model güncellemeleri, izleme ve güvenlik yamaları müşterinin bilgi işlem ekibine düşer. |
+| Kalite | Açık modeller Türkçe metinde ve gerekçeli değerlendirmede genellikle Claude'un gerisindedir. Fark değerlendirme setiyle ölçülmeden söz verilmemelidir. |
+
+**Ara seçenekler:**
+1. Yapay zekayı o müşteride kapalı tutmak. Ürünün geri kalanı yapay zekasız eksiksiz çalışır.
+2. Claude'u müşterinin kendi bulut hesabı üzerinden kullanmak (Amazon Bedrock, Google Cloud veya Microsoft Foundry; A16). Veri müşterinin bulut sözleşmesi altında işlenir. Bölge seçilebilir, ancak Türkiye dışı olduğu için KVKK md. 9 yine geçerlidir. Bizim için küçük bir iş; sunucu tarafı yedek model ve Batch API bu platformlarda yoktur.
+
+**Öneri:** Kurum içi modeli talep eden ilk müşteriyle birlikte yapmak. Altyapı buna hazır; o güne kadar 1. veya 2. seçenek kullanılır.
