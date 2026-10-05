@@ -5,6 +5,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Anthropic" />
+    <PackageReference Include="DocumentFormat.OpenXml" />
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Hangfire.Core" />
     <PackageReference Include="Hangfire.PostgreSql" />
@@ -12,6 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="PdfPig" />
     <PackageReference Include="RabbitMQ.Client" />
     <PackageReference Include="Scrutor" />
   </ItemGroup>

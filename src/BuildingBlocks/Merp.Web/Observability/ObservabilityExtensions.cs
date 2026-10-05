@@ -1,3 +1,4 @@
+using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Messaging.Integration;
 using Microsoft.AspNetCore.Builder;
@@ -55,7 +56,7 @@ public static class ObservabilityExtensions
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
                 .AddNpgsqlInstrumentation()
-                .AddMeter(MessagingTelemetry.MeterName));
+                .AddMeter(MessagingTelemetry.MeterName, AiTelemetry.MeterName));
 
         if (!string.IsNullOrWhiteSpace(otlpEndpoint))
         {

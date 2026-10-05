@@ -48,6 +48,9 @@ public sealed record Error
     public static Error Failure(string code, IReadOnlyDictionary<string, object?>? args = null) =>
         new(code, ErrorType.Failure, args, null);
 
+    public static Error Unavailable(string code, IReadOnlyDictionary<string, object?>? args = null) =>
+        new(code, ErrorType.Unavailable, args, null);
+
     /// <summary>Wraps this error as a field error, e.g. a value object error attached to its input field.</summary>
     public Error ForField(string field) =>
         Validation([new FieldError(field, Code, Args)]);

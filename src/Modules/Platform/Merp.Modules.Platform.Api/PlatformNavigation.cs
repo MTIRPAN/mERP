@@ -13,6 +13,7 @@ internal sealed class PlatformMenu : IMenuContributor
         [
             new("system-info", "web.shell.menu.system_info", Path: "/system/info", Icon: "info", Permission: PlatformPermissions.SystemInfo.Read),
             new("jobs", "web.shell.menu.jobs", Path: "/system/jobs", Icon: "schedule", Permission: PlatformPermissions.Jobs.View, Order: 10),
+            new("ai-usage", "web.shell.menu.ai_usage", Path: "/system/ai-usage", Icon: "ai", Permission: PlatformPermissions.AiUsage.Read, Order: 20),
         ]),
     ];
 }
@@ -23,5 +24,6 @@ internal sealed class PlatformPermissionDefinitions : IPermissionDefinitionProvi
     [
         new(PlatformPermissions.SystemInfo.Read),
         new(PlatformPermissions.Jobs.View),
+        new(PlatformPermissions.AiUsage.Read),
     ];
 }

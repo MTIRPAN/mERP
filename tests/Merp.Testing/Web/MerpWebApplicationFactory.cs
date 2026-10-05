@@ -1,8 +1,10 @@
 using Merp.Application.Abstractions.Context;
 using Merp.Application.Abstractions.Security;
+using Merp.Infrastructure.AI;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.MultiTenancy.Catalog;
 using Merp.Infrastructure.Persistence;
+using Merp.Testing.AI;
 using Merp.Testing.Containers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
@@ -26,6 +28,12 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
 
     /// <summary>Clock of the host when <see cref="UseFakeTime"/> is true.</summary>
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 1, 5, 9, 0, 0, TimeSpan.Zero));
+
+    /// <summary>
+    /// AI provider of the host. AI is enabled for every tenant in tests; disable it per tenant with
+    /// <c>Ai:Tenants:{code}:Enabled = false</c> or for all with <see cref="FakeAiModelClient.IsConfigured"/>.
+    /// </summary>
+    public FakeAiModelClient Ai { get; } = new();
 
     /// <summary>Replace the system clock with <see cref="Time"/>.</summary>
     protected virtual bool UseFakeTime => false;
@@ -82,6 +90,10 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         builder.UseSetting("Jobs:EnableServer", "false");
         builder.UseSetting("Messaging:EnableBackgroundProcessing", "false");
         builder.UseSetting("ApiDocs:Enabled", "true");
+        builder.UseSetting("Ai:Provider", nameof(AiProvider.Anthropic));
+        builder.UseSetting("Ai:Defaults:Enabled", "true");
+        builder.UseSetting("Ai:Defaults:Features:0", "*");
+        builder.UseSetting("RateLimiting:Ai:PermitLimit", "1000");
         foreach (var (key, value) in Settings)
         {
             builder.UseSetting(key, value);
@@ -92,6 +104,7 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
             services.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
             services.AddScoped<IPermissionChecker, TestPermissionChecker>();
+            services.AddSingleton<IAiModelClient>(Ai);
             if (UseFakeTime)
             {
                 services.AddSingleton<TimeProvider>(Time);

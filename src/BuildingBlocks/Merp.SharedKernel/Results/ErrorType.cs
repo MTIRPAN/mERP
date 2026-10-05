@@ -17,4 +17,7 @@ public enum ErrorType
 
     /// <summary>500 — an expected but unrecoverable failure.</summary>
     Failure,
+
+    /// <summary>503 — an external dependency (e.g. the AI provider) is temporarily unavailable; retrying may help.</summary>
+    Unavailable,
 }

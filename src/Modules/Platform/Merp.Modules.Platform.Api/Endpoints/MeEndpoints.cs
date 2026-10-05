@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Security.Claims;
+using Merp.Application.Abstractions.AI;
 using Merp.Application.Abstractions.Context;
 using Merp.Application.Abstractions.Security;
 using Merp.Web.Navigation;
@@ -30,6 +31,8 @@ internal static class MeEndpoints
         IPermissionChecker permissionChecker,
         IEnumerable<IPermissionDefinitionProvider> permissionProviders,
         IEnumerable<IMenuContributor> menuContributors,
+        IEnumerable<IAiFeatureDefinitionProvider> aiFeatureProviders,
+        IAiService ai,
         IConfiguration configuration)
     {
         var granted = new HashSet<string>(StringComparer.Ordinal);
@@ -47,6 +50,13 @@ internal static class MeEndpoints
             .Select(c => CultureInfo.GetCultureInfo(c))
             .Select(c => new CultureResponse(c.Name, c.NativeName))
             .ToList();
+        var aiFeatures = aiFeatureProviders
+            .SelectMany(p => p.GetFeatures())
+            .Select(f => f.Key)
+            .Distinct(StringComparer.Ordinal)
+            .Where(ai.IsEnabled)
+            .Order(StringComparer.Ordinal)
+            .ToList();
 
         return new MeResponse(
             new UserResponse(
@@ -59,7 +69,8 @@ internal static class MeEndpoints
             [],
             menu,
             new PreferencesResponse(currentUser.Culture),
-            cultures);
+            cultures,
+            new MeAiResponse(aiFeatures.Count > 0, aiFeatures));
     }
 
     // Keeps items the user may open; groups without visible children disappear.
@@ -78,7 +89,8 @@ public sealed record MeResponse(
     IReadOnlyList<CompanyResponse> Companies,
     IReadOnlyList<MenuItemResponse> Menu,
     PreferencesResponse Preferences,
-    IReadOnlyList<CultureResponse> Cultures);
+    IReadOnlyList<CultureResponse> Cultures,
+    MeAiResponse Ai);
 
 public sealed record UserResponse(string Subject, string? UserName, string? DisplayName, string? Email);
 
@@ -91,3 +103,7 @@ public sealed record MenuItemResponse(string Key, string LabelKey, string? Path,
 public sealed record PreferencesResponse(string Culture);
 
 public sealed record CultureResponse(string Code, string Name);
+
+/// <param name="Enabled">At least one AI feature is enabled for the tenant (D24).</param>
+/// <param name="Features">Enabled AI feature keys; the web shows AI actions only for these.</param>
+public sealed record MeAiResponse(bool Enabled, IReadOnlyList<string> Features);

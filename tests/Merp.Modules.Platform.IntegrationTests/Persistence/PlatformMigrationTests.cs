@@ -27,7 +27,7 @@ public class PlatformMigrationTests(PostgresFixture postgres)
         await migrator.MigrateAsync(tenant, connectionString, TestContext.Current.CancellationToken);
 
         var tables = await ListTablesAsync(connectionString, "platform");
-        tables.ShouldBe(["__ef_migrations_history", "audit_entries", "inbox_messages", "outbox_messages"], ignoreOrder: true);
+        tables.ShouldBe(["__ef_migrations_history", "ai_usage", "audit_entries", "inbox_messages", "outbox_messages"], ignoreOrder: true);
         (await ListTablesAsync(connectionString, "public")).ShouldBeEmpty();
     }
 

@@ -14,4 +14,9 @@ public static class PlatformPermissions
     {
         public const string View = "platform.jobs.view";
     }
+
+    public static class AiUsage
+    {
+        public const string Read = "platform.ai_usage.read";
+    }
 }

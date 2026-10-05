@@ -12,6 +12,14 @@
         "resolved": "1.0.48",
         "contentHash": "rsLM3yKr4g+YKKox9lhc8D+kz67P7Q9+xdyn1LmCsoYr1kYpJSm+Nt6slo5UrfUrcTiGJ57zUlyO8XUdV7G7iA=="
       },
+      "DocumentFormat.OpenXml.Framework": {
+        "type": "Transitive",
+        "resolved": "3.5.1",
+        "contentHash": "U5txtc3ORno73xQx9Lf2gWzfaSZnZwKHfLkTAslhlew9lxe5XbUiCt0dY1fHeAf8yRqszUAe5i/+xLC9R/Xfsw==",
+        "dependencies": {
+          "System.IO.Packaging": "10.0.2"
+        }
+      },
       "Google.Protobuf": {
         "type": "Transitive",
         "resolved": "3.30.1",
@@ -60,6 +68,11 @@
         "type": "Transitive",
         "resolved": "10.0.12",
         "contentHash": "Kd4o2oO1A6dfKxjz5LS16QyLtpCFTUiFWwmBABETAXRsSImBdRdWeKjSgbbRhAMiV3a3/nWr95ZtzClT4uaADQ=="
+      },
+      "Microsoft.Extensions.AI.Abstractions": {
+        "type": "Transitive",
+        "resolved": "10.5.1",
+        "contentHash": "nB0l3IlsVbNeUxsE7nZNb9GY8rP1OSeqpj0pseORPejt474HNKEauTWTLdSJPkSvPlRMxowZNMo6nyp7APAiSg=="
       },
       "Microsoft.Extensions.DependencyModel": {
         "type": "Transitive",
@@ -229,6 +242,11 @@
           "Microsoft.IdentityModel.Tokens": "8.19.2"
         }
       },
+      "System.IO.Packaging": {
+        "type": "Transitive",
+        "resolved": "10.0.2",
+        "contentHash": "JTpM4z0wpoIHHDvlCU27HsXo+zVnpWib94HXQpzzr+jc/P9NYf4w353AK4MXyGq/grm1mbLi7eXsOsDU8sGmNg=="
+      },
       "merp.application.abstractions": {
         "type": "Project",
         "dependencies": {
@@ -239,6 +257,8 @@
       "merp.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "Anthropic": "[12.53.0, )",
+          "DocumentFormat.OpenXml": "[3.5.1, )",
           "EFCore.NamingConventions": "[10.0.1, )",
           "Hangfire.Core": "[1.8.25, )",
           "Hangfire.PostgreSql": "[1.21.1, )",
@@ -247,6 +267,7 @@
           "Microsoft.Extensions.Caching.Hybrid": "[10.10.0, )",
           "Microsoft.Extensions.Caching.StackExchangeRedis": "[10.0.12, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
+          "PdfPig": "[0.1.16, )",
           "RabbitMQ.Client": "[7.2.2, )",
           "Scrutor": "[7.0.0, )"
         }
@@ -303,6 +324,15 @@
           "Serilog.Sinks.OpenTelemetry": "[4.2.0, )"
         }
       },
+      "Anthropic": {
+        "type": "CentralTransitive",
+        "requested": "[12.53.0, )",
+        "resolved": "12.53.0",
+        "contentHash": "NS4eDj4By+7C8RfhKQDq+/KKPd2m9HZvsflGJIJwT9MTNngNIyCkw6dnFwJp84wOClKHNDM6NXA9OXC8MfwAuQ==",
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.5.1"
+        }
+      },
       "AspNetCore.HealthChecks.NpgSql": {
         "type": "CentralTransitive",
         "requested": "[9.0.0, )",
@@ -335,6 +365,15 @@
         "requested": "[9.0.0, )",
         "resolved": "9.0.0",
         "contentHash": "XYdNlA437KeF8p9qOpZFyNqAN+c0FXt/JjTvzH/Qans0q0O3pPE8KPnn39ucQQjR/Roum1vLTP3kXiUs8VHyuA=="
+      },
+      "DocumentFormat.OpenXml": {
+        "type": "CentralTransitive",
+        "requested": "[3.5.1, )",
+        "resolved": "3.5.1",
+        "contentHash": "zxdOf5VVCe/uNklbRhj8dVBzQGj3DoqkUuqOp9cAZVuN8mNYDjof1lvSQA2OQNr8Ptc9d7pbA7Azq/ReaI3FpA==",
+        "dependencies": {
+          "DocumentFormat.OpenXml.Framework": "3.5.1"
+        }
       },
       "EFCore.NamingConventions": {
         "type": "CentralTransitive",
@@ -514,6 +553,12 @@
         "dependencies": {
           "OpenTelemetry.Api": "[1.19.0, 2.0.0)"
         }
+      },
+      "PdfPig": {
+        "type": "CentralTransitive",
+        "requested": "[0.1.16, )",
+        "resolved": "0.1.16",
+        "contentHash": "qQcbsNMYVY+K5ELptax2S8thNMk0+rSQq3H/KdYj3LLcko8yTCz8y5KIvsKxIyAuTN0ZYNnfsZkM+0EvxTwHVA=="
       },
       "RabbitMQ.Client": {
         "type": "CentralTransitive",

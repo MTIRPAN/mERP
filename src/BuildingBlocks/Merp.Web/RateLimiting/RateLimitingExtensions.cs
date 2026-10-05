@@ -15,12 +15,16 @@ public static class RateLimitingExtensions
     /// <summary>Policy for anonymous public endpoints (career page, D20): per client IP.</summary>
     public const string PublicPolicy = "public";
 
+    /// <summary>Policy for endpoints that call the AI provider (D24): per user, because every call costs money.</summary>
+    public const string AiPolicy = "ai";
+
     public static IServiceCollection AddMerpRateLimiting(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         var window = TimeSpan.FromMinutes(1);
         var globalLimit = configuration.GetValue("RateLimiting:Global:PermitLimit", 1000);
         var publicLimit = configuration.GetValue("RateLimiting:Public:PermitLimit", 30);
+        var aiLimit = configuration.GetValue("RateLimiting:Ai:PermitLimit", 10);
 
         services.AddRateLimiter(options =>
         {
@@ -34,6 +38,11 @@ public static class RateLimitingExtensions
                 RateLimitPartition.GetFixedWindowLimiter(
                     context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     _ => new FixedWindowRateLimiterOptions { PermitLimit = publicLimit, Window = window }));
+
+            options.AddPolicy(AiPolicy, context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    context.User.FindFirstValue("sub") ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions { PermitLimit = aiLimit, Window = window }));
 
             options.OnRejected = async (context, cancellationToken) =>
             {

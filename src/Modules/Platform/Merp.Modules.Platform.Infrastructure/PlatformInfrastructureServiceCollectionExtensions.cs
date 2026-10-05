@@ -1,7 +1,10 @@
+using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
+using Merp.Modules.Platform.Infrastructure.AI;
 using Merp.Modules.Platform.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Merp.Modules.Platform.Infrastructure;
 
@@ -12,6 +15,10 @@ public static class PlatformInfrastructureServiceCollectionExtensions
     {
         services.AddModuleDbContext<PlatformDbContext>(Application.AssemblyReference.Assembly);
         services.AddRequestHandlersFromAssembly(Application.AssemblyReference.Assembly);
+
+        // Platform owns the AI usage ledger of all modules (D24).
+        services.Replace(ServiceDescriptor.Scoped<IAiUsageLedger, PlatformAiUsageLedger>());
+        services.AddScoped<AiUsageReader>();
         return services;
     }
 }
