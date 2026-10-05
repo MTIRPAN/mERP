@@ -20,7 +20,14 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { GetLocalizationBundle200, MeResponse, SystemInfoResponse } from '../../model';
+import type {
+  AiUsageSummaryResponse,
+  GetAiUsageSummaryParams,
+  GetLocalizationBundle200,
+  HttpValidationProblemDetails,
+  MeResponse,
+  SystemInfoResponse,
+} from '../../model';
 
 import { customFetch } from '../../../http';
 import type { ErrorType } from '../../../http';
@@ -397,6 +404,140 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = Err
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetMeQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetAiUsageSummaryUrl = (params?: GetAiUsageSummaryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/ai-usage/summary?${stringifiedParams}`
+    : `/api/platform/ai-usage/summary`;
+};
+
+/**
+ * Requires permission: platform.ai_usage.read.
+ * @summary AI calls, tokens and estimated cost of the tenant for a month (D24)
+ */
+export const getAiUsageSummary = async (
+  params?: GetAiUsageSummaryParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<AiUsageSummaryResponse> => {
+  return customFetch<AiUsageSummaryResponse>(getGetAiUsageSummaryUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetAiUsageSummaryQueryKey = (params?: GetAiUsageSummaryParams) => {
+  return [`/api/platform/ai-usage/summary`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetAiUsageSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAiUsageSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetAiUsageSummaryParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAiUsageSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAiUsageSummaryQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAiUsageSummary>>> = ({ signal }) =>
+    getAiUsageSummary(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAiUsageSummary>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAiUsageSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getAiUsageSummary>>>;
+export type GetAiUsageSummaryQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetAiUsageSummary<
+  TData = Awaited<ReturnType<typeof getAiUsageSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | GetAiUsageSummaryParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAiUsageSummary>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAiUsageSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getAiUsageSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetAiUsageSummary<
+  TData = Awaited<ReturnType<typeof getAiUsageSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetAiUsageSummaryParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAiUsageSummary>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAiUsageSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getAiUsageSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetAiUsageSummary<
+  TData = Awaited<ReturnType<typeof getAiUsageSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetAiUsageSummaryParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAiUsageSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary AI calls, tokens and estimated cost of the tenant for a month (D24)
+ */
+
+export function useGetAiUsageSummary<
+  TData = Awaited<ReturnType<typeof getAiUsageSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetAiUsageSummaryParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getAiUsageSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetAiUsageSummaryQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

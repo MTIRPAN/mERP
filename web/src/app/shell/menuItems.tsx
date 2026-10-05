@@ -4,6 +4,8 @@ import {
   InfoCircleOutlined,
   ScheduleOutlined,
   SettingOutlined,
+  StarOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
@@ -15,6 +17,8 @@ const icons: Record<string, ReactNode> = {
   settings: <SettingOutlined />,
   info: <InfoCircleOutlined />,
   schedule: <ScheduleOutlined />,
+  ai: <StarOutlined />,
+  recruitment: <TeamOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;
@@ -31,7 +35,12 @@ export const toAntdMenuItems = (items: MenuItemResponse[], t: TFunction): AntdMe
           label: t(item.labelKey),
           children: toAntdMenuItems(item.children, t),
         }
-      : { key: item.path ?? item.key, icon: menuIcon(item.icon), label: t(item.labelKey) },
+      : {
+          key: item.path ?? item.key,
+          icon: menuIcon(item.icon),
+          // AI features carry the brand gradient (D23)
+          label: item.ai ? <span className="merp-gradient-text">{t(item.labelKey)}</span> : t(item.labelKey),
+        },
   );
 
 export interface MenuEntry {

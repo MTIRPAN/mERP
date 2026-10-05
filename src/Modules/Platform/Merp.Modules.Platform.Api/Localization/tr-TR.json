@@ -75,5 +75,20 @@
   "web.errors.network": "Sunucuya ulaşılamıyor. Bağlantınızı kontrol edin.",
   "web.auth.signing_in": "Oturum açılıyor…",
   "web.auth.signed_out": "Oturumunuz kapandı.",
-  "web.auth.sign_in": "Oturum aç"
+  "web.auth.sign_in": "Oturum aç",
+  "web.ai.badge": "Yapay zeka",
+  "web.ai.features.recruitment.cv_analysis": "CV analizi",
+  "web.ai_usage.title": "Yapay zeka kullanımı",
+  "web.ai_usage.subtitle": "Yapay zeka çağrıları, token sayıları ve liste fiyatına göre tahmini maliyet. İçerik saklanmaz.",
+  "web.ai_usage.cost": "Tahmini maliyet",
+  "web.ai_usage.of_budget": "Bütçe {budget}",
+  "web.ai_usage.requests": "Çağrı",
+  "web.ai_usage.succeeded": "Başarılı",
+  "web.ai_usage.model": "Model",
+  "web.ai_usage.by_feature": "Özelliklere göre",
+  "web.ai_usage.feature": "Özellik",
+  "web.ai_usage.tokens": "Token (girdi / çıktı)",
+  "web.ai_usage.empty": "Bu ay yapay zeka kullanılmadı.",
+  "web.ai_usage.not_configured": "Sunucuda bir yapay zeka sağlayıcısı yapılandırılmamış. Yapay zeka özellikleri kapalı.",
+  "web.ai_usage.disabled_for_tenant": "Yapay zeka bu hesap için etkin değil."
 }

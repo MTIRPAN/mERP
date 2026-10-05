@@ -6,6 +6,7 @@
  */
 import type { CompanyResponse } from './companyResponse';
 import type { CultureResponse } from './cultureResponse';
+import type { MeAiResponse } from './meAiResponse';
 import type { MenuItemResponse } from './menuItemResponse';
 import type { PreferencesResponse } from './preferencesResponse';
 import type { TenantResponse } from './tenantResponse';
@@ -19,4 +20,5 @@ export interface MeResponse {
   menu: MenuItemResponse[];
   preferences: PreferencesResponse;
   cultures: CultureResponse[];
+  ai: MeAiResponse;
 }

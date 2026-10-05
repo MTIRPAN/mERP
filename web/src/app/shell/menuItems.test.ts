@@ -12,15 +12,16 @@ const texts: Record<string, string> = {
 const t = ((key: string) => texts[key] ?? key) as unknown as TFunction;
 
 const menu: MenuItemResponse[] = [
-  { key: 'home', labelKey: 'web.home', path: '/', icon: 'home', children: null },
+  { key: 'home', labelKey: 'web.home', path: '/', icon: 'home', children: null, ai: false },
   {
     key: 'system',
     labelKey: 'web.system',
     path: null,
     icon: 'settings',
+    ai: false,
     children: [
-      { key: 'info', labelKey: 'web.info', path: '/system/info', icon: 'info', children: null },
-      { key: 'jobs', labelKey: 'web.jobs', path: '/system/jobs', icon: 'schedule', children: null },
+      { key: 'info', labelKey: 'web.info', path: '/system/info', icon: 'info', children: null, ai: false },
+      { key: 'jobs', labelKey: 'web.jobs', path: '/system/jobs', icon: 'schedule', children: null, ai: false },
     ],
   },
 ];

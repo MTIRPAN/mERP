@@ -14,4 +14,5 @@ export interface MenuItemResponse {
   icon: string | null;
   /** @nullable */
   children: MenuItemResponse[] | null;
+  ai: boolean;
 }
