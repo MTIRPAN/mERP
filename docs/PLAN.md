@@ -28,6 +28,8 @@ Faz 0 (iskelet) → Faz 1 (P1…P13) → Faz 2 (H1…H4) → Faz 3 (L1…L6)
                                                                    → Faz 5 (X1…X6)
 ```
 
+Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır; bkz. "Yapay zeka" bölümü.
+
 ---
 
 ## Faz 0 — İskelet
@@ -738,7 +740,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 ### [ ] R1 Modül iskeleti ve ayarlar — M
 
 **Yapılacaklar:**
-- Modül projeleri, şema `recruitment`, yetkiler, menü.
+- Modül projeleri, şema `recruitment`, yetkiler, menü. *(Projeler, şema, `RecruitmentDbContext` ve "İşe alım" menüsü A2 ile geldi; kalanlar bu görevde.)*
 - Ayarlar:
   - Aşama şablonları. Aşama alanları: ad, tip, sıra, SLA günü. Tipler: Applied / Screening / Interview / Assessment / Reference / Offer / Hired / Rejected / Withdrawn.
   - Red nedenleri, aday kaynakları, etiketler.
@@ -809,7 +811,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - **Arama:**
   - PostgreSQL tam metin arama (`turkish` konfigürasyonu)
   - Kapsam: ad, unvan, etiketler, notlar, CV metni
-  - CV metni çıkarma: PDF için PdfPig, DOCX için DocumentFormat.OpenXml
+  - CV metni çıkarma: PDF için PdfPig, DOCX için DocumentFormat.OpenXml *(`IDocumentTextExtractor` A1 ile hazır)*
 - **Web:**
   - İlan detayında kanban (@dnd-kit): sürükle-bırak, ret için neden modalı; ayrıca liste görünümü
   - Aday kartı: profil, başvurular, mülakatlar, değerlendirmeler, notlar, dosyalar, rıza durumu, zaman çizelgesi
@@ -917,6 +919,71 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 
 **Kabul kriterleri:**
 - Seed verisiyle dashboard rakamları elle hesaplanan değerlerle eşleşir (integration test).
+
+---
+
+## Yapay zeka (D24)
+
+Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka görevi için ek Definition of Done:
+- Kişisel veri maskelenmeden sağlayıcıya gitmez; entegrasyon testi sağlayıcıya giden metni doğrular.
+- Sonuç tipli (structured output), talimat sürümlü; kullanım kaydı yazılır.
+- Kiracıda özellik kapalıyken 403 testi var; ekranda "yapay zeka önerisi" uyarısı var.
+- CI gerçek API'yi çağırmaz (sahte sağlayıcı).
+
+### [x] A1 Yapay zeka altyapısı — M
+
+**Yapılanlar:** `IAiService`, Anthropic sağlayıcısı (resmi SDK; structured outputs, effort, prompt caching, sunucu tarafı yedek model), kiracı ve özellik bazında açma, aylık bütçe, `platform.ai_usage` kullanım kaydı ve `GET /api/platform/ai-usage/summary`, `Merp.AI` metrikleri, kullanıcı başına `ai` hız sınırı, `PersonalDataRedactor`, `IDocumentTextExtractor` (PDF/DOCX), `/me` içinde etkin özellikler, sahte sağlayıcı (`FakeAiModelClient`).
+
+**Kabul kriterleri:**
+- Sağlayıcı yapılandırılmamışsa veya kiracıda kapalıysa özellik çağrılamaz ve menüde görünmez.
+- Bütçe dolunca çağrı reddedilir; başarısız çağrılar da kullanım kaydına yazılır.
+- Sağlayıcı istek biçimi (model, şema, effort, önbellek, yedek model) birim testle doğrulanır.
+
+### [x] A2 CV analizi (durumsuz) ve kullanım ekranı — M
+
+**Yapılanlar:** `POST /api/recruitment/cv-analyses`, İşe alım → CV analizi ekranı, Sistem → Yapay zeka kullanımı ekranı. İşe alım modülünün iskeleti (projeler, şema, menü) bu görevle geldi.
+
+**Kabul kriterleri:**
+- PDF ve DOCX analiz edilir; sağlayıcıya giden metinde ad, e-posta, telefon, bağlantı ve özel alanlar yoktur.
+- Gereksinim verilmezse eşleşme döndürülmez.
+- Yetkisiz kullanıcı 403, kapalı kiracı 403 `ai_disabled`, sağlayıcı hatası 503 alır.
+
+### [ ] A3 Aday kartında CV analizi — M (R4 ile)
+
+- CV yüklendiğinde analiz arka plan işinde çalışır ve başvuruya kaydedilir (model, talimat sürümü, tarih). Yeniden analiz edilebilir.
+- Aday formu CV'den doldurulur. İletişim bilgileri yerelde (regex) çıkarılır, sağlayıcıya gönderilmez.
+- Kabul: analiz sonucu başvuru kartında görünür; aday anonimleşince (R8) analiz de silinir.
+
+### [ ] A4 İlan metni taslağı ve kapsayıcı dil kontrolü — S (R3 ile)
+
+- Personel talebinden ve kısa açıklamadan ilan taslağı; yaş, cinsiyet ve benzeri dışlayıcı ifadeler için uyarı listesi.
+- Kabul: taslak TipTap editörüne gelir, kullanıcı düzenlemeden yayınlanamaz.
+
+### [ ] A5 Mülakat soruları, geri bildirim özeti, aday e-posta taslakları — M (R5 ile)
+
+- Pozisyon ve değerlendirme şablonundan soru seti; mülakatçı formlarından ortak özet (kör geri bildirim kuralına uyar: özet herkes formunu gönderdikten sonra görünür).
+- Ret ve davet e-postası şablonunu adaya göre kişiselleştirme (gönderim her zaman kullanıcı onayıyla).
+
+### [ ] A6 Toplu ön tarama — M (R4 sonrası)
+
+- Bir ilanın başvurularını Batch API ile gece analiz eder (yarı maliyet). Bütçe ve kiracı ayarı gözetilir.
+- Kabul: sonuçlar sıralama değil, gereksinim bazında kanıt olarak gösterilir; otomatik ret yoktur.
+
+### [ ] A7 Çeviri taslakları — S (P4 ile)
+### [ ] A8 Onay özeti — S (P10 ile)
+### [ ] A9 İçe aktarma kolon eşleştirme önerisi — S (P11 ile)
+### [ ] A10 Belge şablonu taslağı — S (P12 ile)
+### [ ] A11 Doğal dille izin talebi taslağı — S (L4 ile)
+### [ ] A12 Asistan (Ctrl+K doğal dil, salt okunur, yetki ve veri kapsamına bağlı) — L (Faz 5)
+
+### [ ] A13 Değerlendirme seti (eval) — M
+
+- Anonimleştirilmiş örnek CV'ler, beklenen alanlar, eşleşme puanı aralıkları ve adalet kontrolleri (yalnızca ad veya cinsiyet değişince sonuç değişmemeli).
+- Talimat veya model değişikliği bu setle ölçülür; sonuç PR'da paylaşılır.
+
+### [ ] A14 Yapay zeka ayarları ekranı — S (P11 ile)
+
+- Kiracı yöneticisi özellikleri ve aylık bütçeyi ayarlar ekranından açar/kapatır; yapılandırma dosyasındaki `Ai:Tenants` buraya taşınır.
 
 ---
 

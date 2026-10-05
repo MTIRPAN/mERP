@@ -11,7 +11,7 @@ Holdingler ve büyük şirketler için ERP ürünü. Modüler monolit (.NET 10) 
 | [`CLAUDE.md`](CLAUDE.md) | Çalışma kuralları, proje yapısı, mimari ve kod kuralları, Definition of Done |
 | [`docs/PLAN.md`](docs/PLAN.md) | Görevler, sıra ve kabul kriterleri |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Mimari kararlar, izinli ve yasaklı kütüphaneler |
-| [`docs/domain/`](docs/domain) | Alan kuralları (yetki ve onay, izin mevzuatı) |
+| [`docs/domain/`](docs/domain) | Alan kuralları (yetki ve onay, izin mevzuatı, yapay zeka) |
 
 ## Gereksinimler
 
@@ -107,6 +107,19 @@ npm run dev                  # http://localhost:5173 — /api, /hubs ve /admin/j
 | `src/app` | Uygulama kabuğu: tema, kimlik doğrulama, i18n, menü, üst bar, rotalar |
 | `src/shared` | API istemcisi, ortak bileşenler (`DataTable`, `FormDrawer`, `PageHeader`, `Can`, `StatusTag`), hata sayfaları |
 | `src/modules/<modül>` | Modül sayfaları |
+
+## Yapay zeka
+
+Yapay zeka özellikleri (şimdilik İşe alım → CV analizi) varsayılan olarak kapalıdır (`docs/DECISIONS.md` D24, öneri). Geliştirmede açmak için Anthropic API anahtarını user-secrets'a yazın; anahtar kaynak koda veya `appsettings` dosyalarına yazılmaz:
+
+```bash
+dotnet user-secrets --project src/Host/Merp.Api set "Ai:Anthropic:ApiKey" "<anahtar>"
+```
+
+- `appsettings.Development.json` demo tenant'ında yapay zekayı aylık 20 USD bütçeyle açar. Anahtar yoksa özellikler menüde görünmez ve API 403 `ai_disabled` döner.
+- CV metni sunucuda çıkarılır; ad, iletişim bilgileri ve özel alanlar maskelendikten sonra sadece metin gönderilir. Dosya ve sonuç saklanmaz.
+- Kullanım ve tahmini maliyet: Sistem → Yapay zeka kullanımı (`platform.ai_usage.read`). `ik` kullanıcısı CV analizini, `admin` her ikisini görür.
+- Testler gerçek API'yi çağırmaz. Kurallar, özellik listesi ve maliyet tahmini: [`docs/domain/yapay-zeka.md`](docs/domain/yapay-zeka.md).
 
 ## Sık kullanılan komutlar
 
