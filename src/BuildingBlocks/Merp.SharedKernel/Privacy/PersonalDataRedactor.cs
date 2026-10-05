@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using Merp.SharedKernel.Text;
 using Merp.SharedKernel.ValueObjects;
 
 namespace Merp.SharedKernel.Privacy;
@@ -61,7 +62,7 @@ public static partial class PersonalDataRedactor
         var nameParts = (names ?? [])
             .SelectMany(n => n.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             .Where(p => p.Length >= MinNameLength && p.All(c => char.IsLetter(c) || c is '-' or '\''))
-            .Select(Fold)
+            .Select(TurkishText.Fold)
             .Distinct(StringComparer.Ordinal)
             .OrderByDescending(p => p.Length)
             .ToList();
@@ -74,33 +75,6 @@ public static partial class PersonalDataRedactor
         }
 
         return new RedactionResult(text, counts);
-    }
-
-    /// <summary>
-    /// Lower case, diacritic free form with exactly one character per input character, so match positions in the
-    /// folded text are valid in the original. Folds both Turkish and English casing of I (İ, I, ı, i → i), which
-    /// culture aware lower casing cannot do for mixed language text.
-    /// </summary>
-    public static string Fold(string text)
-    {
-        ArgumentNullException.ThrowIfNull(text);
-        return string.Create(text.Length, text, static (span, source) =>
-        {
-            for (var i = 0; i < source.Length; i++)
-            {
-                span[i] = source[i] switch
-                {
-                    'İ' or 'I' or 'ı' or 'i' or 'Î' or 'î' => 'i',
-                    'Ş' or 'ş' => 's',
-                    'Ğ' or 'ğ' => 'g',
-                    'Ü' or 'ü' or 'Û' or 'û' => 'u',
-                    'Ö' or 'ö' => 'o',
-                    'Ç' or 'ç' => 'c',
-                    'Â' or 'â' => 'a',
-                    var c => char.ToLowerInvariant(c),
-                };
-            }
-        });
     }
 
     private static string Replace(
@@ -130,7 +104,7 @@ public static partial class PersonalDataRedactor
         Dictionary<RedactionKind, int> counts,
         string placeholder)
     {
-        var matches = regex.Matches(Fold(text));
+        var matches = regex.Matches(TurkishText.Fold(text));
         if (matches.Count == 0)
         {
             return text;
@@ -177,7 +151,7 @@ public static partial class PersonalDataRedactor
         1000)]
     private static partial Regex PhoneRegex();
 
-    // Labels are written in folded form (see Fold). The value runs to the end of the line or to a | or ; separator.
+    // Labels are written in folded form (see TurkishText.Fold). The value runs to the end of the line or to a | or ; separator.
     [GeneratedRegex(
         @"(?<![\p{L}\p{N}])(?:dogum tarihi|dogum yeri|dogum yili|d\. ?tarihi|yasi?|cinsiyeti?|medeni durumu?|medeni hali?|uyruk|uyrugu|milliyeti?|dini?|inanci?|saglik durumu|saglik|engel durumu|engellilik durumu|engellilik|engel|kan grubu|askerlik durumu|askerlik|boy|kilo|cocuk sayisi|cocuklar|esi?|ev adresi|adresi?|ikametgah|anne adi|baba adi|sigara|sabika kaydi|sabika|date of birth|birth ?date|dob|place of birth|birth ?place|age|gender|sex|marital status|nationality|citizenship|religion|health status|health|disability|blood type|blood group|military service|military status|height|weight|children|spouse|home address|address|smoker|criminal record)\s*[:：]\s*(?<value>[^|;\r\n]*)",
         RegexOptions.CultureInvariant,

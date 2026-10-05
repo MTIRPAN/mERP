@@ -2,12 +2,23 @@ using Merp.SharedKernel.Results;
 
 namespace Merp.SharedKernel.ValueObjects;
 
-/// <summary>Postal address. Province (il) and district (ilçe) are free text until the P1 reference data exists.</summary>
+/// <summary>
+/// Postal address. Province (il) and district (ilçe) are names; records that need them as references keep the
+/// codes next to the address (e.g. Platform's company and branch locations).
+/// </summary>
 public sealed record Address
 {
     public const string DefaultCountryCode = "TR";
     public const int LineMaxLength = 250;
     public const int NameMaxLength = 100;
+
+    // Used by EF Core, which fills the properties through their backing fields.
+    private Address()
+    {
+        Line1 = null!;
+        City = null!;
+        CountryCode = null!;
+    }
 
     private Address(string line1, string? line2, string? district, string city, string? postalCode, string countryCode)
     {

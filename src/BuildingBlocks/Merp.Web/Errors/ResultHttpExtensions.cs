@@ -1,5 +1,6 @@
 using Merp.SharedKernel.Results;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Merp.Web.Errors;
@@ -18,6 +19,24 @@ public static class ResultHttpExtensions
         (result ?? throw new ArgumentNullException(nameof(result))).IsSuccess
             ? Results.Created(location(result.Value), result.Value)
             : result.Error.ToProblem();
+
+    /// <summary>Typed 200 or problem, so OpenAPI describes the success body.</summary>
+    public static Results<Ok<T>, ProblemHttpResult> ToOkOrProblem<T>(this Result<T> result) =>
+        (result ?? throw new ArgumentNullException(nameof(result))).IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : (ProblemHttpResult)result.Error.ToProblem();
+
+    /// <summary>Typed 204 or problem.</summary>
+    public static Results<NoContent, ProblemHttpResult> ToNoContentOrProblem(this Result result) =>
+        (result ?? throw new ArgumentNullException(nameof(result))).IsSuccess
+            ? TypedResults.NoContent()
+            : (ProblemHttpResult)result.Error.ToProblem();
+
+    /// <summary>Typed 201 with the new id and its location, or problem.</summary>
+    public static Results<Created<CreatedResponse>, ProblemHttpResult> ToCreatedOrProblem(this Result<Guid> result, string collectionPath) =>
+        (result ?? throw new ArgumentNullException(nameof(result))).IsSuccess
+            ? TypedResults.Created($"{collectionPath}/{result.Value}", new CreatedResponse(result.Value))
+            : (ProblemHttpResult)result.Error.ToProblem();
 
     public static IResult ToProblem(this Error error)
     {

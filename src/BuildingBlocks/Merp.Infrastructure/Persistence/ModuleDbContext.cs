@@ -22,7 +22,7 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
     public const string MigrationsHistoryTable = "__ef_migrations_history";
 
     /// <summary>Shadow property mapped to PostgreSQL's <c>xmin</c> system column.</summary>
-    public const string VersionProperty = "Version";
+    public const string VersionProperty = Application.Abstractions.Persistence.ShadowProperties.Version;
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
@@ -49,6 +49,17 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
         configurationBuilder.Properties<CustomFieldValues>()
             .HaveConversion<CustomFieldValuesConverter, CustomFieldValuesComparer>()
             .HaveColumnType("jsonb");
+
+        // Addresses are columns of their owner (address_line1, address_city…), never a table of their own.
+        configurationBuilder.ComplexProperties<Address>();
+
+        configurationBuilder.Properties<Email>().HaveConversion<EmailConverter>().HaveMaxLength(Email.MaxLength);
+        configurationBuilder.Properties<PhoneNumber>().HaveConversion<PhoneNumberConverter>().HaveMaxLength(PhoneNumber.MaxLength);
+        configurationBuilder.Properties<Vkn>().HaveConversion<VknConverter>().HaveMaxLength(Vkn.Length);
+        configurationBuilder.Properties<Tckn>().HaveConversion<TcknConverter>().HaveMaxLength(Tckn.Length);
+        configurationBuilder.Properties<Iban>().HaveConversion<IbanConverter>().HaveMaxLength(Iban.MaxLength);
+        configurationBuilder.Properties<MersisNo>().HaveConversion<MersisNoConverter>().HaveMaxLength(MersisNo.Length);
+        configurationBuilder.Properties<SgkWorkplaceNo>().HaveConversion<SgkWorkplaceNoConverter>().HaveMaxLength(SgkWorkplaceNo.Length);
 
         configurationBuilder.Properties<decimal>().HavePrecision(18, 4);
     }

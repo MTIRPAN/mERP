@@ -1,5 +1,6 @@
 using Merp.Application.Abstractions.Context;
 using Merp.Application.Abstractions.Localization;
+using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.MultiTenancy;
@@ -22,6 +23,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.TryAddScoped<ICurrentUser>(sp => sp.GetRequiredService<CurrentUser>());
         services.TryAddScoped<TenantContext>();
         services.TryAddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
+        services.TryAddScoped<IAccessScopeProvider, NoAccessScopeProvider>();
         services.TryAddScoped<CompanyContext>();
         services.TryAddScoped<ICompanyContext>(sp => sp.GetRequiredService<CompanyContext>());
 

@@ -2,6 +2,9 @@
   "web.app.name": "mERP",
   "web.app.tagline": "Kurumsal kaynak planlama",
   "web.shell.menu.home": "Ana sayfa",
+  "web.shell.menu.organization": "Organizasyon",
+  "web.shell.menu.companies": "Şirketler",
+  "web.shell.menu.branches": "Şubeler",
   "web.shell.menu.system": "Sistem",
   "web.shell.menu.system_info": "Sistem bilgisi",
   "web.shell.menu.jobs": "Arka plan işleri",
@@ -90,5 +93,11 @@
   "web.ai_usage.tokens": "Token (girdi / çıktı)",
   "web.ai_usage.empty": "Bu ay yapay zeka kullanılmadı.",
   "web.ai_usage.not_configured": "Sunucuda bir yapay zeka sağlayıcısı yapılandırılmamış. Yapay zeka özellikleri kapalı.",
-  "web.ai_usage.disabled_for_tenant": "Yapay zeka bu hesap için etkin değil."
+  "web.ai_usage.disabled_for_tenant": "Yapay zeka bu hesap için etkin değil.",
+  "platform.companies.code_taken": "Bu kod başka bir şirkette kullanılıyor.",
+  "platform.branches.code_taken": "Bu kod şirketin başka bir şubesinde kullanılıyor.",
+  "platform.branches.unknown_company": "Şirket bulunamadı.",
+  "platform.branches.inactive_company": "Pasif bir şirkete şube eklenemez.",
+  "platform.locations.unknown_province": "İl bulunamadı.",
+  "platform.locations.unknown_district": "İlçe seçilen ile ait değil."
 }

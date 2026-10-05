@@ -114,15 +114,4 @@ public sealed class PersonalDataRedactorTests
         result.Text.ShouldNotContain("Ayşe");
         result.Text.ShouldNotContain("1990");
     }
-
-    [Fact]
-    public void Fold_KeepsLength_AndFoldsTurkishLetters()
-    {
-        const string input = "İIıiŞşĞğÜüÖöÇç";
-
-        var folded = PersonalDataRedactor.Fold(input);
-
-        folded.ShouldBe("iiiissgguuoocc");
-        folded.Length.ShouldBe(input.Length);
-    }
 }

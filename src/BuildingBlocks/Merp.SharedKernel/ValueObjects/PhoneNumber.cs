@@ -14,6 +14,9 @@ public sealed record PhoneNumber
     private const int MinDigits = 8;
     private const int MaxDigits = 15;
 
+    /// <summary>Longest stored value: <c>+</c> and 15 digits.</summary>
+    public const int MaxLength = MaxDigits + 1;
+
     private PhoneNumber(string value) => Value = value;
 
     /// <summary>E.164 representation including the leading <c>+</c>.</summary>

@@ -11,7 +11,7 @@ public sealed record Iban
 {
     public const int TurkishLength = 26;
     private const int MinLength = 15;
-    private const int MaxLength = 34;
+    public const int MaxLength = 34;
 
     private Iban(string value) => Value = value;
 

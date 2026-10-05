@@ -297,6 +297,21 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
 - Hatalı VKN girilince Türkçe mesajlı 400 döner.
 - Kapsamı tek şirket olan kullanıcı listede ve seçicide sadece o şirketi görür.
 
+**Alt görevler:**
+- [x] P1a Backend — listeleme sözleşmesi (`PagedResult`, `SortMap`, Türkçe arama), `Company`/`Branch`, il/ilçe seed'i ve uç noktaları (`/api/platform/companies`, `/branches`, `/provinces`, `/provinces/{kod}/districts`), olaylar, geçici kapsam sağlayıcıları, `/me` şirket listesi, migration `AddCompaniesAndBranches`, unit ve integration testleri. Kararlar: D25 (öneri).
+- [ ] P1b Web — aşağıdaki maddeler bitince P1 kutusu işaretlenir ve PR açılır:
+  - API'yi Development'ta çalıştırıp (`docker compose up -d`, Migrator, `dotnet run --project src/Host/Merp.Api`) `cd web && npm run gen:api` ile istemciyi yeniden üret.
+  - Rotalar: `/organization/companies`, `/organization/branches` (menü backend'den geliyor; ikon anahtarları `organization`, `company`, `branch` web'deki ikon haritasına eklenmeli).
+  - Şirket listesi: `DataTable` + sunucu tarafı sayfalama/sıralama/arama (`page`, `pageSize`, `sort`, `filter`, `isActive`); kolonlar kod, kısa ad, unvan, VKN, il/ilçe, durum.
+  - Şirket formu (`FormDrawer`): oluştur/düzenle, `version` geri gönderilir; 409'da "kayıt değişti" mesajı ve yenileme. Kod düzenlemede salt okunur. İl seçince ilçe listesi `/provinces/{kod}/districts` ile dolar.
+  - Şube listesi ve formu: şirket filtresi, tür etiketi (`web.platform.branches.types.*`), aynı il/ilçe seçicisi. Aktif şirket seçiliyse liste ona göre daralır (başlık zaten gönderiliyor).
+  - Yetkiye göre butonlar: `platform.companies.manage`, `platform.branches.manage` yoksa "Yeni" ve "Düzenle" gizli.
+  - Şirket seçici `/me` → `companies` ile dolar (backend hazır); seçili şirket artık listede yoksa temizlenir.
+  - Yapay zeka kullanım ekranı: `transferBasis` boşsa "Yurt dışına aktarım dayanağı kayıtlı değil" uyarısı (`web.ai_usage.no_transfer_basis`), doluysa dayanak ve kanıt gösterilir.
+  - Tüm metinler `tr-TR.json` (`web.platform.companies.*`, `web.platform.branches.*`); tarih/sayı `Intl`.
+  - Testler (Vitest + Testing Library): liste sorgu parametreleri, form doğrulama hataları (`fieldErrors` → form alanları), yetkisiz kullanıcıda butonların gizlenmesi.
+  - DoD: `npm run lint && npm run typecheck && npm test && npm run build`, `dotnet build -warnaserror`, `dotnet test`.
+
 ### [ ] P2 Kullanıcılar, roller, yetkiler, kapsam 🔍 — XL (2 PR: P2a backend, P2b web)
 
 Kurallar: `docs/domain/yetki-ve-onay.md` §1.

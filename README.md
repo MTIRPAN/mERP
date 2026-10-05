@@ -97,7 +97,7 @@ npm install
 npm run dev                  # http://localhost:5173 — /api, /hubs ve /admin/jobs API'ye proxy'lenir
 ```
 
-- Giriş Keycloak üzerinden (PKCE) yapılır. Geliştirme kullanıcılarından `admin` "Sistem" menüsünü görür, `calisan` sadece ana sayfayı görür (yetkiler P2'ye kadar `appsettings.Development.json` → `Development:Permissions`).
+- Giriş Keycloak üzerinden (PKCE) yapılır. Geliştirme kullanıcılarından `admin` "Sistem" menüsünü görür, `calisan` sadece ana sayfayı görür (yetkiler P2'ye kadar `appsettings.Development.json` → `Development:Permissions`). Veri kapsamı da P2'ye kadar `Development:Scopes:{kullanıcı}` ile verilir, örneğin `"ik": ["Company:<şirket-id>"]`; girdi yoksa kullanıcı tüm kiracıyı görür.
 - Bütün metinler API'den (`/api/platform/localization/bundles/tr-TR`) gelir. JSX içinde metin literal'i lint hatasıdır.
 - API istemcisi orval ile üretilir: API Development'ta `http://localhost:5000`'de çalışırken `npm run gen:api`. Üretilen kod `src/shared/api/generated/` altındadır ve elle düzenlenmez.
 - Tema: üst bardaki seçiciyle Açık / Koyu / Sistem. Hızlı geçiş: Ctrl/⌘+K.

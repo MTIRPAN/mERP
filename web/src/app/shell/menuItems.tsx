@@ -1,9 +1,12 @@
 import {
+  ApartmentOutlined,
   AppstoreOutlined,
+  BankOutlined,
   HomeOutlined,
   InfoCircleOutlined,
   ScheduleOutlined,
   SettingOutlined,
+  ShopOutlined,
   StarOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
@@ -14,6 +17,9 @@ import type { MenuItemResponse } from '@/shared/api/generated/model';
 
 const icons: Record<string, ReactNode> = {
   home: <HomeOutlined />,
+  organization: <ApartmentOutlined />,
+  company: <BankOutlined />,
+  branch: <ShopOutlined />,
   settings: <SettingOutlined />,
   info: <InfoCircleOutlined />,
   schedule: <ScheduleOutlined />,

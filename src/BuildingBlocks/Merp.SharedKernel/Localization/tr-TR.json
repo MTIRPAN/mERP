@@ -41,5 +41,10 @@
   "common.errors.ai_invalid_output": "Yapay zeka yanıtı okunamadı. Lütfen tekrar deneyin.",
   "common.errors.document_unsupported_format": "Dosya biçimi desteklenmiyor. PDF veya DOCX yükleyin.",
   "common.errors.document_unreadable": "Dosya okunamadı. Dosya bozuk veya parola korumalı olabilir.",
-  "common.errors.document_no_text": "Dosyada okunabilir metin bulunamadı. Taranmış (resim) PDF'ler desteklenmiyor."
+  "common.errors.document_no_text": "Dosyada okunabilir metin bulunamadı. Taranmış (resim) PDF'ler desteklenmiyor.",
+  "common.errors.invalid_time_zone": "Saat dilimi geçersiz.",
+  "common.errors.invalid_mersis_no": "MERSİS numarası 16 haneli olmalıdır.",
+  "common.errors.invalid_sgk_workplace_no": "SGK işyeri sicil numarası 26 haneli olmalıdır.",
+  "common.errors.invalid_sort": "Bu alana göre sıralama yapılamaz.",
+  "common.errors.invalid_code": "Kod harf veya rakamla başlamalı; sadece harf, rakam, tire ve alt çizgi içerebilir."
 }

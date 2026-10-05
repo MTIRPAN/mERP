@@ -1,4 +1,4 @@
-using Merp.SharedKernel.Privacy;
+using Merp.SharedKernel.Text;
 
 namespace Merp.Modules.Recruitment.Application.CvAnalysis;
 
@@ -10,7 +10,7 @@ internal static class CandidateNameDetector
 {
     private const int LinesToInspect = 3;
 
-    // Folded (see PersonalDataRedactor.Fold) words that appear in headings and job titles, never in names.
+    // Folded (see TurkishText.Fold) words that appear in headings and job titles, never in names.
     private static readonly HashSet<string> NotNameWords = new(StringComparer.Ordinal)
     {
         "cv", "curriculum", "vitae", "ozgecmis", "resume", "kisisel", "bilgiler", "personal", "profile", "profil",
@@ -45,5 +45,5 @@ internal static class CandidateNameDetector
         word.Count(char.IsLetter) >= 2
         && char.IsUpper(word[0])
         && word.All(c => char.IsLetter(c) || c is '-' or '\'' or '.')
-        && !NotNameWords.Contains(PersonalDataRedactor.Fold(word.TrimEnd('.')));
+        && !NotNameWords.Contains(TurkishText.Fold(word.TrimEnd('.')));
 }

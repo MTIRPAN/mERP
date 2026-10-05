@@ -40,7 +40,12 @@ public static class WebHostExtensions
 
         // Numbers are JSON numbers only, so the OpenAPI document (and the generated web client) types them as
         // numbers rather than "number or numeric string".
-        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
+        services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+            // Enums travel as their names, so the OpenAPI document and the web client see string unions.
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
 
         // Authentication: Keycloak access tokens (D5). Claims keep their JWT names (sub, tenant).
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

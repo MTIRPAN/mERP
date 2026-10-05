@@ -20,6 +20,10 @@ public static class CommonErrors
     public static readonly Error InvalidPostalCode = Error.Validation("common.errors.invalid_postal_code");
     public static readonly Error InvalidCountryCode = Error.Validation("common.errors.invalid_country_code");
     public static readonly Error InvalidCulture = Error.Validation("common.errors.invalid_culture");
+    public static readonly Error InvalidCode = Error.Validation("common.errors.invalid_code");
+    public static readonly Error InvalidTimeZone = Error.Validation("common.errors.invalid_time_zone");
+    public static readonly Error InvalidMersisNo = Error.Validation("common.errors.invalid_mersis_no");
+    public static readonly Error InvalidSgkWorkplaceNo = Error.Validation("common.errors.invalid_sgk_workplace_no");
 
     public static Error MaxLength(int max) =>
         Error.Validation("common.errors.max_length", new Dictionary<string, object?> { ["maxLength"] = max });

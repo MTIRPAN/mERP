@@ -5,4 +5,8 @@
     <ProjectReference Include="../../../BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Persistence/Seed/*.json" />
+  </ItemGroup>
+
 </Project>

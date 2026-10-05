@@ -105,6 +105,7 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
             services.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
             services.AddScoped<IPermissionChecker, TestPermissionChecker>();
+            services.AddScoped<IAccessScopeProvider, TestAccessScopeProvider>();
             services.AddSingleton<IAiModelClient>(Ai);
             if (UseFakeTime)
             {

@@ -750,7 +750,8 @@
         "type": "Project",
         "dependencies": {
           "FluentValidation": "[12.1.1, )",
-          "Merp.SharedKernel": "[1.0.0, )"
+          "Merp.SharedKernel": "[1.0.0, )",
+          "Microsoft.EntityFrameworkCore": "[10.0.12, )"
         }
       },
       "merp.infrastructure": {

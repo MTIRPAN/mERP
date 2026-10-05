@@ -351,3 +351,33 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 2. ~~Yurt dışına aktarım (KVKK md. 9)~~ — karar verildi: standart sözleşme (veya bağlayıcı şirket kuralları / yeterlilik kararı); dayanak kayıtlı değilse yapay zeka kapalı. Aydınlatma metinlerine yapay zeka maddesi R1 ile eklenecek.
 3. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için. Gereksinimler ve seçenekler `docs/domain/yapay-zeka.md` §9'da. Öneri: talep eden ilk müşteriyle birlikte yapılsın (PLAN A15, A16).
 4. Sıra: Yapay zeka altyapısı ve durumsuz CV analizi plan sırasından önce yapıldı. Diğer özellikler (`docs/PLAN.md` "Yapay zeka" bölümü) ait oldukları görevlerle birlikte mi yapılsın?
+
+## D25 — Listeleme sözleşmesi ve uygulama katmanında veri erişimi (öneri — onay bekliyor)
+
+**Durum:** Öneri. P1 (şirketler ve şubeler) sırasında, planda açıkça yazmayan aşağıdaki noktalar için karar gerekti. Kod bu önerilere göre yazıldı; kullanıcı onayı bekleniyor.
+
+**Uygulama katmanında veri erişimi:**
+- Handler'lar EF Core'a modülün DbContext arayüzü üzerinden erişir (`IPlatformDbContext` Application'da, `PlatformDbContext` Infrastructure'da uygular). Sorgular `Select` ile DTO'ya projekte edilir. Ayrı repository/sorgu servisi katmanı yoktur.
+- Bu yüzden `Merp.Application.Abstractions` ve modül Application projeleri `Microsoft.EntityFrameworkCore` paketine referans verir (sadece `DbSet`/`IQueryable` ve async uzantılar). Npgsql ve altyapı paketleri Application'da yasak kalır; mimari testler bunu denetler. Kural 5 (Application → Infrastructure yok) değişmez.
+- Alternatif: her sorgu için Infrastructure'da sorgu servisi. Daha çok kod, aynı test kapsamı; önerilmez.
+
+**Listeleme sözleşmesi (CLAUDE.md'deki kuralın ayrıntısı):**
+- `sort` liste başına beyaz listedir (`SortMap`): alan adı camelCase, başında `-` azalan. Bilinmeyen alan 400 `common.errors.invalid_sort`. Sayfalar kararlı olsun diye her sıralamaya kimlik ile ikinci sıralama eklenir.
+- `filter` serbest metin aramasıdır. Büyük/küçük harf ve Türkçe harf farkı gözetmez ("istanbul" → "İSTANBUL", "sisecam" → "Şişecam"). Tabloda saklanan hesaplanmış `search_text` kolonu üzerinden yapılır (`lower(translate(...))`, `TurkishText.SqlFold`); PostgreSQL eklentisi gerekmez. Listeye özgü filtreler tipli parametrelerdir (`isActive`, `companyId`).
+- Ad kolonları ICU Türkçe sıralama (`tr-x-icu`) kullanır: C, Ç, D… ve I, İ doğru sıralanır.
+- API JSON'unda enum'lar metin (`"Store"`), sayılar sıkı (`"34"` kabul edilmez, 400).
+
+**Veri kapsamı (P2'ye kadar):**
+- Tek kayıt kapsam dışındaysa 404 döner (yetki-ve-onay.md §1.3). Şirket kapsamı şirketi ve şubelerini, şube kapsamı şubeyi ve okuma için şirketini kapsar. Yeni şirketi sadece kiracı kapsamlı yönetici açabilir.
+- Aktif şirket başlığı (`X-Company-Id`) şube listesini daraltır, kapsamı asla genişletmez. Şirket listesi (yönetim ekranı) başlıkla daraltılmaz.
+- Rol atamaları P2 ile gelene kadar geçici sağlayıcılar: Development'ta `Development:Scopes:{kullanıcı}` (girdi yoksa kiracı kapsamı), testlerde `X-Test-Scopes` başlığı. Diğer ortamlarda varsayılan sağlayıcı hiçbir kapsam vermez (kapalı başlar).
+
+**Kalıcılık:**
+- `Address` sahibinin tablosunda kolonlardır (EF complex type, `address_line1`, `address_city`…). SharedKernel değer nesneleri (`Email`, `PhoneNumber`, `Vkn`, `Tckn`, `Iban`, `MersisNo`, `SgkWorkplaceNo`) konvansiyonla normalize metin olarak saklanır.
+- İl ve ilçeler `platform.provinces` / `platform.districts` tablolarında migration seed'idir (81 il, 973 ilçe). Kaynak PTT posta kodu listesi, `turkey-neighbourhoods` 4.0.3 paketinden alındı (MIT, D19'a uygun; paket bağımlılık olarak eklenmedi, sadece veri). İlçe kimlikleri sabittir (`il kodu * 1000 + sıra`); kaynak ve kurallar `Persistence/Seed/THIRD-PARTY-NOTICES.md`.
+
+**Açık sorular (kullanıcıya):**
+1. Application katmanında EF Core kullanımı onaylanıyor mu?
+2. Şirket listesi aktif şirket başlığıyla daraltılmasın (yönetim ekranı) — uygun mu?
+3. Yabancı adresler (il/ilçe referansı olmadan) P1'de yok; yurt dışı şube ihtiyacı doğunca eklenecek. Uygun mu?
+

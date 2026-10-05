@@ -2,6 +2,8 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
+    <!-- Application layers query their module DbContext through an interface (D25) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>
