@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/BuildingBlocks/Merp.SharedKernel/Merp.SharedKernel.csproj" />
     <ProjectReference Include="../../src/BuildingBlocks/Merp.Application.Abstractions/Merp.Application.Abstractions.csproj" />
+    <ProjectReference Include="../../src/BuildingBlocks/Merp.Application.Persistence/Merp.Application.Persistence.csproj" />
     <ProjectReference Include="../../src/BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
     <ProjectReference Include="../../src/BuildingBlocks/Merp.Web/Merp.Web.csproj" />
   </ItemGroup>

@@ -27,5 +27,8 @@ public sealed class PlatformModule : IModule
         group.MapLocalizationEndpoints();
         group.MapMeEndpoints();
         group.MapAiUsageEndpoints();
+        group.MapCompanyEndpoints();
+        group.MapBranchEndpoints();
+        group.MapLocationEndpoints();
     }
 }

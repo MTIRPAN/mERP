@@ -275,7 +275,19 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
 
 ## Faz 1 — Platform çekirdeği
 
-### [ ] P1 Şirketler ve şubeler — M
+### [x] P1 Şirketler ve şubeler — M
+
+**Yapılanlar:**
+- `Company` ve `Branch` aggregate'leri (audit'li; kod değişmez, şube kodu şirket içinde tekil, şirkette tek merkez), VKN/MERSİS/SGK no/kod değer nesneleri, il/ilçe kodlu `Address`.
+- 81 il ve 973 ilçe migration ile yüklenir; kaynak ve lisans `docs/reference-data.md`.
+- Endpoint'ler: `/api/platform/companies`, `/api/platform/branches` (liste, detay, oluşturma, güncelleme; `version` ile eşzamanlılık), `/api/platform/locations/provinces[/{il}/districts]` (D22).
+- Veri kapsamı: Tenant hepsini, Company şirketi ve şubelerini, Branch sadece o şubeyi (ve okumada şirketini) görür; kapsam dışı kayıt 404. Şube listesi aktif şirket başlığıyla daralır (D4). `/me` seçilebilir şirketleri döndürür.
+- Olaylar `CompanyCreated/Updated`, `BranchCreated/Updated` outbox ile yayınlanır.
+- Web: Organizasyon → Şirketler ve Şubeler ekranları, il/ilçe seçen ortak adres alanları.
+- Altyapı: `Merp.Application.Persistence` (sayfalama, sıralama, arama, sürüm), geçici kapsam sağlayıcıları (P2'ye kadar), owned değerlerin audit'i (D25, öneri).
+- Logo P7, çalışma takvimi P9 ile eklenir. Özel alan sütunu (`custom_fields`) hazır; tanımlar ve doğrulama P6 ile gelir.
+- Yetkiler: `platform.companies.read/manage`, `platform.branches.read/manage`. Sistem rolleri P2 ile gelir; bu yetkiler Sistem Yöneticisi rolünün `platform.*` kümesine girer. Development'ta `admin` (`*`) hepsine sahiptir.
+- Kabul testleri: `CompanyEndpointsTests.Create_WithInvalidTaxNumber_Returns400WithATurkishMessage`, `CompanyEndpointsTests.UserScopedToOneCompany_SeesOnlyThatCompany_InTheListAndTheSelector`.
 
 **Yapılacaklar:**
 - `Company`:

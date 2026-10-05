@@ -175,6 +175,13 @@
           "Merp.SharedKernel": "[1.0.0, )"
         }
       },
+      "merp.application.persistence": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )",
+          "Microsoft.EntityFrameworkCore": "[10.0.12, )"
+        }
+      },
       "merp.sharedkernel": {
         "type": "Project"
       },

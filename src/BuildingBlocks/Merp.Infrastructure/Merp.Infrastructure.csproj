@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Merp.Application.Abstractions/Merp.Application.Abstractions.csproj" />
+    <ProjectReference Include="../Merp.Application.Persistence/Merp.Application.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>

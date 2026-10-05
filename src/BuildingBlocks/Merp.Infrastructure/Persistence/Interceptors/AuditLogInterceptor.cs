@@ -54,6 +54,20 @@ public sealed class AuditLogInterceptor(TimeProvider timeProvider, ICurrentUser 
         var now = timeProvider.GetUtcNow();
         var correlationId = Activity.Current?.TraceId.ToString();
         var entries = new List<AuditEntry>();
+        var inserted = new HashSet<(string Type, string Id)>();
+
+        AuditEntry Write(string entityType, string entityId, AuditAction action, string? field, string? oldValue, string? newValue) => new()
+        {
+            OccurredAt = now,
+            UserId = currentUser.UserId,
+            EntityType = entityType,
+            EntityId = entityId,
+            Action = action,
+            Field = field,
+            OldValue = oldValue,
+            NewValue = newValue,
+            CorrelationId = correlationId,
+        };
 
         foreach (var entry in context.ChangeTracker.Entries()
                      .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted
@@ -62,19 +76,13 @@ public sealed class AuditLogInterceptor(TimeProvider timeProvider, ICurrentUser 
         {
             var entityType = entry.Metadata.ClrType.Name;
             var entityId = FormatKey(entry);
-
-            AuditEntry Create(AuditAction action, string? field, string? oldValue, string? newValue) => new()
+            if (entry.State == EntityState.Added)
             {
-                OccurredAt = now,
-                UserId = currentUser.UserId,
-                EntityType = entityType,
-                EntityId = entityId,
-                Action = action,
-                Field = field,
-                OldValue = oldValue,
-                NewValue = newValue,
-                CorrelationId = correlationId,
-            };
+                inserted.Add((entityType, entityId));
+            }
+
+            AuditEntry Create(AuditAction action, string? field, string? oldValue, string? newValue) =>
+                Write(entityType, entityId, action, field, oldValue, newValue);
 
             if (entry.State == EntityState.Deleted || IsSoftDeletion(entry))
             {
@@ -103,9 +111,60 @@ public sealed class AuditLogInterceptor(TimeProvider timeProvider, ICurrentUser 
             }
         }
 
+        entries.AddRange(OwnedChanges(context, inserted, Write));
+
         if (entries.Count > 0)
         {
             context.Set<AuditEntry>().AddRange(entries);
+        }
+    }
+
+    /// <summary>
+    /// Value objects mapped as owned types (an address) are audited as fields of their <c>[Audited]</c> owner, e.g.
+    /// <c>Address.City</c>. Replacing the value object shows up as a deleted and an added entry with the owner's
+    /// key; the pair is compared field by field.
+    /// </summary>
+    private static IEnumerable<AuditEntry> OwnedChanges(
+        DbContext context,
+        HashSet<(string Type, string Id)> inserted,
+        Func<string, string, AuditAction, string?, string?, string?, AuditEntry> write)
+    {
+        var groups = context.ChangeTracker.Entries()
+            .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted
+                && e.Metadata.FindOwnership() is { PrincipalToDependent: not null } ownership
+                && ownership.PrincipalEntityType.ClrType.IsDefined(typeof(AuditedAttribute), inherit: true))
+            .GroupBy(e =>
+            {
+                var ownership = e.Metadata.FindOwnership()!;
+                return (Owner: ownership.PrincipalEntityType.ClrType.Name, Navigation: ownership.PrincipalToDependent!.Name, Key: FormatKey(e));
+            })
+            .ToList();
+
+        foreach (var group in groups)
+        {
+            var before = group.FirstOrDefault(e => e.State is EntityState.Deleted or EntityState.Modified);
+            var after = group.FirstOrDefault(e => e.State is EntityState.Added or EntityState.Modified);
+            var action = before is null && inserted.Contains((group.Key.Owner, group.Key.Key)) ? AuditAction.Insert : AuditAction.Update;
+
+            foreach (var property in (after ?? before)!.Metadata.GetProperties().Where(p => !p.IsShadowProperty()))
+            {
+                var oldValue = before?.Property(property.Name).OriginalValue;
+                var newValue = after?.Property(property.Name).CurrentValue;
+                if (Equals(oldValue, newValue))
+                {
+                    continue;
+                }
+
+                var entry = (after ?? before)!.Property(property.Name);
+                var sensitive = IsSensitive(entry);
+                yield return write(
+                    group.Key.Owner,
+                    group.Key.Key,
+                    action,
+                    $"{group.Key.Navigation}.{property.Name}",
+                    Format(entry, oldValue, sensitive),
+                    Format(entry, newValue, sensitive));
+            }
         }
     }
 

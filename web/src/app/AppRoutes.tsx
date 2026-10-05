@@ -3,6 +3,8 @@ import { platformPermissions } from '@/modules/platform/permissions';
 import { AiUsagePage } from '@/modules/platform/AiUsagePage';
 import { DashboardPage } from '@/modules/platform/DashboardPage';
 import { JobsPage } from '@/modules/platform/JobsPage';
+import { BranchesPage } from '@/modules/platform/organization/BranchesPage';
+import { CompaniesPage } from '@/modules/platform/organization/CompaniesPage';
 import { SystemInfoPage } from '@/modules/platform/SystemInfoPage';
 import { CvAnalysisPage } from '@/modules/recruitment/CvAnalysisPage';
 import { recruitmentPermissions } from '@/modules/recruitment/permissions';
@@ -26,6 +28,22 @@ export const AppRoutes = () => (
         }
       >
         <Route index element={<DashboardPage />} />
+        <Route
+          path="organization/companies"
+          element={
+            <RequirePermission permission={platformPermissions.companiesRead}>
+              <CompaniesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="organization/branches"
+          element={
+            <RequirePermission permission={platformPermissions.branchesRead}>
+              <BranchesPage />
+            </RequirePermission>
+          }
+        />
         <Route
           path="system/info"
           element={

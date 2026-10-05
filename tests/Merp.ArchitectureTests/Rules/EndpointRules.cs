@@ -24,8 +24,13 @@ public static class EndpointRules
     /// <summary>docs/DECISIONS.md D22 (proposal): host infrastructure with its own protection.</summary>
     public static readonly string[] InfrastructurePrefixes = ["/openapi/", "/scalar", "/admin/jobs", "/hubs/notifications"];
 
-    /// <summary>docs/DECISIONS.md D22 (proposal): the caller's own data; a signed-in user is enough.</summary>
-    public static readonly string[] AuthenticatedUserRoutes = ["/api/platform/me"];
+    /// <summary>docs/DECISIONS.md D22 (proposal): the caller's own data and public reference data; a signed-in user is enough.</summary>
+    public static readonly string[] AuthenticatedUserRoutes =
+    [
+        "/api/platform/me",
+        "/api/platform/locations/provinces",
+        "/api/platform/locations/provinces/{provinceCode:int}/districts",
+    ];
 
     public static IReadOnlyList<string> Violations(IEnumerable<EndpointInfo> endpoints) =>
         [.. endpoints.Select(Check).OfType<string>()];

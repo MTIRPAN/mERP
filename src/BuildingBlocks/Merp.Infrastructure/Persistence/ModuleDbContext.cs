@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using Merp.Application.Persistence;
 using Merp.Infrastructure.Persistence.Auditing;
 using Merp.Infrastructure.Persistence.Conventions;
 using Merp.Infrastructure.Persistence.Inbox;
@@ -8,6 +9,7 @@ using Merp.SharedKernel.Identity;
 using Merp.SharedKernel.Markers;
 using Merp.SharedKernel.ValueObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
 namespace Merp.Infrastructure.Persistence;
 
@@ -22,7 +24,7 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
     public const string MigrationsHistoryTable = "__ef_migrations_history";
 
     /// <summary>Shadow property mapped to PostgreSQL's <c>xmin</c> system column.</summary>
-    public const string VersionProperty = "Version";
+    public const string VersionProperty = ConcurrencyVersion.PropertyName;
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
@@ -59,6 +61,7 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
         modelBuilder.HasDefaultSchema(Schema);
 
         ConfigureInfrastructureTables(modelBuilder);
+        ConfigureFunctions(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes().Where(e => !e.IsOwned() && e.ClrType != typeof(Dictionary<string, object>)))
@@ -83,6 +86,17 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
             }
         }
     }
+
+    // TextSearch.Matches(value, pattern) → texticlike(value, pattern), the function behind PostgreSQL's ILIKE.
+    private static void ConfigureFunctions(ModelBuilder modelBuilder) =>
+        modelBuilder.HasDbFunction(typeof(TextSearch).GetMethod(nameof(TextSearch.Matches))!)
+            .HasTranslation(arguments => new SqlFunctionExpression(
+                "texticlike",
+                arguments,
+                nullable: true,
+                argumentsPropagateNullability: [true, true],
+                typeof(bool),
+                typeMapping: null));
 
     private static void ConfigureInfrastructureTables(ModelBuilder modelBuilder)
     {

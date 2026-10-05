@@ -63,10 +63,16 @@ public class ArchitectureTests
             context.Schema.ShouldBe(module.ToLowerInvariant(), "the schema is the lower case module name (D2)");
 
             var moduleAssemblies = MerpAssemblies.All.Where(a => MerpAssemblies.ModuleName(a) == module).Append(typeof(ModuleDbContext).Assembly).ToHashSet();
+            var sharedKernel = MerpAssemblies.Get("Merp.SharedKernel");
             foreach (var entity in context.Model.GetEntityTypes())
             {
                 entity.GetSchema().ShouldBe(context.Schema, $"{entity.Name} must live in schema {context.Schema}");
-                moduleAssemblies.ShouldContain(entity.ClrType.Assembly, $"{entity.Name} belongs to another module");
+                // Shared kernel value objects (an address) may be mapped as owned types in any module
+                if (!(entity.IsOwned() && entity.ClrType.Assembly == sharedKernel))
+                {
+                    moduleAssemblies.ShouldContain(entity.ClrType.Assembly, $"{entity.Name} belongs to another module");
+                }
+
                 foreach (var foreignKey in entity.GetForeignKeys())
                 {
                     foreignKey.PrincipalEntityType.GetSchema().ShouldBe(context.Schema, $"{entity.Name} has a foreign key into another schema");

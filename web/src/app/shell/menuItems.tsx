@@ -1,9 +1,12 @@
 import {
+  ApartmentOutlined,
   AppstoreOutlined,
+  BankOutlined,
   HomeOutlined,
   InfoCircleOutlined,
   ScheduleOutlined,
   SettingOutlined,
+  ShopOutlined,
   StarOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
@@ -19,6 +22,9 @@ const icons: Record<string, ReactNode> = {
   schedule: <ScheduleOutlined />,
   ai: <StarOutlined />,
   recruitment: <TeamOutlined />,
+  organization: <ApartmentOutlined />,
+  company: <BankOutlined />,
+  branch: <ShopOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Data access helpers for module application layers: paging, optimistic concurrency, text search over EF Core.
+    Kept apart from Merp.Application.Abstractions so that *.Contracts projects stay free of EF Core (D1).
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Merp.Application.Abstractions/Merp.Application.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

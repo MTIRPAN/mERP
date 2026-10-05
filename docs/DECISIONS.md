@@ -297,6 +297,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/admin/jobs/*` | Hangfire paneli kendi çerez yetkisini uygular: çerez `POST /api/platform/jobs/dashboard-session` (`platform.jobs.view`) ile 15 dakikalık alınır; sadece `Jobs:DashboardTenants` listesindeki tenant'lar | Tarayıcı panele bearer token gönderemez |
 | `/hubs/notifications` | Oturum zorunlu, yetki istenmez | Her kullanıcı kendi bildirimlerini alır |
 | `/api/platform/me` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi bilgileri, menüsü ve yetkileri; hiç rolü olmayan kullanıcı da "erişiminiz yok" ekranını görebilmeli |
+| `/api/platform/locations/provinces`, `/api/platform/locations/provinces/{provinceCode}/districts` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kamuya açık referans veri (il/ilçe, `docs/reference-data.md`); her modülün adres formunda kullanılır. Kullanıcı onayıyla eklendi (P1). |
 
 **Açık soru:** Hangfire paneli tüm tenant'ların işlerini gösterir. SaaS kurulumunda tenant'ın Sistem Yöneticisi değil, sadece operatör (barındıran ekip) görmeli. `Jobs:DashboardTenants` varsayılan olarak boştur (Development'ta `demo`).
 
@@ -341,3 +342,21 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 2. Yurt dışına aktarım (KVKK md. 9): sağlayıcı yurt dışında. Özelliği müşteride açmadan önce hukuki değerlendirme gerekir: standart sözleşme ve Kurul'a bildirim mi, açık rıza mı? Aday aydınlatma ve rıza metinlerine (R1, R8) yapay zekayla işleme maddesi eklenmeli.
 3. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için.
 4. Sıra: Yapay zeka altyapısı ve durumsuz CV analizi plan sırasından önce yapıldı. Diğer özellikler (`docs/PLAN.md` "Yapay zeka" bölümü) ait oldukları görevlerle birlikte mi yapılsın?
+
+## D25 — Uygulama katmanında veri erişimi (öneri — onay bekliyor)
+
+**Durum:** Öneri. P1 (ilk gerçek aggregate'ler) ile ortaya çıktı; P1 incelemesinde kullanıcı onayına sunuldu.
+
+**Sorun:** Komut ve sorgu handler'ları Application katmanında durur ama DbContext Infrastructure'dadır (kural 5). Sayfalama, sıralama, arama ve eşzamanlılık her modülde tekrar yazılmamalı.
+
+**Karar önerisi:**
+- Her modülün Application katmanı kendi veri arayüzünü tanımlar (`IPlatformDbContext`: `DbSet<Company>`...). Modülün DbContext'i bunu uygular, handler'lar arayüzü kullanır. Komutlar sadece ekler veya değiştirir; kaydetmeyi unit of work yapar. Application EF Core'a referans verebilir (kural 5 yalnızca Infrastructure ve sağlayıcı paketlerini yasaklar); Npgsql'e referans vermez.
+- Ortak yardımcılar yeni yapı taşı **`Merp.Application.Persistence`** projesindedir (EF Core'a bağlıdır):
+  - `ToPagedResultAsync`: sayfa okuma (`PageRequest` → `PagedResult<T>`; `PagedResult`, `PageRequest` ve `SortMap` EF'siz olarak `Merp.Application.Abstractions.Paging` içinde).
+  - `SortMap<T>`: sadece tanımlı alanlara göre sıralama, kimlikle kararlı sayfa; bilinmeyen alan 400 `common.errors.invalid_sort`.
+  - `TextSearch.Matches`: büyük/küçük harf duyarsız arama; `ModuleDbContext` bunu PostgreSQL `ILIKE`'ın fonksiyonu `texticlike`'a çevirir. Application sağlayıcıya özgü fonksiyon kullanmaz.
+  - `ConcurrencyVersion`: `xmin` sürümü DTO'larda `version` olarak döner; güncelleme komutu bu sürümü bekler (`ExpectVersion`), aradaki değişiklik 409 olur.
+- `Merp.Application.Abstractions` EF Core'a bağımlı olmaz. Böylece `*.Contracts` projeleri (D1, ayrı servise taşınabilir sözleşmeler) EF Core taşımaz.
+- SharedKernel değer nesneleri (ör. `Address`) modül tablolarına owned type olarak eşlenebilir (sütunlar `address_city` gibi). Audit, owned değerlerin değişikliklerini sahibinin alanı olarak yazar (`Address.City`).
+
+**Geçici kapsam sağlayıcıları (P2'ye kadar):** `IAccessScopeProvider.GetCurrentUserScopesAsync` eklendi. Rol atamaları gelene kadar Development, `Development:Scopes:{kullanıcı}` ayarından (`"Company:{id}"` gibi) okur; listelenmeyen kullanıcının izinli olduğu her yetkide Tenant kapsamı vardır. Diğer ortamlar hiç kapsam vermez. Testler kapsamı `X-Test-Scopes` başlığıyla verir. P2 bu sağlayıcıları gerçek atamalarla değiştirir.

@@ -3,7 +3,12 @@
   <ItemGroup>
     <ProjectReference Include="../Merp.Modules.Platform.Domain/Merp.Modules.Platform.Domain.csproj" />
     <ProjectReference Include="../Merp.Modules.Platform.Contracts/Merp.Modules.Platform.Contracts.csproj" />
-    <ProjectReference Include="../../../BuildingBlocks/Merp.Application.Abstractions/Merp.Application.Abstractions.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Merp.Application.Persistence/Merp.Application.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Merp.Modules.Platform.UnitTests" />
+    <InternalsVisibleTo Include="Merp.Modules.Platform.IntegrationTests" />
   </ItemGroup>
 
 </Project>

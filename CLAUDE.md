@@ -49,6 +49,7 @@ src/
   BuildingBlocks/
     Merp.SharedKernel                # Entity, AggregateRoot, ValueObject, Result, Error, ortak value object'ler
     Merp.Application.Abstractions    # ICommand/IQuery, handler'lar, ICurrentUser, ITenantContext, IPermissionChecker
+    Merp.Application.Persistence     # EF Core yardımcıları: sayfalama, arama, sürüm (D25); Contracts EF taşımaz
     Merp.Infrastructure              # EF tabanı, interceptor'lar, outbox/inbox, mediator, bus, cache, job, dosya, PDF
     Merp.Web                         # endpoint yardımcıları, ProblemDetails, izin filtresi, IModule
   Modules/

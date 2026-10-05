@@ -5,10 +5,19 @@
  * OpenAPI spec version: v1
  */
 
+export * from './addressDto';
+export * from './addressInput';
 export * from './aiFeatureUsageResponse';
 export * from './aiUsageSummaryResponse';
 export * from './analyzeCvBody';
+export * from './branchDetails';
+export * from './branchListItem';
+export * from './branchType';
+export * from './companyDetails';
+export * from './companyListItem';
 export * from './companyResponse';
+export * from './createBranchCommand';
+export * from './createCompanyCommand';
 export * from './cultureResponse';
 export * from './cvAnalysisResponse';
 export * from './cvAnalysisResult';
@@ -27,17 +36,25 @@ export * from './cvSeniority';
 export * from './cvSkill';
 export * from './cvSkillCategory';
 export * from './cvSkillLevel';
+export * from './entityCreatedResponse';
 export * from './getAiUsageSummaryParams';
 export * from './getLocalizationBundle200';
 export * from './httpValidationProblemDetails';
 export * from './httpValidationProblemDetailsErrors';
 export * from './iFormFile';
+export * from './listBranchesParams';
+export * from './listCompaniesParams';
+export * from './locationOption';
 export * from './meAiResponse';
 export * from './menuItemResponse';
 export * from './meResponse';
+export * from './pagedResultOfBranchListItem';
+export * from './pagedResultOfCompanyListItem';
 export * from './preferencesResponse';
 export * from './problemDetails';
 export * from './redactionCount';
 export * from './systemInfoResponse';
 export * from './tenantResponse';
+export * from './updateBranchCommand';
+export * from './updateCompanyCommand';
 export * from './userResponse';
