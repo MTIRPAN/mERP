@@ -27,8 +27,23 @@ public class PlatformMigrationTests(PostgresFixture postgres)
         await migrator.MigrateAsync(tenant, connectionString, TestContext.Current.CancellationToken);
 
         var tables = await ListTablesAsync(connectionString, "platform");
-        tables.ShouldBe(["__ef_migrations_history", "ai_usage", "audit_entries", "inbox_messages", "outbox_messages"], ignoreOrder: true);
+        tables.ShouldBe(
+            ["__ef_migrations_history", "ai_usage", "audit_entries", "inbox_messages", "outbox_messages", "companies", "branches", "provinces", "districts"],
+            ignoreOrder: true);
         (await ListTablesAsync(connectionString, "public")).ShouldBeEmpty();
+
+        // Reference data of Türkiye: 81 provinces and 973 districts (docs/reference-data.md)
+        (await CountAsync(connectionString, "platform.provinces")).ShouldBe(81);
+        (await CountAsync(connectionString, "platform.districts")).ShouldBe(973);
+        (await CountAsync(connectionString, "platform.districts WHERE province_id = 34")).ShouldBe(39);
+    }
+
+    private static async Task<long> CountAsync(string connectionString, string from)
+    {
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var command = new NpgsqlCommand($"SELECT count(*) FROM {from}", connection);
+        return (long)(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
     }
 
     private static async Task<List<string>> ListTablesAsync(string connectionString, string schema)

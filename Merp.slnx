@@ -12,6 +12,7 @@
   <Folder Name="/src/" />
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="src/BuildingBlocks/Merp.Application.Abstractions/Merp.Application.Abstractions.csproj" />
+    <Project Path="src/BuildingBlocks/Merp.Application.Persistence/Merp.Application.Persistence.csproj" />
     <Project Path="src/BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
     <Project Path="src/BuildingBlocks/Merp.SharedKernel/Merp.SharedKernel.csproj" />
     <Project Path="src/BuildingBlocks/Merp.Web/Merp.Web.csproj" />

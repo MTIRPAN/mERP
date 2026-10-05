@@ -22,11 +22,24 @@ import type {
 
 import type {
   AiUsageSummaryResponse,
+  BranchDetails,
+  CompanyDetails,
+  CreateBranchCommand,
+  CreateCompanyCommand,
+  EntityCreatedResponse,
   GetAiUsageSummaryParams,
   GetLocalizationBundle200,
   HttpValidationProblemDetails,
+  ListBranchesParams,
+  ListCompaniesParams,
+  LocationOption,
   MeResponse,
+  PagedResultOfBranchListItem,
+  PagedResultOfCompanyListItem,
+  ProblemDetails,
   SystemInfoResponse,
+  UpdateBranchCommand,
+  UpdateCompanyCommand,
 } from '../../model';
 
 import { customFetch } from '../../../http';
@@ -545,3 +558,1043 @@ export function useGetAiUsageSummary<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export const getListProvincesUrl = () => {
+  return `/api/platform/locations/provinces`;
+};
+
+/**
+ * @summary Provinces (il) of Türkiye in Turkish alphabetical order; the code is the plate number
+ */
+export const listProvinces = async (options?: Parameters<typeof customFetch>[1]): Promise<LocationOption[]> => {
+  return customFetch<LocationOption[]>(getListProvincesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListProvincesQueryKey = () => {
+  return [`/api/platform/locations/provinces`] as const;
+};
+
+export const getListProvincesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listProvinces>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listProvinces>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListProvincesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listProvinces>>> = ({ signal }) =>
+    listProvinces({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listProvinces>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListProvincesQueryResult = NonNullable<Awaited<ReturnType<typeof listProvinces>>>;
+export type ListProvincesQueryError = ErrorType<unknown>;
+
+export function useListProvinces<TData = Awaited<ReturnType<typeof listProvinces>>, TError = ErrorType<unknown>>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listProvinces>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProvinces>>,
+          TError,
+          Awaited<ReturnType<typeof listProvinces>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListProvinces<TData = Awaited<ReturnType<typeof listProvinces>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listProvinces>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProvinces>>,
+          TError,
+          Awaited<ReturnType<typeof listProvinces>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListProvinces<TData = Awaited<ReturnType<typeof listProvinces>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listProvinces>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Provinces (il) of Türkiye in Turkish alphabetical order; the code is the plate number
+ */
+
+export function useListProvinces<TData = Awaited<ReturnType<typeof listProvinces>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listProvinces>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListProvincesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListDistrictsUrl = (provinceCode: number) => {
+  return `/api/platform/locations/provinces/${provinceCode}/districts`;
+};
+
+/**
+ * @summary Districts (ilçe) of a province in Turkish alphabetical order
+ */
+export const listDistricts = async (
+  provinceCode: number,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LocationOption[]> => {
+  return customFetch<LocationOption[]>(getListDistrictsUrl(provinceCode), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListDistrictsQueryKey = (provinceCode: number) => {
+  return [`/api/platform/locations/provinces/${provinceCode}/districts`] as const;
+};
+
+export const getListDistrictsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDistricts>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  provinceCode: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistricts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListDistrictsQueryKey(provinceCode);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listDistricts>>> = ({ signal }) =>
+    listDistricts(provinceCode, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: provinceCode !== null && provinceCode !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof listDistricts>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type ListDistrictsQueryResult = NonNullable<Awaited<ReturnType<typeof listDistricts>>>;
+export type ListDistrictsQueryError = ErrorType<ProblemDetails>;
+
+export function useListDistricts<TData = Awaited<ReturnType<typeof listDistricts>>, TError = ErrorType<ProblemDetails>>(
+  provinceCode: number,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistricts>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDistricts>>,
+          TError,
+          Awaited<ReturnType<typeof listDistricts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListDistricts<TData = Awaited<ReturnType<typeof listDistricts>>, TError = ErrorType<ProblemDetails>>(
+  provinceCode: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistricts>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDistricts>>,
+          TError,
+          Awaited<ReturnType<typeof listDistricts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListDistricts<TData = Awaited<ReturnType<typeof listDistricts>>, TError = ErrorType<ProblemDetails>>(
+  provinceCode: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistricts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Districts (ilçe) of a province in Turkish alphabetical order
+ */
+
+export function useListDistricts<TData = Awaited<ReturnType<typeof listDistricts>>, TError = ErrorType<ProblemDetails>>(
+  provinceCode: number,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDistricts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListDistrictsQueryOptions(provinceCode, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListCompaniesUrl = (params?: ListCompaniesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/platform/companies?${stringifiedParams}` : `/api/platform/companies`;
+};
+
+/**
+ * Requires permission: platform.companies.read.
+ * @summary Companies in the caller's scope
+ */
+export const listCompanies = async (
+  params?: ListCompaniesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfCompanyListItem> => {
+  return customFetch<PagedResultOfCompanyListItem>(getListCompaniesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListCompaniesQueryKey = (params?: ListCompaniesParams) => {
+  return [`/api/platform/companies`, ...(params ? [params] : [])] as const;
+};
+
+export const getListCompaniesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListCompaniesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCompaniesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCompanies>>> = ({ signal }) =>
+    listCompanies(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCompanies>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListCompaniesQueryResult = NonNullable<Awaited<ReturnType<typeof listCompanies>>>;
+export type ListCompaniesQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListCompanies<
+  TData = Awaited<ReturnType<typeof listCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListCompaniesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCompanies>>,
+          TError,
+          Awaited<ReturnType<typeof listCompanies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCompanies<
+  TData = Awaited<ReturnType<typeof listCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListCompaniesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCompanies>>,
+          TError,
+          Awaited<ReturnType<typeof listCompanies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCompanies<
+  TData = Awaited<ReturnType<typeof listCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListCompaniesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Companies in the caller's scope
+ */
+
+export function useListCompanies<
+  TData = Awaited<ReturnType<typeof listCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListCompaniesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListCompaniesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateCompanyUrl = () => {
+  return `/api/platform/companies`;
+};
+
+/**
+ * Requires permission: platform.companies.manage.
+ * @summary Create a company (Tenant scope required)
+ */
+export const createCompany = async (
+  createCompanyCommand: CreateCompanyCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateCompanyUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createCompanyCommand),
+  });
+};
+
+export const getCreateCompanyMutationKey = () => ['createCompany'] as const;
+
+export const getCreateCompanyMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCompany>>,
+    TError,
+    CreateCompanyMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof createCompany>>, TError, CreateCompanyMutationVariables, TContext> => {
+  const mutationKey = getCreateCompanyMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCompany>>, CreateCompanyMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return createCompany(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCompanyMutationResult = NonNullable<Awaited<ReturnType<typeof createCompany>>>;
+export type CreateCompanyMutationBody = CreateCompanyCommand;
+export type CreateCompanyMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateCompanyMutationVariables = { data: CreateCompanyCommand };
+
+/**
+ * @summary Create a company (Tenant scope required)
+ */
+export const useCreateCompany = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createCompany>>,
+      TError,
+      CreateCompanyMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof createCompany>>, TError, CreateCompanyMutationVariables, TContext> => {
+  return useMutation(getCreateCompanyMutationOptions(options), queryClient);
+};
+export const getGetCompanyUrl = (id: string) => {
+  return `/api/platform/companies/${id}`;
+};
+
+/**
+ * Requires permission: platform.companies.read.
+ * @summary A company; 404 when it is outside the caller's scope
+ */
+export const getCompany = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CompanyDetails> => {
+  return customFetch<CompanyDetails>(getGetCompanyUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetCompanyQueryKey = (id: string) => {
+  return [`/api/platform/companies/${id}`] as const;
+};
+
+export const getGetCompanyQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCompany>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCompanyQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCompany>>> = ({ signal }) =>
+    getCompany(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCompany>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetCompanyQueryResult = NonNullable<Awaited<ReturnType<typeof getCompany>>>;
+export type GetCompanyQueryError = ErrorType<ProblemDetails>;
+
+export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCompany>>,
+          TError,
+          Awaited<ReturnType<typeof getCompany>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCompany>>,
+          TError,
+          Awaited<ReturnType<typeof getCompany>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A company; 404 when it is outside the caller's scope
+ */
+
+export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetCompanyQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateCompanyUrl = (id: string) => {
+  return `/api/platform/companies/${id}`;
+};
+
+/**
+ * Requires permission: platform.companies.manage.
+ * @summary Update a company's details and active flag; the code never changes
+ */
+export const updateCompany = async (
+  id: string,
+  updateCompanyCommand: UpdateCompanyCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateCompanyUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateCompanyCommand),
+  });
+};
+
+export const getUpdateCompanyMutationKey = () => ['updateCompany'] as const;
+
+export const getUpdateCompanyMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCompany>>,
+    TError,
+    UpdateCompanyMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof updateCompany>>, TError, UpdateCompanyMutationVariables, TContext> => {
+  const mutationKey = getUpdateCompanyMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCompany>>, UpdateCompanyMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return updateCompany(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCompanyMutationResult = NonNullable<Awaited<ReturnType<typeof updateCompany>>>;
+export type UpdateCompanyMutationBody = UpdateCompanyCommand;
+export type UpdateCompanyMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateCompanyMutationVariables = { id: string; data: UpdateCompanyCommand };
+
+/**
+ * @summary Update a company's details and active flag; the code never changes
+ */
+export const useUpdateCompany = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateCompany>>,
+      TError,
+      UpdateCompanyMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof updateCompany>>, TError, UpdateCompanyMutationVariables, TContext> => {
+  return useMutation(getUpdateCompanyMutationOptions(options), queryClient);
+};
+export const getListBranchesUrl = (params?: ListBranchesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/platform/branches?${stringifiedParams}` : `/api/platform/branches`;
+};
+
+/**
+ * Requires permission: platform.branches.read.
+ * @summary Branches in the caller's scope, narrowed by the active company (X-Company-Id)
+ */
+export const listBranches = async (
+  params?: ListBranchesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfBranchListItem> => {
+  return customFetch<PagedResultOfBranchListItem>(getListBranchesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListBranchesQueryKey = (params?: ListBranchesParams) => {
+  return [`/api/platform/branches`, ...(params ? [params] : [])] as const;
+};
+
+export const getListBranchesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListBranchesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listBranches>>> = ({ signal }) =>
+    listBranches(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listBranches>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListBranchesQueryResult = NonNullable<Awaited<ReturnType<typeof listBranches>>>;
+export type ListBranchesQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListBranches<
+  TData = Awaited<ReturnType<typeof listBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListBranchesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listBranches>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBranches>>,
+          TError,
+          Awaited<ReturnType<typeof listBranches>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListBranches<
+  TData = Awaited<ReturnType<typeof listBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listBranches>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBranches>>,
+          TError,
+          Awaited<ReturnType<typeof listBranches>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListBranches<
+  TData = Awaited<ReturnType<typeof listBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Branches in the caller's scope, narrowed by the active company (X-Company-Id)
+ */
+
+export function useListBranches<
+  TData = Awaited<ReturnType<typeof listBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListBranchesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateBranchUrl = () => {
+  return `/api/platform/branches`;
+};
+
+/**
+ * Requires permission: platform.branches.manage.
+ * @summary Create a branch of a company in the caller's scope
+ */
+export const createBranch = async (
+  createBranchCommand: CreateBranchCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateBranchUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createBranchCommand),
+  });
+};
+
+export const getCreateBranchMutationKey = () => ['createBranch'] as const;
+
+export const getCreateBranchMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBranch>>,
+    TError,
+    CreateBranchMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof createBranch>>, TError, CreateBranchMutationVariables, TContext> => {
+  const mutationKey = getCreateBranchMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBranch>>, CreateBranchMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return createBranch(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateBranchMutationResult = NonNullable<Awaited<ReturnType<typeof createBranch>>>;
+export type CreateBranchMutationBody = CreateBranchCommand;
+export type CreateBranchMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateBranchMutationVariables = { data: CreateBranchCommand };
+
+/**
+ * @summary Create a branch of a company in the caller's scope
+ */
+export const useCreateBranch = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createBranch>>,
+      TError,
+      CreateBranchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof createBranch>>, TError, CreateBranchMutationVariables, TContext> => {
+  return useMutation(getCreateBranchMutationOptions(options), queryClient);
+};
+export const getGetBranchUrl = (id: string) => {
+  return `/api/platform/branches/${id}`;
+};
+
+/**
+ * Requires permission: platform.branches.read.
+ * @summary A branch; 404 when it is outside the caller's scope
+ */
+export const getBranch = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<BranchDetails> => {
+  return customFetch<BranchDetails>(getGetBranchUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetBranchQueryKey = (id: string) => {
+  return [`/api/platform/branches/${id}`] as const;
+};
+
+export const getGetBranchQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBranch>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getBranch>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetBranchQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getBranch>>> = ({ signal }) =>
+    getBranch(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBranch>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetBranchQueryResult = NonNullable<Awaited<ReturnType<typeof getBranch>>>;
+export type GetBranchQueryError = ErrorType<ProblemDetails>;
+
+export function useGetBranch<TData = Awaited<ReturnType<typeof getBranch>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getBranch>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<Awaited<ReturnType<typeof getBranch>>, TError, Awaited<ReturnType<typeof getBranch>>>,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetBranch<TData = Awaited<ReturnType<typeof getBranch>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getBranch>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBranch>>,
+          TError,
+          Awaited<ReturnType<typeof getBranch>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetBranch<TData = Awaited<ReturnType<typeof getBranch>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getBranch>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A branch; 404 when it is outside the caller's scope
+ */
+
+export function useGetBranch<TData = Awaited<ReturnType<typeof getBranch>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getBranch>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetBranchQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateBranchUrl = (id: string) => {
+  return `/api/platform/branches/${id}`;
+};
+
+/**
+ * Requires permission: platform.branches.manage.
+ * @summary Update a branch's details and active flag; the company and the code never change
+ */
+export const updateBranch = async (
+  id: string,
+  updateBranchCommand: UpdateBranchCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateBranchUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateBranchCommand),
+  });
+};
+
+export const getUpdateBranchMutationKey = () => ['updateBranch'] as const;
+
+export const getUpdateBranchMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateBranch>>,
+    TError,
+    UpdateBranchMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof updateBranch>>, TError, UpdateBranchMutationVariables, TContext> => {
+  const mutationKey = getUpdateBranchMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateBranch>>, UpdateBranchMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return updateBranch(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateBranchMutationResult = NonNullable<Awaited<ReturnType<typeof updateBranch>>>;
+export type UpdateBranchMutationBody = UpdateBranchCommand;
+export type UpdateBranchMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateBranchMutationVariables = { id: string; data: UpdateBranchCommand };
+
+/**
+ * @summary Update a branch's details and active flag; the company and the code never change
+ */
+export const useUpdateBranch = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateBranch>>,
+      TError,
+      UpdateBranchMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof updateBranch>>, TError, UpdateBranchMutationVariables, TContext> => {
+  return useMutation(getUpdateBranchMutationOptions(options), queryClient);
+};

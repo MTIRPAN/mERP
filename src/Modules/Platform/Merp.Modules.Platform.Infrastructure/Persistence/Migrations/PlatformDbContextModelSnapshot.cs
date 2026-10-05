@@ -202,6 +202,252 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "platform");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Branches.Branch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("SgkWorkplaceNumber")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("sgk_workplace_number");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_branches");
+
+                    b.HasIndex("CompanyId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_branches_company_id_head_office")
+                        .HasFilter("type = 'HeadOffice'");
+
+                    b.HasIndex("CompanyId", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_branches_company_id_code");
+
+                    b.ToTable("branches", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Companies.Company", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Culture")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("culture");
+
+                    b.Property<string>("CustomFields")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("custom_fields");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("MersisNumber")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("mersis_number");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("SgkWorkplaceNumber")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("sgk_workplace_number");
+
+                    b.Property<string>("ShortName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("short_name");
+
+                    b.Property<string>("TaxNumber")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("tax_number");
+
+                    b.Property<string>("TaxOffice")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("tax_office");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("time_zone_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("title");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_companies");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_companies_code");
+
+                    b.HasIndex("TaxNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_companies_tax_number");
+
+                    b.ToTable("companies", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Locations.District", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("ProvinceId")
+                        .HasColumnType("integer")
+                        .HasColumnName("province_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_districts");
+
+                    b.HasIndex("ProvinceId")
+                        .HasDatabaseName("ix_districts_province_id");
+
+                    b.ToTable("districts", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Locations.Province", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("name");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_provinces");
+
+                    b.ToTable("provinces", "platform");
+                });
+
             modelBuilder.Entity("Merp.Modules.Platform.Infrastructure.AI.AiUsageRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -296,6 +542,152 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_ai_usage_feature_occurred_at");
 
                     b.ToTable("ai_usage", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Branches.Branch", b =>
+                {
+                    b.HasOne("Merp.Modules.Platform.Domain.Companies.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_branches_companies_company_id");
+
+                    b.OwnsOne("Merp.SharedKernel.ValueObjects.Address", "Address", b1 =>
+                        {
+                            b1.Property<Guid>("BranchId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("City")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("address_city");
+
+                            b1.Property<string>("CountryCode")
+                                .IsRequired()
+                                .HasMaxLength(2)
+                                .HasColumnType("character varying(2)")
+                                .HasColumnName("address_country_code");
+
+                            b1.Property<string>("District")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("address_district");
+
+                            b1.Property<int?>("DistrictCode")
+                                .HasColumnType("integer")
+                                .HasColumnName("address_district_code");
+
+                            b1.Property<string>("Line1")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("address_line1");
+
+                            b1.Property<string>("Line2")
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("address_line2");
+
+                            b1.Property<string>("PostalCode")
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("address_postal_code");
+
+                            b1.Property<int?>("ProvinceCode")
+                                .HasColumnType("integer")
+                                .HasColumnName("address_province_code");
+
+                            b1.HasKey("BranchId");
+
+                            b1.HasIndex("ProvinceCode")
+                                .HasDatabaseName("ix_branches_address_province_code");
+
+                            b1.ToTable("branches", "platform");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BranchId")
+                                .HasConstraintName("fk_branches_branches_id");
+                        });
+
+                    b.Navigation("Address")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Companies.Company", b =>
+                {
+                    b.OwnsOne("Merp.SharedKernel.ValueObjects.Address", "Address", b1 =>
+                        {
+                            b1.Property<Guid>("CompanyId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("City")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("address_city");
+
+                            b1.Property<string>("CountryCode")
+                                .IsRequired()
+                                .HasMaxLength(2)
+                                .HasColumnType("character varying(2)")
+                                .HasColumnName("address_country_code");
+
+                            b1.Property<string>("District")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("address_district");
+
+                            b1.Property<int?>("DistrictCode")
+                                .HasColumnType("integer")
+                                .HasColumnName("address_district_code");
+
+                            b1.Property<string>("Line1")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("address_line1");
+
+                            b1.Property<string>("Line2")
+                                .HasMaxLength(250)
+                                .HasColumnType("character varying(250)")
+                                .HasColumnName("address_line2");
+
+                            b1.Property<string>("PostalCode")
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)")
+                                .HasColumnName("address_postal_code");
+
+                            b1.Property<int?>("ProvinceCode")
+                                .HasColumnType("integer")
+                                .HasColumnName("address_province_code");
+
+                            b1.HasKey("CompanyId");
+
+                            b1.HasIndex("ProvinceCode")
+                                .HasDatabaseName("ix_companies_address_province_code");
+
+                            b1.ToTable("companies", "platform");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CompanyId")
+                                .HasConstraintName("fk_companies_companies_id");
+                        });
+
+                    b.Navigation("Address");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Locations.District", b =>
+                {
+                    b.HasOne("Merp.Modules.Platform.Domain.Locations.Province", null)
+                        .WithMany()
+                        .HasForeignKey("ProvinceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_districts_provinces_province_id");
                 });
 #pragma warning restore 612, 618
         }

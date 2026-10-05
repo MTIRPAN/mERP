@@ -9,6 +9,11 @@ internal sealed class PlatformMenu : IMenuContributor
     public IEnumerable<MenuItem> GetMenuItems() =>
     [
         new("home", "web.shell.menu.home", Path: "/", Icon: "home", Order: 0),
+        new("organization", "web.shell.menu.organization", Icon: "organization", Order: 800, Children:
+        [
+            new("companies", "web.shell.menu.companies", Path: "/organization/companies", Icon: "company", Permission: PlatformPermissions.Companies.Read),
+            new("branches", "web.shell.menu.branches", Path: "/organization/branches", Icon: "branch", Permission: PlatformPermissions.Branches.Read, Order: 10),
+        ]),
         new("system", "web.shell.menu.system", Icon: "settings", Order: 900, Children:
         [
             new("system-info", "web.shell.menu.system_info", Path: "/system/info", Icon: "info", Permission: PlatformPermissions.SystemInfo.Read),
@@ -25,5 +30,9 @@ internal sealed class PlatformPermissionDefinitions : IPermissionDefinitionProvi
         new(PlatformPermissions.SystemInfo.Read),
         new(PlatformPermissions.Jobs.View),
         new(PlatformPermissions.AiUsage.Read),
+        new(PlatformPermissions.Companies.Read),
+        new(PlatformPermissions.Companies.Manage),
+        new(PlatformPermissions.Branches.Read),
+        new(PlatformPermissions.Branches.Manage),
     ];
 }

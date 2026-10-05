@@ -2,7 +2,9 @@ using System.Globalization;
 using System.Security.Claims;
 using Merp.Application.Abstractions.AI;
 using Merp.Application.Abstractions.Context;
+using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Security;
+using Merp.Modules.Platform.Application.Companies;
 using Merp.Web.Navigation;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
@@ -16,7 +18,7 @@ internal static class MeEndpoints
 {
     /// <summary>
     /// The signed-in user, tenant, granted permissions and menu, used by the web shell. Every signed-in user may
-    /// read their own data (D22). Companies and preferences become real with PLAN P1 and P2.
+    /// read their own data (D22). Companies are those the granted permissions reach (P1); preferences arrive with P2.
     /// </summary>
     public static void MapMeEndpoints(this IEndpointRouteBuilder group) =>
         group.MapGet("/me", GetMeAsync)
@@ -33,6 +35,7 @@ internal static class MeEndpoints
         IEnumerable<IMenuContributor> menuContributors,
         IEnumerable<IAiFeatureDefinitionProvider> aiFeatureProviders,
         IAiService ai,
+        ISender sender,
         IConfiguration configuration)
     {
         var granted = new HashSet<string>(StringComparer.Ordinal);
@@ -44,6 +47,7 @@ internal static class MeEndpoints
             }
         }
 
+        var companies = await sender.Send(new GetSelectableCompaniesQuery(granted), context.RequestAborted);
         var menu = Filter(menuContributors.SelectMany(c => c.GetMenuItems()), granted, ai);
         var user = context.User;
         var cultures = (configuration.GetSection("Localization:SupportedCultures").Get<string[]>() ?? ["tr-TR"])
@@ -66,7 +70,7 @@ internal static class MeEndpoints
                 user.FindFirstValue("email")),
             new TenantResponse(tenant.RequiredTenant.Code, tenant.RequiredTenant.Name),
             [.. granted.Order(StringComparer.Ordinal)],
-            [],
+            [.. companies.Value.Select(c => new CompanyResponse(c.Id, c.Code, c.Name))],
             menu,
             new PreferencesResponse(currentUser.Culture),
             cultures,

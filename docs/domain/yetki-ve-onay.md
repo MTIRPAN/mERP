@@ -42,6 +42,8 @@ Bu iki yapı tüm modüllerde ortaktır. Yeni bir modül yazarken önce bu belge
      - astlar (`reporting_lines` closure tablosu)
      - kendi personel id'si
 3. **Tekil kayıt:** Kayıt kapsam dışındaysa 404 döner. 403 dönülmez; kaydın varlığı sızdırılmaz.
+   - Şirket ve şubelerde (P1): Tenant kapsamı hepsini, Company kapsamı şirketi ve şubelerini, Branch kapsamı yalnızca o şubeyi yönetir. Branch kapsamıyla şirket listesinde şubenin şirketi okunabilir. Yeni şirket yalnızca Tenant kapsamıyla açılır (aksi 403); kapsam dışındaki şirkete şube açmak 403'tür.
+   - Aktif şirket başlığı (`X-Company-Id`, D4) listeleri sadece daraltır; kapsamın dışına çıkarmaz.
 4. **Alan seviyesi:**
    - `[Sensitive]` alanlar için ek yetki gerekir (`hr.employees.sensitive.read`).
    - Yetki yoksa değer maskelenir. Örnek: TCKN `123******01`.

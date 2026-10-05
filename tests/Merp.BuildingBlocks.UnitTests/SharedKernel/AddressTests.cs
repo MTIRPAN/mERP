@@ -39,4 +39,22 @@ public class AddressTests
     [Fact]
     public void Create_ForeignAddress_AcceptsNonNumericPostalCode() =>
         Address.Create("10 Downing St", null, null, "London", "SW1A 2AA", "gb").Value.CountryCode.ShouldBe("GB");
+
+    [Fact]
+    public void Create_TurkishAddressWithProvinceAndDistrict_KeepsCodes()
+    {
+        var address = Address.Create("Atatürk Cad. No: 1", null, "Kadıköy", "İstanbul", "34710", "TR", provinceCode: 34, districtCode: 1421).Value;
+
+        address.ProvinceCode.ShouldBe(34);
+        address.DistrictCode.ShouldBe(1421);
+    }
+
+    [Theory]
+    [InlineData("TR", 0, null, "provinceCode")]
+    [InlineData("TR", 82, null, "provinceCode")]
+    [InlineData("DE", 34, null, "provinceCode")]
+    [InlineData("TR", null, 1421, "districtCode")]
+    [InlineData("TR", 34, 0, "districtCode")]
+    public void Create_InvalidProvinceOrDistrict_ReturnsFieldError(string country, int? province, int? district, string field) =>
+        Address.Create("Line", null, null, "City", null, country, province, district).Error.Fields.Single().Field.ShouldBe(field);
 }

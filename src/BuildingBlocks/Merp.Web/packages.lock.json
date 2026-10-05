@@ -401,6 +401,13 @@
           "Merp.SharedKernel": "[1.0.0, )"
         }
       },
+      "merp.application.persistence": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )",
+          "Microsoft.EntityFrameworkCore": "[10.0.12, )"
+        }
+      },
       "merp.infrastructure": {
         "type": "Project",
         "dependencies": {
@@ -409,7 +416,7 @@
           "EFCore.NamingConventions": "[10.0.1, )",
           "Hangfire.Core": "[1.8.25, )",
           "Hangfire.PostgreSql": "[1.21.1, )",
-          "Merp.Application.Abstractions": "[1.0.0, )",
+          "Merp.Application.Persistence": "[1.0.0, )",
           "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.12, )",
           "Microsoft.Extensions.Caching.Hybrid": "[10.10.0, )",
           "Microsoft.Extensions.Caching.StackExchangeRedis": "[10.0.12, )",
