@@ -12,7 +12,7 @@ namespace Merp.BuildingBlocks.UnitTests.AI;
 public sealed class AnthropicModelClientTests
 {
     private const string SuccessBody = """
-        {"id":"msg_1","type":"message","role":"assistant","model":"claude-opus-5-5",
+        {"id":"msg_1","type":"message","role":"assistant","model":"claude-sonnet-5-5",
          "content":[{"type":"text","text":"{\"summary\":\"ok\"}"}],
          "stop_reason":"end_turn","stop_sequence":null,
          "usage":{"input_tokens":1200,"output_tokens":340,"cache_read_input_tokens":800,"cache_creation_input_tokens":50}}
@@ -33,7 +33,7 @@ public sealed class AnthropicModelClientTests
         handler.Headers["anthropic-beta"].ShouldContain("server-side-fallback-2026-07-01");
 
         var body = handler.Body;
-        body.GetProperty("model").GetString().ShouldBe("claude-opus-5-5");
+        body.GetProperty("model").GetString().ShouldBe("claude-sonnet-5-5");
         body.GetProperty("max_tokens").GetInt32().ShouldBe(4000);
         body.GetProperty("fallbacks").GetString().ShouldBe("default");
         body.TryGetProperty("thinking", out _).ShouldBeFalse();
@@ -52,7 +52,7 @@ public sealed class AnthropicModelClientTests
         message.GetProperty("role").GetString().ShouldBe("user");
         message.GetProperty("content").GetString().ShouldBe("<cv>text</cv>");
 
-        response.ShouldBe(new AiModelResponse("claude-opus-5-5", AiStopReason.Completed, "{\"summary\":\"ok\"}", 1200, 340, 800, 50));
+        response.ShouldBe(new AiModelResponse("claude-sonnet-5-5", AiStopReason.Completed, "{\"summary\":\"ok\"}", 1200, 340, 800, 50));
     }
 
     [Fact]

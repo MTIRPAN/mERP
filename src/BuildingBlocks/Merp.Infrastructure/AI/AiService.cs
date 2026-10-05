@@ -67,17 +67,17 @@ internal sealed partial class AiService(
         catch (AiProviderException exception)
         {
             LogProviderFailed(logger, exception, request.Feature);
-            await RecordAsync(request, current.Model, AiUsageOutcome.Failed, null, started, current.Pricing);
+            await RecordAsync(request, current.Model, AiUsageOutcome.Failed, null, started);
             return AiErrors.Unavailable;
         }
 
         switch (response.StopReason)
         {
             case AiStopReason.Refusal:
-                await RecordAsync(request, response.Model, AiUsageOutcome.Refused, response, started, current.Pricing);
+                await RecordAsync(request, response.Model, AiUsageOutcome.Refused, response, started);
                 return AiErrors.Refused;
             case AiStopReason.MaxTokens:
-                await RecordAsync(request, response.Model, AiUsageOutcome.Truncated, response, started, current.Pricing);
+                await RecordAsync(request, response.Model, AiUsageOutcome.Truncated, response, started);
                 return AiErrors.InvalidOutput;
         }
 
@@ -94,11 +94,11 @@ internal sealed partial class AiService(
 
         if (value is null)
         {
-            await RecordAsync(request, response.Model, AiUsageOutcome.InvalidOutput, response, started, current.Pricing);
+            await RecordAsync(request, response.Model, AiUsageOutcome.InvalidOutput, response, started);
             return AiErrors.InvalidOutput;
         }
 
-        var usage = await RecordAsync(request, response.Model, AiUsageOutcome.Succeeded, response, started, current.Pricing);
+        var usage = await RecordAsync(request, response.Model, AiUsageOutcome.Succeeded, response, started);
         return new AiResponse<T>(value, usage);
     }
 
@@ -107,13 +107,12 @@ internal sealed partial class AiService(
         string model,
         AiUsageOutcome outcome,
         AiModelResponse? response,
-        long started,
-        AiPricingOptions pricing)
+        long started)
     {
         var duration = Stopwatch.GetElapsedTime(started);
         var cost = response is null
             ? 0m
-            : pricing.Cost(response.InputTokens, response.OutputTokens, response.CacheReadTokens, response.CacheWriteTokens);
+            : options.CurrentValue.PricingFor(model).Cost(response.InputTokens, response.OutputTokens, response.CacheReadTokens, response.CacheWriteTokens);
 
         var entry = new AiUsageEntry(
             timeProvider.GetUtcNow(),

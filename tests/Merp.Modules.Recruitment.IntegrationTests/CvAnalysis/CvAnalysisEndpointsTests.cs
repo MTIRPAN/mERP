@@ -70,7 +70,7 @@ public sealed class CvAnalysisEndpointsTests : IClassFixture<RecruitmentFactory>
         var body = (await response.Content.ReadFromJsonAsync<CvAnalysisResponse>(AiSchema.SerializerOptions, Ct))!;
         body.Analysis.Summary.ShouldBe("Kıdemli backend geliştirici.");
         body.Analysis.Match!.Score.ShouldBe(100);
-        body.Model.ShouldBe("claude-opus-5-5");
+        body.Model.ShouldBe("claude-sonnet-5-5");
         body.PromptVersion.ShouldBe(CvAnalysisPrompt.Version);
         body.Redactions.Select(r => r.Kind).ShouldBe(["email", "phone", "url", "name", "sensitive_field"], ignoreOrder: true);
 
@@ -111,7 +111,7 @@ public sealed class CvAnalysisEndpointsTests : IClassFixture<RecruitmentFactory>
         var usage = summary.Features.ShouldHaveSingleItem();
         usage.Feature.ShouldBe(RecruitmentAiFeatures.CvAnalysis);
         usage.Requests.ShouldBeGreaterThanOrEqualTo(1);
-        usage.CostUsd.ShouldBeGreaterThanOrEqualTo(((5_000 * 4m) + (1_000 * 20m)) / 1_000_000m);
+        usage.CostUsd.ShouldBeGreaterThanOrEqualTo(((5_000 * 2m) + (1_000 * 10m)) / 1_000_000m);
     }
 
     [Fact]
