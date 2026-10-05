@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Text.Json.Serialization;
 using Merp.Infrastructure.Localization;
 using Merp.Web.Errors;
 using Merp.Web.Health;
@@ -36,6 +37,10 @@ public static class WebHostExtensions
         services.AddHttpContextAccessor();
         services.AddProblemDetails(options => options.CustomizeProblemDetails = LocalizedProblemDetails.Customize);
         services.AddExceptionHandler<GlobalExceptionHandler>();
+
+        // Numbers are JSON numbers only, so the OpenAPI document (and the generated web client) types them as
+        // numbers rather than "number or numeric string".
+        services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
 
         // Authentication: Keycloak access tokens (D5). Claims keep their JWT names (sub, tenant).
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

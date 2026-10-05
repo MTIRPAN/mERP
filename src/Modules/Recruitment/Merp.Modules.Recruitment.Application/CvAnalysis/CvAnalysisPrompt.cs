@@ -47,7 +47,7 @@ internal static class CvAnalysisPrompt
     {
         var language = CultureInfo.GetCultureInfo(culture);
         var input = new StringBuilder()
-            .Append("Output language: ").Append(language.EnglishName).Append(" (").Append(language.Name).AppendLine(")")
+            .Append("Output language: ").Append(language.EnglishName).Append(", ").AppendLine(language.Name)
             .AppendLine();
 
         if (string.IsNullOrWhiteSpace(jobRequirements))

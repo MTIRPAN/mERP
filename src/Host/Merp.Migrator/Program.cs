@@ -1,4 +1,6 @@
 using Merp.Infrastructure;
+using Merp.Infrastructure.AI;
+using Merp.Infrastructure.Documents;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Infrastructure;
@@ -19,6 +21,9 @@ builder.Configuration.AddCommandLine(args, new Dictionary<string, string> { ["--
 
 builder.Services.AddMerpInfrastructure();
 builder.Services.AddMerpMultiTenancy(builder.Configuration);
+// Module registrations include their request handlers, whose dependencies must resolve even though none runs here.
+builder.Services.AddMerpAi(builder.Configuration);
+builder.Services.AddMerpDocuments();
 builder.Services.AddPlatformInfrastructure();
 builder.Services.AddRecruitmentInfrastructure();
 
