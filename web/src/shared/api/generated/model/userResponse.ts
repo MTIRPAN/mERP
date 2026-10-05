@@ -6,6 +6,8 @@
  */
 
 export interface UserResponse {
+  /** @nullable */
+  id: string | null;
   subject: string;
   /** @nullable */
   userName: string | null;

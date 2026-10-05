@@ -3,6 +3,8 @@ using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.Locations;
+using Merp.Modules.Platform.Domain.Roles;
+using Merp.Modules.Platform.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Merp.Modules.Platform.Infrastructure.Persistence;
@@ -20,4 +22,10 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<Province> Provinces => Set<Province>();
 
     public DbSet<District> Districts => Set<District>();
+
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<Role> Roles => Set<Role>();
+
+    public DbSet<Permission> Permissions => Set<Permission>();
 }

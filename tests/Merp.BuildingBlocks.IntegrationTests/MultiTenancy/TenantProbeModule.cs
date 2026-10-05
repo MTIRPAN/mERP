@@ -29,7 +29,12 @@ public sealed class TenantProbeModule : IModule
         Results.Ok(new TenantProbe(
             tenant.Tenant?.Code,
             context.User.Identity?.IsAuthenticated == true,
-            await db.AuditEntries.Select(e => e.EntityType).ToListAsync(context.RequestAborted)));
+            await db.AuditEntries.Where(e => EF.Functions.Like(e.EntityType, TenantProbe.MarkerPattern)).Select(e => e.EntityType).ToListAsync(context.RequestAborted)));
 }
 
-public sealed record TenantProbe(string? Tenant, bool Authenticated, List<string> Data);
+/// <summary>Data holds the markers seeded into the tenant database (audit rows of type <c>secret-of-*</c>).</summary>
+public sealed record TenantProbe(string? Tenant, bool Authenticated, List<string> Data)
+{
+    /// <summary>Other audit rows (seeded roles, provisioned users) are not markers.</summary>
+    public const string MarkerPattern = "secret-of-%";
+}

@@ -38,7 +38,7 @@ dotnet ef migrations add <Name> \
   -s src/Host/Merp.Api -c HrDbContext -o Persistence/Migrations
 ```
 
-Geliştirme kullanıcıları (Keycloak realm importundan gelir): `admin / admin` (tenant admin), `ik / ik`, `yonetici / yonetici`, `calisan / calisan`.
+Geliştirme kullanıcıları (Keycloak realm importundan gelir): `admin / admin` (Sistem Yöneticisi), `ik / ik` (İK Yöneticisi), `yonetici / yonetici` (Yönetici), `calisan / calisan` (Çalışan). Rolleri ilk girişte `Platform:Bootstrap:Users` ayarından alırlar (D26).
 
 ## Proje yapısı
 

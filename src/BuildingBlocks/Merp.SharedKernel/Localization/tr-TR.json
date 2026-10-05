@@ -40,6 +40,7 @@
   "common.errors.payload_too_large": "Gönderilen veri çok büyük.",
   "common.errors.invalid_company_header": "Seçili şirket bilgisi geçersiz.",
   "common.errors.service_unavailable": "Hizmet geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.",
+  "common.errors.user_inactive": "Hesabınız pasif durumda. Sistem yöneticinize başvurun.",
   "common.errors.ai_disabled": "Yapay zeka özelliği bu hesap için etkin değil. Sistem yöneticinize başvurun.",
   "common.errors.ai_budget_exceeded": "Bu ayki yapay zeka kullanım bütçesi doldu. Sistem yöneticinize başvurun.",
   "common.errors.ai_unavailable": "Yapay zeka hizmetine şu anda ulaşılamıyor. Lütfen biraz sonra tekrar deneyin.",

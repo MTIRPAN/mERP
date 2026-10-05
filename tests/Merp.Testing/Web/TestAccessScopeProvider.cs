@@ -1,5 +1,4 @@
 using Merp.Application.Abstractions.Security;
-using Merp.Web.Security;
 using Microsoft.AspNetCore.Http;
 
 namespace Merp.Testing.Web;
@@ -26,6 +25,29 @@ public sealed class TestAccessScopeProvider(IHttpContextAccessor httpContextAcce
         return string.IsNullOrWhiteSpace(header)
             ? [AccessScope.Tenant]
             : AccessScopeParser.Parse(header.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+    }
+}
+
+/// <summary>Parses <c>Type</c> or <c>Type:id</c> entries; malformed entries are skipped.</summary>
+public static class AccessScopeParser
+{
+    public static IReadOnlyList<AccessScope> Parse(IEnumerable<string> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        var scopes = new List<AccessScope>();
+        foreach (var parts in entries.Select(e => e.Split(':', 2, StringSplitOptions.TrimEntries)).Where(p => p[0].Length > 0))
+        {
+            if (parts.Length == 1)
+            {
+                scopes.Add(new AccessScope(parts[0]));
+            }
+            else if (Guid.TryParse(parts[1], out var id))
+            {
+                scopes.Add(new AccessScope(parts[0], id));
+            }
+        }
+
+        return scopes;
     }
 }
 

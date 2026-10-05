@@ -65,8 +65,27 @@ public sealed class MediatorPipelineTests : IAsyncDisposable
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.Version.ShouldBe(7);
-        Journal.Entries.ShouldBe(["begin", "handler", "commit"]);
+        Journal.Entries.ShouldBe(["begin", "handler", "commit", "after-commit"]);
         UnitOfWork.Outbox.ShouldHaveSingleItem().ShouldBeOfType<ThingCreated>().Name.ShouldBe("desk");
+    }
+
+    [Theory]
+    [InlineData("fail")]
+    [InlineData("throw")]
+    public async Task FailedCommand_DropsItsAfterCommitActions(string name)
+    {
+        try
+        {
+            (await Sender.Send(new CreateThing(name), Ct)).IsFailure.ShouldBeTrue();
+        }
+        catch (InvalidOperationException)
+        {
+            // the handler threw on purpose
+        }
+
+        Journal.Entries.ShouldNotContain("after-commit");
+        (await Sender.Send(new CreateThing("desk"), Ct)).IsSuccess.ShouldBeTrue();
+        Journal.Entries.Count(e => e == "after-commit").ShouldBe(1);
     }
 
     [Fact]

@@ -31,4 +31,16 @@ public static class PlatformPermissions
         public const string Read = "platform.branches.read";
         public const string Manage = "platform.branches.manage";
     }
+
+    public static class Users
+    {
+        public const string Read = "platform.users.read";
+        public const string Manage = "platform.users.manage";
+    }
+
+    public static class Roles
+    {
+        public const string Read = "platform.roles.read";
+        public const string Manage = "platform.roles.manage";
+    }
 }

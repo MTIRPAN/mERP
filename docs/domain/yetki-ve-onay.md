@@ -52,8 +52,12 @@ Bu iki yapı tüm modüllerde ortaktır. Yeni bir modül yazarken önce bu belge
    - Kontrol `IApprovalAccess.HasTaskAsync(userId, documentType, documentId)` ile yapılır.
 
 **Performans:**
-- Kullanıcının etkin yetki ve kapsamları HybridCache'te tutulur. Tag: `user:{id}:perm`.
-- Rol, atama veya organizasyon değişince tag silinir.
+- Kullanıcının etkin yetki ve kapsamları HybridCache'te tutulur. Tag: `{kiracı}:user:{id}:perm`; rol değişikliklerinde kiracı geneli `{kiracı}:perm`.
+- Rol, atama, aktiflik veya organizasyon değişince tag commit'ten sonra silinir (D26).
+
+**Geçerlilik:** Atama, başlangıç ve bitiş günleri dahil Europe/Istanbul takvimine göre bugün geçerliyse yetki verir. Pasif kullanıcının hiçbir ataması geçerli değildir.
+
+**Yönetim:** Kullanıcı ve rol yönetimi kiracı düzeyindedir: `platform.users.*` ve `platform.roles.*` yalnızca Tenant kapsamıyla geçerlidir. Son Sistem Yöneticisi ataması kaldırılamaz (D26).
 
 ### 1.4 Sistem rolleri (seed)
 

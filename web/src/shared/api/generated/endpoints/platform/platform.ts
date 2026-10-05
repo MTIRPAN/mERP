@@ -22,24 +22,39 @@ import type {
 
 import type {
   AiUsageSummaryResponse,
+  AssignRoleCommand,
   BranchDetails,
+  ChangeAssignmentCommand,
   CompanyDetails,
   CreateBranchCommand,
   CreateCompanyCommand,
+  CreateRoleCommand,
+  CreateUserCommand,
   EntityCreatedResponse,
   GetAiUsageSummaryParams,
   GetLocalizationBundle200,
   HttpValidationProblemDetails,
   ListBranchesParams,
   ListCompaniesParams,
+  ListRolesParams,
+  ListUsersParams,
   LocationOption,
   MeResponse,
   PagedResultOfBranchListItem,
   PagedResultOfCompanyListItem,
+  PagedResultOfRoleListItem,
+  PagedResultOfUserListItem,
+  PermissionModuleNode,
   ProblemDetails,
+  RoleDetails,
+  ScopeTypeItem,
+  SetUserActiveCommand,
   SystemInfoResponse,
   UpdateBranchCommand,
   UpdateCompanyCommand,
+  UpdateMyPreferencesCommand,
+  UpdateRoleCommand,
+  UserDetails,
 } from '../../model';
 
 import { customFetch } from '../../../http';
@@ -425,6 +440,104 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = Err
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getUpdateMyPreferencesUrl = () => {
+  return `/api/platform/me/preferences`;
+};
+
+/**
+ * @summary The signed-in user's preferences (culture); a null culture follows the browser
+ */
+export const updateMyPreferences = async (
+  updateMyPreferencesCommand: UpdateMyPreferencesCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateMyPreferencesUrl(), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateMyPreferencesCommand),
+  });
+};
+
+export const getUpdateMyPreferencesMutationKey = () => ['updateMyPreferences'] as const;
+
+export const getUpdateMyPreferencesMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyPreferences>>,
+    TError,
+    UpdateMyPreferencesMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMyPreferences>>,
+  TError,
+  UpdateMyPreferencesMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateMyPreferencesMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMyPreferences>>,
+    UpdateMyPreferencesMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateMyPreferences(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyPreferencesMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyPreferences>>>;
+export type UpdateMyPreferencesMutationBody = UpdateMyPreferencesCommand;
+export type UpdateMyPreferencesMutationError = ErrorType<HttpValidationProblemDetails>;
+export type UpdateMyPreferencesMutationVariables = { data: UpdateMyPreferencesCommand };
+
+/**
+ * @summary The signed-in user's preferences (culture); a null culture follows the browser
+ */
+export const useUpdateMyPreferences = <TError = ErrorType<HttpValidationProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateMyPreferences>>,
+      TError,
+      UpdateMyPreferencesMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateMyPreferences>>,
+  TError,
+  UpdateMyPreferencesMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateMyPreferencesMutationOptions(options), queryClient);
+};
 export const getGetAiUsageSummaryUrl = (params?: GetAiUsageSummaryParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -762,6 +875,220 @@ export function useListDistricts<TData = Awaited<ReturnType<typeof listDistricts
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListDistrictsQueryOptions(provinceCode, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetPermissionTreeUrl = () => {
+  return `/api/platform/permissions`;
+};
+
+/**
+ * Requires permission: platform.roles.read.
+ * @summary Permission catalog as a module → resource → permission tree with localized labels
+ */
+export const getPermissionTree = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PermissionModuleNode[]> => {
+  return customFetch<PermissionModuleNode[]>(getGetPermissionTreeUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetPermissionTreeQueryKey = () => {
+  return [`/api/platform/permissions`] as const;
+};
+
+export const getGetPermissionTreeQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPermissionTree>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissionTree>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPermissionTreeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPermissionTree>>> = ({ signal }) =>
+    getPermissionTree({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPermissionTree>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPermissionTreeQueryResult = NonNullable<Awaited<ReturnType<typeof getPermissionTree>>>;
+export type GetPermissionTreeQueryError = ErrorType<unknown>;
+
+export function useGetPermissionTree<
+  TData = Awaited<ReturnType<typeof getPermissionTree>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissionTree>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPermissionTree>>,
+          TError,
+          Awaited<ReturnType<typeof getPermissionTree>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPermissionTree<
+  TData = Awaited<ReturnType<typeof getPermissionTree>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissionTree>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPermissionTree>>,
+          TError,
+          Awaited<ReturnType<typeof getPermissionTree>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPermissionTree<
+  TData = Awaited<ReturnType<typeof getPermissionTree>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissionTree>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Permission catalog as a module → resource → permission tree with localized labels
+ */
+
+export function useGetPermissionTree<
+  TData = Awaited<ReturnType<typeof getPermissionTree>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPermissionTree>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPermissionTreeQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListScopeTypesUrl = () => {
+  return `/api/platform/scope-types`;
+};
+
+/**
+ * Requires permission: platform.users.read.
+ * @summary Data scope types a role assignment can use
+ */
+export const listScopeTypes = async (options?: Parameters<typeof customFetch>[1]): Promise<ScopeTypeItem[]> => {
+  return customFetch<ScopeTypeItem[]>(getListScopeTypesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListScopeTypesQueryKey = () => {
+  return [`/api/platform/scope-types`] as const;
+};
+
+export const getListScopeTypesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listScopeTypes>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listScopeTypes>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListScopeTypesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listScopeTypes>>> = ({ signal }) =>
+    listScopeTypes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listScopeTypes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListScopeTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listScopeTypes>>>;
+export type ListScopeTypesQueryError = ErrorType<unknown>;
+
+export function useListScopeTypes<TData = Awaited<ReturnType<typeof listScopeTypes>>, TError = ErrorType<unknown>>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listScopeTypes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listScopeTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listScopeTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListScopeTypes<TData = Awaited<ReturnType<typeof listScopeTypes>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listScopeTypes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listScopeTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listScopeTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListScopeTypes<TData = Awaited<ReturnType<typeof listScopeTypes>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listScopeTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Data scope types a role assignment can use
+ */
+
+export function useListScopeTypes<TData = Awaited<ReturnType<typeof listScopeTypes>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listScopeTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListScopeTypesQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -1597,4 +1924,1239 @@ export const useUpdateBranch = <TError = ErrorType<HttpValidationProblemDetails 
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof updateBranch>>, TError, UpdateBranchMutationVariables, TContext> => {
   return useMutation(getUpdateBranchMutationOptions(options), queryClient);
+};
+export const getListUsersUrl = (params?: ListUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/platform/users?${stringifiedParams}` : `/api/platform/users`;
+};
+
+/**
+ * Requires permission: platform.users.read.
+ * @summary Users of the tenant with the roles in force today
+ */
+export const listUsers = async (
+  params?: ListUsersParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfUserListItem> => {
+  return customFetch<PagedResultOfUserListItem>(getListUsersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListUsersQueryKey = (params?: ListUsersParams) => {
+  return [`/api/platform/users`, ...(params ? [params] : [])] as const;
+};
+
+export const getListUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsers>>> = ({ signal }) =>
+    listUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListUsersQueryResult = NonNullable<Awaited<ReturnType<typeof listUsers>>>;
+export type ListUsersQueryError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: undefined | ListUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<Awaited<ReturnType<typeof listUsers>>, TError, Awaited<ReturnType<typeof listUsers>>>,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listUsers>>,
+          TError,
+          Awaited<ReturnType<typeof listUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Users of the tenant with the roles in force today
+ */
+
+export function useListUsers<
+  TData = Awaited<ReturnType<typeof listUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateUserUrl = () => {
+  return `/api/platform/users`;
+};
+
+/**
+ * Requires permission: platform.users.manage.
+ * @summary Create a user in Keycloak and send the invitation e-mail
+ */
+export const createUser = async (
+  createUserCommand: CreateUserCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateUserUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createUserCommand),
+  });
+};
+
+export const getCreateUserMutationKey = () => ['createUser'] as const;
+
+export const getCreateUserMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError, CreateUserMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError, CreateUserMutationVariables, TContext> => {
+  const mutationKey = getCreateUserMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createUser>>, CreateUserMutationVariables> = (props) => {
+    const { data } = props ?? {};
+
+    return createUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof createUser>>>;
+export type CreateUserMutationBody = CreateUserCommand;
+export type CreateUserMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateUserMutationVariables = { data: CreateUserCommand };
+
+/**
+ * @summary Create a user in Keycloak and send the invitation e-mail
+ */
+export const useCreateUser = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createUser>>,
+      TError,
+      CreateUserMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof createUser>>, TError, CreateUserMutationVariables, TContext> => {
+  return useMutation(getCreateUserMutationOptions(options), queryClient);
+};
+export const getGetUserUrl = (id: string) => {
+  return `/api/platform/users/${id}`;
+};
+
+/**
+ * Requires permission: platform.users.read.
+ * @summary A user with role assignments
+ */
+export const getUser = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<UserDetails> => {
+  return customFetch<UserDetails>(getGetUserUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetUserQueryKey = (id: string) => {
+  return [`/api/platform/users/${id}`] as const;
+};
+
+export const getGetUserQueryOptions = <TData = Awaited<ReturnType<typeof getUser>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUserQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUser>>> = ({ signal }) =>
+    getUser(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUser>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetUserQueryResult = NonNullable<Awaited<ReturnType<typeof getUser>>>;
+export type GetUserQueryError = ErrorType<ProblemDetails>;
+
+export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<Awaited<ReturnType<typeof getUser>>, TError, Awaited<ReturnType<typeof getUser>>>,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<Awaited<ReturnType<typeof getUser>>, TError, Awaited<ReturnType<typeof getUser>>>,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A user with role assignments
+ */
+
+export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetUserQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSetUserActiveUrl = (id: string) => {
+  return `/api/platform/users/${id}/active`;
+};
+
+/**
+ * Requires permission: platform.users.manage.
+ * @summary Activate or deactivate a user (also in Keycloak)
+ */
+export const setUserActive = async (
+  id: string,
+  setUserActiveCommand: SetUserActiveCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getSetUserActiveUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setUserActiveCommand),
+  });
+};
+
+export const getSetUserActiveMutationKey = () => ['setUserActive'] as const;
+
+export const getSetUserActiveMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setUserActive>>,
+    TError,
+    SetUserActiveMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof setUserActive>>, TError, SetUserActiveMutationVariables, TContext> => {
+  const mutationKey = getSetUserActiveMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof setUserActive>>, SetUserActiveMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return setUserActive(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetUserActiveMutationResult = NonNullable<Awaited<ReturnType<typeof setUserActive>>>;
+export type SetUserActiveMutationBody = SetUserActiveCommand;
+export type SetUserActiveMutationError = ErrorType<ProblemDetails>;
+export type SetUserActiveMutationVariables = { id: string; data: SetUserActiveCommand };
+
+/**
+ * @summary Activate or deactivate a user (also in Keycloak)
+ */
+export const useSetUserActive = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setUserActive>>,
+      TError,
+      SetUserActiveMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof setUserActive>>, TError, SetUserActiveMutationVariables, TContext> => {
+  return useMutation(getSetUserActiveMutationOptions(options), queryClient);
+};
+export const getSendPasswordResetUrl = (id: string) => {
+  return `/api/platform/users/${id}/password-reset`;
+};
+
+/**
+ * Requires permission: platform.users.manage.
+ * @summary E-mail the user a link to set a new password
+ */
+export const sendPasswordReset = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getSendPasswordResetUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getSendPasswordResetMutationKey = () => ['sendPasswordReset'] as const;
+
+export const getSendPasswordResetMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendPasswordReset>>,
+    TError,
+    SendPasswordResetMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendPasswordReset>>,
+  TError,
+  SendPasswordResetMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSendPasswordResetMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendPasswordReset>>,
+    SendPasswordResetMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return sendPasswordReset(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof sendPasswordReset>>>;
+
+export type SendPasswordResetMutationError = ErrorType<ProblemDetails>;
+export type SendPasswordResetMutationVariables = { id: string };
+
+/**
+ * @summary E-mail the user a link to set a new password
+ */
+export const useSendPasswordReset = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof sendPasswordReset>>,
+      TError,
+      SendPasswordResetMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof sendPasswordReset>>,
+  TError,
+  SendPasswordResetMutationVariables,
+  TContext
+> => {
+  return useMutation(getSendPasswordResetMutationOptions(options), queryClient);
+};
+export const getAssignRoleUrl = (id: string) => {
+  return `/api/platform/users/${id}/assignments`;
+};
+
+/**
+ * Requires permission: platform.users.manage.
+ * @summary Give the user a role in a data scope, optionally for a period
+ */
+export const assignRole = async (
+  id: string,
+  assignRoleCommand: AssignRoleCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getAssignRoleUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(assignRoleCommand),
+  });
+};
+
+export const getAssignRoleMutationKey = () => ['assignRole'] as const;
+
+export const getAssignRoleMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof assignRole>>, TError, AssignRoleMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof assignRole>>, TError, AssignRoleMutationVariables, TContext> => {
+  const mutationKey = getAssignRoleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignRole>>, AssignRoleMutationVariables> = (props) => {
+    const { id, data } = props ?? {};
+
+    return assignRole(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AssignRoleMutationResult = NonNullable<Awaited<ReturnType<typeof assignRole>>>;
+export type AssignRoleMutationBody = AssignRoleCommand;
+export type AssignRoleMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AssignRoleMutationVariables = { id: string; data: AssignRoleCommand };
+
+/**
+ * @summary Give the user a role in a data scope, optionally for a period
+ */
+export const useAssignRole = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof assignRole>>,
+      TError,
+      AssignRoleMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof assignRole>>, TError, AssignRoleMutationVariables, TContext> => {
+  return useMutation(getAssignRoleMutationOptions(options), queryClient);
+};
+export const getChangeAssignmentUrl = (id: string, assignmentId: string) => {
+  return `/api/platform/users/${id}/assignments/${assignmentId}`;
+};
+
+/**
+ * Requires permission: platform.users.manage.
+ * @summary Change the period of a role assignment
+ */
+export const changeAssignment = async (
+  id: string,
+  assignmentId: string,
+  changeAssignmentCommand: ChangeAssignmentCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getChangeAssignmentUrl(id, assignmentId), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(changeAssignmentCommand),
+  });
+};
+
+export const getChangeAssignmentMutationKey = () => ['changeAssignment'] as const;
+
+export const getChangeAssignmentMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof changeAssignment>>,
+    TError,
+    ChangeAssignmentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof changeAssignment>>,
+  TError,
+  ChangeAssignmentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getChangeAssignmentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof changeAssignment>>,
+    ChangeAssignmentMutationVariables
+  > = (props) => {
+    const { id, assignmentId, data } = props ?? {};
+
+    return changeAssignment(id, assignmentId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ChangeAssignmentMutationResult = NonNullable<Awaited<ReturnType<typeof changeAssignment>>>;
+export type ChangeAssignmentMutationBody = ChangeAssignmentCommand;
+export type ChangeAssignmentMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type ChangeAssignmentMutationVariables = { id: string; assignmentId: string; data: ChangeAssignmentCommand };
+
+/**
+ * @summary Change the period of a role assignment
+ */
+export const useChangeAssignment = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof changeAssignment>>,
+      TError,
+      ChangeAssignmentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof changeAssignment>>,
+  TError,
+  ChangeAssignmentMutationVariables,
+  TContext
+> => {
+  return useMutation(getChangeAssignmentMutationOptions(options), queryClient);
+};
+export const getRemoveAssignmentUrl = (id: string, assignmentId: string) => {
+  return `/api/platform/users/${id}/assignments/${assignmentId}`;
+};
+
+/**
+ * Requires permission: platform.users.manage.
+ * @summary Withdraw a role assignment
+ */
+export const removeAssignment = async (
+  id: string,
+  assignmentId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getRemoveAssignmentUrl(id, assignmentId), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveAssignmentMutationKey = () => ['removeAssignment'] as const;
+
+export const getRemoveAssignmentMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeAssignment>>,
+    TError,
+    RemoveAssignmentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeAssignment>>,
+  TError,
+  RemoveAssignmentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoveAssignmentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeAssignment>>,
+    RemoveAssignmentMutationVariables
+  > = (props) => {
+    const { id, assignmentId } = props ?? {};
+
+    return removeAssignment(id, assignmentId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveAssignmentMutationResult = NonNullable<Awaited<ReturnType<typeof removeAssignment>>>;
+
+export type RemoveAssignmentMutationError = ErrorType<ProblemDetails>;
+export type RemoveAssignmentMutationVariables = { id: string; assignmentId: string };
+
+/**
+ * @summary Withdraw a role assignment
+ */
+export const useRemoveAssignment = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeAssignment>>,
+      TError,
+      RemoveAssignmentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeAssignment>>,
+  TError,
+  RemoveAssignmentMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoveAssignmentMutationOptions(options), queryClient);
+};
+export const getListRolesUrl = (params?: ListRolesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/platform/roles?${stringifiedParams}` : `/api/platform/roles`;
+};
+
+/**
+ * Requires permission: platform.roles.read.
+ * @summary Roles of the tenant
+ */
+export const listRoles = async (
+  params?: ListRolesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfRoleListItem> => {
+  return customFetch<PagedResultOfRoleListItem>(getListRolesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListRolesQueryKey = (params?: ListRolesParams) => {
+  return [`/api/platform/roles`, ...(params ? [params] : [])] as const;
+};
+
+export const getListRolesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listRoles>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListRolesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListRolesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listRoles>>> = ({ signal }) =>
+    listRoles(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listRoles>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListRolesQueryResult = NonNullable<Awaited<ReturnType<typeof listRoles>>>;
+export type ListRolesQueryError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+
+export function useListRoles<
+  TData = Awaited<ReturnType<typeof listRoles>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: undefined | ListRolesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<Awaited<ReturnType<typeof listRoles>>, TError, Awaited<ReturnType<typeof listRoles>>>,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListRoles<
+  TData = Awaited<ReturnType<typeof listRoles>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListRolesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRoles>>,
+          TError,
+          Awaited<ReturnType<typeof listRoles>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListRoles<
+  TData = Awaited<ReturnType<typeof listRoles>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListRolesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Roles of the tenant
+ */
+
+export function useListRoles<
+  TData = Awaited<ReturnType<typeof listRoles>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListRolesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListRolesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateRoleUrl = () => {
+  return `/api/platform/roles`;
+};
+
+/**
+ * Requires permission: platform.roles.manage.
+ * @summary Create a custom role
+ */
+export const createRole = async (
+  createRoleCommand: CreateRoleCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateRoleUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createRoleCommand),
+  });
+};
+
+export const getCreateRoleMutationKey = () => ['createRole'] as const;
+
+export const getCreateRoleMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof createRole>>, TError, CreateRoleMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof createRole>>, TError, CreateRoleMutationVariables, TContext> => {
+  const mutationKey = getCreateRoleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRole>>, CreateRoleMutationVariables> = (props) => {
+    const { data } = props ?? {};
+
+    return createRole(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateRoleMutationResult = NonNullable<Awaited<ReturnType<typeof createRole>>>;
+export type CreateRoleMutationBody = CreateRoleCommand;
+export type CreateRoleMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateRoleMutationVariables = { data: CreateRoleCommand };
+
+/**
+ * @summary Create a custom role
+ */
+export const useCreateRole = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createRole>>,
+      TError,
+      CreateRoleMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof createRole>>, TError, CreateRoleMutationVariables, TContext> => {
+  return useMutation(getCreateRoleMutationOptions(options), queryClient);
+};
+export const getGetRoleUrl = (id: string) => {
+  return `/api/platform/roles/${id}`;
+};
+
+/**
+ * Requires permission: platform.roles.read.
+ * @summary A role with its permissions
+ */
+export const getRole = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<RoleDetails> => {
+  return customFetch<RoleDetails>(getGetRoleUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetRoleQueryKey = (id: string) => {
+  return [`/api/platform/roles/${id}`] as const;
+};
+
+export const getGetRoleQueryOptions = <TData = Awaited<ReturnType<typeof getRole>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRole>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRoleQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRole>>> = ({ signal }) =>
+    getRole(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRole>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRoleQueryResult = NonNullable<Awaited<ReturnType<typeof getRole>>>;
+export type GetRoleQueryError = ErrorType<ProblemDetails>;
+
+export function useGetRole<TData = Awaited<ReturnType<typeof getRole>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRole>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<Awaited<ReturnType<typeof getRole>>, TError, Awaited<ReturnType<typeof getRole>>>,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRole<TData = Awaited<ReturnType<typeof getRole>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRole>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<Awaited<ReturnType<typeof getRole>>, TError, Awaited<ReturnType<typeof getRole>>>,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRole<TData = Awaited<ReturnType<typeof getRole>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRole>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A role with its permissions
+ */
+
+export function useGetRole<TData = Awaited<ReturnType<typeof getRole>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRole>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRoleQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateRoleUrl = (id: string) => {
+  return `/api/platform/roles/${id}`;
+};
+
+/**
+ * Requires permission: platform.roles.manage.
+ * @summary Rename a role and replace its permissions; holders are affected from their next request
+ */
+export const updateRole = async (
+  id: string,
+  updateRoleCommand: UpdateRoleCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateRoleUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateRoleCommand),
+  });
+};
+
+export const getUpdateRoleMutationKey = () => ['updateRole'] as const;
+
+export const getUpdateRoleMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof updateRole>>, TError, UpdateRoleMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof updateRole>>, TError, UpdateRoleMutationVariables, TContext> => {
+  const mutationKey = getUpdateRoleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRole>>, UpdateRoleMutationVariables> = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateRole(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateRoleMutationResult = NonNullable<Awaited<ReturnType<typeof updateRole>>>;
+export type UpdateRoleMutationBody = UpdateRoleCommand;
+export type UpdateRoleMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateRoleMutationVariables = { id: string; data: UpdateRoleCommand };
+
+/**
+ * @summary Rename a role and replace its permissions; holders are affected from their next request
+ */
+export const useUpdateRole = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateRole>>,
+      TError,
+      UpdateRoleMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof updateRole>>, TError, UpdateRoleMutationVariables, TContext> => {
+  return useMutation(getUpdateRoleMutationOptions(options), queryClient);
+};
+export const getDeleteRoleUrl = (id: string) => {
+  return `/api/platform/roles/${id}`;
+};
+
+/**
+ * Requires permission: platform.roles.manage.
+ * @summary Delete a custom role nobody holds
+ */
+export const deleteRole = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getDeleteRoleUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getDeleteRoleMutationKey = () => ['deleteRole'] as const;
+
+export const getDeleteRoleMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof deleteRole>>, TError, DeleteRoleMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof deleteRole>>, TError, DeleteRoleMutationVariables, TContext> => {
+  const mutationKey = getDeleteRoleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteRole>>, DeleteRoleMutationVariables> = (props) => {
+    const { id } = props ?? {};
+
+    return deleteRole(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteRoleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteRole>>>;
+
+export type DeleteRoleMutationError = ErrorType<ProblemDetails>;
+export type DeleteRoleMutationVariables = { id: string };
+
+/**
+ * @summary Delete a custom role nobody holds
+ */
+export const useDeleteRole = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteRole>>,
+      TError,
+      DeleteRoleMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof deleteRole>>, TError, DeleteRoleMutationVariables, TContext> => {
+  return useMutation(getDeleteRoleMutationOptions(options), queryClient);
+};
+export const getResetRoleUrl = (id: string) => {
+  return `/api/platform/roles/${id}/reset`;
+};
+
+/**
+ * Requires permission: platform.roles.manage.
+ * @summary Reset a system role to its default name and permissions
+ */
+export const resetRole = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getResetRoleUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getResetRoleMutationKey = () => ['resetRole'] as const;
+
+export const getResetRoleMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof resetRole>>, TError, ResetRoleMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof resetRole>>, TError, ResetRoleMutationVariables, TContext> => {
+  const mutationKey = getResetRoleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetRole>>, ResetRoleMutationVariables> = (props) => {
+    const { id } = props ?? {};
+
+    return resetRole(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResetRoleMutationResult = NonNullable<Awaited<ReturnType<typeof resetRole>>>;
+
+export type ResetRoleMutationError = ErrorType<ProblemDetails>;
+export type ResetRoleMutationVariables = { id: string };
+
+/**
+ * @summary Reset a system role to its default name and permissions
+ */
+export const useResetRole = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof resetRole>>, TError, ResetRoleMutationVariables, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof resetRole>>, TError, ResetRoleMutationVariables, TContext> => {
+  return useMutation(getResetRoleMutationOptions(options), queryClient);
 };
