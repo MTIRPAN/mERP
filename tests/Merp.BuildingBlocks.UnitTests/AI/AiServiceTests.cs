@@ -24,7 +24,7 @@ public sealed class AiServiceTests
     private readonly AiOptions _options = new()
     {
         Provider = AiProvider.Anthropic,
-        Defaults = new AiTenantOptions { Enabled = true, Features = ["recruitment.*"], MonthlyBudgetUsd = 0 },
+        Defaults = new AiTenantOptions { Enabled = true, Features = ["recruitment.*"], MonthlyBudgetUsd = 0, TransferBasis = AiTransferBasis.StandardContract },
     };
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -61,6 +61,17 @@ public sealed class AiServiceTests
 
         service.IsEnabled(Feature).ShouldBeFalse();
         (await service.GenerateAsync<Output>(Request(), Ct)).Error.ShouldBe(AiErrors.Disabled);
+    }
+
+    [Fact]
+    public async Task Disabled_WhenNoKvkkTransferBasisIsRecorded()
+    {
+        _options.Defaults.TransferBasis = null;
+
+        var result = await CreateService().GenerateAsync<Output>(Request(), Ct);
+
+        result.Error.ShouldBe(AiErrors.Disabled);
+        await _client.DidNotReceive().CompleteAsync(Arg.Any<AiModelRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

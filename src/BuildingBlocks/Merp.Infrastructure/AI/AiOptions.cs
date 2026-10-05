@@ -47,7 +47,9 @@ public sealed class AiOptions
         return new AiTenantSettings(
             tenant?.Enabled ?? Defaults.Enabled ?? false,
             tenant?.Features ?? Defaults.Features ?? [],
-            tenant?.MonthlyBudgetUsd ?? Defaults.MonthlyBudgetUsd ?? 0m);
+            tenant?.MonthlyBudgetUsd ?? Defaults.MonthlyBudgetUsd ?? 0m,
+            tenant?.TransferBasis ?? Defaults.TransferBasis,
+            tenant?.TransferReference ?? Defaults.TransferReference);
     }
 }
 
@@ -113,12 +115,42 @@ public sealed class AiTenantOptions
 
     /// <summary>Monthly spending limit in USD; 0 means no limit.</summary>
     public decimal? MonthlyBudgetUsd { get; set; }
+
+    /// <summary>
+    /// Legal basis for transferring personal data to the AI provider abroad (KVKK md. 9). AI stays off for the
+    /// tenant until it is set (docs/domain/yapay-zeka.md §10).
+    /// </summary>
+    public AiTransferBasis? TransferBasis { get; set; }
+
+    /// <summary>Evidence of the basis, e.g. the date and registered e-mail (KEP) reference of the KVKK notification.</summary>
+    public string? TransferReference { get; set; }
 }
 
-public sealed record AiTenantSettings(bool Enabled, IReadOnlyList<string> Features, decimal MonthlyBudgetUsd)
+/// <summary>
+/// Bases KVKK md. 9 accepts for regular transfers abroad. Explicit consent is deliberately missing: since
+/// 1 September 2024 it only covers occasional (arızi) transfers, and AI features transfer data regularly.
+/// </summary>
+public enum AiTransferBasis
+{
+    /// <summary>Standard contract approved by the KVKK Board, notified to the Authority within five business days of signing.</summary>
+    StandardContract,
+
+    /// <summary>Binding corporate rules approved by the Board.</summary>
+    BindingCorporateRules,
+
+    /// <summary>An adequacy decision of the Board covers the provider's country and sector.</summary>
+    AdequacyDecision,
+}
+
+public sealed record AiTenantSettings(
+    bool Enabled,
+    IReadOnlyList<string> Features,
+    decimal MonthlyBudgetUsd,
+    AiTransferBasis? TransferBasis = null,
+    string? TransferReference = null)
 {
     public bool Allows(string feature) =>
-        Enabled && Features.Any(pattern =>
+        Enabled && TransferBasis is not null && Features.Any(pattern =>
             string.Equals(pattern, "*", StringComparison.Ordinal)
             || string.Equals(pattern, feature, StringComparison.OrdinalIgnoreCase)
             || (pattern.EndsWith(".*", StringComparison.Ordinal) && feature.StartsWith(pattern[..^1], StringComparison.OrdinalIgnoreCase)));

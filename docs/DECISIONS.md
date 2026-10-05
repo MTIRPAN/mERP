@@ -283,13 +283,13 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 
 **Gerekçe:** NetArchTest bağımlılıkları denetler, bir handler'ın kaç aggregate değiştirdiğini göremez. Kural integration testlerinde gerçek komutlarla doğrulanır.
 
-## D22 — Host altyapı endpoint'leri (öneri — onay bekliyor)
+## D22 — Host altyapı endpoint'leri
 
-**Durum:** Öneri. 0.12 incelemesinde kullanıcı onayına sunuldu. Hangfire panelini kimlerin göreceği kararlaştırıldı (aşağıda); endpoint listesi onay bekliyor.
+**Durum:** Kabul edildi (kullanıcı, 2026-10-05).
 
 **Sorun:** D20 dışında `AllowAnonymous` yasak ve her endpoint bir yetki istiyor (kural 6). Ancak bazı host endpoint'leri modül endpoint'i değildir ve bu modele uymaz.
 
-**Öneri:** Aşağıdaki endpoint'ler mimari testte ayrı bir listeyle (D22) denetlenir:
+**Karar:** Aşağıdaki endpoint'ler mimari testte ayrı bir listeyle (D22) denetlenir:
 
 | Endpoint | Koruma | Gerekçe |
 |---|---|---|
@@ -331,6 +331,11 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 - Başka bir sağlayıcı veya kurum içi model `IAiModelClient` uygulamasıyla eklenir; modüller değişmez.
 - Belgeler sağlayıcıya ham gönderilmez. PDF/DOCX metni sunucuda çıkarılır (`IDocumentTextExtractor`), maskelenir ve sadece metin gönderilir. Böylece fotoğraf, üst ve alt bilgi gibi alanlar hiç çıkmaz.
 
+**Yurt dışına aktarım (KVKK md. 9) — karar (kullanıcı "gerekeni yap" dedi, 2026-10-05):**
+- 7499 sayılı Kanunla değişen md. 9 ve 10.07.2024 tarihli Yönetmelik uyarınca, yeterlilik kararı yoksa düzenli aktarım uygun güvencelerle yapılır: Kurul'un standart sözleşmesi (imzadan itibaren 5 iş günü içinde Kuruma bildirilir), bağlayıcı şirket kuralları veya taahhütname. 1 Eylül 2024'ten sonra açık rıza sadece arızi (ara sıra) aktarımlarda geçerlidir. Yapay zeka özellikleri veriyi düzenli olarak aktardığı için açık rıza dayanak olarak sunulmaz.
+- Ürün güvencesi: Kiracıda aktarım dayanağı (`Ai:Tenants:{kod}:TransferBasis`: `StandardContract`, `BindingCorporateRules` veya `AdequacyDecision`) ve kanıtı (`TransferReference`, örn. bildirim tarihi ve KEP numarası) kayıtlı değilse yapay zeka özellikleri çalışmaz ve menüde görünmez. Dayanak, kullanım ekranında gösterilir.
+- Sözleşmenin imzalanması, Kuruma bildirim, aydınlatma metni ve VERBİS güncellemesi veri sorumlusunun (müşterinin) işidir; kontrol listesi `docs/domain/yapay-zeka.md` §10'da. Hukuk danışmanı onayı gerekir.
+
 **Kiracı, bütçe ve kayıt:**
 - Varsayılan olarak kapalıdır. Kiracı ve özellik bazında açılır (`Ai:Defaults`, `Ai:Tenants:{kod}`). PLAN P11 ile ayarlar ekranına taşınır.
 - Aylık bütçe USD cinsindendir ve Europe/Istanbul takvim ayına göre sayılır. Bütçe dolunca çağrılar 403 `common.errors.ai_budget_exceeded` ile reddedilir.
@@ -345,7 +350,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 
 **Açık sorular (kullanıcıya):**
 1. ~~Sağlayıcı ve model~~ — karar verildi: Claude Sonnet 5.5.
-2. Yurt dışına aktarım (KVKK md. 9): sağlayıcı yurt dışında. Özelliği müşteride açmadan önce hukuki değerlendirme gerekir: standart sözleşme ve Kurul'a bildirim mi, açık rıza mı? Aday aydınlatma ve rıza metinlerine (R1, R8) yapay zekayla işleme maddesi eklenmeli.
+2. ~~Yurt dışına aktarım (KVKK md. 9)~~ — karar verildi: standart sözleşme (veya bağlayıcı şirket kuralları / yeterlilik kararı); dayanak kayıtlı değilse yapay zeka kapalı. Aydınlatma metinlerine yapay zeka maddesi R1 ile eklenecek.
 3. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için. Gereksinimler ve seçenekler `docs/domain/yapay-zeka.md` §9'da. Öneri: talep eden ilk müşteriyle birlikte yapılsın (PLAN A15, A16).
 4. Sıra: Yapay zeka altyapısı ve durumsuz CV analizi plan sırasından önce yapıldı. Diğer özellikler (`docs/PLAN.md` "Yapay zeka" bölümü) ait oldukları görevlerle birlikte mi yapılsın?
 

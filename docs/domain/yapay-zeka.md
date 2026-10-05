@@ -152,3 +152,39 @@ Bazı müşteriler verinin şirket dışına hiç çıkmamasını isteyebilir. �
 2. Claude'u müşterinin kendi bulut hesabı üzerinden kullanmak (Amazon Bedrock, Google Cloud veya Microsoft Foundry; A16). Veri müşterinin bulut sözleşmesi altında işlenir. Bölge seçilebilir, ancak Türkiye dışı olduğu için KVKK md. 9 yine geçerlidir. Bizim için küçük bir iş; sunucu tarafı yedek model ve Batch API bu platformlarda yoktur.
 
 **Öneri:** Kurum içi modeli talep eden ilk müşteriyle birlikte yapmak. Altyapı buna hazır; o güne kadar 1. veya 2. seçenek kullanılır.
+
+## 10. KVKK uyumu (yurt dışına aktarım)
+
+Sağlayıcı (Anthropic) Türkiye dışındadır. Maskelenmiş özgeçmiş metni de kişisel veridir: kişi dolaylı olarak belirlenebilir. Bu yüzden her çağrı KVKK md. 9 kapsamında yurt dışına aktarımdır.
+
+### 10.1 Hukuki çerçeve
+
+7499 sayılı Kanunla değişen md. 9 ve 10.07.2024 tarihli "Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar Hakkında Yönetmelik" uyarınca:
+
+- Yeterlilik kararı varsa aktarım yapılabilir. Bu belge yazılırken sağlayıcının ülkesi için Kurul kararı bilinmemektedir.
+- Yeterlilik kararı yoksa uygun güvence gerekir. En pratik yol, Kurul'un ilan ettiği standart sözleşmedir. Sözleşme imzalandıktan sonra 5 iş günü içinde Kuruma bildirilir (fiziki, KEP veya Kurul'un bildirim modülü). Bağlayıcı şirket kuralları ve taahhütname de birer güvencedir.
+- Açık rıza 1 Eylül 2024'ten sonra yalnızca arızi (ara sıra, tekrarlanmayan) aktarımlarda kullanılabilir. Yapay zeka özellikleri veriyi düzenli aktardığından açık rızaya dayanılmaz.
+
+### 10.2 Üründe yapılanlar
+
+- Kiracıda aktarım dayanağı kayıtlı değilse (`TransferBasis`) yapay zeka özellikleri çalışmaz, menüde görünmez ve API 403 `common.errors.ai_disabled` döner.
+- Dayanak ve kanıtı (`TransferReference`: örn. "Standart sözleşme 12.10.2026, Kurul bildirimi KEP 2026-…") Sistem → Yapay zeka kullanımı ekranında görünür.
+- Veri minimizasyonu (§4): kimlik ve iletişim bilgileri ile özel nitelikli veriler gönderilmez.
+- Otomatik karar yok: sonuçlar öneridir (md. 11/1-g'deki itiraz hakkı korunur).
+- Prompt ve çıktı saklanmaz. Kullanım kaydında sadece kim, ne zaman, hangi özellik ve maliyet bilgisi tutulur.
+
+### 10.3 Veri sorumlusunun (müşterinin) yapacakları
+
+Bunlar yazılımla çözülemez; müşterinin hukuk birimi veya danışmanı yürütür:
+
+1. Sağlayıcıyla Kurul'un standart sözleşmesini imzalamak; uygun modülü seçmek (veri sorumlusundan veri işleyene). SaaS kurulumunda ürünü işleten firma veri işleyendir; o durumda veri işleyenden veri işleyene modülü de gerekir.
+2. Sözleşmeyi imzadan itibaren 5 iş günü içinde Kuruma bildirmek ve bildirim tarihini, referansını `TransferReference` olarak kaydetmek.
+3. Sağlayıcının veri işleme sözleşmesini (DPA) imzalamak. Verinin model eğitiminde kullanılmadığını ve saklama süresini sözleşmede teyit etmek.
+4. Aydınlatma metinlerini güncellemek (md. 10). Aday metnine eklenecek örnek madde (hukuk danışmanınca gözden geçirilmelidir):
+
+   > Başvurunuz, işe alım uzmanlarımıza yardımcı olmak amacıyla yapay zeka destekli bir araçla ön değerlendirmeden geçirilebilir. Bu değerlendirmede ad, iletişim bilgileri ve özel nitelikli kişisel verileriniz çıkarılır; yalnızca eğitim, deneyim ve yetkinliklerinize ilişkin bilgiler, KVKK md. 9 uyarınca imzalanan standart sözleşme kapsamında yurt dışında bulunan hizmet sağlayıcıya aktarılır. Değerlendirme sonucu yalnızca öneri niteliğindedir; işe alım kararını yetkili çalışanlarımız verir. Münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhinize bir sonuç doğduğunu düşünüyorsanız itiraz edebilirsiniz.
+
+5. VERBİS kaydını güncellemek (yükümlüyse): alıcı grubu ve yurt dışına aktarılan veri kategorileri.
+6. Gerekirse çalışanlar için de aynı adımları uygulamak. İK özellikleri (A7–A11) çalışan verisi işler.
+
+Kurum içi model (§9) kullanılırsa veri yurt dışına çıkmaz ve bu bölüm uygulanmaz.

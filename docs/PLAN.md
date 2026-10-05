@@ -794,7 +794,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
   - Aşama şablonları. Aşama alanları: ad, tip, sıra, SLA günü. Tipler: Applied / Screening / Interview / Assessment / Reference / Offer / Hired / Rejected / Withdrawn.
   - Red nedenleri, aday kaynakları, etiketler.
   - E-posta şablonları: başvuru alındı, mülakat daveti, ret, teklif.
-  - KVKK aydınlatma ve açık rıza metinleri: şirket ve kültür bazında, sürümlü.
+  - KVKK aydınlatma ve açık rıza metinleri: şirket ve kültür bazında, sürümlü. Varsayılan aydınlatma metni, yapay zeka özellikleri açıksa yapay zekayla ön değerlendirme ve yurt dışına aktarım maddesini içerir (`docs/domain/yapay-zeka.md` §10.3).
   - Saklama süresi.
 
 **Kabul kriterleri:**
