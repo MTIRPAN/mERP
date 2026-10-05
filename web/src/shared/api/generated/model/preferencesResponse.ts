@@ -7,4 +7,6 @@
 
 export interface PreferencesResponse {
   culture: string;
+  /** @nullable */
+  preferredCulture: string | null;
 }

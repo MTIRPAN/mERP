@@ -284,7 +284,7 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
 - Veri kapsamı: Tenant hepsini, Company şirketi ve şubelerini, Branch sadece o şubeyi (ve okumada şirketini) görür; kapsam dışı kayıt 404. Şube listesi aktif şirket başlığıyla daralır (D4). `/me` seçilebilir şirketleri döndürür.
 - Olaylar `CompanyCreated/Updated`, `BranchCreated/Updated` outbox ile yayınlanır.
 - Web: Organizasyon → Şirketler ve Şubeler ekranları, il/ilçe seçen ortak adres alanları.
-- Altyapı: `Merp.Application.Persistence` (sayfalama, sıralama, arama, sürüm), geçici kapsam sağlayıcıları (P2'ye kadar), owned değerlerin audit'i (D25, öneri).
+- Altyapı: `Merp.Application.Persistence` (sayfalama, sıralama, arama, sürüm), geçici kapsam sağlayıcıları (P2'ye kadar), owned değerlerin audit'i (D25).
 - Logo P7, çalışma takvimi P9 ile eklenir. Özel alan sütunu (`custom_fields`) hazır; tanımlar ve doğrulama P6 ile gelir.
 - Yetkiler: `platform.companies.read/manage`, `platform.branches.read/manage`. Sistem rolleri P2 ile gelir; bu yetkiler Sistem Yöneticisi rolünün `platform.*` kümesine girer. Development'ta `admin` (`*`) hepsine sahiptir.
 - Kabul testleri: `CompanyEndpointsTests.Create_WithInvalidTaxNumber_Returns400WithATurkishMessage`, `CompanyEndpointsTests.UserScopedToOneCompany_SeesOnlyThatCompany_InTheListAndTheSelector`.
@@ -312,6 +312,17 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
 ### [ ] P2 Kullanıcılar, roller, yetkiler, kapsam 🔍 — XL (2 PR: P2a backend, P2b web)
 
 Kurallar: `docs/domain/yetki-ve-onay.md` §1.
+
+- [x] **P2a backend.** Yapılanlar:
+  - JIT kullanıcı, Keycloak aynası ve pasif kullanıcının reddi.
+  - Rol atamalarından yetki ve kapsam hesabı (`PlatformAccess`); HybridCache ve commit sonrası etiket temizliği.
+  - Yetki kataloğu senkronu ve sistem rolleri (`ITenantDataSeeder`). Yeni yetki deseni uyan sistem rolüne otomatik girer.
+  - Endpoint'ler: `/api/platform/users`, `/roles`, `/permissions`, `/scope-types`, `/me/preferences`.
+  - Keycloak yönetim API'si: oluşturma ve davet, aktif/pasif, şifre sıfırlama.
+  - Son Sistem Yöneticisi koruması; `Merp.Migrator create-admin`; geliştirmede `Platform:Bootstrap:Users`.
+  - Karar önerisi: D26.
+  - Kabul testleri: `AccessControlTests.ChangingThePermissionMatrix_ChangesMenuAndApiAccessOnTheNextRequest`, `ExpiredOrFutureAssignments_GrantNothing_…`, `ScopesOfSeveralAssignments_AreUnited`.
+- [ ] **P2b web:** Kullanıcılar, Roller (yetki matrisi), Profilim; menü öğeleri.
 
 **Yapılacaklar:**
 - **Yetki kaydı:** Yetki tanımları açılışta DB'ye senkronlanır. Yetki ağacı endpoint'i yerelleştirilmiş etiketlerle döner.

@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/Modules/Platform/Merp.Modules.Platform.Domain/Merp.Modules.Platform.Domain.csproj" />
     <ProjectReference Include="../../src/Modules/Platform/Merp.Modules.Platform.Application/Merp.Modules.Platform.Application.csproj" />
   </ItemGroup>

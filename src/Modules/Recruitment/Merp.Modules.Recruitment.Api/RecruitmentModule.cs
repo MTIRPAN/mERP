@@ -1,5 +1,4 @@
 using Merp.Application.Abstractions.AI;
-using Merp.Application.Abstractions.Security;
 using Merp.Modules.Recruitment.Api.Endpoints;
 using Merp.Modules.Recruitment.Infrastructure;
 using Merp.Web.Modules;
@@ -22,7 +21,6 @@ public sealed class RecruitmentModule : IModule
     {
         services.AddRecruitmentInfrastructure();
         services.AddSingleton<IMenuContributor, RecruitmentMenu>();
-        services.AddSingleton<IPermissionDefinitionProvider, RecruitmentPermissionDefinitions>();
         services.AddSingleton<IAiFeatureDefinitionProvider, RecruitmentAiFeatureDefinitions>();
     }
 

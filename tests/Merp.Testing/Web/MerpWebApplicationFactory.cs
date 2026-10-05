@@ -38,6 +38,12 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
     /// <summary>Replace the system clock with <see cref="Time"/>.</summary>
     protected virtual bool UseFakeTime => false;
 
+    /// <summary>
+    /// Permissions and scopes from request headers (<see cref="TestPermissionChecker"/>, <see cref="TestAccessScopeProvider"/>).
+    /// Override with false to test the real role assignments (PLAN P2).
+    /// </summary>
+    protected virtual bool UseTestAccessControl => true;
+
     public virtual async ValueTask InitializeAsync()
     {
         _catalogConnectionString = await postgres.CreateDatabaseAsync();
@@ -103,8 +109,12 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         {
             services.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
-            services.AddScoped<IPermissionChecker, TestPermissionChecker>();
-            services.AddScoped<IAccessScopeProvider, TestAccessScopeProvider>();
+            if (UseTestAccessControl)
+            {
+                services.AddScoped<IPermissionChecker, TestPermissionChecker>();
+                services.AddScoped<IAccessScopeProvider, TestAccessScopeProvider>();
+            }
+
             services.AddSingleton<IAiModelClient>(Ai);
             if (UseFakeTime)
             {

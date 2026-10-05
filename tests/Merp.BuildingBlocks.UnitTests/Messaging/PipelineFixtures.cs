@@ -24,11 +24,16 @@ internal sealed class CreateThingValidator : AbstractValidator<CreateThing>
     public CreateThingValidator() => RuleFor(x => x.Name).NotEmpty().MaximumLength(10);
 }
 
-internal sealed class CreateThingHandler(Journal journal, IIntegrationEventPublisher publisher) : ICommandHandler<CreateThing, Guid>
+internal sealed class CreateThingHandler(Journal journal, IIntegrationEventPublisher publisher, IAfterCommit afterCommit) : ICommandHandler<CreateThing, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateThing request, CancellationToken cancellationToken)
     {
         journal.Write("handler");
+        afterCommit.Enqueue(_ =>
+        {
+            journal.Write("after-commit");
+            return Task.CompletedTask;
+        });
         await publisher.PublishAsync(new ThingCreated(request.Name), cancellationToken);
 
         return request.Name switch

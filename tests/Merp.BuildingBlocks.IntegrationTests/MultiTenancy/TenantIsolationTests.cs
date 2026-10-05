@@ -8,6 +8,7 @@ using Merp.Modules.Platform.Infrastructure.Persistence;
 using Merp.Testing.Containers;
 using Merp.Testing.Web;
 using Merp.Web.Modules;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -125,7 +126,7 @@ public sealed class TenantIsolationTests(TenantIsolationFactory factory) : IClas
                 visited.Add((
                     services.GetRequiredService<ITenantContext>().RequiredTenant.Code,
                     services.GetRequiredService<ICurrentUser>().IsSystem,
-                    [.. db.AuditEntries.Select(e => e.EntityType)]));
+                    [.. db.AuditEntries.Where(e => EF.Functions.Like(e.EntityType, TenantProbe.MarkerPattern)).Select(e => e.EntityType)]));
                 await Task.CompletedTask;
             },
             Ct);

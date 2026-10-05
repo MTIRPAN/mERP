@@ -27,6 +27,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddLocalizationResources(typeof(SharedKernel.Results.Error).Assembly);
         services.TryAddSingleton<ITextLocalizer, EmbeddedTextLocalizer>();
+        services.TryAddSingleton<ISupportedCultures, SupportedCultures>();
 
         services.AddMerpMediator();
         services.AddMerpPersistence();

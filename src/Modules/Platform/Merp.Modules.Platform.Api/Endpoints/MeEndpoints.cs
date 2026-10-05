@@ -4,13 +4,16 @@ using Merp.Application.Abstractions.AI;
 using Merp.Application.Abstractions.Context;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Security;
+using Merp.Application.Abstractions.Localization;
 using Merp.Modules.Platform.Application.Companies;
+using Merp.Modules.Platform.Application.Users;
+using Merp.Web.Errors;
 using Merp.Web.Navigation;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Configuration;
 
 namespace Merp.Modules.Platform.Api.Endpoints;
 
@@ -18,13 +21,31 @@ internal static class MeEndpoints
 {
     /// <summary>
     /// The signed-in user, tenant, granted permissions and menu, used by the web shell. Every signed-in user may
-    /// read their own data (D22). Companies are those the granted permissions reach (P1); preferences arrive with P2.
+    /// read their own data (D22). Permissions come from the role assignments in force (P2); companies are those the
+    /// granted permissions reach (P1).
     /// </summary>
-    public static void MapMeEndpoints(this IEndpointRouteBuilder group) =>
+    public static void MapMeEndpoints(this IEndpointRouteBuilder group)
+    {
         group.MapGet("/me", GetMeAsync)
             .RequireAuthenticatedUser()
             .WithName("GetMe")
             .WithSummary("Current user, tenant, permissions and menu");
+
+        group.MapPut("/me/preferences", UpdatePreferencesAsync)
+            .RequireAuthenticatedUser()
+            .WithName("UpdateMyPreferences")
+            .WithSummary("The signed-in user's preferences (culture); a null culture follows the browser")
+            .ProducesValidationProblem();
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> UpdatePreferencesAsync(
+        UpdateMyPreferencesCommand command,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+        return result.IsSuccess ? TypedResults.NoContent() : (ProblemHttpResult)result.Error.ToProblem();
+    }
 
     private static async Task<MeResponse> GetMeAsync(
         HttpContext context,
@@ -36,7 +57,8 @@ internal static class MeEndpoints
         IEnumerable<IAiFeatureDefinitionProvider> aiFeatureProviders,
         IAiService ai,
         ISender sender,
-        IConfiguration configuration)
+        ICurrentUserProvisioner provisioner,
+        ISupportedCultures supportedCultures)
     {
         var granted = new HashSet<string>(StringComparer.Ordinal);
         foreach (var permission in permissionProviders.SelectMany(p => p.GetPermissions()).Select(p => p.Code).Distinct(StringComparer.Ordinal))
@@ -50,7 +72,7 @@ internal static class MeEndpoints
         var companies = await sender.Send(new GetSelectableCompaniesQuery(granted), context.RequestAborted);
         var menu = Filter(menuContributors.SelectMany(c => c.GetMenuItems()), granted, ai);
         var user = context.User;
-        var cultures = (configuration.GetSection("Localization:SupportedCultures").Get<string[]>() ?? ["tr-TR"])
+        var cultures = supportedCultures.All
             .Select(c => CultureInfo.GetCultureInfo(c))
             .Select(c => new CultureResponse(c.Name, c.NativeName))
             .ToList();
@@ -62,8 +84,19 @@ internal static class MeEndpoints
             .Order(StringComparer.Ordinal)
             .ToList();
 
+        var preferred = context.User.FindFirstValue("sub") is { } subject
+            ? (await provisioner.ProvisionAsync(new IdentityClaims(
+                subject,
+                context.User.FindFirstValue("preferred_username"),
+                context.User.FindFirstValue("email"),
+                context.User.FindFirstValue("given_name"),
+                context.User.FindFirstValue("family_name"),
+                context.User.FindFirstValue("name")), context.RequestAborted)).Culture
+            : null;
+
         return new MeResponse(
             new UserResponse(
+                currentUser.UserId,
                 user.FindFirstValue("sub") ?? string.Empty,
                 user.FindFirstValue("preferred_username"),
                 user.FindFirstValue("name"),
@@ -72,7 +105,7 @@ internal static class MeEndpoints
             [.. granted.Order(StringComparer.Ordinal)],
             [.. companies.Value.Select(c => new CompanyResponse(c.Id, c.Code, c.Name))],
             menu,
-            new PreferencesResponse(currentUser.Culture),
+            new PreferencesResponse(currentUser.Culture, preferred),
             cultures,
             new MeAiResponse(aiFeatures.Count > 0, aiFeatures));
     }
@@ -96,7 +129,12 @@ public sealed record MeResponse(
     IReadOnlyList<CultureResponse> Cultures,
     MeAiResponse Ai);
 
-public sealed record UserResponse(string Subject, string? UserName, string? DisplayName, string? Email);
+/// <param name="Id">Platform user id.</param>
+/// <param name="Subject">Keycloak subject.</param>
+/// <param name="UserName">User name.</param>
+/// <param name="DisplayName">Name to show.</param>
+/// <param name="Email">E-mail address.</param>
+public sealed record UserResponse(Guid? Id, string Subject, string? UserName, string? DisplayName, string? Email);
 
 public sealed record TenantResponse(string Code, string Name);
 
@@ -105,7 +143,9 @@ public sealed record CompanyResponse(Guid Id, string Code, string Name);
 /// <summary>Menu entry; <c>Ai</c> marks items that open an AI feature (the web shows the AI badge).</summary>
 public sealed record MenuItemResponse(string Key, string LabelKey, string? Path, string? Icon, IReadOnlyList<MenuItemResponse>? Children, bool Ai);
 
-public sealed record PreferencesResponse(string Culture);
+/// <param name="Culture">Culture in effect for this request.</param>
+/// <param name="PreferredCulture">Culture the user chose; null follows the browser.</param>
+public sealed record PreferencesResponse(string Culture, string? PreferredCulture);
 
 public sealed record CultureResponse(string Code, string Name);
 

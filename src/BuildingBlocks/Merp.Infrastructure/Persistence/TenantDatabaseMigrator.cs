@@ -7,10 +7,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Merp.Infrastructure.Persistence;
 
-/// <summary>Applies the migrations of every registered module to tenant databases.</summary>
+/// <summary>Applies the migrations of every registered module to tenant databases, then runs the data seeders.</summary>
 public sealed partial class TenantDatabaseMigrator(
     IServiceScopeFactory scopeFactory,
     IEnumerable<ModuleDatabase> modules,
+    IEnumerable<ITenantDataSeeder> seeders,
     ILogger<TenantDatabaseMigrator> logger)
 {
     /// <summary>Migrates every active tenant of the catalog, or only <paramref name="tenantCode"/> when given.</summary>
@@ -49,6 +50,14 @@ public sealed partial class TenantDatabaseMigrator(
             var dbContext = (DbContext)scope.ServiceProvider.GetRequiredService(module.DbContextType);
             LogMigrating(logger, tenant.Code, module.Schema);
             await dbContext.Database.MigrateAsync(cancellationToken);
+        }
+
+        foreach (var seeder in seeders)
+        {
+            await using var scope = scopeFactory.CreateAsyncScope();
+            scope.ServiceProvider.GetRequiredService<TenantContext>().Set(tenant, connectionString);
+            scope.ServiceProvider.GetRequiredService<CurrentUser>().SetSystem(tenant.Id);
+            await seeder.SeedAsync(scope.ServiceProvider, cancellationToken);
         }
     }
 

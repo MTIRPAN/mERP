@@ -1,5 +1,4 @@
 using Merp.Api.Development;
-using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure;
 using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Caching;
@@ -13,7 +12,6 @@ using Merp.Modules.Recruitment.Api;
 using Merp.Web.Hosting;
 using Merp.Web.Modules;
 using Merp.Web.Observability;
-using Merp.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,19 +26,6 @@ builder.AddMerpWebHost();
 
 builder.Services.Configure<PersistenceOptions>(options =>
     options.EnforceSingleAggregatePerCommand = builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"));
-
-// Until roles and assignments exist (PLAN P2): Development reads permissions and data scopes per user from
-// configuration (Development:Permissions, Development:Scopes); other environments grant nothing.
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddScoped<IPermissionChecker, DevelopmentPermissionChecker>();
-    builder.Services.AddScoped<IAccessScopeProvider, DevelopmentAccessScopeProvider>();
-}
-else
-{
-    builder.Services.AddScoped<IPermissionChecker, DenyAllPermissionChecker>();
-    builder.Services.AddScoped<IAccessScopeProvider, DenyAllAccessScopeProvider>();
-}
 
 // Modules are registered explicitly (PLAN 0.9).
 builder.AddModule<PlatformModule>();

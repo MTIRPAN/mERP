@@ -28,6 +28,7 @@ public static class EndpointRules
     public static readonly string[] AuthenticatedUserRoutes =
     [
         "/api/platform/me",
+        "/api/platform/me/preferences",
         "/api/platform/locations/provinces",
         "/api/platform/locations/provinces/{provinceCode:int}/districts",
     ];

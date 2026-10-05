@@ -298,6 +298,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/hubs/notifications` | Oturum zorunlu, yetki istenmez | Her kullanıcı kendi bildirimlerini alır |
 | `/api/platform/me` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi bilgileri, menüsü ve yetkileri; hiç rolü olmayan kullanıcı da "erişiminiz yok" ekranını görebilmeli |
 | `/api/platform/locations/provinces`, `/api/platform/locations/provinces/{provinceCode}/districts` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kamuya açık referans veri (il/ilçe, `docs/reference-data.md`); her modülün adres formunda kullanılır. Kullanıcı onayıyla eklendi (P1). |
+| `/api/platform/me/preferences` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi tercihleri (dil); hiç rolü olmayan kullanıcı da değiştirebilmeli (P2). |
 
 **Açık soru:** Hangfire paneli tüm tenant'ların işlerini gösterir. SaaS kurulumunda tenant'ın Sistem Yöneticisi değil, sadece operatör (barındıran ekip) görmeli. `Jobs:DashboardTenants` varsayılan olarak boştur (Development'ta `demo`).
 
@@ -343,13 +344,13 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 3. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için.
 4. Sıra: Yapay zeka altyapısı ve durumsuz CV analizi plan sırasından önce yapıldı. Diğer özellikler (`docs/PLAN.md` "Yapay zeka" bölümü) ait oldukları görevlerle birlikte mi yapılsın?
 
-## D25 — Uygulama katmanında veri erişimi (öneri — onay bekliyor)
+## D25 — Uygulama katmanında veri erişimi
 
-**Durum:** Öneri. P1 (ilk gerçek aggregate'ler) ile ortaya çıktı; P1 incelemesinde kullanıcı onayına sunuldu.
+**Durum:** Kabul edildi (P1 sonrası kullanıcı onayı). P1 (ilk gerçek aggregate'ler) ile ortaya çıktı.
 
 **Sorun:** Komut ve sorgu handler'ları Application katmanında durur ama DbContext Infrastructure'dadır (kural 5). Sayfalama, sıralama, arama ve eşzamanlılık her modülde tekrar yazılmamalı.
 
-**Karar önerisi:**
+**Karar:**
 - Her modülün Application katmanı kendi veri arayüzünü tanımlar (`IPlatformDbContext`: `DbSet<Company>`...). Modülün DbContext'i bunu uygular, handler'lar arayüzü kullanır. Komutlar sadece ekler veya değiştirir; kaydetmeyi unit of work yapar. Application EF Core'a referans verebilir (kural 5 yalnızca Infrastructure ve sağlayıcı paketlerini yasaklar); Npgsql'e referans vermez.
 - Ortak yardımcılar yeni yapı taşı **`Merp.Application.Persistence`** projesindedir (EF Core'a bağlıdır):
   - `ToPagedResultAsync`: sayfa okuma (`PageRequest` → `PagedResult<T>`; `PagedResult`, `PageRequest` ve `SortMap` EF'siz olarak `Merp.Application.Abstractions.Paging` içinde).
@@ -359,4 +360,38 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 - `Merp.Application.Abstractions` EF Core'a bağımlı olmaz. Böylece `*.Contracts` projeleri (D1, ayrı servise taşınabilir sözleşmeler) EF Core taşımaz.
 - SharedKernel değer nesneleri (ör. `Address`) modül tablolarına owned type olarak eşlenebilir (sütunlar `address_city` gibi). Audit, owned değerlerin değişikliklerini sahibinin alanı olarak yazar (`Address.City`).
 
-**Geçici kapsam sağlayıcıları (P2'ye kadar):** `IAccessScopeProvider.GetCurrentUserScopesAsync` eklendi. Rol atamaları gelene kadar Development, `Development:Scopes:{kullanıcı}` ayarından (`"Company:{id}"` gibi) okur; listelenmeyen kullanıcının izinli olduğu her yetkide Tenant kapsamı vardır. Diğer ortamlar hiç kapsam vermez. Testler kapsamı `X-Test-Scopes` başlığıyla verir. P2 bu sağlayıcıları gerçek atamalarla değiştirir.
+**Kapsam sağlayıcısı:** `IAccessScopeProvider.GetCurrentUserScopesAsync` oturumdaki kullanıcının kapsamlarını verir. P1'deki geçici sağlayıcıların yerini P2'de rol atamaları aldı (D26). Testler kapsamı `X-Test-Scopes` başlığıyla verebilir.
+
+## D26 — Kullanıcı, rol ve yetki kontrolü (öneri — onay bekliyor)
+
+**Durum:** Öneri. PLAN P2a ile uygulandı; P2 incelemesinde kullanıcı onayına sunuldu.
+
+**Kimlik zinciri:**
+- Her istekte JWT'deki `sub`, kiracının Platform kullanıcısına eşlenir. İlk istekte kullanıcı rolsüz oluşturulur (JIT). Ad, soyad ve e-posta token'dan kopyalanır; eşleme önbelleği saatte bir yenilenir.
+- `CurrentUser.UserId` bu kullanıcıdır. Audit kayıtlarına kimin yaptığı artık yazılır.
+- Pasif kullanıcı, geçerli token'la gelse de 403 `common.errors.user_inactive` alır.
+- Kullanıcının dil tercihi `Accept-Language`'dan önce gelir (D11).
+
+**Yetki hesabı:**
+- Yetki, aktif kullanıcının bugün geçerli rol atamalarının rollerinde varsa vardır. Kapsamlar bu atamaların kapsamlarının birleşimidir.
+- "Bugün" Europe/Istanbul takvimine göre hesaplanır; atamalar kiracı geneli olduğu için şirket saat dilimi kullanılmaz. Başlangıç ve bitiş günleri dahildir.
+- Sonuç HybridCache'te en fazla 10 dakika, gün sonunu geçmeyecek şekilde tutulur. Etiketler kullanıcı (`{kiracı}:user:{id}:perm`) ve kiracı (`{kiracı}:perm`) düzeyindedir. Rol değişince kiracı etiketi, atama/aktiflik/tercih değişince kullanıcı etiketi temizlenir.
+- Önbellek, komut commit edildikten sonra temizlenir (`IAfterCommit`). Daha önce temizlenirse eşzamanlı bir istek eski veriyi yeniden önbelleğe alabilir.
+
+**Yetki kataloğu ve sistem rolleri:**
+- Modüllerin yetki tanımları her migration'dan sonra `platform.permissions` tablosuna senkronlanır (`ITenantDataSeeder`). Koddan kalkan yetki katalogdan ve tüm rollerden düşer.
+- Sistem rolleri (yetki-ve-onay §1.4) seed edilir. Varsayılan yetkileri desenle tanımlanır (`platform.*`, `!hr.employees.sensitive.*`). İlk kez görülen bir yetki, deseni uyan sistem rollerine otomatik eklenir; kullanıcının sistem rollerinde yaptığı düzenlemeler korunur.
+- Yetki tanımları ve etiketleri modülün Application/Infrastructure katmanında kaydedilir. Migrator Api modüllerini yüklemediği için seed bunlara ihtiyaç duyar.
+
+**Yönetim kuralları:**
+- Kullanıcı ve rol yönetimi kiracı düzeyindedir. `platform.users.*` ve `platform.roles.*` yalnızca Tenant kapsamıyla geçerlidir; şirket kapsamlı yönetici 403 alır.
+- Sistemi yöneticisiz bırakacak işlem 409 ile reddedilir: Tenant kapsamlı son Sistem Yöneticisi atamasını kaldırmak, bitirmek ya da sahibini pasifleştirmek. Kullanıcı kendini pasifleştiremez.
+- Kullanıcı oluşturma önce Keycloak'ta kimliği açar (`tenant` özniteliğiyle), sonra Platform kaydını yazar. Davet e-postası commit'ten sonra gönderilir. Pasifleştirme Keycloak'ta da hesabı kapatır.
+
+**Keycloak yönetim API'si:**
+- Realm'deki `merp-api` istemcisinin servis hesabı kullanılır (`manage-users`). İstemci `HttpClient` ile yazıldı; D19'daki Keycloak.AuthServices.Sdk eklenmedi, çünkü dört çağrı için paket gerekmedi.
+- Ayarlar `Keycloak:Admin` bölümündedir: Url, Realm, ClientId, ClientSecret, WebUrl. Sır user-secrets veya ortam değişkeniyle verilir; yoksa kullanıcı yönetimi 503 döner.
+
+**İlk yönetici:**
+- Development: `Platform:Bootstrap:Users` realm'deki test kullanıcılarına ilk girişte rol verir (`admin` → Sistem Yöneticisi). P1'deki `Development:Permissions` kaldırıldı.
+- Üretim: `Merp.Migrator create-admin --tenant … --username … --email … --first-name … --last-name …` Keycloak kullanıcısını ve Tenant kapsamlı Sistem Yöneticisi atamasını oluşturur, davet e-postasını gönderir.

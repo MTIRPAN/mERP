@@ -1,4 +1,3 @@
-using Merp.Application.Abstractions.Security;
 using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Infrastructure;
 using Merp.Web.Modules;
@@ -15,9 +14,8 @@ public sealed class PlatformModule : IModule
 
     public void AddServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddPlatformInfrastructure();
+        services.AddPlatformInfrastructure(configuration);
         services.AddSingleton<IMenuContributor, PlatformMenu>();
-        services.AddSingleton<IPermissionDefinitionProvider, PlatformPermissionDefinitions>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -30,5 +28,7 @@ public sealed class PlatformModule : IModule
         group.MapCompanyEndpoints();
         group.MapBranchEndpoints();
         group.MapLocationEndpoints();
+        group.MapUserEndpoints();
+        group.MapRoleEndpoints();
     }
 }

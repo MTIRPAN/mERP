@@ -1,6 +1,8 @@
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.Locations;
+using Merp.Modules.Platform.Domain.Roles;
+using Merp.Modules.Platform.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -19,6 +21,12 @@ public interface IPlatformDbContext
     DbSet<Province> Provinces { get; }
 
     DbSet<District> Districts { get; }
+
+    DbSet<User> Users { get; }
+
+    DbSet<Role> Roles { get; }
+
+    DbSet<Permission> Permissions { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

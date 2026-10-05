@@ -1,5 +1,4 @@
 using Merp.Application.Abstractions.AI;
-using Merp.Application.Abstractions.Security;
 using Merp.Modules.Recruitment.Application;
 using Merp.Web.Navigation;
 
@@ -19,14 +18,6 @@ internal sealed class RecruitmentMenu : IMenuContributor
                 Permission: RecruitmentPermissions.Cv.Analyze,
                 AiFeature: RecruitmentAiFeatures.CvAnalysis),
         ]),
-    ];
-}
-
-internal sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProvider
-{
-    public IEnumerable<PermissionDefinition> GetPermissions() =>
-    [
-        new(RecruitmentPermissions.Cv.Analyze),
     ];
 }
 

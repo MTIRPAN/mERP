@@ -28,7 +28,8 @@ public class PlatformMigrationTests(PostgresFixture postgres)
 
         var tables = await ListTablesAsync(connectionString, "platform");
         tables.ShouldBe(
-            ["__ef_migrations_history", "ai_usage", "audit_entries", "inbox_messages", "outbox_messages", "companies", "branches", "provinces", "districts"],
+            ["__ef_migrations_history", "ai_usage", "audit_entries", "inbox_messages", "outbox_messages", "companies", "branches", "provinces", "districts",
+                "permissions", "roles", "role_permissions", "users", "role_assignments"],
             ignoreOrder: true);
         (await ListTablesAsync(connectionString, "public")).ShouldBeEmpty();
 
@@ -36,6 +37,11 @@ public class PlatformMigrationTests(PostgresFixture postgres)
         (await CountAsync(connectionString, "platform.provinces")).ShouldBe(81);
         (await CountAsync(connectionString, "platform.districts")).ShouldBe(973);
         (await CountAsync(connectionString, "platform.districts WHERE province_id = 34")).ShouldBe(39);
+
+        // The seeder ran: permission catalog and the seven system roles (docs/domain/yetki-ve-onay.md §1.4)
+        (await CountAsync(connectionString, "platform.permissions WHERE code = 'platform.roles.manage'")).ShouldBe(1);
+        (await CountAsync(connectionString, "platform.roles WHERE is_system")).ShouldBe(7);
+        (await CountAsync(connectionString, "platform.role_permissions WHERE permission_code = 'platform.users.manage'")).ShouldBe(1);
     }
 
     private static async Task<long> CountAsync(string connectionString, string from)
