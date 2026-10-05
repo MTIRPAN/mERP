@@ -28,7 +28,7 @@ public sealed class FakeAiModelClient : IAiModelClient
             0,
             0));
 
-    public void Returns(AiStopReason stopReason, string text = "", long inputTokens = 4_000, long outputTokens = 0) =>
+    public void Stops(AiStopReason stopReason, string text = "", long inputTokens = 4_000, long outputTokens = 0) =>
         _responses.Enqueue(_ => new AiModelResponse("claude-opus-5-5", stopReason, text, inputTokens, outputTokens, 0, 0));
 
     public void Fails() =>

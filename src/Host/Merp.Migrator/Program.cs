@@ -2,6 +2,7 @@ using Merp.Infrastructure;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Infrastructure;
+using Merp.Modules.Recruitment.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,6 +20,7 @@ builder.Configuration.AddCommandLine(args, new Dictionary<string, string> { ["--
 builder.Services.AddMerpInfrastructure();
 builder.Services.AddMerpMultiTenancy(builder.Configuration);
 builder.Services.AddPlatformInfrastructure();
+builder.Services.AddRecruitmentInfrastructure();
 
 using var host = builder.Build();
 var cancellationToken = CancellationToken.None;

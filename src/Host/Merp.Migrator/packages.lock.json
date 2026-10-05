@@ -263,6 +263,33 @@
           "Merp.Modules.Platform.Application": "[1.0.0, )"
         }
       },
+      "merp.modules.recruitment.application": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )",
+          "Merp.Modules.Recruitment.Contracts": "[1.0.0, )",
+          "Merp.Modules.Recruitment.Domain": "[1.0.0, )"
+        }
+      },
+      "merp.modules.recruitment.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )"
+        }
+      },
+      "merp.modules.recruitment.domain": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.SharedKernel": "[1.0.0, )"
+        }
+      },
+      "merp.modules.recruitment.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Infrastructure": "[1.0.0, )",
+          "Merp.Modules.Recruitment.Application": "[1.0.0, )"
+        }
+      },
       "merp.sharedkernel": {
         "type": "Project"
       },

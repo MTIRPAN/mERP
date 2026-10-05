@@ -9,6 +9,7 @@ using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Api;
 using Merp.Modules.Platform.Application;
+using Merp.Modules.Recruitment.Api;
 using Merp.Web.Hosting;
 using Merp.Web.Modules;
 using Merp.Web.Observability;
@@ -41,6 +42,7 @@ else
 
 // Modules are registered explicitly (PLAN 0.9).
 builder.AddModule<PlatformModule>();
+builder.AddModule<RecruitmentModule>();
 
 var app = builder.Build();
 

@@ -1,0 +1,6 @@
+{
+  "recruitment.cv.unsupported_file": "Yalnızca PDF veya DOCX dosyası yüklenebilir.",
+  "recruitment.cv.file_too_large": "Dosya en fazla {maxMegabytes} MB olabilir.",
+  "web.shell.menu.recruitment": "İşe alım",
+  "web.shell.menu.cv_analysis": "CV analizi"
+}

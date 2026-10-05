@@ -28,12 +28,21 @@
     <Project Path="src/Modules/Platform/Merp.Modules.Platform.Domain/Merp.Modules.Platform.Domain.csproj" />
     <Project Path="src/Modules/Platform/Merp.Modules.Platform.Infrastructure/Merp.Modules.Platform.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Recruitment/">
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Api/Merp.Modules.Recruitment.Api.csproj" />
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Application/Merp.Modules.Recruitment.Application.csproj" />
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Contracts/Merp.Modules.Recruitment.Contracts.csproj" />
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Domain/Merp.Modules.Recruitment.Domain.csproj" />
+    <Project Path="src/Modules/Recruitment/Merp.Modules.Recruitment.Infrastructure/Merp.Modules.Recruitment.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Merp.ArchitectureTests/Merp.ArchitectureTests.csproj" />
     <Project Path="tests/Merp.BuildingBlocks.IntegrationTests/Merp.BuildingBlocks.IntegrationTests.csproj" />
     <Project Path="tests/Merp.BuildingBlocks.UnitTests/Merp.BuildingBlocks.UnitTests.csproj" />
     <Project Path="tests/Merp.Modules.Platform.IntegrationTests/Merp.Modules.Platform.IntegrationTests.csproj" />
     <Project Path="tests/Merp.Modules.Platform.UnitTests/Merp.Modules.Platform.UnitTests.csproj" />
+    <Project Path="tests/Merp.Modules.Recruitment.IntegrationTests/Merp.Modules.Recruitment.IntegrationTests.csproj" />
+    <Project Path="tests/Merp.Modules.Recruitment.UnitTests/Merp.Modules.Recruitment.UnitTests.csproj" />
     <Project Path="tests/Merp.Testing/Merp.Testing.csproj" />
   </Folder>
 </Solution>

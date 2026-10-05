@@ -44,7 +44,7 @@ internal static class MeEndpoints
             }
         }
 
-        var menu = Filter(menuContributors.SelectMany(c => c.GetMenuItems()), granted);
+        var menu = Filter(menuContributors.SelectMany(c => c.GetMenuItems()), granted, ai);
         var user = context.User;
         var cultures = (configuration.GetSection("Localization:SupportedCultures").Get<string[]>() ?? ["tr-TR"])
             .Select(c => CultureInfo.GetCultureInfo(c))
@@ -74,11 +74,11 @@ internal static class MeEndpoints
     }
 
     // Keeps items the user may open; groups without visible children disappear.
-    private static List<MenuItemResponse> Filter(IEnumerable<MenuItem> items, HashSet<string> granted) =>
+    private static List<MenuItemResponse> Filter(IEnumerable<MenuItem> items, HashSet<string> granted, IAiService ai) =>
         [.. items
-            .Where(i => i.Permission is null || granted.Contains(i.Permission))
+            .Where(i => (i.Permission is null || granted.Contains(i.Permission)) && (i.AiFeature is null || ai.IsEnabled(i.AiFeature)))
             .OrderBy(i => i.Order)
-            .Select(i => new MenuItemResponse(i.Key, i.LabelKey, i.Path, i.Icon, i.Children is null ? null : Filter(i.Children, granted)))
+            .Select(i => new MenuItemResponse(i.Key, i.LabelKey, i.Path, i.Icon, i.Children is null ? null : Filter(i.Children, granted, ai), i.AiFeature is not null))
             .Where(i => i.Path is not null || i.Children is { Count: > 0 })];
 }
 
@@ -98,7 +98,8 @@ public sealed record TenantResponse(string Code, string Name);
 
 public sealed record CompanyResponse(Guid Id, string Code, string Name);
 
-public sealed record MenuItemResponse(string Key, string LabelKey, string? Path, string? Icon, IReadOnlyList<MenuItemResponse>? Children);
+/// <summary>Menu entry; <c>Ai</c> marks items that open an AI feature (the web shows the AI badge).</summary>
+public sealed record MenuItemResponse(string Key, string LabelKey, string? Path, string? Icon, IReadOnlyList<MenuItemResponse>? Children, bool Ai);
 
 public sealed record PreferencesResponse(string Culture);
 
