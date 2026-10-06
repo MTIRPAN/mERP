@@ -26,9 +26,10 @@ import {
 } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
+import { useNavigate } from 'react-router';
 import { setActiveCompanyId, useActiveCompanyId } from '@/app/company/companyStore';
-import { changeCulture } from '@/app/i18n/i18n';
 import { useMe } from '@/app/me/meContext';
+import { useCulturePreference } from '@/app/me/useCulturePreference';
 import { useThemeMode, type ThemeMode } from '@/app/theme/themeModeContext';
 
 export const SearchTrigger = ({ onOpen }: { onOpen: () => void }) => {
@@ -128,7 +129,7 @@ export const ApprovalsBadge = () => {
 export const LanguageSelector = () => {
   const { t, i18n } = useTranslation();
   const me = useMe();
-  const queryClient = useQueryClient();
+  const applyCulture = useCulturePreference();
   return (
     <Dropdown
       trigger={['click']}
@@ -137,7 +138,8 @@ export const LanguageSelector = () => {
         selectedKeys: [i18n.language],
         items: me.cultures.map((culture) => ({ key: culture.code, label: culture.name })),
         onClick: ({ key }) => {
-          void changeCulture(key).then(() => queryClient.invalidateQueries());
+          // Failures are reported by ApiErrorNotifier
+          applyCulture(key).catch(() => undefined);
         },
       }}
     >
@@ -152,6 +154,7 @@ export const UserMenu = () => {
   const { t } = useTranslation();
   const auth = useAuth();
   const me = useMe();
+  const navigate = useNavigate();
   const name = me.user.displayName ?? me.user.userName ?? me.user.subject;
   const initials = name
     .split(/\s+/)
@@ -165,12 +168,14 @@ export const UserMenu = () => {
       trigger={['click']}
       menu={{
         items: [
-          { key: 'profile', icon: <UserOutlined />, label: t('web.shell.user.profile'), disabled: true },
+          { key: 'profile', icon: <UserOutlined />, label: t('web.shell.user.profile') },
           { type: 'divider' },
           { key: 'logout', icon: <LogoutOutlined />, label: t('web.shell.user.logout'), danger: true },
         ],
         onClick: ({ key }) => {
-          if (key === 'logout') {
+          if (key === 'profile') {
+            void navigate('/profile');
+          } else if (key === 'logout') {
             void auth.signoutRedirect();
           }
         },

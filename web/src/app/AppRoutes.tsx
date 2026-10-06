@@ -1,12 +1,7 @@
+import { lazy, type ComponentType } from 'react';
 import { Route, Routes } from 'react-router';
 import { platformPermissions } from '@/modules/platform/permissions';
-import { AiUsagePage } from '@/modules/platform/AiUsagePage';
 import { DashboardPage } from '@/modules/platform/DashboardPage';
-import { JobsPage } from '@/modules/platform/JobsPage';
-import { BranchesPage } from '@/modules/platform/organization/BranchesPage';
-import { CompaniesPage } from '@/modules/platform/organization/CompaniesPage';
-import { SystemInfoPage } from '@/modules/platform/SystemInfoPage';
-import { CvAnalysisPage } from '@/modules/recruitment/CvAnalysisPage';
 import { recruitmentPermissions } from '@/modules/recruitment/permissions';
 import { ForbiddenPage } from '@/shared/pages/ForbiddenPage';
 import { NotFoundPage } from '@/shared/pages/NotFoundPage';
@@ -15,6 +10,22 @@ import { ProtectedRoute } from './auth/ProtectedRoute';
 import { RequirePermission } from './auth/RequirePermission';
 import { MeProvider } from './me/MeProvider';
 import { AppLayout } from './shell/AppLayout';
+
+/** Module pages load on first visit, so the start-up bundle does not grow with every module. */
+const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
+  lazy(async () => ({ default: (await load())[name] }));
+
+const RoleEditorPage = page(() => import('@/modules/platform/access/RoleEditorPage'), 'RoleEditorPage');
+const RolesPage = page(() => import('@/modules/platform/access/RolesPage'), 'RolesPage');
+const UserDetailPage = page(() => import('@/modules/platform/access/UserDetailPage'), 'UserDetailPage');
+const UsersPage = page(() => import('@/modules/platform/access/UsersPage'), 'UsersPage');
+const AiUsagePage = page(() => import('@/modules/platform/AiUsagePage'), 'AiUsagePage');
+const JobsPage = page(() => import('@/modules/platform/JobsPage'), 'JobsPage');
+const BranchesPage = page(() => import('@/modules/platform/organization/BranchesPage'), 'BranchesPage');
+const CompaniesPage = page(() => import('@/modules/platform/organization/CompaniesPage'), 'CompaniesPage');
+const ProfilePage = page(() => import('@/modules/platform/ProfilePage'), 'ProfilePage');
+const SystemInfoPage = page(() => import('@/modules/platform/SystemInfoPage'), 'SystemInfoPage');
+const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
   <Routes>
@@ -44,6 +55,39 @@ export const AppRoutes = () => (
             </RequirePermission>
           }
         />
+        <Route
+          path="access/users"
+          element={
+            <RequirePermission permission={platformPermissions.usersRead}>
+              <UsersPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="access/users/:id"
+          element={
+            <RequirePermission permission={platformPermissions.usersRead}>
+              <UserDetailPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="access/roles"
+          element={
+            <RequirePermission permission={platformPermissions.rolesRead}>
+              <RolesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="access/roles/:id"
+          element={
+            <RequirePermission permission={platformPermissions.rolesRead}>
+              <RoleEditorPage />
+            </RequirePermission>
+          }
+        />
+        <Route path="profile" element={<ProfilePage />} />
         <Route
           path="system/info"
           element={
