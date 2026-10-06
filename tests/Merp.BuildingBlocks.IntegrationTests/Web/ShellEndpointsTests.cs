@@ -53,4 +53,14 @@ public sealed class ShellEndpointsTests(WebHostFactory factory) : IClassFixture<
         var system = me.Menu.Single(m => m.Key == "system");
         system.Children!.Select(c => c.Key).ShouldBe(["system-info"]);
     }
+
+    [Fact]
+    public async Task Me_WithUserPermission_ShowsUsersButNotRoles()
+    {
+        var me = (await factory.CreateClientFor("admin-1", "acme", PlatformPermissions.Users.Read)
+            .GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!;
+
+        var access = me.Menu.Single(m => m.Key == "access");
+        access.Children!.Select(c => c.Path).ShouldBe(["/access/users"]);
+    }
 }

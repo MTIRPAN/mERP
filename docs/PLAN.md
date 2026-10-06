@@ -309,7 +309,7 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
 - Hatalı VKN girilince Türkçe mesajlı 400 döner.
 - Kapsamı tek şirket olan kullanıcı listede ve seçicide sadece o şirketi görür.
 
-### [ ] P2 Kullanıcılar, roller, yetkiler, kapsam 🔍 — XL (2 PR: P2a backend, P2b web)
+### [x] P2 Kullanıcılar, roller, yetkiler, kapsam 🔍 — XL (2 PR: P2a backend, P2b web)
 
 Kurallar: `docs/domain/yetki-ve-onay.md` §1.
 
@@ -322,7 +322,12 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §1.
   - Son Sistem Yöneticisi koruması; `Merp.Migrator create-admin`; geliştirmede `Platform:Bootstrap:Users`.
   - Karar önerisi: D26.
   - Kabul testleri: `AccessControlTests.ChangingThePermissionMatrix_ChangesMenuAndApiAccessOnTheNextRequest`, `ExpiredOrFutureAssignments_GrantNothing_…`, `ScopesOfSeveralAssignments_AreUnited`.
-- [ ] **P2b web:** Kullanıcılar, Roller (yetki matrisi), Profilim; menü öğeleri.
+- [x] **P2b web.** Yapılanlar:
+  - Menüde "Erişim yönetimi" grubu: Kullanıcılar (`/access/users`), Roller ve yetkiler (`/access/roles`).
+  - Kullanıcılar: arama, rol ve durum filtresi; yeni kullanıcı (davet e-postası). Detayda aktif/pasif, şifre sıfırlama e-postası ve rol atamaları. Atamada kapsam seçici (Tüm şirketler, şirket, şube, yalnızca kendisi) ve geçerlilik tarihleri.
+  - Roller: liste; düzenleme ekranında dil başına ad ve yetki matrisi (modül → kaynak → yetki ağacı); özel rolü silme, sistem rolünü varsayılana döndürme.
+  - Profilim (`/profile`): hesap bilgisi ve dil tercihi. Üst bardaki dil seçici de tercihi sunucuya kaydeder; başka cihazda seçilen dil açılışta uygulanır.
+  - Modül sayfaları rota başına yüklenir (`React.lazy`); açılış paketi 1,6 MB'tan 430 kB'a indi.
 
 **Yapılacaklar:**
 - **Yetki kaydı:** Yetki tanımları açılışta DB'ye senkronlanır. Yetki ağacı endpoint'i yerelleştirilmiş etiketlerle döner.

@@ -4,11 +4,14 @@ import {
   BankOutlined,
   HomeOutlined,
   InfoCircleOutlined,
+  LockOutlined,
+  SafetyCertificateOutlined,
   ScheduleOutlined,
   SettingOutlined,
   ShopOutlined,
   StarOutlined,
   TeamOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import type { TFunction } from 'i18next';
@@ -25,6 +28,9 @@ const icons: Record<string, ReactNode> = {
   organization: <ApartmentOutlined />,
   company: <BankOutlined />,
   branch: <ShopOutlined />,
+  access: <LockOutlined />,
+  user: <UserOutlined />,
+  role: <SafetyCertificateOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;

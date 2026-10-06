@@ -1,6 +1,6 @@
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
-import { Button, Divider, Flex, Layout, Menu, Tooltip, theme } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { Button, Divider, Flex, Layout, Menu, Skeleton, Tooltip, theme } from 'antd';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useMe } from '@/app/me/meContext';
@@ -106,7 +106,10 @@ export const AppLayout = () => {
           </Flex>
         </Layout.Header>
         <Layout.Content style={{ padding: token.paddingLG }}>
-          <Outlet />
+          {/* Module pages are loaded lazily (AppRoutes) */}
+          <Suspense fallback={<Skeleton active />}>
+            <Outlet />
+          </Suspense>
         </Layout.Content>
       </Layout>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} entries={entries} />
