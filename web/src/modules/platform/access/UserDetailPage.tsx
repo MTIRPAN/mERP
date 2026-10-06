@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { useMe } from '@/app/me/meContext';
+import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
 import { platformPermissions } from '@/modules/platform/permissions';
 import {
   getGetMeQueryKey,
@@ -157,36 +158,39 @@ export const UserDetailPage = () => {
           { title: data.displayName },
         ]}
         extra={
-          canManage && (
-            <>
-              <Popconfirm
-                title={t('web.platform.users.password_reset_confirm')}
-                okText={t('web.common.yes')}
-                cancelText={t('web.common.no')}
-                onConfirm={sendPasswordReset}
-                disabled={!data.isActive}
-              >
-                <Button icon={<MailOutlined />} disabled={!data.isActive}>
-                  {t('web.platform.users.password_reset')}
-                </Button>
-              </Popconfirm>
-              <Tooltip title={isSelf ? t('web.platform.users.cannot_deactivate_self') : undefined}>
+          <>
+            <AuditHistoryButton module="platform" entityType="User" entityId={data.id} title={data.displayName} />
+            {canManage && (
+              <>
                 <Popconfirm
-                  title={t(
-                    data.isActive ? 'web.platform.users.deactivate_confirm' : 'web.platform.users.activate_confirm',
-                  )}
+                  title={t('web.platform.users.password_reset_confirm')}
                   okText={t('web.common.yes')}
                   cancelText={t('web.common.no')}
-                  onConfirm={toggleActive}
-                  disabled={isSelf && data.isActive}
+                  onConfirm={sendPasswordReset}
+                  disabled={!data.isActive}
                 >
-                  <Button danger={data.isActive} disabled={isSelf && data.isActive}>
-                    {t(data.isActive ? 'web.platform.users.deactivate' : 'web.platform.users.activate')}
+                  <Button icon={<MailOutlined />} disabled={!data.isActive}>
+                    {t('web.platform.users.password_reset')}
                   </Button>
                 </Popconfirm>
-              </Tooltip>
-            </>
-          )
+                <Tooltip title={isSelf ? t('web.platform.users.cannot_deactivate_self') : undefined}>
+                  <Popconfirm
+                    title={t(
+                      data.isActive ? 'web.platform.users.deactivate_confirm' : 'web.platform.users.activate_confirm',
+                    )}
+                    okText={t('web.common.yes')}
+                    cancelText={t('web.common.no')}
+                    onConfirm={toggleActive}
+                    disabled={isSelf && data.isActive}
+                  >
+                    <Button danger={data.isActive} disabled={isSelf && data.isActive}>
+                      {t(data.isActive ? 'web.platform.users.deactivate' : 'web.platform.users.activate')}
+                    </Button>
+                  </Popconfirm>
+                </Tooltip>
+              </>
+            )}
+          </>
         }
       />
       <Flex vertical gap={16}>

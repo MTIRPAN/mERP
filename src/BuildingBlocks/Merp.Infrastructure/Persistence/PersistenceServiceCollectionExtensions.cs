@@ -1,5 +1,7 @@
 using System.Reflection;
+using Merp.Application.Abstractions.Auditing;
 using Merp.Application.Abstractions.Messaging;
+using Merp.Infrastructure.Persistence.Auditing;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence.Interceptors;
@@ -20,6 +22,7 @@ public static class PersistenceServiceCollectionExtensions
         services.TryAddScoped<SoftDeleteInterceptor>();
         services.TryAddScoped<AuditableInterceptor>();
         services.TryAddScoped<AuditLogInterceptor>();
+        services.TryAddScoped<ISensitiveReadLog, SensitiveReadLog>();
         services.TryAddScoped<DomainEventDispatcher>();
         services.TryAddScoped<IIntegrationEventPublisher, OutboxIntegrationEventPublisher>();
         services.TryAddSingleton<TenantDatabaseMigrator>();
@@ -46,6 +49,7 @@ public static class PersistenceServiceCollectionExtensions
         });
 
         services.AddScoped<ModuleUnitOfWork<TContext>>();
+        services.TryAddEnumerable(ServiceDescriptor.Scoped<IAuditReader, ModuleAuditReader<TContext>>());
         services.AddModuleUnitOfWork<ModuleUnitOfWork<TContext>>(applicationAssembly, namespacePrefix);
         services.AddSingleton(new ModuleDatabase(typeof(TContext), TContext.SchemaName, new ModuleScope(applicationAssembly, namespacePrefix)));
         return services;

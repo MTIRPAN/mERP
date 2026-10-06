@@ -1,7 +1,8 @@
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Input, Segmented, Space } from 'antd';
+import { Button, Flex, Input, Segmented, Space } from 'antd';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
 import { platformPermissions } from '@/modules/platform/permissions';
 import { getListCompaniesQueryKey, listCompanies } from '@/shared/api/generated/endpoints/platform/platform';
 import type { CompanyListItem } from '@/shared/api/generated/model';
@@ -18,6 +19,7 @@ import { activeFilter, toActiveParam, type ActiveFilter } from './filters';
 export const CompaniesPage = () => {
   const { t } = useTranslation();
   const canManage = useHasPermission(platformPermissions.companiesManage);
+  const canAudit = useHasPermission(platformPermissions.auditRead);
   const [search, setSearch] = useState<string>();
   const [active, setActive] = useState<ActiveFilter>('active');
   const [drawer, setDrawer] = useState<{ open: boolean; companyId?: string }>({ open: false });
@@ -41,25 +43,36 @@ export const CompaniesPage = () => {
         sorter: true,
         render: (_, row) => <StatusTag status={row.isActive ? 'active' : 'inactive'} />,
       },
-      ...(canManage
+      ...(canManage || canAudit
         ? [
             {
               key: 'actions',
               title: '',
-              width: 56,
+              width: 96,
               render: (_: unknown, row: CompanyListItem) => (
-                <Button
-                  type="text"
-                  icon={<EditOutlined />}
-                  aria-label={t('web.common.edit')}
-                  onClick={() => setDrawer({ open: true, companyId: row.id })}
-                />
+                <Flex gap={4}>
+                  {canManage && (
+                    <Button
+                      type="text"
+                      icon={<EditOutlined />}
+                      aria-label={t('web.common.edit')}
+                      onClick={() => setDrawer({ open: true, companyId: row.id })}
+                    />
+                  )}
+                  <AuditHistoryButton
+                    compact
+                    module="platform"
+                    entityType="Company"
+                    entityId={row.id}
+                    title={row.shortName}
+                  />
+                </Flex>
               ),
             },
           ]
         : []),
     ],
-    [t, canManage],
+    [t, canManage, canAudit],
   );
 
   const fetchPage = (params: ListParams) =>

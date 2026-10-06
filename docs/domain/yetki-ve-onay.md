@@ -57,7 +57,7 @@ Bu iki yapı tüm modüllerde ortaktır. Yeni bir modül yazarken önce bu belge
 
 **Geçerlilik:** Atama, başlangıç ve bitiş günleri dahil Europe/Istanbul takvimine göre bugün geçerliyse yetki verir. Pasif kullanıcının hiçbir ataması geçerli değildir.
 
-**Yönetim:** Kullanıcı ve rol yönetimi kiracı düzeyindedir: `platform.users.*` ve `platform.roles.*` yalnızca Tenant kapsamıyla geçerlidir. Son Sistem Yöneticisi ataması kaldırılamaz (D26).
+**Yönetim:** Kullanıcı ve rol yönetimi kiracı düzeyindedir: `platform.users.*` ve `platform.roles.*` yalnızca Tenant kapsamıyla geçerlidir. Son Sistem Yöneticisi ataması kaldırılamaz (D26). Audit okuma (`platform.audit.read`) da yalnızca Tenant kapsamıyla geçerlidir (D27).
 
 ### 1.4 Sistem rolleri (seed)
 

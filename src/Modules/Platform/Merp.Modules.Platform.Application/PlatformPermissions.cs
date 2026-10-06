@@ -43,4 +43,9 @@ public static class PlatformPermissions
         public const string Read = "platform.roles.read";
         public const string Manage = "platform.roles.manage";
     }
+
+    public static class Audit
+    {
+        public const string Read = "platform.audit.read";
+    }
 }

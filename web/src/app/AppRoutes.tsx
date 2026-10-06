@@ -25,6 +25,7 @@ const BranchesPage = page(() => import('@/modules/platform/organization/Branches
 const CompaniesPage = page(() => import('@/modules/platform/organization/CompaniesPage'), 'CompaniesPage');
 const ProfilePage = page(() => import('@/modules/platform/ProfilePage'), 'ProfilePage');
 const SystemInfoPage = page(() => import('@/modules/platform/SystemInfoPage'), 'SystemInfoPage');
+const AuditLogPage = page(() => import('@/modules/platform/audit/AuditLogPage'), 'AuditLogPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -109,6 +110,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={platformPermissions.aiUsageRead}>
               <AiUsagePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/audit"
+          element={
+            <RequirePermission permission={platformPermissions.auditRead}>
+              <AuditLogPage />
             </RequirePermission>
           }
         />

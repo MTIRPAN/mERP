@@ -11,4 +11,5 @@ export const platformPermissions = {
   usersManage: 'platform.users.manage',
   rolesRead: 'platform.roles.read',
   rolesManage: 'platform.roles.manage',
+  auditRead: 'platform.audit.read',
 } as const;
