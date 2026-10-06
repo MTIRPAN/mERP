@@ -362,9 +362,9 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 
 **Kapsam sağlayıcısı:** `IAccessScopeProvider.GetCurrentUserScopesAsync` oturumdaki kullanıcının kapsamlarını verir. P1'deki geçici sağlayıcıların yerini P2'de rol atamaları aldı (D26). Testler kapsamı `X-Test-Scopes` başlığıyla verebilir.
 
-## D26 — Kullanıcı, rol ve yetki kontrolü (öneri — onay bekliyor)
+## D26 — Kullanıcı, rol ve yetki kontrolü
 
-**Durum:** Öneri. PLAN P2a ile uygulandı; P2 incelemesinde kullanıcı onayına sunuldu.
+**Durum:** Kabul edildi (P2 incelemesinden sonra kullanıcı onayı). PLAN P2a ile uygulandı.
 
 **Kimlik zinciri:**
 - Her istekte JWT'deki `sub`, kiracının Platform kullanıcısına eşlenir. İlk istekte kullanıcı rolsüz oluşturulur (JIT). Ad, soyad ve e-posta token'dan kopyalanır; eşleme önbelleği saatte bir yenilenir.
@@ -395,3 +395,23 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 **İlk yönetici:**
 - Development: `Platform:Bootstrap:Users` realm'deki test kullanıcılarına ilk girişte rol verir (`admin` → Sistem Yöneticisi). P1'deki `Development:Permissions` kaldırıldı.
 - Üretim: `Merp.Migrator create-admin --tenant … --username … --email … --first-name … --last-name …` Keycloak kullanıcısını ve Tenant kapsamlı Sistem Yöneticisi atamasını oluşturur, davet e-postasını gönderir.
+
+## D27 — Audit okuma
+
+**Durum:** Kabul edildi. Kapsam kuralını kullanıcı P3 başında seçti.
+
+**Okuma yolu:**
+- `IAuditReader` (Application.Abstractions) bir modülün `audit_entries` tablosunu okur. `AddModuleDbContext` bunu her modül için kendiliğinden kaydeder. Platform, modüllere referans vermeden hepsinin kayıtlarını `IEnumerable<IAuditReader>` ile okur (D13).
+- Modüllerin kayıtları bellekte birleştirilip en yeniden eskiye sıralanır. Bu yüzden sayfalama en fazla 10 000 kayıt derine iner. Daha eskisi için tarih aralığı veya kayıt filtresi gerekir (`platform.audit.errors.too_deep`).
+- Her modülde `audit_entries.occurred_at` üzerine indeks eklendi.
+
+**Yetki ve kapsam:**
+- `platform.audit.read` yalnızca Tenant kapsamıyla geçerlidir. Audit kayıtları şirket veya şube taşımaz, bu yüzden şirket kapsamlı kullanıcı 403 alır (`platform.audit.errors.tenant_scope_required`).
+- Kayıt geçmişi çekmecesi de aynı yetkiye bağlıdır. Geçmişi kaydın kendi kapsamına göre gösterme sonraya bırakıldı; gerekirse her modül bir entity → kapsam çözümleyicisi ekler.
+
+**Hassas alan okumaları:**
+- `ISensitiveReadLog`, `[Sensitive]` alanların değeri maskesiz gösterildiğinde alan başına bir `Read` kaydı yazar. Kayıt, entity'yi eşleyen modülün tablosuna gider.
+- Kayıt, isteğin unit of work'ü dışında, ayrı bir DbContext ile hemen yazılır. Veri görüldüyse istek sonradan başarısız olsa da kayıt kalır.
+- Hassas alanların değerleri audit'e hiç yazılmaz; değişiklikte yalnızca değiştiği görünür (`***`).
+
+**Etiketler:** Entity ve alan adları `{modül}.entities.{Tür}` ve `{modül}.entities.{Tür}.{Alan}` anahtarlarıyla yerelleştirilir (ör. `platform.entities.Company.Address.City`). Metni olmayan alan için teknik ad gösterilir.

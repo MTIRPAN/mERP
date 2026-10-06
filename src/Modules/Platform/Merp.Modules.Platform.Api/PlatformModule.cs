@@ -30,5 +30,6 @@ public sealed class PlatformModule : IModule
         group.MapLocationEndpoints();
         group.MapUserEndpoints();
         group.MapRoleEndpoints();
+        group.MapAuditEndpoints();
     }
 }

@@ -76,6 +76,9 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_audit_entries");
 
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("ix_audit_entries_occurred_at");
+
                     b.HasIndex("UserId", "OccurredAt")
                         .HasDatabaseName("ix_audit_entries_user_id_occurred_at");
 

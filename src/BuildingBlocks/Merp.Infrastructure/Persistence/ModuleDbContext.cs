@@ -138,6 +138,8 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
             builder.Property(e => e.CorrelationId).HasMaxLength(100);
             builder.HasIndex(e => new { e.EntityType, e.EntityId, e.OccurredAt });
             builder.HasIndex(e => new { e.UserId, e.OccurredAt });
+            // The audit search pages through all entries, newest first (PLAN P3)
+            builder.HasIndex(e => e.OccurredAt);
         });
     }
 

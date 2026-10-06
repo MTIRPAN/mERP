@@ -1,8 +1,9 @@
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Input, Segmented, Select, Space } from 'antd';
+import { Button, Flex, Input, Segmented, Select, Space } from 'antd';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useActiveCompanyId } from '@/app/company/companyStore';
+import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
 import { platformPermissions } from '@/modules/platform/permissions';
 import { getListBranchesQueryKey, listBranches } from '@/shared/api/generated/endpoints/platform/platform';
 import { BranchType, type BranchListItem } from '@/shared/api/generated/model';
@@ -19,6 +20,7 @@ import { activeFilter, toActiveParam, type ActiveFilter } from './filters';
 export const BranchesPage = () => {
   const { t } = useTranslation();
   const canManage = useHasPermission(platformPermissions.branchesManage);
+  const canAudit = useHasPermission(platformPermissions.auditRead);
   const activeCompanyId = useActiveCompanyId();
   const [search, setSearch] = useState<string>();
   const [type, setType] = useState<BranchType>();
@@ -44,25 +46,36 @@ export const BranchesPage = () => {
         sorter: true,
         render: (_, row) => <StatusTag status={row.isActive ? 'active' : 'inactive'} />,
       },
-      ...(canManage
+      ...(canManage || canAudit
         ? [
             {
               key: 'actions',
               title: '',
-              width: 56,
+              width: 96,
               render: (_: unknown, row: BranchListItem) => (
-                <Button
-                  type="text"
-                  icon={<EditOutlined />}
-                  aria-label={t('web.common.edit')}
-                  onClick={() => setDrawer({ open: true, branchId: row.id })}
-                />
+                <Flex gap={4}>
+                  {canManage && (
+                    <Button
+                      type="text"
+                      icon={<EditOutlined />}
+                      aria-label={t('web.common.edit')}
+                      onClick={() => setDrawer({ open: true, branchId: row.id })}
+                    />
+                  )}
+                  <AuditHistoryButton
+                    compact
+                    module="platform"
+                    entityType="Branch"
+                    entityId={row.id}
+                    title={row.name}
+                  />
+                </Flex>
               ),
             },
           ]
         : []),
     ],
-    [t, canManage],
+    [t, canManage, canAudit],
   );
 
   const fetchPage = (params: ListParams) =>

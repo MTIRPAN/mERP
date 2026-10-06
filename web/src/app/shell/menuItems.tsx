@@ -2,6 +2,7 @@ import {
   ApartmentOutlined,
   AppstoreOutlined,
   BankOutlined,
+  HistoryOutlined,
   HomeOutlined,
   InfoCircleOutlined,
   LockOutlined,
@@ -31,6 +32,7 @@ const icons: Record<string, ReactNode> = {
   access: <LockOutlined />,
   user: <UserOutlined />,
   role: <SafetyCertificateOutlined />,
+  audit: <HistoryOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;

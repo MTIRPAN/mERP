@@ -23,6 +23,7 @@ import type {
 import type {
   AiUsageSummaryResponse,
   AssignRoleCommand,
+  AuditEntityType,
   BranchDetails,
   ChangeAssignmentCommand,
   CompanyDetails,
@@ -40,6 +41,7 @@ import type {
   ListUsersParams,
   LocationOption,
   MeResponse,
+  PagedResultOfAuditItem,
   PagedResultOfBranchListItem,
   PagedResultOfCompanyListItem,
   PagedResultOfRoleListItem,
@@ -48,6 +50,7 @@ import type {
   ProblemDetails,
   RoleDetails,
   ScopeTypeItem,
+  SearchAuditParams,
   SetUserActiveCommand,
   SystemInfoResponse,
   UpdateBranchCommand,
@@ -3160,3 +3163,246 @@ export const useResetRole = <TError = ErrorType<ProblemDetails>, TContext = unkn
 ): UseMutationResult<Awaited<ReturnType<typeof resetRole>>, TError, ResetRoleMutationVariables, TContext> => {
   return useMutation(getResetRoleMutationOptions(options), queryClient);
 };
+export const getSearchAuditUrl = (params?: SearchAuditParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/platform/audit?${stringifiedParams}` : `/api/platform/audit`;
+};
+
+/**
+ * Requires permission: platform.audit.read.
+ * @summary Field level changes and sensitive reads, newest first
+ */
+export const searchAudit = async (
+  params?: SearchAuditParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfAuditItem> => {
+  return customFetch<PagedResultOfAuditItem>(getSearchAuditUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchAuditQueryKey = (params?: SearchAuditParams) => {
+  return [`/api/platform/audit`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchAuditQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchAudit>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: SearchAuditParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchAudit>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchAuditQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchAudit>>> = ({ signal }) =>
+    searchAudit(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchAudit>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchAuditQueryResult = NonNullable<Awaited<ReturnType<typeof searchAudit>>>;
+export type SearchAuditQueryError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+
+export function useSearchAudit<
+  TData = Awaited<ReturnType<typeof searchAudit>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: undefined | SearchAuditParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchAudit>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchAudit>>,
+          TError,
+          Awaited<ReturnType<typeof searchAudit>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchAudit<
+  TData = Awaited<ReturnType<typeof searchAudit>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: SearchAuditParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchAudit>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchAudit>>,
+          TError,
+          Awaited<ReturnType<typeof searchAudit>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchAudit<
+  TData = Awaited<ReturnType<typeof searchAudit>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: SearchAuditParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchAudit>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Field level changes and sensitive reads, newest first
+ */
+
+export function useSearchAudit<
+  TData = Awaited<ReturnType<typeof searchAudit>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: SearchAuditParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchAudit>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchAuditQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListAuditEntityTypesUrl = () => {
+  return `/api/platform/audit/entity-types`;
+};
+
+/**
+ * Requires permission: platform.audit.read.
+ * @summary Audited entity types per module
+ */
+export const listAuditEntityTypes = async (options?: Parameters<typeof customFetch>[1]): Promise<AuditEntityType[]> => {
+  return customFetch<AuditEntityType[]>(getListAuditEntityTypesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListAuditEntityTypesQueryKey = () => {
+  return [`/api/platform/audit/entity-types`] as const;
+};
+
+export const getListAuditEntityTypesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAuditEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditEntityTypes>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAuditEntityTypesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listAuditEntityTypes>>> = ({ signal }) =>
+    listAuditEntityTypes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAuditEntityTypes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListAuditEntityTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listAuditEntityTypes>>>;
+export type ListAuditEntityTypesQueryError = ErrorType<ProblemDetails>;
+
+export function useListAuditEntityTypes<
+  TData = Awaited<ReturnType<typeof listAuditEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditEntityTypes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAuditEntityTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listAuditEntityTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListAuditEntityTypes<
+  TData = Awaited<ReturnType<typeof listAuditEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditEntityTypes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAuditEntityTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listAuditEntityTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListAuditEntityTypes<
+  TData = Awaited<ReturnType<typeof listAuditEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditEntityTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Audited entity types per module
+ */
+
+export function useListAuditEntityTypes<
+  TData = Awaited<ReturnType<typeof listAuditEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditEntityTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListAuditEntityTypesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

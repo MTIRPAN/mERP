@@ -354,7 +354,9 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §1.
 - Süresi dolmuş rol ataması yetki vermez.
 - Birden fazla atamada kapsamların birleşimi doğru hesaplanır.
 
-### [ ] P3 Audit görüntüleme — S
+### [x] P3 Audit görüntüleme — S
+
+Yapılanlar (D27): her modüle kendiliğinden kaydedilen `IAuditReader`; `GET /api/platform/audit` ve `/audit/entity-types`; `ISensitiveReadLog`; `occurred_at` indeksi; web'de "Geçmiş" çekmecesi (şirket, şube, kullanıcı, rol) ve Sistem → Denetim kayıtları sayfası. Kabul testi: `AuditEndpointsTests.CompanyUpdate_ShowsOldAndNewValuePerField_InTheHistory`.
 
 **Yapılacaklar:**
 - Her modülde `IAuditReader` uygulaması.

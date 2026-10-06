@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { DEFAULT_CULTURE } from '@/app/i18n/i18n';
 import { useMe } from '@/app/me/meContext';
+import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
 import { platformPermissions } from '@/modules/platform/permissions';
 import {
   getGetMeQueryKey,
@@ -148,38 +149,41 @@ export const RoleEditorPage = () => {
         subtitle={data ? t('web.platform.roles.users_holding', { count: data.userCount }) : undefined}
         breadcrumb={[{ title: <Link to="/access/roles">{t('web.platform.roles.title')}</Link> }, { title }]}
         extra={
-          canManage && (
-            <>
-              {data?.isSystem && (
-                <Popconfirm
-                  title={t('web.platform.roles.reset_confirm')}
-                  okText={t('web.common.yes')}
-                  cancelText={t('web.common.no')}
-                  onConfirm={resetRole}
-                >
-                  <Button icon={<RollbackOutlined />}>{t('web.platform.roles.reset')}</Button>
-                </Popconfirm>
-              )}
-              {data && !data.isSystem && (
-                <Tooltip title={data.userCount > 0 ? t('web.platform.roles.delete_in_use') : undefined}>
+          <>
+            {data && <AuditHistoryButton module="platform" entityType="Role" entityId={data.id} title={title} />}
+            {canManage && (
+              <>
+                {data?.isSystem && (
                   <Popconfirm
-                    title={t('web.platform.roles.delete_confirm')}
+                    title={t('web.platform.roles.reset_confirm')}
                     okText={t('web.common.yes')}
                     cancelText={t('web.common.no')}
-                    onConfirm={deleteRole}
-                    disabled={data.userCount > 0}
+                    onConfirm={resetRole}
                   >
-                    <Button danger icon={<DeleteOutlined />} disabled={data.userCount > 0}>
-                      {t('web.platform.roles.delete')}
-                    </Button>
+                    <Button icon={<RollbackOutlined />}>{t('web.platform.roles.reset')}</Button>
                   </Popconfirm>
-                </Tooltip>
-              )}
-              <Button type="primary" loading={saving} onClick={() => form.submit()}>
-                {t('web.common.save')}
-              </Button>
-            </>
-          )
+                )}
+                {data && !data.isSystem && (
+                  <Tooltip title={data.userCount > 0 ? t('web.platform.roles.delete_in_use') : undefined}>
+                    <Popconfirm
+                      title={t('web.platform.roles.delete_confirm')}
+                      okText={t('web.common.yes')}
+                      cancelText={t('web.common.no')}
+                      onConfirm={deleteRole}
+                      disabled={data.userCount > 0}
+                    >
+                      <Button danger icon={<DeleteOutlined />} disabled={data.userCount > 0}>
+                        {t('web.platform.roles.delete')}
+                      </Button>
+                    </Popconfirm>
+                  </Tooltip>
+                )}
+                <Button type="primary" loading={saving} onClick={() => form.submit()}>
+                  {t('web.common.save')}
+                </Button>
+              </>
+            )}
+          </>
         }
       />
       <Form<RoleFormValues>
