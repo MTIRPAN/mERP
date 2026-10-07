@@ -2,6 +2,7 @@ using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Companies;
+using Merp.Modules.Platform.Domain.CustomFields;
 using Merp.Modules.Platform.Domain.Localization;
 using Merp.Modules.Platform.Domain.Numbering;
 using Merp.Modules.Platform.Domain.Locations;
@@ -16,6 +17,15 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public static string SchemaName => "platform";
 
     public override string Schema => SchemaName;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+
+        // Options are stored as jsonb by a value converter, not as entities
+        modelBuilder.Ignore<CustomFieldOption>();
+        base.OnModelCreating(modelBuilder);
+    }
 
     public DbSet<Company> Companies => Set<Company>();
 
@@ -34,4 +44,6 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<Culture> Cultures => Set<Culture>();
 
     public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
+
+    public DbSet<CustomFieldDefinition> CustomFieldDefinitions => Set<CustomFieldDefinition>();
 }

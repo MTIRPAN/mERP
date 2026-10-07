@@ -1,9 +1,12 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentValidation;
+using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Persistence;
 using Merp.Application.Abstractions.Security;
 using Merp.Application.Abstractions.Validation;
+using Merp.Modules.Platform.Application.CustomFields;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Contracts.Organization;
 using Merp.Modules.Platform.Domain.Companies;
@@ -14,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Merp.Modules.Platform.Application.Companies;
 
 /// <summary>Creates a company. Needs <c>platform.companies.manage</c> with the Tenant scope.</summary>
+/// <remarks>CustomFields holds the values of the tenant's custom fields by code (PLAN P6).</remarks>
 public sealed record CreateCompanyCommand(
     string? Code,
     string? Title,
@@ -26,7 +30,8 @@ public sealed record CreateCompanyCommand(
     string? Phone,
     string? Email,
     string? Culture,
-    string? TimeZoneId) : ICommand<Guid>, IRequirePermission, ICompanyFields
+    string? TimeZoneId,
+    IReadOnlyDictionary<string, JsonElement>? CustomFields = null) : ICommand<Guid>, IRequirePermission, ICompanyFields
 {
     [JsonIgnore]
     public string Permission => PlatformPermissions.Companies.Manage;
@@ -47,7 +52,8 @@ public sealed record UpdateCompanyCommand(
     string? Email,
     string? Culture,
     string? TimeZoneId,
-    bool IsActive) : ICommand, IRequirePermission, ICompanyFields
+    bool IsActive,
+    IReadOnlyDictionary<string, JsonElement>? CustomFields = null) : ICommand, IRequirePermission, ICompanyFields
 {
     /// <summary>From the route.</summary>
     [JsonIgnore]
@@ -83,6 +89,9 @@ public interface ICompanyFields
 
 internal static class CompanyRules
 {
+    /// <summary>Entity type of companies for custom fields (PLAN P6).</summary>
+    public const string EntityType = PlatformCustomFieldEntities.Company;
+
     public static void AddFieldRules<T>(AbstractValidator<T> validator)
         where T : ICompanyFields
     {
@@ -166,6 +175,7 @@ internal sealed class CreateCompanyCommandHandler(
     IPlatformDbContext db,
     IAccessScopeProvider scopes,
     AddressResolver addressResolver,
+    ICustomFieldValidator customFields,
     IIntegrationEventPublisher publisher) : ICommandHandler<CreateCompanyCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateCompanyCommand request, CancellationToken cancellationToken)
@@ -194,12 +204,20 @@ internal sealed class CreateCompanyCommandHandler(
             errors.AddRange(address.Error.Fields);
         }
 
+        // A new company has no company specific fields yet
+        var values = await customFields.ValidateAsync(CompanyRules.EntityType, null, request.CustomFields, CustomFieldValues.Empty, cancellationToken);
+        if (values.IsFailure)
+        {
+            errors.AddRange(values.Error.Fields);
+        }
+
         if (errors.Count > 0)
         {
             return Error.Validation(errors);
         }
 
         var company = Company.Create(code, CompanyRules.ToProfile(request, address.Value));
+        company.SetCustomFields(values.Value);
         db.Companies.Add(company);
         await publisher.PublishAsync(
             new CompanyCreated(company.Code, company.ShortName, company.TimeZoneId, company.IsActive) { CompanyId = company.Id.Value },
@@ -212,6 +230,7 @@ internal sealed class UpdateCompanyCommandHandler(
     IPlatformDbContext db,
     IAccessScopeProvider scopes,
     AddressResolver addressResolver,
+    ICustomFieldValidator customFields,
     IIntegrationEventPublisher publisher) : ICommandHandler<UpdateCompanyCommand>
 {
     public async Task<Result> Handle(UpdateCompanyCommand request, CancellationToken cancellationToken)
@@ -237,6 +256,12 @@ internal sealed class UpdateCompanyCommandHandler(
             errors.AddRange(address.Error.Fields);
         }
 
+        var values = await customFields.ValidateAsync(CompanyRules.EntityType, company.Id.Value, request.CustomFields, company.CustomFields, cancellationToken);
+        if (values.IsFailure)
+        {
+            errors.AddRange(values.Error.Fields);
+        }
+
         if (errors.Count > 0)
         {
             return Error.Validation(errors);
@@ -244,6 +269,7 @@ internal sealed class UpdateCompanyCommandHandler(
 
         db.Entry(company).ExpectVersion(request.Version);
         company.Update(CompanyRules.ToProfile(request, address.Value));
+        company.SetCustomFields(values.Value);
         if (request.IsActive)
         {
             company.Activate();

@@ -5,6 +5,7 @@
  * OpenAPI spec version: v1
  */
 import type { AddressInput } from './addressInput';
+import type { UpdateCompanyCommandCustomFields } from './updateCompanyCommandCustomFields';
 
 export interface UpdateCompanyCommand {
   version: number;
@@ -30,4 +31,6 @@ export interface UpdateCompanyCommand {
   /** @nullable */
   timeZoneId: string | null;
   isActive: boolean;
+  /** @nullable */
+  customFields?: UpdateCompanyCommandCustomFields;
 }

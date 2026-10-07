@@ -32,5 +32,6 @@ public sealed class PlatformModule : IModule
         group.MapRoleEndpoints();
         group.MapAuditEndpoints();
         group.MapNumberingEndpoints();
+        group.MapCustomFieldEndpoints();
     }
 }

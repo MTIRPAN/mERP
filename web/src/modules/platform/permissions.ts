@@ -16,4 +16,6 @@ export const platformPermissions = {
   localizationManage: 'platform.localization.manage',
   numberingRead: 'platform.numbering.read',
   numberingManage: 'platform.numbering.manage',
+  customFieldsRead: 'platform.custom_fields.read',
+  customFieldsManage: 'platform.custom_fields.manage',
 } as const;

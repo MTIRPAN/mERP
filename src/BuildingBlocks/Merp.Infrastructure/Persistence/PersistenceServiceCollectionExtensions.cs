@@ -49,7 +49,8 @@ public static class PersistenceServiceCollectionExtensions
             options.AddInterceptors(
                 serviceProvider.GetRequiredService<SoftDeleteInterceptor>(),
                 serviceProvider.GetRequiredService<AuditableInterceptor>(),
-                serviceProvider.GetRequiredService<AuditLogInterceptor>());
+                serviceProvider.GetRequiredService<AuditLogInterceptor>(),
+                CustomFieldQueryInterceptor.Instance);
         });
 
         services.AddScoped<ModuleUnitOfWork<TContext>>();

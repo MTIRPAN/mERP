@@ -5,6 +5,7 @@
  * OpenAPI spec version: v1
  */
 import type { AddressInput } from './addressInput';
+import type { CreateCompanyCommandCustomFields } from './createCompanyCommandCustomFields';
 
 export interface CreateCompanyCommand {
   /** @nullable */
@@ -30,4 +31,6 @@ export interface CreateCompanyCommand {
   culture: string | null;
   /** @nullable */
   timeZoneId: string | null;
+  /** @nullable */
+  customFields?: CreateCompanyCommandCustomFields;
 }

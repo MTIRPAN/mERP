@@ -8,12 +8,16 @@ import {
   getListCompaniesQueryKey,
   useCreateCompany,
   useGetCompany,
+  useGetCustomFieldForm,
   useUpdateCompany,
 } from '@/shared/api/generated/endpoints/platform/platform';
-import type { CompanyDetails } from '@/shared/api/generated/model';
+import type { CompanyDetails, CustomFieldFormItem } from '@/shared/api/generated/model';
+import { DynamicFields } from '@/shared/customFields/DynamicFields';
+import { toApiValues, toFormValues, type CustomFieldValues } from '@/shared/customFields/customFieldValues';
 import { FormDrawer } from '@/shared/components/FormDrawer';
 import { fromAddressDto, toAddressInput, type AddressValues } from './address';
 import { AddressFields } from './AddressFields';
+import { COMPANY_ENTITY } from './filters';
 import { timeZones } from './timeZones';
 
 interface CompanyFormValues {
@@ -30,13 +34,15 @@ interface CompanyFormValues {
   timeZoneId?: string;
   isActive?: boolean;
   address?: AddressValues;
+  customFields?: CustomFieldValues;
 }
 
 const blank = (value?: string) => (value?.trim() ? value.trim() : null);
 
-const toValues = (company?: CompanyDetails): CompanyFormValues =>
+const toValues = (company: CompanyDetails | undefined, fields: CustomFieldFormItem[]): CompanyFormValues =>
   company
     ? {
+        customFields: toFormValues(fields, company.customFields),
         code: company.code,
         title: company.title,
         shortName: company.shortName,
@@ -51,7 +57,12 @@ const toValues = (company?: CompanyDetails): CompanyFormValues =>
         isActive: company.isActive,
         address: fromAddressDto(company.address),
       }
-    : { culture: 'tr-TR', timeZoneId: 'Europe/Istanbul', isActive: true };
+    : {
+        culture: 'tr-TR',
+        timeZoneId: 'Europe/Istanbul',
+        isActive: true,
+        customFields: toFormValues(fields, undefined),
+      };
 
 interface CompanyFormDrawerProps {
   /** Company to edit; undefined creates a new one. */
@@ -69,6 +80,9 @@ export const CompanyFormDrawer = ({ companyId, open, onClose }: CompanyFormDrawe
   const company = useGetCompany(companyId ?? '', { query: { enabled: open && editing } });
   const create = useCreateCompany();
   const update = useUpdateCompany();
+  // A new company has only the fields of every company (PLAN P6)
+  const fields = useGetCustomFieldForm({ entityType: COMPANY_ENTITY, companyId }, { query: { enabled: open } });
+  const customFields = fields.data ?? [];
 
   const submit = async (values: CompanyFormValues) => {
     const fields = {
@@ -83,6 +97,7 @@ export const CompanyFormDrawer = ({ companyId, open, onClose }: CompanyFormDrawe
       email: blank(values.email),
       culture: values.culture ?? null,
       timeZoneId: values.timeZoneId ?? null,
+      customFields: toApiValues(customFields, values.customFields),
     };
 
     if (editing && company.data) {
@@ -101,16 +116,16 @@ export const CompanyFormDrawer = ({ companyId, open, onClose }: CompanyFormDrawe
     }
   };
 
-  const loading = editing && !company.data;
+  const loading = (editing && !company.data) || !fields.data;
 
   return (
     <FormDrawer<CompanyFormValues>
-      key={company.data ? `${company.data.id}-${company.data.version}` : 'new'}
+      key={`${company.data ? `${company.data.id}-${company.data.version}` : 'new'}-${customFields.length}`}
       title={t(editing ? 'web.platform.companies.edit' : 'web.platform.companies.new')}
       open={open}
       onClose={onClose}
       onSubmit={submit}
-      initialValues={toValues(company.data)}
+      initialValues={toValues(company.data, customFields)}
       width={640}
     >
       {loading ? (
@@ -204,6 +219,7 @@ export const CompanyFormDrawer = ({ companyId, open, onClose }: CompanyFormDrawe
           )}
           <Divider titlePlacement="start">{t('web.platform.address.title')}</Divider>
           <AddressFields />
+          <DynamicFields fields={customFields} />
         </>
       )}
     </FormDrawer>

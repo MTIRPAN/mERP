@@ -4,6 +4,7 @@
  * mERP API
  * OpenAPI spec version: v1
  */
+import type { CompanyListItemCustomFields } from './companyListItemCustomFields';
 
 export interface CompanyListItem {
   id: string;
@@ -14,4 +15,5 @@ export interface CompanyListItem {
   /** @nullable */
   city: string | null;
   isActive: boolean;
+  customFields: CompanyListItemCustomFields;
 }

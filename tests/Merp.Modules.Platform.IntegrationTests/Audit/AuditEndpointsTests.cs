@@ -119,7 +119,7 @@ public sealed class AuditEndpointsTests(AccessFactory factory) : IClassFixture<A
         types.ShouldContain(new AuditEntityType("platform", "Company", "Şirket"));
         types.ShouldContain(new AuditEntityType("platform", "RoleAssignment", "Rol ataması"));
         types.Where(t => t.Module == "platform").Select(t => t.EntityType)
-            .ShouldBe(["Branch", "Company", "Culture", "CultureText", "NumberSequence", "Role", "RoleAssignment", "RolePermission", "User"], ignoreOrder: true);
+            .ShouldBe(["Branch", "Company", "Culture", "CultureText", "CustomFieldDefinition", "NumberSequence", "Role", "RoleAssignment", "RolePermission", "User"], ignoreOrder: true);
     }
 
     [Fact]
