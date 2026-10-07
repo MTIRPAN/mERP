@@ -43,4 +43,13 @@ export const changeCulture = async (culture: string) => {
   document.documentElement.lang = culture.split('-')[0] ?? 'tr';
 };
 
+/**
+ * Loads the current culture's texts again: after sign-in (the bundle then includes the tenant's translations) and
+ * after a translation changes.
+ */
+export const reloadTexts = async () => {
+  i18n.addResourceBundle(i18n.language, 'translation', await loadTexts(i18n.language), true, true);
+  await i18n.changeLanguage(i18n.language);
+};
+
 export default i18n;

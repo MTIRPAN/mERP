@@ -29,7 +29,7 @@ public class PlatformMigrationTests(PostgresFixture postgres)
         var tables = await ListTablesAsync(connectionString, "platform");
         tables.ShouldBe(
             ["__ef_migrations_history", "ai_usage", "audit_entries", "inbox_messages", "outbox_messages", "companies", "branches", "provinces", "districts",
-                "permissions", "roles", "role_permissions", "users", "role_assignments"],
+                "permissions", "roles", "role_permissions", "users", "role_assignments", "cultures", "localization_texts"],
             ignoreOrder: true);
         (await ListTablesAsync(connectionString, "public")).ShouldBeEmpty();
 
@@ -42,6 +42,10 @@ public class PlatformMigrationTests(PostgresFixture postgres)
         (await CountAsync(connectionString, "platform.permissions WHERE code = 'platform.roles.manage'")).ShouldBe(1);
         (await CountAsync(connectionString, "platform.roles WHERE is_system")).ShouldBe(7);
         (await CountAsync(connectionString, "platform.role_permissions WHERE permission_code = 'platform.users.manage'")).ShouldBe(1);
+
+        // Only Turkish, active and default (PLAN P4)
+        (await CountAsync(connectionString, "platform.cultures")).ShouldBe(1);
+        (await CountAsync(connectionString, "platform.cultures WHERE code = 'tr-TR' AND is_default AND is_active")).ShouldBe(1);
     }
 
     private static async Task<long> CountAsync(string connectionString, string from)

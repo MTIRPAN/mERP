@@ -19,6 +19,8 @@ public sealed class PlatformPermissionDefinitions : IPermissionDefinitionProvide
         new(PlatformPermissions.Roles.Read),
         new(PlatformPermissions.Roles.Manage),
         new(PlatformPermissions.Audit.Read),
+        new(PlatformPermissions.Localization.Read),
+        new(PlatformPermissions.Localization.Manage),
     ];
 }
 

@@ -12,4 +12,6 @@ export const platformPermissions = {
   rolesRead: 'platform.roles.read',
   rolesManage: 'platform.roles.manage',
   auditRead: 'platform.audit.read',
+  localizationRead: 'platform.localization.read',
+  localizationManage: 'platform.localization.manage',
 } as const;

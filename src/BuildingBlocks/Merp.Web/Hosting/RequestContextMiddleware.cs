@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Claims;
 using Merp.Application.Abstractions.Localization;
 using Merp.Application.Abstractions.Security;
+using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Security;
 using Merp.Web.Errors;
@@ -15,7 +16,8 @@ namespace Merp.Web.Hosting;
 /// Binds the per-request context:
 /// <list type="bullet">
 /// <item>the platform user of the signed-in identity (created on first sign-in, D6); inactive users get 403;</item>
-/// <item>the culture: the user's preference, otherwise the one chosen by request localization (D11);</item>
+/// <item>the tenant's cultures and translations, and the culture: the user's preference, otherwise the best match of
+/// <c>Accept-Language</c> among the tenant's active cultures, otherwise the tenant's default (D11, D28);</item>
 /// <item>the active company from the <c>X-Company-Id</c> header (D4), which narrows data and never widens permissions.</item>
 /// </list>
 /// </summary>
@@ -29,13 +31,22 @@ public sealed class RequestContextMiddleware(RequestDelegate next)
         CurrentUser currentUser,
         CompanyContext companyContext,
         TenantContext tenantContext,
+        LocalizationContext localization,
         IProblemDetailsService problemDetails)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(currentUser);
         ArgumentNullException.ThrowIfNull(companyContext);
         ArgumentNullException.ThrowIfNull(tenantContext);
+        ArgumentNullException.ThrowIfNull(localization);
         ArgumentNullException.ThrowIfNull(problemDetails);
+
+        if (tenantContext.Tenant is not null)
+        {
+            var snapshot = await context.RequestServices.GetRequiredService<ILocalizationSource>().GetAsync(context.RequestAborted);
+            localization.Set(snapshot);
+            ApplyCulture(context, RequestedCulture(context, snapshot) ?? snapshot.DefaultCulture);
+        }
 
         currentUser.SetCulture(CultureInfo.CurrentUICulture.Name);
 
@@ -51,12 +62,11 @@ public sealed class RequestContextMiddleware(RequestDelegate next)
                 return;
             }
 
-            var culture = user.Culture is { } preferred && context.RequestServices.GetRequiredService<ISupportedCultures>().IsSupported(preferred)
-                ? preferred
-                : null;
+            // A preference for a culture the tenant has switched off is ignored
+            var culture = localization.Snapshot.Find(user.Culture)?.Code;
             if (culture is not null)
             {
-                CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
+                ApplyCulture(context, culture);
             }
 
             currentUser.SetUser(user.UserId, tenant.Id, user.EmployeeId, culture);
@@ -74,6 +84,20 @@ public sealed class RequestContextMiddleware(RequestDelegate next)
         }
 
         await next(context);
+    }
+
+    /// <summary>The best active culture of <c>Accept-Language</c>, by quality.</summary>
+    private static string? RequestedCulture(HttpContext context, LocalizationSnapshot snapshot) =>
+        context.Request.GetTypedHeaders().AcceptLanguage
+            .Where(l => l.Quality is not 0)
+            .OrderByDescending(l => l.Quality ?? 1)
+            .Select(l => l.Value.Value is { } value ? snapshot.Match(value) : null)
+            .FirstOrDefault(c => c is not null);
+
+    private static void ApplyCulture(HttpContext context, string culture)
+    {
+        CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
+        context.Response.Headers.ContentLanguage = culture;
     }
 
     private static IdentityClaims Identity(ClaimsPrincipal user, string subject) =>

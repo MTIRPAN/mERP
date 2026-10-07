@@ -26,6 +26,7 @@ const CompaniesPage = page(() => import('@/modules/platform/organization/Compani
 const ProfilePage = page(() => import('@/modules/platform/ProfilePage'), 'ProfilePage');
 const SystemInfoPage = page(() => import('@/modules/platform/SystemInfoPage'), 'SystemInfoPage');
 const AuditLogPage = page(() => import('@/modules/platform/audit/AuditLogPage'), 'AuditLogPage');
+const LocalizationPage = page(() => import('@/modules/platform/localization/LocalizationPage'), 'LocalizationPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -118,6 +119,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={platformPermissions.auditRead}>
               <AuditLogPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/localization"
+          element={
+            <RequirePermission permission={platformPermissions.localizationRead}>
+              <LocalizationPage />
             </RequirePermission>
           }
         />

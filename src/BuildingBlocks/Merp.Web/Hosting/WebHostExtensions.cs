@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text.Json.Serialization;
+using Merp.Application.Abstractions.Localization;
 using Merp.Infrastructure.Localization;
 using Merp.Web.Errors;
 using Merp.Web.Health;
@@ -79,10 +80,9 @@ public static class WebHostExtensions
 
         services.AddMerpRateLimiting(configuration);
 
-        // Only tr-TR is active until languages are managed in the database (D11, PLAN P4).
-        var cultures = configuration.GetSection("Localization:SupportedCultures").Get<string[]>() is { Length: > 0 } configured
-            ? configured
-            : [EmbeddedTextLocalizer.DefaultCulture];
+        // Before the tenant is known only the embedded culture exists; RequestContextMiddleware then picks among the
+        // tenant's active cultures (D11, D28).
+        string[] cultures = [LocalizationSnapshot.EmbeddedCulture];
         services.Configure<RequestLocalizationOptions>(options =>
         {
             options.SetDefaultCulture(cultures[0]).AddSupportedCultures(cultures).AddSupportedUICultures(cultures);

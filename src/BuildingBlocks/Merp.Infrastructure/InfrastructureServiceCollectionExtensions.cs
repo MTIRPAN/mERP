@@ -1,5 +1,4 @@
 using Merp.Application.Abstractions.Context;
-using Merp.Application.Abstractions.Localization;
 using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.MultiTenancy;
@@ -26,8 +25,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.TryAddScoped<ICompanyContext>(sp => sp.GetRequiredService<CompanyContext>());
 
         services.AddLocalizationResources(typeof(SharedKernel.Results.Error).Assembly);
-        services.TryAddSingleton<ITextLocalizer, EmbeddedTextLocalizer>();
-        services.TryAddSingleton<ISupportedCultures, SupportedCultures>();
+        services.AddMerpLocalization();
 
         services.AddMerpMediator();
         services.AddMerpPersistence();

@@ -4,6 +4,8 @@
   "common.errors.forbidden": "Bu işlem için yetkiniz yok.",
   "common.errors.concurrency_conflict": "Kayıt siz düzenlerken başka biri tarafından değiştirildi. Sayfayı yenileyip tekrar deneyin.",
   "common.errors.unexpected": "Beklenmeyen bir hata oluştu.",
+  "common.errors.default_culture_required": "Varsayılan dilde ({culture}) bir metin girilmelidir.",
+  "common.errors.inactive_culture": "{culture} dili etkin değil.",
   "common.errors.required": "Bu alan zorunludur.",
   "common.errors.max_length": "En fazla {maxLength} karakter girilebilir.",
   "common.errors.invalid_email": "Geçerli bir e-posta adresi girin.",

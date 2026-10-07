@@ -1,10 +1,9 @@
-using System.Globalization;
 using System.Security.Claims;
 using Merp.Application.Abstractions.AI;
 using Merp.Application.Abstractions.Context;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Security;
-using Merp.Application.Abstractions.Localization;
+using Merp.Infrastructure.Localization;
 using Merp.Modules.Platform.Application.Companies;
 using Merp.Modules.Platform.Application.Users;
 using Merp.Web.Errors;
@@ -58,7 +57,7 @@ internal static class MeEndpoints
         IAiService ai,
         ISender sender,
         ICurrentUserProvisioner provisioner,
-        ISupportedCultures supportedCultures)
+        LocalizationContext localization)
     {
         var granted = new HashSet<string>(StringComparer.Ordinal);
         foreach (var permission in permissionProviders.SelectMany(p => p.GetPermissions()).Select(p => p.Code).Distinct(StringComparer.Ordinal))
@@ -72,10 +71,8 @@ internal static class MeEndpoints
         var companies = await sender.Send(new GetSelectableCompaniesQuery(granted), context.RequestAborted);
         var menu = Filter(menuContributors.SelectMany(c => c.GetMenuItems()), granted, ai);
         var user = context.User;
-        var cultures = supportedCultures.All
-            .Select(c => CultureInfo.GetCultureInfo(c))
-            .Select(c => new CultureResponse(c.Name, c.NativeName))
-            .ToList();
+        // The tenant's active cultures, the default first (D11)
+        var cultures = localization.Snapshot.Cultures.Select(c => new CultureResponse(c.Code, c.Name)).ToList();
         var aiFeatures = aiFeatureProviders
             .SelectMany(p => p.GetFeatures())
             .Select(f => f.Key)
