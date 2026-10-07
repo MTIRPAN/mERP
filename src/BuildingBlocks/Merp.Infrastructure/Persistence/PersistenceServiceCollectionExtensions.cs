@@ -1,6 +1,8 @@
 using System.Reflection;
 using Merp.Application.Abstractions.Auditing;
 using Merp.Application.Abstractions.Messaging;
+using Merp.Application.Abstractions.Numbering;
+using Merp.Infrastructure.Numbering;
 using Merp.Infrastructure.Persistence.Auditing;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.MultiTenancy;
@@ -23,6 +25,8 @@ public static class PersistenceServiceCollectionExtensions
         services.TryAddScoped<AuditableInterceptor>();
         services.TryAddScoped<AuditLogInterceptor>();
         services.TryAddScoped<ISensitiveReadLog, SensitiveReadLog>();
+        services.TryAddScoped<INumberGenerator, NumberGenerator>();
+        services.TryAddScoped<INumberSequenceSettingsSource, NoNumberSequences>();
         services.TryAddScoped<DomainEventDispatcher>();
         services.TryAddScoped<IIntegrationEventPublisher, OutboxIntegrationEventPublisher>();
         services.TryAddSingleton<TenantDatabaseMigrator>();

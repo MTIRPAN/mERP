@@ -1,4 +1,5 @@
 using Merp.Application.Abstractions.Localization;
+using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Localization;
@@ -7,11 +8,13 @@ using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Platform.Application.Localization;
+using Merp.Modules.Platform.Application.Numbering;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Infrastructure.Access;
 using Merp.Modules.Platform.Infrastructure.AI;
 using Merp.Modules.Platform.Infrastructure.Identity;
 using Merp.Modules.Platform.Infrastructure.Localization;
+using Merp.Modules.Platform.Infrastructure.Numbering;
 using Merp.Modules.Platform.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +52,11 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.Replace(ServiceDescriptor.Scoped<ILocalizationSource, PlatformLocalizationSource>());
         services.AddScoped<ILocalizationCache, LocalizationCache>();
         services.AddSingleton<ITenantDataSeeder, LocalizationSeeder>();
+
+        // Number patterns of all modules; the counters stay in each module (D29)
+        services.Replace(ServiceDescriptor.Scoped<INumberSequenceSettingsSource, PlatformNumberSequences>());
+        services.AddScoped<INumberingCache, NumberingCache>();
+        services.AddSingleton<ITenantDataSeeder, NumberingSeeder>();
 
         var keycloak = services.AddOptions<KeycloakAdminOptions>();
         if (configuration is not null)

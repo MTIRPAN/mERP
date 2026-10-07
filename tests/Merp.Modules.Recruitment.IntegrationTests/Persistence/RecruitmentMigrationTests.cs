@@ -27,7 +27,7 @@ public class RecruitmentMigrationTests(PostgresFixture postgres)
         await migrator.MigrateAsync(tenant, connectionString, TestContext.Current.CancellationToken);
 
         var tables = await ListTablesAsync(connectionString, "recruitment");
-        tables.ShouldBe(["__ef_migrations_history", "audit_entries", "inbox_messages", "outbox_messages"], ignoreOrder: true);
+        tables.ShouldBe(["__ef_migrations_history", "audit_entries", "inbox_messages", "outbox_messages", "number_counters"], ignoreOrder: true);
         (await ListTablesAsync(connectionString, "public")).ShouldBeEmpty();
     }
 

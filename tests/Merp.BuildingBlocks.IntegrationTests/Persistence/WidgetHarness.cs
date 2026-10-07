@@ -1,5 +1,6 @@
 using Merp.Application.Abstractions.Context;
 using Merp.Application.Abstractions.Messaging;
+using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure;
 using Merp.Infrastructure.Messaging;
@@ -7,6 +8,7 @@ using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
 using Merp.Infrastructure.Security;
 using Merp.Testing.Containers;
+using Merp.SharedKernel.Numbering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
@@ -45,6 +47,7 @@ public sealed class WidgetHarness : IAsyncDisposable
         services.AddModuleDbContext<WidgetDbContext>(typeof(WidgetHarness).Assembly, typeof(WidgetHarness).Namespace);
         services.AddRequestHandlersFromAssembly(typeof(WidgetHarness).Assembly, typeof(WidgetHarness).Namespace);
         services.AddSingleton(permissions);
+        services.AddScoped<INumberSequenceSettingsSource>(_ => new FixedNumberSequence(new("W-{yyyy}-{seq:4}", NumberResetPeriod.Yearly)));
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         var harness = new WidgetHarness(provider, connectionString, time);
@@ -77,4 +80,11 @@ public sealed class WidgetHarness : IAsyncDisposable
     }
 
     public ValueTask DisposeAsync() => _provider.DisposeAsync();
+}
+
+/// <summary>Every document type of the harness numbers with one pattern.</summary>
+internal sealed class FixedNumberSequence(NumberSequenceSettings settings) : INumberSequenceSettingsSource
+{
+    public Task<NumberSequenceSettings?> GetAsync(Guid companyId, string documentType, CancellationToken cancellationToken = default) =>
+        Task.FromResult<NumberSequenceSettings?>(settings);
 }

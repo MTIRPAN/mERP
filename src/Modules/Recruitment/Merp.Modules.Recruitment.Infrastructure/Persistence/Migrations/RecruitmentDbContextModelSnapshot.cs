@@ -23,6 +23,32 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Merp.Infrastructure.Numbering.NumberCounter", b =>
+                {
+                    b.Property<string>("DocumentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_type");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<string>("Period")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("period");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("bigint")
+                        .HasColumnName("value");
+
+                    b.HasKey("DocumentType", "CompanyId", "Period")
+                        .HasName("pk_number_counters");
+
+                    b.ToTable("number_counters", "recruitment");
+                });
+
             modelBuilder.Entity("Merp.Infrastructure.Persistence.Auditing.AuditEntry", b =>
                 {
                     b.Property<Guid>("Id")

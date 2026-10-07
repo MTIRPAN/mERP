@@ -27,6 +27,7 @@ const ProfilePage = page(() => import('@/modules/platform/ProfilePage'), 'Profil
 const SystemInfoPage = page(() => import('@/modules/platform/SystemInfoPage'), 'SystemInfoPage');
 const AuditLogPage = page(() => import('@/modules/platform/audit/AuditLogPage'), 'AuditLogPage');
 const LocalizationPage = page(() => import('@/modules/platform/localization/LocalizationPage'), 'LocalizationPage');
+const NumberingPage = page(() => import('@/modules/platform/numbering/NumberingPage'), 'NumberingPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -127,6 +128,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={platformPermissions.localizationRead}>
               <LocalizationPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/numbering"
+          element={
+            <RequirePermission permission={platformPermissions.numberingRead}>
+              <NumberingPage />
             </RequirePermission>
           }
         />

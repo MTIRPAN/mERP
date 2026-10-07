@@ -14,4 +14,6 @@ export const platformPermissions = {
   auditRead: 'platform.audit.read',
   localizationRead: 'platform.localization.read',
   localizationManage: 'platform.localization.manage',
+  numberingRead: 'platform.numbering.read',
+  numberingManage: 'platform.numbering.manage',
 } as const;
