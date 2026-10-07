@@ -23,6 +23,32 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Merp.Infrastructure.Numbering.NumberCounter", b =>
+                {
+                    b.Property<string>("DocumentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_type");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<string>("Period")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("period");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("bigint")
+                        .HasColumnName("value");
+
+                    b.HasKey("DocumentType", "CompanyId", "Period")
+                        .HasName("pk_number_counters");
+
+                    b.ToTable("number_counters", "platform");
+                });
+
             modelBuilder.Entity("Merp.Infrastructure.Persistence.Auditing.AuditEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -546,6 +572,72 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasName("pk_provinces");
 
                     b.ToTable("provinces", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Numbering.NumberSequence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_type");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Pattern")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("pattern");
+
+                    b.Property<string>("ResetPeriod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reset_period");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_number_sequences");
+
+                    b.HasIndex("DocumentType")
+                        .IsUnique()
+                        .HasDatabaseName("ix_number_sequences_document_type")
+                        .HasFilter("company_id IS NULL");
+
+                    b.HasIndex("DocumentType", "CompanyId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_number_sequences_document_type_company_id")
+                        .HasFilter("company_id IS NOT NULL");
+
+                    b.ToTable("number_sequences", "platform");
                 });
 
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Roles.Permission", b =>

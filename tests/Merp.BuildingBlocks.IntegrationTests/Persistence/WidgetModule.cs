@@ -1,4 +1,5 @@
 using Merp.Application.Abstractions.Messaging;
+using Merp.Application.Abstractions.Numbering;
 using Merp.Infrastructure.Persistence;
 using Merp.SharedKernel.Domain;
 using Merp.SharedKernel.Identity;
@@ -105,6 +106,9 @@ public sealed record DeleteWidget(WidgetId Id) : ICommand;
 
 public sealed record CreateTwoWidgets : ICommand;
 
+/// <summary>Takes a document number; Fail throws afterwards, so the transaction rolls back.</summary>
+public sealed record NumberWidget(Guid CompanyId, DateOnly Date, bool Fail = false) : ICommand<string>;
+
 internal sealed class CreateWidgetHandler(WidgetDbContext db, IIntegrationEventPublisher publisher) : ICommandHandler<CreateWidget, WidgetId>
 {
     public async Task<Result<WidgetId>> Handle(CreateWidget request, CancellationToken cancellationToken)
@@ -161,6 +165,17 @@ internal sealed class CreateTwoWidgetsHandler(WidgetDbContext db) : ICommandHand
         db.Widgets.Add(Widget.Create("first", "Bir", null));
         db.Widgets.Add(Widget.Create("second", "İki", null));
         return Task.FromResult(Result.Success());
+    }
+}
+
+internal sealed class NumberWidgetHandler(INumberGenerator numbers) : ICommandHandler<NumberWidget, string>
+{
+    public const string DocumentType = "widgets.order";
+
+    public async Task<Result<string>> Handle(NumberWidget request, CancellationToken cancellationToken)
+    {
+        var number = await numbers.NextAsync(request.CompanyId, DocumentType, request.Date, cancellationToken);
+        return request.Fail ? throw new InvalidOperationException("Simulated failure after numbering") : number;
     }
 }
 

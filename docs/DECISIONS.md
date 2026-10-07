@@ -416,9 +416,9 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 
 **Etiketler:** Entity ve alan adları `{modül}.entities.{Tür}` ve `{modül}.entities.{Tür}.{Alan}` anahtarlarıyla yerelleştirilir (ör. `platform.entities.Company.Address.City`). Metni olmayan alan için teknik ad gösterilir.
 
-## D28 — Çoklu dilin uygulanması (öneri — onay bekliyor)
+## D28 — Çoklu dilin uygulanması
 
-**Durum:** Öneri. PLAN P4 ile uygulandı; P4 incelemesinde kullanıcı onayına sunuldu. D11'i ayrıntılandırır.
+**Durum:** Kabul edildi (P4 incelemesinden sonra kullanıcı onayı). PLAN P4 ile uygulandı. D11'i ayrıntılandırır.
 
 **Diller ve çeviriler kiracıya aittir:**
 - `platform.cultures` (kod, ad, aktif, varsayılan, yedek dil) ve `platform.localization_texts` (dil, anahtar, metin) tabloları kiracı veritabanındadır.
@@ -450,3 +450,27 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Excel için D19'daki ClosedXML (MIT) eklendi. Alt bağımlılıkları MIT ve Apache-2.0 (SixLabors.Fonts 1.0.0).
 
 **Ana veri metinleri (`LocalizedString`):** Girişte varsayılan dilde metin zorunludur ve yalnızca aktif diller kullanılabilir (`MustCoverDefaultCulture`; ilk kullanan: rol adları).
+
+## D29 — Belge numaralandırma (öneri — onay bekliyor)
+
+**Durum:** Öneri. PLAN P5 ile uygulandı; P5 incelemesinde kullanıcı onayına sunuldu.
+
+**Sorun:** Numara, çağıran komutun transaction'ında satır kilidiyle üretilmeli (PLAN P5). Komut başka modülde olabilir (HR, Recruitment). Kural 2 başka şemaya yazmayı, kural 3 modüller arası senkron yazmayı yasaklar.
+
+**Karar — desen Platform'da, sayaç modülde:**
+- **Desen ve sıfırlama:** `platform.number_sequences` tablosunda. Belge türü başına bir varsayılan (şirketsiz) ve isteğe bağlı şirkete özel desenler. Modüller belge türlerini `INumberSequenceDefinitionProvider` ile bildirir (izin kataloğu gibi). Platform eksik varsayılanları seed eder, düzenlenmiş desenlere dokunmaz.
+- **Sayaç:** Her modül şemasındaki `number_counters` tablosu (`audit_entries` gibi `ModuleDbContext`'ten gelir). Belge türünün ilk parçası modüldür (`recruitment.offer` → `recruitment` şeması).
+- **Üretim:** `INumberGenerator.NextAsync(companyId, documentType, date)`. Deseni Platform'dan okur; `INumberSequenceSettingsSource` HybridCache'te tutulur ve değişiklikten sonra temizlenir. Ardından modülün açık transaction'ında tek bir `INSERT … ON CONFLICT DO UPDATE SET value = value + 1 RETURNING value` çalıştırır.
+  - Satır kilidi commit'e kadar sürer: eşzamanlı komutlar sırayla numara alır, aynı numara iki kez verilmez.
+  - Geri alınan komut numarayı geri bırakır; boşluk oluşmaz.
+  - Transaction dışında çağrılırsa hata verir.
+- **Sayaç kapsamı:** Belge türü × şirket × dönem (`-`, `2026` veya `2026-10`). Her şirket kendi sayacıyla sayar. Belge tarihi dönemi belirler; eski yıla ait geç bir belge o yılın sayacından devam eder.
+
+**Desen kuralları:**
+- `{yyyy}`, `{yy}`, `{MM}` ve tam olarak bir `{seq}` veya `{seq:N}` (N 1–12) kullanılabilir.
+- Yıllık sıfırlamada yıl, aylık sıfırlamada yıl ve ay desende olmalıdır; yoksa numaralar tekrar eder.
+- Desen değişince sayaç kaldığı yerden devam eder. Yılı desenden çıkarmak eski numaraları tekrarlayabilir; arayüz bunu uyarır.
+
+**Yönetim:** `platform.numbering.read/manage` yalnızca Tenant kapsamıyla geçerlidir (D26 gibi). Varsayılan desen silinemez; şirkete özel desen silinince varsayılan devreye girer.
+
+**Seed:** Şimdilik `recruitment.requisition` (`PT-{yyyy}-{seq:5}`) ve `recruitment.offer` (`TKL-{yyyy}-{seq:5}`), yıllık. `hr.employee` ve `hr.leave-request` HR modülü (H1/H2) eklenince onun tanımlarıyla gelir.

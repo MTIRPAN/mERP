@@ -54,4 +54,10 @@ public static class PlatformPermissions
         public const string Read = "platform.localization.read";
         public const string Manage = "platform.localization.manage";
     }
+
+    public static class Numbering
+    {
+        public const string Read = "platform.numbering.read";
+        public const string Manage = "platform.numbering.manage";
+    }
 }

@@ -21,6 +21,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddCompanyNumberSequenceCommand,
   AddCultureCommand,
   AiUsageSummaryResponse,
   AssignRoleCommand,
@@ -47,6 +48,7 @@ import type {
   ListUsersParams,
   LocationOption,
   MeResponse,
+  NumberSequenceItem,
   PagedResultOfAuditItem,
   PagedResultOfBranchListItem,
   PagedResultOfCompanyListItem,
@@ -65,6 +67,7 @@ import type {
   UpdateCompanyCommand,
   UpdateCultureCommand,
   UpdateMyPreferencesCommand,
+  UpdateNumberSequenceCommand,
   UpdateRoleCommand,
   UserDetails,
 } from '../../model';
@@ -4151,3 +4154,403 @@ export function useListAuditEntityTypes<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export const getListNumberSequencesUrl = () => {
+  return `/api/platform/numbering/sequences`;
+};
+
+/**
+ * Requires permission: platform.numbering.read.
+ * @summary Number patterns of all document types, defaults and companies' own
+ */
+export const listNumberSequences = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<NumberSequenceItem[]> => {
+  return customFetch<NumberSequenceItem[]>(getListNumberSequencesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListNumberSequencesQueryKey = () => {
+  return [`/api/platform/numbering/sequences`] as const;
+};
+
+export const getListNumberSequencesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listNumberSequences>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNumberSequences>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListNumberSequencesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listNumberSequences>>> = ({ signal }) =>
+    listNumberSequences({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listNumberSequences>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListNumberSequencesQueryResult = NonNullable<Awaited<ReturnType<typeof listNumberSequences>>>;
+export type ListNumberSequencesQueryError = ErrorType<ProblemDetails>;
+
+export function useListNumberSequences<
+  TData = Awaited<ReturnType<typeof listNumberSequences>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNumberSequences>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listNumberSequences>>,
+          TError,
+          Awaited<ReturnType<typeof listNumberSequences>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListNumberSequences<
+  TData = Awaited<ReturnType<typeof listNumberSequences>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNumberSequences>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listNumberSequences>>,
+          TError,
+          Awaited<ReturnType<typeof listNumberSequences>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListNumberSequences<
+  TData = Awaited<ReturnType<typeof listNumberSequences>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNumberSequences>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Number patterns of all document types, defaults and companies' own
+ */
+
+export function useListNumberSequences<
+  TData = Awaited<ReturnType<typeof listNumberSequences>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listNumberSequences>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListNumberSequencesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAddCompanyNumberSequenceUrl = () => {
+  return `/api/platform/numbering/sequences`;
+};
+
+/**
+ * Requires permission: platform.numbering.manage.
+ * @summary Give a company its own pattern for a document type
+ */
+export const addCompanyNumberSequence = async (
+  addCompanyNumberSequenceCommand: AddCompanyNumberSequenceCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getAddCompanyNumberSequenceUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addCompanyNumberSequenceCommand),
+  });
+};
+
+export const getAddCompanyNumberSequenceMutationKey = () => ['addCompanyNumberSequence'] as const;
+
+export const getAddCompanyNumberSequenceMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addCompanyNumberSequence>>,
+    TError,
+    AddCompanyNumberSequenceMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addCompanyNumberSequence>>,
+  TError,
+  AddCompanyNumberSequenceMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAddCompanyNumberSequenceMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addCompanyNumberSequence>>,
+    AddCompanyNumberSequenceMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return addCompanyNumberSequence(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddCompanyNumberSequenceMutationResult = NonNullable<Awaited<ReturnType<typeof addCompanyNumberSequence>>>;
+export type AddCompanyNumberSequenceMutationBody = AddCompanyNumberSequenceCommand;
+export type AddCompanyNumberSequenceMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AddCompanyNumberSequenceMutationVariables = { data: AddCompanyNumberSequenceCommand };
+
+/**
+ * @summary Give a company its own pattern for a document type
+ */
+export const useAddCompanyNumberSequence = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addCompanyNumberSequence>>,
+      TError,
+      AddCompanyNumberSequenceMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof addCompanyNumberSequence>>,
+  TError,
+  AddCompanyNumberSequenceMutationVariables,
+  TContext
+> => {
+  return useMutation(getAddCompanyNumberSequenceMutationOptions(options), queryClient);
+};
+export const getUpdateNumberSequenceUrl = (id: string) => {
+  return `/api/platform/numbering/sequences/${id}`;
+};
+
+/**
+ * Requires permission: platform.numbering.manage.
+ * @summary Change a pattern and its reset period
+ */
+export const updateNumberSequence = async (
+  id: string,
+  updateNumberSequenceCommand: UpdateNumberSequenceCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateNumberSequenceUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateNumberSequenceCommand),
+  });
+};
+
+export const getUpdateNumberSequenceMutationKey = () => ['updateNumberSequence'] as const;
+
+export const getUpdateNumberSequenceMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateNumberSequence>>,
+    TError,
+    UpdateNumberSequenceMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateNumberSequence>>,
+  TError,
+  UpdateNumberSequenceMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateNumberSequenceMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateNumberSequence>>,
+    UpdateNumberSequenceMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateNumberSequence(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateNumberSequenceMutationResult = NonNullable<Awaited<ReturnType<typeof updateNumberSequence>>>;
+export type UpdateNumberSequenceMutationBody = UpdateNumberSequenceCommand;
+export type UpdateNumberSequenceMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateNumberSequenceMutationVariables = { id: string; data: UpdateNumberSequenceCommand };
+
+/**
+ * @summary Change a pattern and its reset period
+ */
+export const useUpdateNumberSequence = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateNumberSequence>>,
+      TError,
+      UpdateNumberSequenceMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateNumberSequence>>,
+  TError,
+  UpdateNumberSequenceMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateNumberSequenceMutationOptions(options), queryClient);
+};
+export const getDeleteNumberSequenceUrl = (id: string) => {
+  return `/api/platform/numbering/sequences/${id}`;
+};
+
+/**
+ * Requires permission: platform.numbering.manage.
+ * @summary Remove a company's own pattern
+ */
+export const deleteNumberSequence = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getDeleteNumberSequenceUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getDeleteNumberSequenceMutationKey = () => ['deleteNumberSequence'] as const;
+
+export const getDeleteNumberSequenceMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteNumberSequence>>,
+    TError,
+    DeleteNumberSequenceMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteNumberSequence>>,
+  TError,
+  DeleteNumberSequenceMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteNumberSequenceMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteNumberSequence>>,
+    DeleteNumberSequenceMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteNumberSequence(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteNumberSequenceMutationResult = NonNullable<Awaited<ReturnType<typeof deleteNumberSequence>>>;
+
+export type DeleteNumberSequenceMutationError = ErrorType<ProblemDetails>;
+export type DeleteNumberSequenceMutationVariables = { id: string };
+
+/**
+ * @summary Remove a company's own pattern
+ */
+export const useDeleteNumberSequence = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteNumberSequence>>,
+      TError,
+      DeleteNumberSequenceMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteNumberSequence>>,
+  TError,
+  DeleteNumberSequenceMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteNumberSequenceMutationOptions(options), queryClient);
+};

@@ -25,6 +25,7 @@ internal sealed class PlatformMenu : IMenuContributor
             new("ai-usage", "web.shell.menu.ai_usage", Path: "/system/ai-usage", Icon: "ai", Permission: PlatformPermissions.AiUsage.Read, Order: 20),
             new("audit", "web.shell.menu.audit", Path: "/system/audit", Icon: "audit", Permission: PlatformPermissions.Audit.Read, Order: 30),
             new("localization", "web.shell.menu.localization", Path: "/system/localization", Icon: "language", Permission: PlatformPermissions.Localization.Read, Order: 40),
+            new("numbering", "web.shell.menu.numbering", Path: "/system/numbering", Icon: "numbering", Permission: PlatformPermissions.Numbering.Read, Order: 50),
         ]),
     ];
 }

@@ -5,6 +5,7 @@
  * OpenAPI spec version: v1
  */
 
+export * from './addCompanyNumberSequenceCommand';
 export * from './addCultureCommand';
 export * from './addressDto';
 export * from './addressInput';
@@ -64,6 +65,8 @@ export * from './locationOption';
 export * from './meAiResponse';
 export * from './menuItemResponse';
 export * from './meResponse';
+export * from './numberResetPeriod';
+export * from './numberSequenceItem';
 export * from './pagedResultOfAuditItem';
 export * from './pagedResultOfBranchListItem';
 export * from './pagedResultOfCompanyListItem';
@@ -90,6 +93,7 @@ export * from './updateBranchCommand';
 export * from './updateCompanyCommand';
 export * from './updateCultureCommand';
 export * from './updateMyPreferencesCommand';
+export * from './updateNumberSequenceCommand';
 export * from './updateRoleCommand';
 export * from './updateRoleCommandName';
 export * from './userDetails';

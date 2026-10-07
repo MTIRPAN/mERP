@@ -400,7 +400,14 @@ Kurallar: D11.
 - Kullanıcı dili değiştirince bu metinler İngilizce, eksikler Türkçe görünür.
 - API hata mesajları seçilen dilde gelir.
 
-### [ ] P5 Numaralandırma — S
+### [x] P5 Numaralandırma — S
+
+Yapılanlar (D29):
+- Desenler `platform.number_sequences` tablosunda (varsayılan ve şirkete özel); sayaçlar her modülün `number_counters` tablosunda.
+- `INumberGenerator`: çağıranın transaction'ında tek bir upsert ile satır kilidi alır.
+- API ve Sistem → Numaralandırma ekranı (canlı önizleme).
+- Seed: `recruitment.requisition`, `recruitment.offer`. **`hr.employee` (H2) ve `hr.leave-request` (L4) HR modülüyle eklenecek**; HR modülü henüz yok.
+- Kabul testleri: `NumberGeneratorTests.FiftyParallelRequests_GetFiftyDifferentNumbers`, `NewYear_StartsTheCounterAgain`.
 
 **Yapılacaklar:**
 - `NumberSequence`: şirket, belge türü, desen (`IZN-{yyyy}-{seq:6}`), sıfırlama periyodu (Never / Yearly / Monthly), periyot bazında son değer.
@@ -590,6 +597,7 @@ Kurallar: D14.
 Kurallar: D6, D13.
 
 **Yapılacaklar:**
+- Numaralandırma: `hr.employee` (sicil no, `{seq:6}`, sıfırlanmaz) tanımı HR modülünden bildirilir (P5, D29).
 - **`Employee`:**
   - Kimlik: TCKN (tenant içinde tekil), ad, soyad, doğum tarihi ve yeri, cinsiyet, uyruk, medeni hal.
   - İletişim: e-postalar, telefonlar, adresler, acil durum kişileri.
@@ -710,6 +718,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 ### [ ] L4 İzin talebi ve onay 🔍 — XL (2 PR: backend, web)
 
 **Yapılacaklar:**
+- Numaralandırma: `hr.leave-request` (`IZN-{yyyy}-{seq:6}`, yıllık) tanımı HR modülünden bildirilir (P5, D29).
 - **`LeaveRequest`:**
   - numara, istihdam, tür, başlangıç/bitiş, yarım gün parçaları, saat, süre
   - açıklama, izindeki adres ve telefon, vekil personel, yol izni günleri, ekler

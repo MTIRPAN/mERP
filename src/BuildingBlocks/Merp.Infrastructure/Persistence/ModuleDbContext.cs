@@ -3,6 +3,7 @@ using System.Reflection;
 using Merp.Application.Persistence;
 using Merp.Infrastructure.Persistence.Auditing;
 using Merp.Infrastructure.Persistence.Conventions;
+using Merp.Infrastructure.Numbering;
 using Merp.Infrastructure.Persistence.Inbox;
 using Merp.Infrastructure.Persistence.Outbox;
 using Merp.SharedKernel.Identity;
@@ -140,6 +141,14 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
             builder.HasIndex(e => new { e.UserId, e.OccurredAt });
             // The audit search pages through all entries, newest first (PLAN P3)
             builder.HasIndex(e => e.OccurredAt);
+        });
+
+        modelBuilder.Entity<NumberCounter>(builder =>
+        {
+            builder.ToTable("number_counters");
+            builder.HasKey(c => new { c.DocumentType, c.CompanyId, c.Period });
+            builder.Property(c => c.DocumentType).HasMaxLength(NumberCounter.DocumentTypeMaxLength);
+            builder.Property(c => c.Period).HasMaxLength(NumberCounter.PeriodMaxLength);
         });
     }
 

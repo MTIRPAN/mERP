@@ -6,6 +6,8 @@
   "common.errors.unexpected": "Beklenmeyen bir hata oluştu.",
   "common.errors.default_culture_required": "Varsayılan dilde ({culture}) bir metin girilmelidir.",
   "common.errors.inactive_culture": "{culture} dili etkin değil.",
+  "common.errors.invalid_number_pattern": "Desen geçersiz. Tam olarak bir {seq} veya {seq:5} gibi bir sayaç içermeli; yalnızca {yyyy}, {yy} ve {MM} kullanılabilir.",
+  "common.errors.number_pattern_period": "Sayaç yıllık sıfırlanıyorsa desende yıl ({yyyy} veya {yy}), aylık sıfırlanıyorsa yıl ve ay ({MM}) olmalı; yoksa numaralar tekrar eder.",
   "common.errors.required": "Bu alan zorunludur.",
   "common.errors.max_length": "En fazla {maxLength} karakter girilebilir.",
   "common.errors.invalid_email": "Geçerli bir e-posta adresi girin.",

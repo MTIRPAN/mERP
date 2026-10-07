@@ -2,6 +2,7 @@ import {
   ApartmentOutlined,
   AppstoreOutlined,
   BankOutlined,
+  FieldNumberOutlined,
   HistoryOutlined,
   HomeOutlined,
   InfoCircleOutlined,
@@ -35,6 +36,7 @@ const icons: Record<string, ReactNode> = {
   role: <SafetyCertificateOutlined />,
   audit: <HistoryOutlined />,
   language: <TranslationOutlined />,
+  numbering: <FieldNumberOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;
