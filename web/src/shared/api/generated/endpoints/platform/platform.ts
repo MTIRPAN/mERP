@@ -21,6 +21,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddCultureCommand,
   AiUsageSummaryResponse,
   AssignRoleCommand,
   AuditEntityType,
@@ -31,13 +32,18 @@ import type {
   CreateCompanyCommand,
   CreateRoleCommand,
   CreateUserCommand,
+  CultureCreatedResponse,
+  CultureItem,
   EntityCreatedResponse,
   GetAiUsageSummaryParams,
   GetLocalizationBundle200,
   HttpValidationProblemDetails,
+  ImportTextsBody,
+  ImportTextsResult,
   ListBranchesParams,
   ListCompaniesParams,
   ListRolesParams,
+  ListTextsParams,
   ListUsersParams,
   LocationOption,
   MeResponse,
@@ -45,16 +51,19 @@ import type {
   PagedResultOfBranchListItem,
   PagedResultOfCompanyListItem,
   PagedResultOfRoleListItem,
+  PagedResultOfTextItem,
   PagedResultOfUserListItem,
   PermissionModuleNode,
   ProblemDetails,
   RoleDetails,
   ScopeTypeItem,
   SearchAuditParams,
+  SetTextCommand,
   SetUserActiveCommand,
   SystemInfoResponse,
   UpdateBranchCommand,
   UpdateCompanyCommand,
+  UpdateCultureCommand,
   UpdateMyPreferencesCommand,
   UpdateRoleCommand,
   UserDetails,
@@ -241,6 +250,7 @@ export const getGetLocalizationBundleUrl = (culture: string) => {
 };
 
 /**
+ * Anonymous for the sign-in screen: then only the embedded texts. With a token, the tenant's translations are included and only its active cultures are served.
  * @summary Web client texts for a culture
  */
 export const getLocalizationBundle = async (
@@ -1100,6 +1110,741 @@ export function useListScopeTypes<TData = Awaited<ReturnType<typeof listScopeTyp
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getListCulturesUrl = () => {
+  return `/api/platform/localization/cultures`;
+};
+
+/**
+ * Requires permission: platform.localization.read.
+ * @summary Languages of the tenant with their translation coverage
+ */
+export const listCultures = async (options?: Parameters<typeof customFetch>[1]): Promise<CultureItem[]> => {
+  return customFetch<CultureItem[]>(getListCulturesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListCulturesQueryKey = () => {
+  return [`/api/platform/localization/cultures`] as const;
+};
+
+export const getListCulturesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCultures>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCultures>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCulturesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCultures>>> = ({ signal }) =>
+    listCultures({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCultures>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListCulturesQueryResult = NonNullable<Awaited<ReturnType<typeof listCultures>>>;
+export type ListCulturesQueryError = ErrorType<ProblemDetails>;
+
+export function useListCultures<TData = Awaited<ReturnType<typeof listCultures>>, TError = ErrorType<ProblemDetails>>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCultures>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCultures>>,
+          TError,
+          Awaited<ReturnType<typeof listCultures>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCultures<TData = Awaited<ReturnType<typeof listCultures>>, TError = ErrorType<ProblemDetails>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCultures>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCultures>>,
+          TError,
+          Awaited<ReturnType<typeof listCultures>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCultures<TData = Awaited<ReturnType<typeof listCultures>>, TError = ErrorType<ProblemDetails>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCultures>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Languages of the tenant with their translation coverage
+ */
+
+export function useListCultures<TData = Awaited<ReturnType<typeof listCultures>>, TError = ErrorType<ProblemDetails>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCultures>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListCulturesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAddCultureUrl = () => {
+  return `/api/platform/localization/cultures`;
+};
+
+/**
+ * Requires permission: platform.localization.manage.
+ * @summary Add a language
+ */
+export const addCulture = async (
+  addCultureCommand: AddCultureCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CultureCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<CultureCreatedResponse>(getAddCultureUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addCultureCommand),
+  });
+};
+
+export const getAddCultureMutationKey = () => ['addCulture'] as const;
+
+export const getAddCultureMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof addCulture>>, TError, AddCultureMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof addCulture>>, TError, AddCultureMutationVariables, TContext> => {
+  const mutationKey = getAddCultureMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof addCulture>>, AddCultureMutationVariables> = (props) => {
+    const { data } = props ?? {};
+
+    return addCulture(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddCultureMutationResult = NonNullable<Awaited<ReturnType<typeof addCulture>>>;
+export type AddCultureMutationBody = AddCultureCommand;
+export type AddCultureMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AddCultureMutationVariables = { data: AddCultureCommand };
+
+/**
+ * @summary Add a language
+ */
+export const useAddCulture = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addCulture>>,
+      TError,
+      AddCultureMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof addCulture>>, TError, AddCultureMutationVariables, TContext> => {
+  return useMutation(getAddCultureMutationOptions(options), queryClient);
+};
+export const getUpdateCultureUrl = (code: string) => {
+  return `/api/platform/localization/cultures/${code}`;
+};
+
+/**
+ * Requires permission: platform.localization.manage.
+ * @summary Rename a language, switch it on or off, set its fallback
+ */
+export const updateCulture = async (
+  code: string,
+  updateCultureCommand: UpdateCultureCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateCultureUrl(code), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateCultureCommand),
+  });
+};
+
+export const getUpdateCultureMutationKey = () => ['updateCulture'] as const;
+
+export const getUpdateCultureMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCulture>>,
+    TError,
+    UpdateCultureMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof updateCulture>>, TError, UpdateCultureMutationVariables, TContext> => {
+  const mutationKey = getUpdateCultureMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCulture>>, UpdateCultureMutationVariables> = (
+    props,
+  ) => {
+    const { code, data } = props ?? {};
+
+    return updateCulture(code, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCultureMutationResult = NonNullable<Awaited<ReturnType<typeof updateCulture>>>;
+export type UpdateCultureMutationBody = UpdateCultureCommand;
+export type UpdateCultureMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateCultureMutationVariables = { code: string; data: UpdateCultureCommand };
+
+/**
+ * @summary Rename a language, switch it on or off, set its fallback
+ */
+export const useUpdateCulture = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateCulture>>,
+      TError,
+      UpdateCultureMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof updateCulture>>, TError, UpdateCultureMutationVariables, TContext> => {
+  return useMutation(getUpdateCultureMutationOptions(options), queryClient);
+};
+export const getDeleteCultureUrl = (code: string) => {
+  return `/api/platform/localization/cultures/${code}`;
+};
+
+/**
+ * Requires permission: platform.localization.manage.
+ * @summary Delete a language and its translations
+ */
+export const deleteCulture = async (code: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getDeleteCultureUrl(code), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getDeleteCultureMutationKey = () => ['deleteCulture'] as const;
+
+export const getDeleteCultureMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCulture>>,
+    TError,
+    DeleteCultureMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof deleteCulture>>, TError, DeleteCultureMutationVariables, TContext> => {
+  const mutationKey = getDeleteCultureMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCulture>>, DeleteCultureMutationVariables> = (
+    props,
+  ) => {
+    const { code } = props ?? {};
+
+    return deleteCulture(code, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCultureMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCulture>>>;
+
+export type DeleteCultureMutationError = ErrorType<ProblemDetails>;
+export type DeleteCultureMutationVariables = { code: string };
+
+/**
+ * @summary Delete a language and its translations
+ */
+export const useDeleteCulture = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteCulture>>,
+      TError,
+      DeleteCultureMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof deleteCulture>>, TError, DeleteCultureMutationVariables, TContext> => {
+  return useMutation(getDeleteCultureMutationOptions(options), queryClient);
+};
+export const getListTextsUrl = (culture: string, params?: ListTextsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/localization/texts/${culture}?${stringifiedParams}`
+    : `/api/platform/localization/texts/${culture}`;
+};
+
+/**
+ * Requires permission: platform.localization.read.
+ * @summary The text catalog in a language, optionally only the missing translations
+ */
+export const listTexts = async (
+  culture: string,
+  params?: ListTextsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfTextItem> => {
+  return customFetch<PagedResultOfTextItem>(getListTextsUrl(culture, params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListTextsQueryKey = (culture: string, params?: ListTextsParams) => {
+  return [`/api/platform/localization/texts/${culture}`, ...(params ? [params] : [])] as const;
+};
+
+export const getListTextsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  culture: string,
+  params?: ListTextsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListTextsQueryKey(culture, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listTexts>>> = ({ signal }) =>
+    listTexts(culture, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: culture !== null && culture !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTexts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListTextsQueryResult = NonNullable<Awaited<ReturnType<typeof listTexts>>>;
+export type ListTextsQueryError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+
+export function useListTexts<
+  TData = Awaited<ReturnType<typeof listTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  culture: string,
+  params: undefined | ListTextsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTexts>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<Awaited<ReturnType<typeof listTexts>>, TError, Awaited<ReturnType<typeof listTexts>>>,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListTexts<
+  TData = Awaited<ReturnType<typeof listTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  culture: string,
+  params?: ListTextsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTexts>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTexts>>,
+          TError,
+          Awaited<ReturnType<typeof listTexts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListTexts<
+  TData = Awaited<ReturnType<typeof listTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  culture: string,
+  params?: ListTextsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The text catalog in a language, optionally only the missing translations
+ */
+
+export function useListTexts<
+  TData = Awaited<ReturnType<typeof listTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  culture: string,
+  params?: ListTextsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListTextsQueryOptions(culture, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSetTextUrl = (culture: string) => {
+  return `/api/platform/localization/texts/${culture}`;
+};
+
+/**
+ * Requires permission: platform.localization.manage.
+ * @summary Translate one key; an empty value removes the translation
+ */
+export const setText = async (
+  culture: string,
+  setTextCommand: SetTextCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getSetTextUrl(culture), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setTextCommand),
+  });
+};
+
+export const getSetTextMutationKey = () => ['setText'] as const;
+
+export const getSetTextMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof setText>>, TError, SetTextMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof setText>>, TError, SetTextMutationVariables, TContext> => {
+  const mutationKey = getSetTextMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof setText>>, SetTextMutationVariables> = (props) => {
+    const { culture, data } = props ?? {};
+
+    return setText(culture, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetTextMutationResult = NonNullable<Awaited<ReturnType<typeof setText>>>;
+export type SetTextMutationBody = SetTextCommand;
+export type SetTextMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SetTextMutationVariables = { culture: string; data: SetTextCommand };
+
+/**
+ * @summary Translate one key; an empty value removes the translation
+ */
+export const useSetText = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof setText>>, TError, SetTextMutationVariables, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof setText>>, TError, SetTextMutationVariables, TContext> => {
+  return useMutation(getSetTextMutationOptions(options), queryClient);
+};
+export const getExportTextsUrl = (culture: string) => {
+  return `/api/platform/localization/texts/${culture}/export`;
+};
+
+/**
+ * Requires permission: platform.localization.read.
+ * @summary The text catalog of a language as an Excel file
+ */
+export const exportTexts = async (culture: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getExportTextsUrl(culture), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportTextsQueryKey = (culture: string) => {
+  return [`/api/platform/localization/texts/${culture}/export`] as const;
+};
+
+export const getExportTextsQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportTexts>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  culture: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportTextsQueryKey(culture);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportTexts>>> = ({ signal }) =>
+    exportTexts(culture, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: culture !== null && culture !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportTexts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportTextsQueryResult = NonNullable<Awaited<ReturnType<typeof exportTexts>>>;
+export type ExportTextsQueryError = ErrorType<ProblemDetails>;
+
+export function useExportTexts<TData = Awaited<ReturnType<typeof exportTexts>>, TError = ErrorType<ProblemDetails>>(
+  culture: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportTexts>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportTexts>>,
+          TError,
+          Awaited<ReturnType<typeof exportTexts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportTexts<TData = Awaited<ReturnType<typeof exportTexts>>, TError = ErrorType<ProblemDetails>>(
+  culture: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportTexts>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportTexts>>,
+          TError,
+          Awaited<ReturnType<typeof exportTexts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportTexts<TData = Awaited<ReturnType<typeof exportTexts>>, TError = ErrorType<ProblemDetails>>(
+  culture: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The text catalog of a language as an Excel file
+ */
+
+export function useExportTexts<TData = Awaited<ReturnType<typeof exportTexts>>, TError = ErrorType<ProblemDetails>>(
+  culture: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportTextsQueryOptions(culture, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getImportTextsUrl = (culture: string) => {
+  return `/api/platform/localization/texts/${culture}/import`;
+};
+
+/**
+ * Requires permission: platform.localization.manage.
+ * @summary Import translations from the Excel file of the export
+ */
+export const importTexts = async (
+  culture: string,
+  importTextsBody: ImportTextsBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ImportTextsResult> => {
+  const formData = new FormData();
+  if (importTextsBody.file !== undefined) {
+    formData.append(`file`, importTextsBody.file);
+  }
+
+  return customFetch<ImportTextsResult>(getImportTextsUrl(culture), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getImportTextsMutationKey = () => ['importTexts'] as const;
+
+export const getImportTextsMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof importTexts>>,
+    TError,
+    ImportTextsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof importTexts>>, TError, ImportTextsMutationVariables, TContext> => {
+  const mutationKey = getImportTextsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof importTexts>>, ImportTextsMutationVariables> = (
+    props,
+  ) => {
+    const { culture, data } = props ?? {};
+
+    return importTexts(culture, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ImportTextsMutationResult = NonNullable<Awaited<ReturnType<typeof importTexts>>>;
+export type ImportTextsMutationBody = ImportTextsBody;
+export type ImportTextsMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type ImportTextsMutationVariables = { culture: string; data: ImportTextsBody };
+
+/**
+ * @summary Import translations from the Excel file of the export
+ */
+export const useImportTexts = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof importTexts>>,
+      TError,
+      ImportTextsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof importTexts>>, TError, ImportTextsMutationVariables, TContext> => {
+  return useMutation(getImportTextsMutationOptions(options), queryClient);
+};
 export const getListCompaniesUrl = (params?: ListCompaniesParams) => {
   const normalizedParams = new URLSearchParams();
 

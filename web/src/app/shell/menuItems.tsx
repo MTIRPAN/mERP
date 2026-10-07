@@ -10,6 +10,7 @@ import {
   ScheduleOutlined,
   SettingOutlined,
   ShopOutlined,
+  TranslationOutlined,
   StarOutlined,
   TeamOutlined,
   UserOutlined,
@@ -33,6 +34,7 @@ const icons: Record<string, ReactNode> = {
   user: <UserOutlined />,
   role: <SafetyCertificateOutlined />,
   audit: <HistoryOutlined />,
+  language: <TranslationOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;

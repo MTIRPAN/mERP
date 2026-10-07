@@ -396,6 +396,103 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                     b.ToTable("companies", "platform");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Localization.Culture", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("FallbackCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("fallback_code");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_default");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cultures");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_cultures_code");
+
+                    b.HasIndex("IsDefault")
+                        .IsUnique()
+                        .HasDatabaseName("ix_cultures_is_default")
+                        .HasFilter("is_default = true");
+
+                    b.ToTable("cultures", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Localization.CultureText", b =>
+                {
+                    b.Property<Guid>("CultureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("culture_id");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("value");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("CultureId", "Key")
+                        .HasName("pk_localization_texts");
+
+                    b.ToTable("localization_texts", "platform");
+                });
+
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Locations.District", b =>
                 {
                     b.Property<int>("Id")
@@ -952,6 +1049,16 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                     b.Navigation("Address");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Localization.CultureText", b =>
+                {
+                    b.HasOne("Merp.Modules.Platform.Domain.Localization.Culture", null)
+                        .WithMany("Texts")
+                        .HasForeignKey("CultureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_localization_texts_cultures_culture_id");
+                });
+
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Locations.District", b =>
                 {
                     b.HasOne("Merp.Modules.Platform.Domain.Locations.Province", null)
@@ -994,6 +1101,11 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_role_assignments_users_user_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Localization.Culture", b =>
+                {
+                    b.Navigation("Texts");
                 });
 
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Roles.Role", b =>

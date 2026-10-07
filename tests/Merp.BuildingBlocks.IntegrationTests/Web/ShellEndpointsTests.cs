@@ -23,8 +23,23 @@ public sealed class ShellEndpointsTests(WebHostFactory factory) : IClassFixture<
     }
 
     [Fact]
-    public async Task Bundle_ForInactiveCulture_Returns404() =>
-        (await factory.CreateClient().GetAsync("/api/platform/localization/bundles/en-US", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    public async Task Bundle_BeforeSignIn_FallsBackToTheEmbeddedTexts_ForAnyKnownCulture()
+    {
+        var response = await factory.CreateClient().GetAsync("/api/platform/localization/bundles/en-US", Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(Ct))!["web.shell.menu.home"].ShouldBe("Ana sayfa");
+        (await factory.CreateClient().GetAsync("/api/platform/localization/bundles/xx-YY", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Bundle_ForACultureTheTenantHasNotSwitchedOn_Returns404()
+    {
+        var response = await factory.CreateClientFor("employee-1", "acme").GetAsync("/api/platform/localization/bundles/en-US", Ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        response.Headers.CacheControl!.Private.ShouldBeTrue();
+    }
 
     [Fact]
     public async Task Me_RequiresSignIn() =>

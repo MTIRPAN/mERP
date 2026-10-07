@@ -272,7 +272,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 - `/health/live`, `/health/ready`
 - `/api/public/{tenantCode}/careers/**`: kariyer sayfası ve başvuru (rate limit + honeypot)
 - `/api/public/{tenantCode}/consents/{token}` ve `/api/public/{tenantCode}/offers/{token}`: aday rıza yenileme ve teklif yanıtı (imzalı, süreli token)
-- `/api/platform/localization/bundles/{culture}` (sadece `web.*` anahtarları, giriş ekranı için)
+- `/api/platform/localization/bundles/{culture}` (sadece `web.*` anahtarları, giriş ekranı için; token ile kiracının çevirilerini de verir, D28)
 
 ## D21 — Kural 7'nin çalışma zamanında denetimi
 
@@ -415,3 +415,38 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 - Hassas alanların değerleri audit'e hiç yazılmaz; değişiklikte yalnızca değiştiği görünür (`***`).
 
 **Etiketler:** Entity ve alan adları `{modül}.entities.{Tür}` ve `{modül}.entities.{Tür}.{Alan}` anahtarlarıyla yerelleştirilir (ör. `platform.entities.Company.Address.City`). Metni olmayan alan için teknik ad gösterilir.
+
+## D28 — Çoklu dilin uygulanması (öneri — onay bekliyor)
+
+**Durum:** Öneri. PLAN P4 ile uygulandı; P4 incelemesinde kullanıcı onayına sunuldu. D11'i ayrıntılandırır.
+
+**Diller ve çeviriler kiracıya aittir:**
+- `platform.cultures` (kod, ad, aktif, varsayılan, yedek dil) ve `platform.localization_texts` (dil, anahtar, metin) tabloları kiracı veritabanındadır.
+- Çeviriler `Culture` aggregate'inin parçasıdır. Excel içe aktarma tek aggregate'i değiştirir (kural 7).
+- Seed yalnızca `tr-TR` ekler (aktif, varsayılan). Varsayılan dil kapatılamaz, silinemez. Varsayılanı değiştirmek sonraki bir göreve bırakıldı.
+- `Localization:SupportedCultures` ayarı kaldırıldı.
+
+**Metin arama sırası:** dil → yedek dilleri → kiracının varsayılan dili → `tr-TR`.
+- Her dilde önce kiracının çevirisine, sonra modüllerin gömülü JSON metnine bakılır. Yedek dil zincirinde döngü kurulamaz.
+- Kiracının dilleri ve çevirileri tek bir `LocalizationSnapshot` olarak HybridCache'te tutulur (`{kiracı}:localization` etiketi). Değişiklikten sonra önbellek commit'ten sonra temizlenir.
+
+**Kültür seçimi:** `RequestContextMiddleware`, kiracı belli olunca dil listesini yükler ve kültürü şu sırayla seçer:
+1. Kullanıcının tercihi (aktif bir dilse).
+2. `Accept-Language` içinde aktif dillerin en iyi eşleşmesi (`en` → `en-US`).
+3. Kiracının varsayılan dili.
+
+Seçilen kültür `Content-Language` başlığında döner.
+
+**Yerelleştirici:** `ITextLocalizer` artık istek başına (scoped) çalışır ve yukarıdaki zinciri izler. ASP.NET `IStringLocalizer` uygulanmadı; hiçbir bileşen ona ihtiyaç duymuyor.
+
+**Web metin paketi (D20):**
+- Token olmadan (giriş ekranı) yalnızca gömülü metinleri verir. Geçerli her dil kodu kabul edilir ve Türkçe'ye düşer; önbelleğe alınabilir (`public`).
+- Token ile kiracının çevirilerini de içerir ve yalnızca aktif dilleri kabul eder (`private, no-cache`).
+- Web, oturum açıldıktan sonra paketi yeniden yükler. Üst bardaki dil seçici tercihi sunucuya da kaydeder.
+
+**Yönetim:**
+- `platform.localization.read` ve `platform.localization.manage` yalnızca Tenant kapsamıyla geçerlidir (D26 gibi).
+- Excel biçimi: A sütunu anahtar, B sütunu varsayılan dildeki metin, C sütunu çeviri. C sütununun başlığı dil kodudur; başka dilin dosyası reddedilir. Boş hücreler atlanır, katalogda olmayan anahtarlar raporlanır.
+- Excel için D19'daki ClosedXML (MIT) eklendi. Alt bağımlılıkları MIT ve Apache-2.0 (SixLabors.Fonts 1.0.0).
+
+**Ana veri metinleri (`LocalizedString`):** Girişte varsayılan dilde metin zorunludur ve yalnızca aktif diller kullanılabilir (`MustCoverDefaultCulture`; ilk kullanan: rol adları).

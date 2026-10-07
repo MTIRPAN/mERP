@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Anthropic" />
+    <PackageReference Include="ClosedXML" />
     <PackageReference Include="DocumentFormat.OpenXml" />
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Hangfire.Core" />

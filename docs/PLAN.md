@@ -368,7 +368,16 @@ Yapılanlar (D27): her modüle kendiliğinden kaydedilen `IAuditReader`; `GET /a
 **Kabul kriterleri:**
 - Şirket güncellenince geçmişte alan bazında eski ve yeni değer görünür.
 
-### [ ] P4 Çoklu dil — M
+### [x] P4 Çoklu dil — M
+
+Yapılanlar (D28):
+- Kiracıya ait `cultures` ve `localization_texts` tabloları; dil zinciri (dil → yedek → varsayılan → tr-TR) ile çalışan istek başına `ITextLocalizer`; HybridCache.
+- Kültür seçimi: tercih → `Accept-Language` → kiracı varsayılanı. Hata mesajları da seçilen dilde gelir.
+- API: diller CRUD, metin listesi ("eksikler" filtresi), tek metin güncelleme, Excel dışa ve içe aktarma (ClosedXML).
+- `LocalizedString` girişinde varsayılan dil zorunlu.
+- Web: Sistem → Diller ve çeviriler sayfası. Dil seçici yalnızca aktif dilleri gösterir; oturum açılınca kiracı çevirileri yüklenir.
+- `IStringLocalizer` yerine mevcut `ITextLocalizer` genişletildi (D28).
+- Kabul testi: `LocalizationEndpointsTests.EnglishFromExcel_ReachesTheUser_MissingTextsInTurkish_ErrorsInEnglish`.
 
 Kurallar: D11.
 

@@ -2,6 +2,7 @@ using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Companies;
+using Merp.Modules.Platform.Domain.Localization;
 using Merp.Modules.Platform.Domain.Locations;
 using Merp.Modules.Platform.Domain.Roles;
 using Merp.Modules.Platform.Domain.Users;
@@ -28,4 +29,6 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<Role> Roles => Set<Role>();
 
     public DbSet<Permission> Permissions => Set<Permission>();
+
+    public DbSet<Culture> Cultures => Set<Culture>();
 }

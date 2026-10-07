@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.Localization;
 using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Localization;
@@ -5,10 +6,12 @@ using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
+using Merp.Modules.Platform.Application.Localization;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Infrastructure.Access;
 using Merp.Modules.Platform.Infrastructure.AI;
 using Merp.Modules.Platform.Infrastructure.Identity;
+using Merp.Modules.Platform.Infrastructure.Localization;
 using Merp.Modules.Platform.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +44,11 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddScoped<IAccessCache, AccessCache>();
         services.AddScoped<ICurrentUserProvisioner, CurrentUserProvisioner>();
         services.AddSingleton<ITenantDataSeeder, PlatformTenantSeeder>();
+
+        // Cultures and translations of the tenant (D11, D28)
+        services.Replace(ServiceDescriptor.Scoped<ILocalizationSource, PlatformLocalizationSource>());
+        services.AddScoped<ILocalizationCache, LocalizationCache>();
+        services.AddSingleton<ITenantDataSeeder, LocalizationSeeder>();
 
         var keycloak = services.AddOptions<KeycloakAdminOptions>();
         if (configuration is not null)

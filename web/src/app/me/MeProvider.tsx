@@ -1,7 +1,7 @@
 import { Button, Result } from 'antd';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { changeCulture } from '@/app/i18n/i18n';
+import { changeCulture, reloadTexts } from '@/app/i18n/i18n';
 import { useGetMe } from '@/shared/api/generated/endpoints/platform/platform';
 import { PermissionProvider } from '@/shared/auth/PermissionProvider';
 import { FullPageSpinner } from '@/shared/components/FullPageSpinner';
@@ -10,14 +10,24 @@ import { MeContext } from './meContext';
 export const MeProvider = ({ children }: { children: ReactNode }) => {
   const { t, i18n } = useTranslation();
   const me = useGetMe({ query: { staleTime: 60_000 } });
-  const preferred = me.data?.preferences.preferredCulture;
+  const data = me.data;
+  // The user's choice (also made on another device, D26) wins; otherwise this device's language if the tenant offers
+  // it; otherwise the culture the server picked (D28)
+  const target = data
+    ? (data.preferences.preferredCulture ??
+      (data.cultures.some((c) => c.code === i18n.language) ? i18n.language : data.preferences.culture))
+    : undefined;
+  const loaded = useRef<string>(undefined);
 
-  // A language chosen on another device wins over this device's last choice (D26)
+  // Signed in: load the texts again, now with the tenant's translations
   useEffect(() => {
-    if (preferred && preferred !== i18n.language) {
-      void changeCulture(preferred);
+    if (!target || loaded.current === target) {
+      return;
     }
-  }, [preferred, i18n.language]);
+
+    loaded.current = target;
+    void (target === i18n.language ? reloadTexts() : changeCulture(target));
+  }, [target, i18n.language]);
 
   if (me.isPending) {
     return <FullPageSpinner />;

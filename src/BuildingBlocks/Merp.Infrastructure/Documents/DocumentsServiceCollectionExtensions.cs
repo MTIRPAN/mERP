@@ -9,6 +9,7 @@ public static class DocumentsServiceCollectionExtensions
     public static IServiceCollection AddMerpDocuments(this IServiceCollection services)
     {
         services.TryAddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
+        services.TryAddSingleton<ISpreadsheet, ClosedXmlSpreadsheet>();
         return services;
     }
 }

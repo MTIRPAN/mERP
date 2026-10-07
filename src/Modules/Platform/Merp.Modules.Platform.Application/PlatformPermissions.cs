@@ -48,4 +48,10 @@ public static class PlatformPermissions
     {
         public const string Read = "platform.audit.read";
     }
+
+    public static class Localization
+    {
+        public const string Read = "platform.localization.read";
+        public const string Manage = "platform.localization.manage";
+    }
 }

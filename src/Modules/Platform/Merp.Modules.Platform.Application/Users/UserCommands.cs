@@ -145,7 +145,7 @@ internal sealed class CreateUserCommandHandler(
     IAccessScopeProvider scopes,
     IIdentityAdmin identityAdmin,
     ITenantContext tenant,
-    ISupportedCultures cultures,
+    ILocalizationSource localization,
     IAfterCommit afterCommit) : ICommandHandler<CreateUserCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -168,7 +168,8 @@ internal sealed class CreateUserCommandHandler(
             errors.Add(new FieldError("email", CommonErrors.Duplicate.Code));
         }
 
-        if (request.Culture is { } culture && !cultures.IsSupported(culture))
+        var snapshot = await localization.GetAsync(cancellationToken);
+        if (request.Culture is { } culture && !snapshot.IsActive(culture))
         {
             errors.Add(new FieldError("culture", CommonErrors.InvalidCulture.Code));
         }
@@ -187,7 +188,7 @@ internal sealed class CreateUserCommandHandler(
         }
 
         var user = User.Create(identity.Value, new UserProfile(userName, email, request.FirstName, request.LastName));
-        user.SetCulture(request.Culture);
+        user.SetCulture(snapshot.Find(request.Culture)?.Code);
         db.Users.Add(user);
         afterCommit.Enqueue(ct => identityAdmin.SendActionsEmailAsync(identity.Value, IdentityEmail.Invitation, ct));
         return user.Id.Value;
@@ -448,7 +449,7 @@ internal sealed class RemoveAssignmentCommandHandler(
 internal sealed class UpdateMyPreferencesCommandHandler(
     IPlatformDbContext db,
     ICurrentUser currentUser,
-    ISupportedCultures cultures,
+    ILocalizationSource localization,
     IAccessCache accessCache,
     IAfterCommit afterCommit) : ICommandHandler<UpdateMyPreferencesCommand>
 {
@@ -459,13 +460,14 @@ internal sealed class UpdateMyPreferencesCommandHandler(
             return CommonErrors.Forbidden;
         }
 
-        if (request.Culture is { } culture && !cultures.IsSupported(culture))
+        var snapshot = await localization.GetAsync(cancellationToken);
+        if (request.Culture is { } culture && !snapshot.IsActive(culture))
         {
             return Error.Validation([new FieldError("culture", CommonErrors.InvalidCulture.Code)]);
         }
 
         var user = await db.Users.SingleAsync(u => u.Id == UserId.From(userId), cancellationToken);
-        user.SetCulture(request.Culture);
+        user.SetCulture(snapshot.Find(request.Culture)?.Code);
         afterCommit.Enqueue(ct => accessCache.InvalidateUserAsync(userId, ct));
         return Result.Success();
     }

@@ -69,9 +69,10 @@ internal static class RoleRules
     public static readonly Error NotASystemRole = Error.Conflict("platform.roles.errors.not_a_system_role");
     public static readonly Error InUse = Error.Conflict("platform.roles.errors.in_use");
 
-    public static void AddFieldRules<T>(AbstractValidator<T> validator)
+    public static void AddFieldRules<T>(AbstractValidator<T> validator, ILocalizationSource localization)
         where T : IRoleFields
     {
+        validator.RuleFor(r => r.Name).MustCoverDefaultCulture(localization);
         validator.RuleFor(r => r.Name).Custom((name, context) =>
         {
             var result = LocalizedString.Create(name);
@@ -106,16 +107,16 @@ internal static class RoleRules
 
 internal sealed class CreateRoleCommandValidator : AbstractValidator<CreateRoleCommand>
 {
-    public CreateRoleCommandValidator()
+    public CreateRoleCommandValidator(ILocalizationSource localization)
     {
         RuleFor(r => r.Code).Cascade(CascadeMode.Stop).NotEmpty().MustBeValid(v => Code.Create(v, Role.CodeMaxLength));
-        RoleRules.AddFieldRules(this);
+        RoleRules.AddFieldRules(this, localization);
     }
 }
 
 internal sealed class UpdateRoleCommandValidator : AbstractValidator<UpdateRoleCommand>
 {
-    public UpdateRoleCommandValidator() => RoleRules.AddFieldRules(this);
+    public UpdateRoleCommandValidator(ILocalizationSource localization) => RoleRules.AddFieldRules(this, localization);
 }
 
 internal sealed class CreateRoleCommandHandler(IPlatformDbContext db, IAccessScopeProvider scopes) : ICommandHandler<CreateRoleCommand, Guid>

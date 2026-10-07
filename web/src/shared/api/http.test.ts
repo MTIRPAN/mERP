@@ -62,4 +62,16 @@ describe('customFetch', () => {
 
     await expect(customFetch('/api/x')).rejects.toMatchObject({ status: 0 });
   });
+
+  it('keeps files binary', async () => {
+    const xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(new Uint8Array([80, 75, 3, 4]), { status: 200, headers: { 'content-type': xlsx } }),
+    );
+
+    const file = await customFetch<Blob>('/api/x/export');
+
+    expect(file).toBeInstanceOf(Blob);
+    expect(file.size).toBe(4);
+  });
 });
