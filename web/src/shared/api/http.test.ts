@@ -71,7 +71,8 @@ describe('customFetch', () => {
 
     const file = await customFetch<Blob>('/api/x/export');
 
-    expect(file).toBeInstanceOf(Blob);
-    expect(file.size).toBe(4);
+    // Not instanceof: under jsdom, fetch's Blob may come from Node's realm, not the window's
+    expect(file.type).toBe(xlsx);
+    expect(new Uint8Array(await file.arrayBuffer())).toEqual(new Uint8Array([80, 75, 3, 4]));
   });
 });
