@@ -58,7 +58,7 @@ const response: CvAnalysisResponse = {
     { kind: 'name', count: 2 },
   ],
   documentTruncated: false,
-  model: 'claude-opus-5-5',
+  model: 'claude-sonnet-5-5',
   promptVersion: '2026-10-05',
 };
 

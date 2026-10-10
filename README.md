@@ -117,6 +117,7 @@ dotnet user-secrets --project src/Host/Merp.Api set "Ai:Anthropic:ApiKey" "<anah
 ```
 
 - `appsettings.Development.json` demo tenant'ında yapay zekayı aylık 20 USD bütçeyle açar. Anahtar yoksa özellikler menüde görünmez ve API 403 `ai_disabled` döner.
+- KVKK: bir tenant'ta yurt dışına aktarım dayanağı (`Ai:Tenants:{kod}:TransferBasis`, örn. `StandardContract`) kayıtlı değilse yapay zeka çalışmaz. Müşterinin yapacakları: [`docs/domain/yapay-zeka.md`](docs/domain/yapay-zeka.md) §10.
 - CV metni sunucuda çıkarılır; ad, iletişim bilgileri ve özel alanlar maskelendikten sonra sadece metin gönderilir. Dosya ve sonuç saklanmaz.
 - Kullanım ve tahmini maliyet: Sistem → Yapay zeka kullanımı (`platform.ai_usage.read`). `ik` kullanıcısı CV analizini, `admin` her ikisini görür.
 - Testler gerçek API'yi çağırmaz. Kurallar, özellik listesi ve maliyet tahmini: [`docs/domain/yapay-zeka.md`](docs/domain/yapay-zeka.md).

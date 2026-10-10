@@ -24,7 +24,7 @@ public sealed class AiServiceTests
     private readonly AiOptions _options = new()
     {
         Provider = AiProvider.Anthropic,
-        Defaults = new AiTenantOptions { Enabled = true, Features = ["recruitment.*"], MonthlyBudgetUsd = 0 },
+        Defaults = new AiTenantOptions { Enabled = true, Features = ["recruitment.*"], MonthlyBudgetUsd = 0, TransferBasis = AiTransferBasis.StandardContract },
     };
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -64,6 +64,17 @@ public sealed class AiServiceTests
     }
 
     [Fact]
+    public async Task Disabled_WhenNoKvkkTransferBasisIsRecorded()
+    {
+        _options.Defaults.TransferBasis = null;
+
+        var result = await CreateService().GenerateAsync<Output>(Request(), Ct);
+
+        result.Error.ShouldBe(AiErrors.Disabled);
+        await _client.DidNotReceive().CompleteAsync(Arg.Any<AiModelRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task BudgetExceeded_WhenMonthToDateCostReachesTheLimit()
     {
         _options.Defaults.MonthlyBudgetUsd = 5;
@@ -86,7 +97,7 @@ public sealed class AiServiceTests
 
         result.IsSuccess.ShouldBeTrue();
         result.Value.Value.ShouldBe(new Output("Kıdemli mühendis", 82));
-        var expectedCost = ((10_000 * 4m) + (2_000 * 20m) + (3_000 * 0.2m)) / 1_000_000m;
+        var expectedCost = ((10_000 * 2m) + (2_000 * 10m) + (3_000 * 0.2m)) / 1_000_000m;
         result.Value.Usage.CostUsd.ShouldBe(expectedCost);
         await _ledger.Received(1).RecordAsync(
             Arg.Is<AiUsageEntry>(e => e.Outcome == AiUsageOutcome.Succeeded
@@ -157,7 +168,7 @@ public sealed class AiServiceTests
 
     private void Respond(AiStopReason stopReason, string text, long input = 1_000, long output = 100, long cacheRead = 0) =>
         _client.CompleteAsync(Arg.Any<AiModelRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new AiModelResponse("claude-opus-5-5", stopReason, text, input, output, cacheRead, 0));
+            .Returns(new AiModelResponse("claude-sonnet-5-5", stopReason, text, input, output, cacheRead, 0));
 
     private static AiRequest Request() => new()
     {

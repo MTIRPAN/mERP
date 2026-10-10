@@ -52,7 +52,9 @@ internal static class AiUsageEndpoints
         return TypedResults.Ok(new AiUsageSummaryResponse(
             new DateOnly(year, monthNumber, 1).ToString("yyyy-MM", CultureInfo.InvariantCulture),
             configured,
-            configured && settings.Enabled,
+            configured && settings.Enabled && settings.TransferBasis is not null,
+            settings.TransferBasis?.ToString(),
+            settings.TransferReference,
             configured ? options.Value.Model : null,
             settings.MonthlyBudgetUsd,
             features.Sum(f => f.CostUsd),
@@ -63,7 +65,9 @@ internal static class AiUsageEndpoints
 
 /// <param name="Month">Month in <c>yyyy-MM</c> form; months start in the Europe/Istanbul time zone.</param>
 /// <param name="ProviderConfigured">An AI provider with credentials is configured on the server.</param>
-/// <param name="Enabled">AI is enabled for this tenant.</param>
+/// <param name="Enabled">AI is enabled for this tenant and its KVKK transfer basis is recorded.</param>
+/// <param name="TransferBasis">Legal basis for the transfer abroad (KVKK md. 9): StandardContract, BindingCorporateRules or AdequacyDecision; null when not recorded.</param>
+/// <param name="TransferReference">Evidence of the basis, e.g. the notification date and reference.</param>
 /// <param name="Model">Model used for new calls.</param>
 /// <param name="MonthlyBudgetUsd">Monthly limit; 0 means no limit.</param>
 /// <param name="CostUsd">Estimated cost of the month at list prices.</param>
@@ -73,6 +77,8 @@ public sealed record AiUsageSummaryResponse(
     string Month,
     bool ProviderConfigured,
     bool Enabled,
+    string? TransferBasis,
+    string? TransferReference,
     string? Model,
     decimal MonthlyBudgetUsd,
     decimal CostUsd,

@@ -12,11 +12,28 @@ public sealed class AiOptionsTests
     [InlineData("hr.*", "recruitment.cv_analysis", false)]
     [InlineData("recruitment.cv", "recruitment.cv_analysis", false)]
     public void Allows_MatchesFeaturePatterns(string pattern, string feature, bool expected) =>
-        new AiTenantSettings(true, [pattern], 0).Allows(feature).ShouldBe(expected);
+        new AiTenantSettings(true, [pattern], 0, AiTransferBasis.StandardContract).Allows(feature).ShouldBe(expected);
 
     [Fact]
     public void Allows_IsFalse_WhenTenantIsDisabled() =>
-        new AiTenantSettings(false, ["*"], 0).Allows("recruitment.cv_analysis").ShouldBeFalse();
+        new AiTenantSettings(false, ["*"], 0, AiTransferBasis.StandardContract).Allows("recruitment.cv_analysis").ShouldBeFalse();
+
+    [Fact]
+    public void Allows_IsFalse_WithoutKvkkTransferBasis() =>
+        new AiTenantSettings(true, ["*"], 0).Allows("recruitment.cv_analysis").ShouldBeFalse();
+
+    [Fact]
+    public void ForTenant_TakesTransferBasisFromDefaultsOrTenant()
+    {
+        var options = new AiOptions
+        {
+            Defaults = new AiTenantOptions { Enabled = true, Features = ["*"], TransferBasis = AiTransferBasis.StandardContract, TransferReference = "KEP 2026/1" },
+            Tenants = { ["acme"] = new AiTenantOptions { TransferBasis = AiTransferBasis.BindingCorporateRules } },
+        };
+
+        options.ForTenant("acme").TransferBasis.ShouldBe(AiTransferBasis.BindingCorporateRules);
+        options.ForTenant("other").TransferReference.ShouldBe("KEP 2026/1");
+    }
 
     [Fact]
     public void ForTenant_FallsBackToDefaults_PerValue()
@@ -33,9 +50,27 @@ public sealed class AiOptionsTests
     }
 
     [Fact]
-    public void Pricing_ComputesCost_PerMillionTokens() =>
-        new AiPricingOptions().Cost(input: 1_000_000, output: 100_000, cacheRead: 500_000, cacheWrite: 200_000)
-            .ShouldBe(4m + 2m + 0.1m + 1m);
+    public void DefaultModel_IsSonnet() => new AiOptions().Model.ShouldBe("claude-sonnet-5-5");
+
+    [Theory]
+    [InlineData("claude-sonnet-5-5", 2 + 1 + 0.1 + 0.5)]
+    [InlineData("CLAUDE-SONNET-5-5", 2 + 1 + 0.1 + 0.5)]
+    [InlineData("claude-opus-5-5", 4 + 2 + 0.1 + 1)]
+    [InlineData("some-future-model", 4 + 2 + 0.1 + 1)]
+    public void Pricing_UsesBuiltInPrices_AndTheMostExpensiveForUnknownModels(string model, double expected) =>
+        new AiOptions().PricingFor(model).Cost(input: 1_000_000, output: 100_000, cacheRead: 500_000, cacheWrite: 200_000)
+            .ShouldBe((decimal)expected);
+
+    [Fact]
+    public void Pricing_FromConfiguration_ReplacesBuiltInPrices()
+    {
+        var options = new AiOptions
+        {
+            Pricing = { ["claude-sonnet-5-5"] = new AiPricingOptions { InputPerMillionTokens = 1, OutputPerMillionTokens = 5 } },
+        };
+
+        options.PricingFor("claude-sonnet-5-5").Cost(1_000_000, 1_000_000, 0, 0).ShouldBe(6m);
+    }
 
     [Fact]
     public void BudgetPeriod_StartsAtMidnight_InIstanbul()
