@@ -72,4 +72,10 @@ public static class PlatformPermissions
         public const string Read = "platform.notification_templates.read";
         public const string Manage = "platform.notification_templates.manage";
     }
+
+    public static class Calendars
+    {
+        public const string Read = "platform.calendars.read";
+        public const string Manage = "platform.calendars.manage";
+    }
 }

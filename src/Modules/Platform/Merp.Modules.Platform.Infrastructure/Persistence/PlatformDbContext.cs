@@ -1,6 +1,7 @@
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Domain.Branches;
+using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.CustomFields;
 using Merp.Modules.Platform.Domain.Localization;
@@ -26,6 +27,7 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
         // Options are stored as jsonb by a value converter, not as entities
         modelBuilder.Ignore<CustomFieldOption>();
         modelBuilder.Ignore<NotificationPreference>();
+        modelBuilder.Ignore<WorkDay>();
         base.OnModelCreating(modelBuilder);
     }
 
@@ -48,6 +50,10 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
 
     public DbSet<CustomFieldDefinition> CustomFieldDefinitions => Set<CustomFieldDefinition>();
+
+    public DbSet<HolidayCalendar> HolidayCalendars => Set<HolidayCalendar>();
+
+    public DbSet<WorkSchedule> WorkSchedules => Set<WorkSchedule>();
 
     public DbSet<Notification> Notifications => Set<Notification>();
 

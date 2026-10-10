@@ -501,7 +501,16 @@ Kurallar: D16, D31.
 - Olay gelince alıcıya anında bildirim düşer ve Mailpit'e e-posta gelir.
 - Kullanıcı e-postayı kapatırsa sadece uygulama içi bildirim gelir.
 
-### [ ] P9 Çalışma takvimi ve resmi tatiller — M
+### [ ] P9 Çalışma takvimi ve resmi tatiller — M (2 PR: P9a backend, P9b web)
+
+- [x] **P9a — backend (D33):**
+  - `HolidayCalendar` ve `Holiday` (tam ya da yarım gün, hareketli mi), seed 2026–2027, sabit tatilleri önceki yıldan kopyalama.
+  - `WorkSchedule` (gün başına mesai ve mola), şirket ve kiracı varsayılanı, şube ezmesi (`branches.work_schedule_id`).
+  - `IWorkingCalendar` (Platform.Contracts): takvim çözümü, gün ve aralık sorgusu, önbellek.
+  - Hatırlatma işi `calendars.holiday-reminder` (1 Ekim) ve `platform.holidays_missing` bildirimi.
+  - Kabul testleri: `WorkingDaysTests` (S1–S7, 6 günlük hafta) ve seed'lenmiş takvimlerle `CalendarEndpointsTests.Days_OfTheSeededSchedules_CountAsTheRulesSay`.
+- [ ] **P9b — web:** resmi tatiller (yıl görünümü), çalışma takvimleri, şube formunda takvim seçimi.
+
 
 **Yapılacaklar:**
 - Resmi tatiller:

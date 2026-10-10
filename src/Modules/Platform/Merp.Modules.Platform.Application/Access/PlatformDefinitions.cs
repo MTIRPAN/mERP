@@ -27,6 +27,8 @@ public sealed class PlatformPermissionDefinitions : IPermissionDefinitionProvide
         new(PlatformPermissions.CustomFields.Manage),
         new(PlatformPermissions.NotificationTemplates.Read),
         new(PlatformPermissions.NotificationTemplates.Manage),
+        new(PlatformPermissions.Calendars.Read),
+        new(PlatformPermissions.Calendars.Manage),
     ];
 }
 

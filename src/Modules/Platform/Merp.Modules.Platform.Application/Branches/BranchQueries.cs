@@ -69,7 +69,8 @@ public sealed record BranchDetails(
     bool IsActive,
     uint Version,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? ModifiedAt);
+    DateTimeOffset? ModifiedAt,
+    Guid? WorkScheduleId);
 
 internal sealed class GetBranchesQueryValidator : AbstractValidator<GetBranchesQuery>
 {
@@ -166,6 +167,7 @@ internal sealed class GetBranchQueryHandler(IPlatformDbContext db, IAccessScopeP
             branch.IsActive,
             row.Version,
             branch.CreatedAt,
-            branch.ModifiedAt);
+            branch.ModifiedAt,
+            branch.WorkScheduleId?.Value);
     }
 }
