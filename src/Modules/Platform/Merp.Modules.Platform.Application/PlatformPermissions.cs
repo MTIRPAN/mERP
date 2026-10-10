@@ -60,4 +60,10 @@ public static class PlatformPermissions
         public const string Read = "platform.numbering.read";
         public const string Manage = "platform.numbering.manage";
     }
+
+    public static class CustomFields
+    {
+        public const string Read = "platform.custom_fields.read";
+        public const string Manage = "platform.custom_fields.manage";
+    }
 }

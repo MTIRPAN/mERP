@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Localization;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
@@ -7,11 +8,13 @@ using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
+using Merp.Modules.Platform.Application.CustomFields;
 using Merp.Modules.Platform.Application.Localization;
 using Merp.Modules.Platform.Application.Numbering;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Infrastructure.Access;
 using Merp.Modules.Platform.Infrastructure.AI;
+using Merp.Modules.Platform.Infrastructure.CustomFields;
 using Merp.Modules.Platform.Infrastructure.Identity;
 using Merp.Modules.Platform.Infrastructure.Localization;
 using Merp.Modules.Platform.Infrastructure.Numbering;
@@ -57,6 +60,11 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.Replace(ServiceDescriptor.Scoped<INumberSequenceSettingsSource, PlatformNumberSequences>());
         services.AddScoped<INumberingCache, NumberingCache>();
         services.AddSingleton<ITenantDataSeeder, NumberingSeeder>();
+
+        // Custom field definitions; the values stay in each module's records (D12, D30)
+        services.AddSingleton<ICustomFieldEntityProvider, PlatformCustomFieldEntities>();
+        services.AddScoped<ICustomFieldValidator, PlatformCustomFieldValidator>();
+        services.AddScoped<ICustomFieldCache, CustomFieldCache>();
 
         var keycloak = services.AddOptions<KeycloakAdminOptions>();
         if (configuration is not null)

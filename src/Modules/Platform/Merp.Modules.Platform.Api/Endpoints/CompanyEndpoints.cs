@@ -50,6 +50,7 @@ internal static class CompanyEndpoints
     /// <param name="sort">code, shortName, title, taxNumber, isActive or createdAt; a leading "-" sorts descending.</param>
     /// <param name="search">Part of the code, short name, title or tax number.</param>
     /// <param name="isActive">Only active or only inactive companies.</param>
+    /// <param name="customFields">JSON object of custom field codes and values the companies must have, e.g. {"shoe_size":42}.</param>
     /// <param name="sender">Mediator.</param>
     /// <param name="cancellationToken">Request aborted.</param>
     private static async Task<Results<Ok<PagedResult<CompanyListItem>>, ProblemHttpResult>> ListAsync(
@@ -58,10 +59,11 @@ internal static class CompanyEndpoints
         string? sort,
         string? search,
         bool? isActive,
+        string? customFields,
         ISender sender,
         CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetCompaniesQuery(new PageRequest(page, pageSize, sort), search, isActive), cancellationToken);
+        var result = await sender.Send(new GetCompaniesQuery(new PageRequest(page, pageSize, sort), search, isActive, customFields), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : (ProblemHttpResult)result.Error.ToProblem();
     }
 

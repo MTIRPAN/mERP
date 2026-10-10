@@ -5,6 +5,7 @@
  * OpenAPI spec version: v1
  */
 import type { AddressDto } from './addressDto';
+import type { CompanyDetailsCustomFields } from './companyDetailsCustomFields';
 
 export interface CompanyDetails {
   id: string;
@@ -30,4 +31,5 @@ export interface CompanyDetails {
   createdAt: string;
   /** @nullable */
   modifiedAt: string | null;
+  customFields: CompanyDetailsCustomFields;
 }

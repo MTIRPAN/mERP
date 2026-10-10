@@ -419,7 +419,15 @@ Yapılanlar (D29):
 - 50 paralel istekte tekrar eden numara olmaz.
 - Yıl değişince sayaç sıfırlanır.
 
-### [ ] P6 Özel alanlar — M
+### [x] P6 Özel alanlar — M
+
+Yapılanlar (D30):
+- `platform.custom_field_definitions` (değişmez kod, tip ve şirket; silme yerine pasifleştirme).
+- Kayıt türü kaydı (`ICustomFieldEntityProvider`), `ICustomFieldValidator` (önbellekli).
+- Liste filtresi: jsonb `@>` ve GIN indeks; uygulama katmanında sağlayıcıdan bağımsız yer tutucu.
+- Web: Sistem → Özel alanlar; `<DynamicFields />`; listelerde özel alan kolonları ve filtre.
+- İlk entegrasyon: şirketler (form, detay, liste kolonu, filtre).
+- Kabul testi: `CustomFieldEndpointsTests.ShoeSize_IsOnTheForm_Required_AndFilterable`.
 
 Kurallar: D12.
 

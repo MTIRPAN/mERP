@@ -11,4 +11,5 @@ export type ListCompaniesParams = {
   sort?: string;
   search?: string;
   isActive?: boolean;
+  customFields?: string;
 };

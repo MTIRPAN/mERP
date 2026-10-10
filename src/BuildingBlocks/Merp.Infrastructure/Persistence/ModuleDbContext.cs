@@ -84,6 +84,9 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
             if (typeof(IHasCustomFields).IsAssignableFrom(clrType))
             {
                 builder.Property(nameof(IHasCustomFields.CustomFields)).HasColumnName("custom_fields");
+
+                // Containment filters (jsonb @>) of the lists use it (D12, D30)
+                builder.HasIndex(nameof(IHasCustomFields.CustomFields)).HasMethod("gin").HasOperators("jsonb_path_ops");
             }
         }
     }

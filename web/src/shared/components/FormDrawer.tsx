@@ -11,6 +11,8 @@ interface FormDrawerProps<TValues> {
   initialValues?: Partial<TValues>;
   form?: FormInstance<TValues>;
   width?: number;
+  /** Moves API field errors onto other form fields, e.g. label → ['label', 'tr-TR']. */
+  fieldAliases?: Record<string, (string | number)[]>;
   children: ReactNode;
 }
 
@@ -23,6 +25,7 @@ export const FormDrawer = <TValues extends object>({
   initialValues,
   form: externalForm,
   width = 560,
+  fieldAliases,
   children,
 }: FormDrawerProps<TValues>) => {
   const { t } = useTranslation();
@@ -36,7 +39,7 @@ export const FormDrawer = <TValues extends object>({
       await onSubmit(values);
       onClose();
     } catch (error) {
-      if (!applyApiErrorsToForm(form, error)) {
+      if (!applyApiErrorsToForm(form, error, fieldAliases)) {
         throw error;
       }
     } finally {

@@ -28,6 +28,7 @@ const SystemInfoPage = page(() => import('@/modules/platform/SystemInfoPage'), '
 const AuditLogPage = page(() => import('@/modules/platform/audit/AuditLogPage'), 'AuditLogPage');
 const LocalizationPage = page(() => import('@/modules/platform/localization/LocalizationPage'), 'LocalizationPage');
 const NumberingPage = page(() => import('@/modules/platform/numbering/NumberingPage'), 'NumberingPage');
+const CustomFieldsPage = page(() => import('@/modules/platform/customFields/CustomFieldsPage'), 'CustomFieldsPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -136,6 +137,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={platformPermissions.numberingRead}>
               <NumberingPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/custom-fields"
+          element={
+            <RequirePermission permission={platformPermissions.customFieldsRead}>
+              <CustomFieldsPage />
             </RequirePermission>
           }
         />

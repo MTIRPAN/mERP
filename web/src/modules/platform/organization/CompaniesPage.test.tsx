@@ -23,6 +23,7 @@ vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
   useUpdateCompany: () => ({ mutateAsync: vi.fn() }),
   useListProvinces: () => ({ data: [{ code: 34, name: 'İstanbul' }], isFetching: false }),
   useListDistricts: () => ({ data: [], isFetching: false }),
+  useGetCustomFieldForm: () => ({ data: [] }),
 }));
 
 const texts: Record<string, string> = {
@@ -62,6 +63,7 @@ describe('CompaniesPage', () => {
           taxNumber: '1234567890',
           city: 'İstanbul',
           isActive: true,
+          customFields: {},
         },
         {
           id: '2',
@@ -71,6 +73,7 @@ describe('CompaniesPage', () => {
           taxNumber: '9876543217',
           city: null,
           isActive: false,
+          customFields: {},
         },
       ],
       page: 1,

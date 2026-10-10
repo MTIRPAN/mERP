@@ -3,6 +3,7 @@ import {
   AppstoreOutlined,
   BankOutlined,
   FieldNumberOutlined,
+  FormOutlined,
   HistoryOutlined,
   HomeOutlined,
   InfoCircleOutlined,
@@ -37,6 +38,7 @@ const icons: Record<string, ReactNode> = {
   audit: <HistoryOutlined />,
   language: <TranslationOutlined />,
   numbering: <FieldNumberOutlined />,
+  'custom-fields': <FormOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;

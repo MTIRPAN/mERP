@@ -29,6 +29,7 @@ public static class EndpointRules
     [
         "/api/platform/me",
         "/api/platform/me/preferences",
+        "/api/platform/custom-fields/form",
         "/api/platform/locations/provinces",
         "/api/platform/locations/provinces/{provinceCode:int}/districts",
     ];

@@ -415,11 +415,121 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_companies_code");
 
+                    b.HasIndex("CustomFields")
+                        .HasDatabaseName("ix_companies_custom_fields");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("CustomFields"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("CustomFields"), new[] { "jsonb_path_ops" });
+
                     b.HasIndex("TaxNumber")
                         .IsUnique()
                         .HasDatabaseName("ix_companies_tax_number");
 
                     b.ToTable("companies", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.CustomFields.CustomFieldDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("Group")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("group");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("label");
+
+                    b.Property<decimal?>("Max")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("max");
+
+                    b.Property<int?>("MaxLength")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_length");
+
+                    b.Property<decimal?>("Min")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("min");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Options")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("options");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer")
+                        .HasColumnName("order");
+
+                    b.Property<bool>("Required")
+                        .HasColumnType("boolean")
+                        .HasColumnName("required");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<bool>("WholeNumber")
+                        .HasColumnType("boolean")
+                        .HasColumnName("whole_number");
+
+                    b.HasKey("Id")
+                        .HasName("pk_custom_field_definitions");
+
+                    b.HasIndex("EntityType", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_custom_field_definitions_entity_type_code");
+
+                    b.ToTable("custom_field_definitions", "platform");
                 });
 
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Localization.Culture", b =>
