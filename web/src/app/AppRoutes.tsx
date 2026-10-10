@@ -24,6 +24,7 @@ const JobsPage = page(() => import('@/modules/platform/JobsPage'), 'JobsPage');
 const BranchesPage = page(() => import('@/modules/platform/organization/BranchesPage'), 'BranchesPage');
 const CompaniesPage = page(() => import('@/modules/platform/organization/CompaniesPage'), 'CompaniesPage');
 const ProfilePage = page(() => import('@/modules/platform/ProfilePage'), 'ProfilePage');
+const NotificationsPage = page(() => import('@/modules/platform/notifications/NotificationsPage'), 'NotificationsPage');
 const SystemInfoPage = page(() => import('@/modules/platform/SystemInfoPage'), 'SystemInfoPage');
 const AuditLogPage = page(() => import('@/modules/platform/audit/AuditLogPage'), 'AuditLogPage');
 const LocalizationPage = page(() => import('@/modules/platform/localization/LocalizationPage'), 'LocalizationPage');
@@ -92,6 +93,7 @@ export const AppRoutes = () => (
           }
         />
         <Route path="profile" element={<ProfilePage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
         <Route
           path="system/info"
           element={

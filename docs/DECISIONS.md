@@ -218,7 +218,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
 
 ## D19 — Kütüphaneler ve lisans politikası
 
-**İzinli lisanslar:** MIT, Apache-2.0, BSD-2/3, MPL-2.0, PostgreSQL, ISC. LGPL sadece dinamik bağlantıyla kullanılır (Hangfire).
+**İzinli lisanslar:** MIT, Apache-2.0, BSD-2/3, MPL-2.0, PostgreSQL, ISC, Unlicense (kamu malı; kullanıcı onayı, P8b: `@microsoft/signalr` bağımlılığı `fetch-cookie`). LGPL sadece dinamik bağlantıyla kullanılır (Hangfire).
 
 ### Backend — kullanılacaklar
 
@@ -595,5 +595,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Anlık kanal:**
 - SignalR kullanıcıyı `{tenant}:{sub}` ile tanır (`IUserIdProvider`).
 - Tek API örneği varsayılır. Birden çok örnekte Valkey backplane'i (`Microsoft.AspNetCore.SignalR.StackExchangeRedis`, MIT) eklenmelidir (X5).
+
+**Web (P8b):** Sunucu yalnızca "yeni bildirim var" der (`notificationReceived`: kimlik ve tür); istemci okunmamış sayısını ve listeleri yeniden okur. Metinler böylece her zaman okuyanın dilinde, tek yerden (API) gelir. Bağlantı kurulamazsa zil sayfa odaklanınca güncellenir.
 
 **Uç noktalar:** Kullanıcının kendi bildirimleri ve tercihleri yalnızca oturum ister (D22). `POST /api/platform/notifications/test` kullanıcıya kendi kanallarından bir test bildirimi gönderir (`platform.test`).

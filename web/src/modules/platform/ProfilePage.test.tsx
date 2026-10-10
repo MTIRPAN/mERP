@@ -11,6 +11,9 @@ import { ProfilePage } from './ProfilePage';
 const updatePreferences = vi.fn<(variables: UpdateMyPreferencesMutationVariables) => Promise<void>>();
 const changeCulture = vi.fn<(culture: string) => Promise<void>>();
 
+// The notification card has its own tests (NotificationPreferencesCard.test.tsx)
+vi.mock('./notifications/NotificationPreferencesCard', () => ({ NotificationPreferencesCard: () => null }));
+
 vi.mock('@/app/i18n/i18n', () => ({ changeCulture: (culture: string) => changeCulture(culture) }));
 
 vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({

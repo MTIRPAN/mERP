@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useMe } from '@/app/me/meContext';
 import { useCulturePreference } from '@/app/me/useCulturePreference';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { NotificationPreferencesCard } from './notifications/NotificationPreferencesCard';
 
 /** Option value for "no preference"; antd Select cannot hold null. */
 const DEVICE = '';
@@ -63,6 +64,7 @@ export const ProfilePage = () => {
             </Button>
           </Form>
         </Card>
+        <NotificationPreferencesCard />
       </Flex>
     </>
   );

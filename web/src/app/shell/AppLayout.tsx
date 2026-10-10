@@ -4,13 +4,14 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { useMe } from '@/app/me/meContext';
+import { NotificationsHub } from '@/app/notifications/NotificationsHub';
+import { NotificationBell } from '@/modules/platform/notifications/NotificationBell';
 import { Brand } from './Brand';
 import { CommandPalette } from './CommandPalette';
 import {
   ApprovalsBadge,
   CompanySelector,
   LanguageSelector,
-  NotificationBell,
   SearchTrigger,
   ThemeSwitcher,
   UserMenu,
@@ -113,6 +114,7 @@ export const AppLayout = () => {
         </Layout.Content>
       </Layout>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} entries={entries} />
+      <NotificationsHub />
     </Layout>
   );
 };
