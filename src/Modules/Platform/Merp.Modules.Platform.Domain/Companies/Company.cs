@@ -77,6 +77,9 @@ public sealed class Company : AuditableAggregateRoot<CompanyId>, IHasCustomField
 
     public void Update(CompanyProfile profile) => Apply(profile);
 
+    /// <summary>Values checked by the application against the custom field definitions (D12).</summary>
+    public void SetCustomFields(CustomFieldValues values) => CustomFields = values ?? throw new ArgumentNullException(nameof(values));
+
     public void Activate() => IsActive = true;
 
     public void Deactivate() => IsActive = false;

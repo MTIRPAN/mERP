@@ -1,5 +1,6 @@
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Companies;
+using Merp.Modules.Platform.Domain.CustomFields;
 using Merp.Modules.Platform.Domain.Localization;
 using Merp.Modules.Platform.Domain.Numbering;
 using Merp.Modules.Platform.Domain.Locations;
@@ -33,6 +34,8 @@ public interface IPlatformDbContext
     DbSet<Culture> Cultures { get; }
 
     DbSet<NumberSequence> NumberSequences { get; }
+
+    DbSet<CustomFieldDefinition> CustomFieldDefinitions { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

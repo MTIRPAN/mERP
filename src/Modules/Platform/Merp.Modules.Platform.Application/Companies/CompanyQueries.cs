@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentValidation;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Paging;
@@ -11,8 +12,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Merp.Modules.Platform.Application.Companies;
 
 /// <summary>Companies in the caller's scope, filtered and paged.</summary>
-/// <remarks>Search matches part of the code, short name, title or tax number.</remarks>
-public sealed record GetCompaniesQuery(PageRequest Paging, string? Search = null, bool? IsActive = null)
+/// <remarks>
+/// Search matches part of the code, short name, title or tax number. CustomFields is a JSON object of custom field
+/// codes and values the companies must have (PLAN P6), e.g. <c>{"shoe_size": 42}</c>.
+/// </remarks>
+public sealed record GetCompaniesQuery(PageRequest Paging, string? Search = null, bool? IsActive = null, string? CustomFields = null)
     : IQuery<PagedResult<CompanyListItem>>, IRequirePermission
 {
     public const string DefaultSort = "shortName";
@@ -28,7 +32,16 @@ public sealed record GetCompaniesQuery(PageRequest Paging, string? Search = null
     public string Permission => PlatformPermissions.Companies.Read;
 }
 
-public sealed record CompanyListItem(Guid Id, string Code, string ShortName, string Title, string TaxNumber, string? City, bool IsActive);
+/// <remarks>CustomFields holds the custom field values by code, for optional list columns.</remarks>
+public sealed record CompanyListItem(
+    Guid Id,
+    string Code,
+    string ShortName,
+    string Title,
+    string TaxNumber,
+    string? City,
+    bool IsActive,
+    IReadOnlyDictionary<string, JsonElement> CustomFields);
 
 /// <summary>One company in the caller's scope; otherwise 404.</summary>
 public sealed record GetCompanyQuery(Guid Id) : IQuery<CompanyDetails>, IRequirePermission
@@ -54,7 +67,8 @@ public sealed record CompanyDetails(
     bool IsActive,
     uint Version,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? ModifiedAt);
+    DateTimeOffset? ModifiedAt,
+    IReadOnlyDictionary<string, JsonElement> CustomFields);
 
 /// <summary>
 /// Active companies the caller can work in, for the company selector (D4): the union of the scopes of the given
@@ -66,8 +80,13 @@ public sealed record CompanyOption(Guid Id, string Code, string Name);
 
 internal sealed class GetCompaniesQueryValidator : AbstractValidator<GetCompaniesQuery>
 {
-    public GetCompaniesQueryValidator() =>
+    public GetCompaniesQueryValidator()
+    {
         RuleFor(q => q.Paging.Sort).Must(GetCompaniesQuery.Sorts.IsValid).WithErrorCode(CommonErrors.InvalidSort.Code).OverridePropertyName("sort");
+        RuleFor(q => q.CustomFields)
+            .Must(json => CustomFieldFiltering.Parse(json, out var valid) is not null || valid)
+            .WithErrorCode(CustomFieldFiltering.InvalidFilterCode);
+    }
 }
 
 internal sealed class GetCompaniesQueryHandler(IPlatformDbContext db, IAccessScopeProvider scopes)
@@ -92,9 +111,17 @@ internal sealed class GetCompaniesQueryHandler(IPlatformDbContext db, IAccessSco
             companies = companies.Where(c => c.IsActive == isActive);
         }
 
-        return await GetCompaniesQuery.Sorts.Apply(companies, request.Paging.Sort, GetCompaniesQuery.DefaultSort)
-            .Select(c => new CompanyListItem(c.Id.Value, c.Code, c.ShortName, c.Title, c.TaxNumber, c.Address == null ? null : c.Address.City, c.IsActive))
+        companies = companies.WhereCustomFields(CustomFieldFiltering.Parse(request.CustomFields, out _));
+
+        // The jsonb column is read whole: members of the converted value cannot be translated
+        var page = await GetCompaniesQuery.Sorts.Apply(companies, request.Paging.Sort, GetCompaniesQuery.DefaultSort)
+            .Select(c => new { c.Id, c.Code, c.ShortName, c.Title, c.TaxNumber, City = c.Address == null ? null : c.Address.City, c.IsActive, c.CustomFields })
             .ToPagedResultAsync(request.Paging, cancellationToken);
+        return new PagedResult<CompanyListItem>(
+            [.. page.Items.Select(c => new CompanyListItem(c.Id.Value, c.Code, c.ShortName, c.Title, c.TaxNumber, c.City, c.IsActive, c.CustomFields.Values))],
+            page.Page,
+            page.PageSize,
+            page.TotalCount);
     }
 }
 
@@ -133,7 +160,8 @@ internal sealed class GetCompanyQueryHandler(IPlatformDbContext db, IAccessScope
             c.IsActive,
             company.Version,
             c.CreatedAt,
-            c.ModifiedAt);
+            c.ModifiedAt,
+            c.CustomFields.Values);
     }
 }
 

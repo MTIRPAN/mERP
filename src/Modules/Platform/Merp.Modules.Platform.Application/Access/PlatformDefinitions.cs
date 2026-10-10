@@ -23,6 +23,8 @@ public sealed class PlatformPermissionDefinitions : IPermissionDefinitionProvide
         new(PlatformPermissions.Localization.Manage),
         new(PlatformPermissions.Numbering.Read),
         new(PlatformPermissions.Numbering.Manage),
+        new(PlatformPermissions.CustomFields.Read),
+        new(PlatformPermissions.CustomFields.Manage),
     ];
 }
 

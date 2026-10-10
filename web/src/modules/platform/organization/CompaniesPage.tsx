@@ -4,25 +4,35 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
 import { platformPermissions } from '@/modules/platform/permissions';
-import { getListCompaniesQueryKey, listCompanies } from '@/shared/api/generated/endpoints/platform/platform';
+import {
+  getListCompaniesQueryKey,
+  listCompanies,
+  useGetCustomFieldForm,
+} from '@/shared/api/generated/endpoints/platform/platform';
 import type { CompanyListItem } from '@/shared/api/generated/model';
 import type { ListParams } from '@/shared/api/paging';
 import { Can } from '@/shared/components/Can';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatusTag } from '@/shared/components/StatusTag';
+import { CustomFieldFilter } from '@/shared/customFields/CustomFieldFilter';
+import { displayValue } from '@/shared/customFields/customFieldValues';
 import { useHasPermission } from '@/shared/auth/permissionContext';
 import { CompanyFormDrawer } from './CompanyFormDrawer';
-import { activeFilter, toActiveParam, type ActiveFilter } from './filters';
+import { activeFilter, COMPANY_ENTITY, toActiveParam, type ActiveFilter } from './filters';
 
 /** Companies of the tenant in the caller's scope (PLAN P1). */
 export const CompaniesPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const canManage = useHasPermission(platformPermissions.companiesManage);
   const canAudit = useHasPermission(platformPermissions.auditRead);
   const [search, setSearch] = useState<string>();
   const [active, setActive] = useState<ActiveFilter>('active');
   const [drawer, setDrawer] = useState<{ open: boolean; companyId?: string }>({ open: false });
+  const [customFilter, setCustomFilter] = useState<string>();
+  // Fields of every company, as optional columns and filters (PLAN P6)
+  const fields = useGetCustomFieldForm({ entityType: COMPANY_ENTITY });
+  const customFields = useMemo(() => fields.data ?? [], [fields.data]);
 
   const columns = useMemo<DataTableColumn<CompanyListItem>[]>(
     () => [
@@ -37,6 +47,12 @@ export const CompaniesPage = () => {
       },
       { key: 'taxNumber', dataIndex: 'taxNumber', title: t('web.platform.companies.tax_number'), sorter: true },
       { key: 'city', dataIndex: 'city', title: t('web.platform.address.province') },
+      ...customFields.map<DataTableColumn<CompanyListItem>>((field) => ({
+        key: `customFields.${field.code}`,
+        title: field.label,
+        hiddenByDefault: true,
+        render: (_, row) => displayValue(field, row.customFields[field.code], t, i18n.language),
+      })),
       {
         key: 'isActive',
         title: t('web.platform.fields.status'),
@@ -72,7 +88,7 @@ export const CompaniesPage = () => {
           ]
         : []),
     ],
-    [t, canManage, canAudit],
+    [t, i18n.language, canManage, canAudit, customFields],
   );
 
   const fetchPage = (params: ListParams) =>
@@ -82,6 +98,7 @@ export const CompaniesPage = () => {
       sort: params.sort,
       search: params.filter?.search,
       isActive: toActiveParam(params.filter?.active as ActiveFilter | undefined),
+      customFields: params.filter?.customFields,
     });
 
   return (
@@ -102,7 +119,7 @@ export const CompaniesPage = () => {
         fetchPage={fetchPage}
         columns={columns}
         rowKey="id"
-        filter={{ search, active }}
+        filter={{ search, active, customFields: customFilter }}
         toolbar={
           <Space wrap>
             <Input.Search
@@ -111,6 +128,7 @@ export const CompaniesPage = () => {
               onSearch={(value) => setSearch(value.trim() || undefined)}
               style={{ width: 280 }}
             />
+            <CustomFieldFilter fields={customFields} onChange={setCustomFilter} />
             <Segmented<ActiveFilter>
               value={active}
               onChange={setActive}

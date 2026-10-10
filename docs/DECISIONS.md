@@ -299,6 +299,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/api/platform/me` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi bilgileri, menüsü ve yetkileri; hiç rolü olmayan kullanıcı da "erişiminiz yok" ekranını görebilmeli |
 | `/api/platform/locations/provinces`, `/api/platform/locations/provinces/{provinceCode}/districts` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kamuya açık referans veri (il/ilçe, `docs/reference-data.md`); her modülün adres formunda kullanılır. Kullanıcı onayıyla eklendi (P1). |
 | `/api/platform/me/preferences` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi tercihleri (dil); hiç rolü olmayan kullanıcı da değiştirebilmeli (P2). |
+| `/api/platform/custom-fields/form` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Bir formun göstereceği özel alan tanımları (etiket, tip, seçenek). Hassas değil; özel alanı olan her formda gerekir (P6, D30). |
 
 **Karar — Hangfire paneli (kullanıcı, 2026-10-05):** Panel, şirketlerdeki yaygın uygulamaya uygun olarak sadece bilgi işlem / sistem yöneticilerine açıktır.
 - `platform.jobs.view` yetkisi sadece "Sistem Yöneticisi" sistem rolüne seed edilir (P2). İK ve diğer iş kullanıcıları paneli görmez.
@@ -461,9 +462,9 @@ Seçilen kültür `Content-Language` başlığında döner.
 
 **Ana veri metinleri (`LocalizedString`):** Girişte varsayılan dilde metin zorunludur ve yalnızca aktif diller kullanılabilir (`MustCoverDefaultCulture`; ilk kullanan: rol adları).
 
-## D29 — Belge numaralandırma (öneri — onay bekliyor)
+## D29 — Belge numaralandırma
 
-**Durum:** Öneri. PLAN P5 ile uygulandı; P5 incelemesinde kullanıcı onayına sunuldu.
+**Durum:** Kabul edildi (P5 incelemesinden sonra kullanıcı onayı). PLAN P5 ile uygulandı.
 
 **Sorun:** Numara, çağıran komutun transaction'ında satır kilidiyle üretilmeli (PLAN P5). Komut başka modülde olabilir (HR, Recruitment). Kural 2 başka şemaya yazmayı, kural 3 modüller arası senkron yazmayı yasaklar.
 
@@ -484,3 +485,34 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Yönetim:** `platform.numbering.read/manage` yalnızca Tenant kapsamıyla geçerlidir (D26 gibi). Varsayılan desen silinemez; şirkete özel desen silinince varsayılan devreye girer.
 
 **Seed:** Şimdilik `recruitment.requisition` (`PT-{yyyy}-{seq:5}`) ve `recruitment.offer` (`TKL-{yyyy}-{seq:5}`), yıllık. `hr.employee` ve `hr.leave-request` HR modülü (H1/H2) eklenince onun tanımlarıyla gelir.
+
+## D30 — Özel alanların uygulanması (öneri — onay bekliyor)
+
+**Durum:** Öneri. PLAN P6 ile uygulandı; P6 incelemesinde kullanıcı onayına sunuldu. D12'yi ayrıntılandırır.
+
+**Tanımlar Platform'da, değerler kaydın kendisinde:**
+- Tanımlar `platform.custom_field_definitions` tablosundadır: kayıt türü, kod, veri tipi, şirket, çok dilli ad, zorunluluk, seçenekler, sınırlar, grup, sıra, aktiflik.
+- Modüller özel alan alabilen kayıt türlerini `ICustomFieldEntityProvider` ile bildirir (`platform.company`). Türün ilk parçası modüldür.
+- Değerler kaydın `custom_fields` jsonb kolonunda, alan kodu → değer olarak tutulur (D12).
+
+**Değişmezler:** Kod, veri tipi ve şirket kayıttan sonra değişmez, çünkü kayıtlardaki değerler bunlara bağlıdır. Kod, kayıt türü başına benzersizdir (şirketten bağımsız). Tanım silinmez, pasifleştirilir: pasif alan formda görünmez, kayıtlardaki değeri korunur.
+
+**Doğrulama:**
+- Kaydın sahibi olan modül, komutunda `ICustomFieldValidator` çağırır. Platform bunu önbelleğe alınmış tanımlarla uygular (HybridCache, değişince temizlenir).
+- Yalnızca aktif ve o şirkete uyan alanlar kabul edilir; bilinmeyen kod hatadır. Hatalar `customFields.{kod}` alanına yazılır.
+- Pasif alanların mevcut değerleri korunur.
+- Değerler normalleştirilir: kırpılmış metin, sayı, `yyyy-MM-dd`, mantıksal değer, seçenek kodu veya kodları, GUID.
+- Kullanıcı tipindeki alanın kullanıcısı Platform'da aranır. Personel tipindeki alan HR modülü gelene kadar yalnızca biçimce denetlenir.
+
+**Liste filtresi:**
+- `customFields` sorgu parametresi bir JSON nesnesidir; kayıt bu değerleri içermelidir (jsonb `@>`). Bu karşılaştırmayı `custom_fields` üzerindeki GIN (`jsonb_path_ops`) indeksi karşılar.
+- Uygulama katmanı veritabanı sağlayıcısına bağlanmasın diye sorgularda yer tutucu bir metot (`CustomFieldFiltering.Contain`) kullanılır. Infrastructure bunu sorgu derlenmeden önce Npgsql'in `JsonContains` çağrısına çevirir (`IQueryExpressionInterceptor`).
+
+**Form endpoint'i:** `/api/platform/custom-fields/form` oturum ister, yetki istemez (D22). Hassas değildir ve özel alanı olan her formda gerekir.
+
+**Yönetim:** `platform.custom_fields.read/manage` yalnızca Tenant kapsamıyla geçerlidir.
+
+**Web:**
+- `DynamicFields` tüm veri tiplerini gösterir (`shared/customFields`).
+- Listelerde özel alanlar isteğe bağlı kolon ve tek alanlık filtre olarak kullanılır.
+- İlk kullanan: Şirketler.

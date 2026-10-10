@@ -31,18 +31,24 @@ import type {
   CompanyDetails,
   CreateBranchCommand,
   CreateCompanyCommand,
+  CreateCustomFieldCommand,
   CreateRoleCommand,
   CreateUserCommand,
   CultureCreatedResponse,
   CultureItem,
+  CustomFieldDefinitionItem,
+  CustomFieldEntityItem,
+  CustomFieldFormItem,
   EntityCreatedResponse,
   GetAiUsageSummaryParams,
+  GetCustomFieldFormParams,
   GetLocalizationBundle200,
   HttpValidationProblemDetails,
   ImportTextsBody,
   ImportTextsResult,
   ListBranchesParams,
   ListCompaniesParams,
+  ListCustomFieldDefinitionsParams,
   ListRolesParams,
   ListTextsParams,
   ListUsersParams,
@@ -66,6 +72,7 @@ import type {
   UpdateBranchCommand,
   UpdateCompanyCommand,
   UpdateCultureCommand,
+  UpdateCustomFieldCommand,
   UpdateMyPreferencesCommand,
   UpdateNumberSequenceCommand,
   UpdateRoleCommand,
@@ -4554,3 +4561,588 @@ export const useDeleteNumberSequence = <TError = ErrorType<ProblemDetails>, TCon
 > => {
   return useMutation(getDeleteNumberSequenceMutationOptions(options), queryClient);
 };
+export const getListCustomFieldEntityTypesUrl = () => {
+  return `/api/platform/custom-fields/entity-types`;
+};
+
+/**
+ * Requires permission: platform.custom_fields.read.
+ * @summary Entity types that can carry custom fields
+ */
+export const listCustomFieldEntityTypes = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CustomFieldEntityItem[]> => {
+  return customFetch<CustomFieldEntityItem[]>(getListCustomFieldEntityTypesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListCustomFieldEntityTypesQueryKey = () => {
+  return [`/api/platform/custom-fields/entity-types`] as const;
+};
+
+export const getListCustomFieldEntityTypesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCustomFieldEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldEntityTypes>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCustomFieldEntityTypesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCustomFieldEntityTypes>>> = ({ signal }) =>
+    listCustomFieldEntityTypes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCustomFieldEntityTypes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListCustomFieldEntityTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listCustomFieldEntityTypes>>>;
+export type ListCustomFieldEntityTypesQueryError = ErrorType<ProblemDetails>;
+
+export function useListCustomFieldEntityTypes<
+  TData = Awaited<ReturnType<typeof listCustomFieldEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldEntityTypes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCustomFieldEntityTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listCustomFieldEntityTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCustomFieldEntityTypes<
+  TData = Awaited<ReturnType<typeof listCustomFieldEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldEntityTypes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCustomFieldEntityTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listCustomFieldEntityTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCustomFieldEntityTypes<
+  TData = Awaited<ReturnType<typeof listCustomFieldEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldEntityTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Entity types that can carry custom fields
+ */
+
+export function useListCustomFieldEntityTypes<
+  TData = Awaited<ReturnType<typeof listCustomFieldEntityTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldEntityTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListCustomFieldEntityTypesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListCustomFieldDefinitionsUrl = (params?: ListCustomFieldDefinitionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/custom-fields/definitions?${stringifiedParams}`
+    : `/api/platform/custom-fields/definitions`;
+};
+
+/**
+ * Requires permission: platform.custom_fields.read.
+ * @summary Custom field definitions, active or not
+ */
+export const listCustomFieldDefinitions = async (
+  params?: ListCustomFieldDefinitionsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CustomFieldDefinitionItem[]> => {
+  return customFetch<CustomFieldDefinitionItem[]>(getListCustomFieldDefinitionsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListCustomFieldDefinitionsQueryKey = (params?: ListCustomFieldDefinitionsParams) => {
+  return [`/api/platform/custom-fields/definitions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListCustomFieldDefinitionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCustomFieldDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListCustomFieldDefinitionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldDefinitions>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCustomFieldDefinitionsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCustomFieldDefinitions>>> = ({ signal }) =>
+    listCustomFieldDefinitions(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCustomFieldDefinitions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListCustomFieldDefinitionsQueryResult = NonNullable<Awaited<ReturnType<typeof listCustomFieldDefinitions>>>;
+export type ListCustomFieldDefinitionsQueryError = ErrorType<ProblemDetails>;
+
+export function useListCustomFieldDefinitions<
+  TData = Awaited<ReturnType<typeof listCustomFieldDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | ListCustomFieldDefinitionsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldDefinitions>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCustomFieldDefinitions>>,
+          TError,
+          Awaited<ReturnType<typeof listCustomFieldDefinitions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCustomFieldDefinitions<
+  TData = Awaited<ReturnType<typeof listCustomFieldDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListCustomFieldDefinitionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldDefinitions>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCustomFieldDefinitions>>,
+          TError,
+          Awaited<ReturnType<typeof listCustomFieldDefinitions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCustomFieldDefinitions<
+  TData = Awaited<ReturnType<typeof listCustomFieldDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListCustomFieldDefinitionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldDefinitions>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Custom field definitions, active or not
+ */
+
+export function useListCustomFieldDefinitions<
+  TData = Awaited<ReturnType<typeof listCustomFieldDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListCustomFieldDefinitionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCustomFieldDefinitions>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListCustomFieldDefinitionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateCustomFieldUrl = () => {
+  return `/api/platform/custom-fields/definitions`;
+};
+
+/**
+ * Requires permission: platform.custom_fields.manage.
+ * @summary Define a custom field
+ */
+export const createCustomField = async (
+  createCustomFieldCommand: CreateCustomFieldCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateCustomFieldUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createCustomFieldCommand),
+  });
+};
+
+export const getCreateCustomFieldMutationKey = () => ['createCustomField'] as const;
+
+export const getCreateCustomFieldMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCustomField>>,
+    TError,
+    CreateCustomFieldMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCustomField>>,
+  TError,
+  CreateCustomFieldMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateCustomFieldMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCustomField>>,
+    CreateCustomFieldMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createCustomField(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCustomFieldMutationResult = NonNullable<Awaited<ReturnType<typeof createCustomField>>>;
+export type CreateCustomFieldMutationBody = CreateCustomFieldCommand;
+export type CreateCustomFieldMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateCustomFieldMutationVariables = { data: CreateCustomFieldCommand };
+
+/**
+ * @summary Define a custom field
+ */
+export const useCreateCustomField = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createCustomField>>,
+      TError,
+      CreateCustomFieldMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createCustomField>>,
+  TError,
+  CreateCustomFieldMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateCustomFieldMutationOptions(options), queryClient);
+};
+export const getUpdateCustomFieldUrl = (id: string) => {
+  return `/api/platform/custom-fields/definitions/${id}`;
+};
+
+/**
+ * Requires permission: platform.custom_fields.manage.
+ * @summary Change a custom field, or switch it off
+ */
+export const updateCustomField = async (
+  id: string,
+  updateCustomFieldCommand: UpdateCustomFieldCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateCustomFieldUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateCustomFieldCommand),
+  });
+};
+
+export const getUpdateCustomFieldMutationKey = () => ['updateCustomField'] as const;
+
+export const getUpdateCustomFieldMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCustomField>>,
+    TError,
+    UpdateCustomFieldMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCustomField>>,
+  TError,
+  UpdateCustomFieldMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateCustomFieldMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCustomField>>,
+    UpdateCustomFieldMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateCustomField(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCustomFieldMutationResult = NonNullable<Awaited<ReturnType<typeof updateCustomField>>>;
+export type UpdateCustomFieldMutationBody = UpdateCustomFieldCommand;
+export type UpdateCustomFieldMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateCustomFieldMutationVariables = { id: string; data: UpdateCustomFieldCommand };
+
+/**
+ * @summary Change a custom field, or switch it off
+ */
+export const useUpdateCustomField = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateCustomField>>,
+      TError,
+      UpdateCustomFieldMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateCustomField>>,
+  TError,
+  UpdateCustomFieldMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateCustomFieldMutationOptions(options), queryClient);
+};
+export const getGetCustomFieldFormUrl = (params: GetCustomFieldFormParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/custom-fields/form?${stringifiedParams}`
+    : `/api/platform/custom-fields/form`;
+};
+
+/**
+ * @summary Active custom fields of an entity type for a company, as a form shows them
+ */
+export const getCustomFieldForm = async (
+  params: GetCustomFieldFormParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CustomFieldFormItem[]> => {
+  return customFetch<CustomFieldFormItem[]>(getGetCustomFieldFormUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetCustomFieldFormQueryKey = (params?: GetCustomFieldFormParams) => {
+  return [`/api/platform/custom-fields/form`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetCustomFieldFormQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCustomFieldForm>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetCustomFieldFormParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomFieldForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCustomFieldFormQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomFieldForm>>> = ({ signal }) =>
+    getCustomFieldForm(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCustomFieldForm>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetCustomFieldFormQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomFieldForm>>>;
+export type GetCustomFieldFormQueryError = ErrorType<unknown>;
+
+export function useGetCustomFieldForm<
+  TData = Awaited<ReturnType<typeof getCustomFieldForm>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetCustomFieldFormParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomFieldForm>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomFieldForm>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomFieldForm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCustomFieldForm<
+  TData = Awaited<ReturnType<typeof getCustomFieldForm>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetCustomFieldFormParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomFieldForm>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomFieldForm>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomFieldForm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCustomFieldForm<
+  TData = Awaited<ReturnType<typeof getCustomFieldForm>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetCustomFieldFormParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomFieldForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active custom fields of an entity type for a company, as a form shows them
+ */
+
+export function useGetCustomFieldForm<
+  TData = Awaited<ReturnType<typeof getCustomFieldForm>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetCustomFieldFormParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomFieldForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetCustomFieldFormQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
