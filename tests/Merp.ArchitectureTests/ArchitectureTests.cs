@@ -62,7 +62,11 @@ public class ArchitectureTests
             using var context = CreateDesignTimeContext(infrastructure, contexts[0]);
             context.Schema.ShouldBe(module.ToLowerInvariant(), "the schema is the lower case module name (D2)");
 
-            var moduleAssemblies = MerpAssemblies.All.Where(a => MerpAssemblies.ModuleName(a) == module).Append(typeof(ModuleDbContext).Assembly).ToHashSet();
+            // Every module also has the shared tables of the building blocks: outbox, inbox, audit, counters (D29), files (D31)
+            var moduleAssemblies = MerpAssemblies.All.Where(a => MerpAssemblies.ModuleName(a) == module)
+                .Append(typeof(ModuleDbContext).Assembly)
+                .Append(typeof(Merp.Application.Persistence.Files.StoredFile).Assembly)
+                .ToHashSet();
             var sharedKernel = MerpAssemblies.Get("Merp.SharedKernel");
             foreach (var entity in context.Model.GetEntityTypes())
             {

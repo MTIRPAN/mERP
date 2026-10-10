@@ -12,4 +12,9 @@
     <ProjectReference Include="../../src/BuildingBlocks/Merp.Web/Merp.Web.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Sample files shared with the integration tests; Merp.Testing itself needs the API host and containers -->
+    <Compile Include="../Merp.Testing/Data/SampleFiles.cs" Link="Files/SampleFiles.cs" />
+  </ItemGroup>
+
 </Project>

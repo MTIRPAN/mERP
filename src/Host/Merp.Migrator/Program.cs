@@ -2,6 +2,7 @@ using Merp.Application.Abstractions.Messaging;
 using Merp.Infrastructure;
 using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Documents;
+using Merp.Infrastructure.Files;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application.Users;
@@ -38,6 +39,7 @@ builder.Services.AddMerpMultiTenancy(builder.Configuration);
 // Module registrations include their request handlers, whose dependencies must resolve even though none runs here.
 builder.Services.AddMerpAi(builder.Configuration);
 builder.Services.AddMerpDocuments();
+builder.Services.AddMerpFiles(builder.Configuration);
 builder.Services.AddPlatformInfrastructure(builder.Configuration);
 builder.Services.AddRecruitmentInfrastructure();
 

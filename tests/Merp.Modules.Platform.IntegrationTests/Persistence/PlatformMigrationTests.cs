@@ -29,7 +29,7 @@ public class PlatformMigrationTests(PostgresFixture postgres)
         var tables = await ListTablesAsync(connectionString, "platform");
         tables.ShouldBe(
             ["__ef_migrations_history", "ai_usage", "audit_entries", "inbox_messages", "outbox_messages", "companies", "branches", "provinces", "districts",
-                "permissions", "roles", "role_permissions", "users", "role_assignments", "cultures", "localization_texts", "number_sequences", "number_counters", "custom_field_definitions"],
+                "permissions", "roles", "role_permissions", "users", "role_assignments", "cultures", "localization_texts", "number_sequences", "number_counters", "custom_field_definitions", "stored_files"],
             ignoreOrder: true);
         (await ListTablesAsync(connectionString, "public")).ShouldBeEmpty();
 

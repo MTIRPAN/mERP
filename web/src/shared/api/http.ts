@@ -82,8 +82,9 @@ export const customFetch = async <T>(url: string, options: RequestInit = {}): Pr
     return (await response.json()) as T;
   }
 
-  // Files (Excel exports) stay binary; see download.ts
-  return (contentType.startsWith('text/') ? await response.text() : await response.blob()) as T;
+  // Files (Excel exports, attachments, even text ones) stay binary; see download.ts
+  const isAttachment = (response.headers.get('content-disposition') ?? '').startsWith('attachment');
+  return (contentType.startsWith('text/') && !isAttachment ? await response.text() : await response.blob()) as T;
 };
 
 export default customFetch;

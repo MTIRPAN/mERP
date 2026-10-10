@@ -24,6 +24,15 @@ vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
   useListProvinces: () => ({ data: [{ code: 34, name: 'İstanbul' }], isFetching: false }),
   useListDistricts: () => ({ data: [], isFetching: false }),
   useGetCustomFieldForm: () => ({ data: [] }),
+  // Logo and attachments of an edited company
+  getListAttachmentsQueryKey: () => ['/api/platform/attachments'],
+  listAttachments: vi.fn(),
+  uploadAttachment: vi.fn(),
+  deleteAttachment: vi.fn(),
+  downloadFile: vi.fn(),
+  useDownloadFile: () => ({ data: undefined }),
+  useSetCompanyLogo: () => ({ mutateAsync: vi.fn() }),
+  useRemoveCompanyLogo: () => ({ mutateAsync: vi.fn() }),
 }));
 
 const texts: Record<string, string> = {

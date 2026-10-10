@@ -15,8 +15,10 @@ import type { CompanyDetails, CustomFieldFormItem } from '@/shared/api/generated
 import { DynamicFields } from '@/shared/customFields/DynamicFields';
 import { toApiValues, toFormValues, type CustomFieldValues } from '@/shared/customFields/customFieldValues';
 import { FormDrawer } from '@/shared/components/FormDrawer';
+import { Attachments } from '@/shared/files/Attachments';
 import { fromAddressDto, toAddressInput, type AddressValues } from './address';
 import { AddressFields } from './AddressFields';
+import { CompanyLogo } from './CompanyLogo';
 import { COMPANY_ENTITY } from './filters';
 import { timeZones } from './timeZones';
 
@@ -220,6 +222,14 @@ export const CompanyFormDrawer = ({ companyId, open, onClose }: CompanyFormDrawe
           <Divider titlePlacement="start">{t('web.platform.address.title')}</Divider>
           <AddressFields />
           <DynamicFields fields={customFields} />
+          {editing && company.data && (
+            <>
+              <Divider titlePlacement="start">{t('web.platform.companies.logo')}</Divider>
+              <CompanyLogo companyId={company.data.id} logoFileId={company.data.logoFileId} />
+              <Divider titlePlacement="start">{t('web.platform.companies.attachments')}</Divider>
+              <Attachments ownerType={COMPANY_ENTITY} ownerId={company.data.id} />
+            </>
+          )}
         </>
       )}
     </FormDrawer>

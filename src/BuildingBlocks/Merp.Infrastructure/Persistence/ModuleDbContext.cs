@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Merp.Application.Persistence;
+using Merp.Application.Persistence.Files;
 using Merp.Infrastructure.Persistence.Auditing;
 using Merp.Infrastructure.Persistence.Conventions;
 using Merp.Infrastructure.Numbering;
@@ -16,8 +17,8 @@ namespace Merp.Infrastructure.Persistence;
 
 /// <summary>
 /// Base DbContext of a module. Every module owns one schema (CLAUDE.md rule 2) and gets the shared
-/// <c>outbox_messages</c>, <c>inbox_messages</c> and <c>audit_entries</c> tables, strongly typed id and jsonb
-/// conventions, <c>xmin</c> optimistic concurrency and the soft delete filter (D9).
+/// <c>outbox_messages</c>, <c>inbox_messages</c>, <c>audit_entries</c>, <c>number_counters</c> and <c>stored_files</c>
+/// tables, strongly typed id and jsonb conventions, <c>xmin</c> optimistic concurrency and the soft delete filter (D9).
 /// </summary>
 public abstract class ModuleDbContext(DbContextOptions options) : DbContext(options)
 {
@@ -32,6 +33,9 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
     public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
 
     public DbSet<AuditEntry> AuditEntries => Set<AuditEntry>();
+
+    /// <summary>Files of the module's records (D31).</summary>
+    public DbSet<StoredFile> StoredFiles => Set<StoredFile>();
 
     /// <summary>The module schema, e.g. <c>platform</c>.</summary>
     public abstract string Schema { get; }
@@ -152,6 +156,22 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
             builder.HasKey(c => new { c.DocumentType, c.CompanyId, c.Period });
             builder.Property(c => c.DocumentType).HasMaxLength(NumberCounter.DocumentTypeMaxLength);
             builder.Property(c => c.Period).HasMaxLength(NumberCounter.PeriodMaxLength);
+        });
+
+        modelBuilder.Entity<StoredFile>(builder =>
+        {
+            builder.ToTable("stored_files");
+            builder.HasKey(f => f.Id);
+            builder.Property(f => f.Id).ValueGeneratedNever();
+            builder.Property(f => f.OwnerType).HasMaxLength(StoredFile.OwnerTypeMaxLength);
+            builder.Property(f => f.Purpose).HasMaxLength(StoredFile.PurposeMaxLength);
+            builder.Property(f => f.FileName).HasMaxLength(StoredFile.FileNameMaxLength);
+            builder.Property(f => f.Extension).HasMaxLength(StoredFile.ExtensionMaxLength);
+            builder.Property(f => f.ContentType).HasMaxLength(StoredFile.ContentTypeMaxLength);
+            builder.Property(f => f.Sha256).HasMaxLength(64).IsFixedLength();
+            builder.Property(f => f.StorageKey).HasMaxLength(StoredFile.StorageKeyMaxLength);
+            builder.HasIndex(f => new { f.OwnerType, f.OwnerId, f.Purpose });
+            builder.HasIndex(f => f.StorageKey).IsUnique();
         });
     }
 

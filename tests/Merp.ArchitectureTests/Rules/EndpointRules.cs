@@ -24,12 +24,18 @@ public static class EndpointRules
     /// <summary>docs/DECISIONS.md D22 (proposal): host infrastructure with its own protection.</summary>
     public static readonly string[] InfrastructurePrefixes = ["/openapi/", "/scalar", "/admin/jobs", "/hubs/notifications"];
 
-    /// <summary>docs/DECISIONS.md D22 (proposal): the caller's own data and public reference data; a signed-in user is enough.</summary>
+    /// <summary>
+    /// docs/DECISIONS.md D22 (proposal): the caller's own data and public reference data; a signed-in user is enough.
+    /// Files follow the permissions of their record through its IFileAccessPolicy (D31).
+    /// </summary>
     public static readonly string[] AuthenticatedUserRoutes =
     [
         "/api/platform/me",
         "/api/platform/me/preferences",
         "/api/platform/custom-fields/form",
+        "/api/platform/attachments",
+        "/api/platform/attachments/{id:guid}",
+        "/api/platform/files/{id:guid}",
         "/api/platform/locations/provinces",
         "/api/platform/locations/provinces/{provinceCode:int}/districts",
     ];

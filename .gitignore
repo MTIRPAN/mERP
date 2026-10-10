@@ -505,3 +505,6 @@ storage/
 # Test results
 TestResults/
 coverage/
+
+# Uploaded files of local runs (Files:FileSystem:RootPath, D31)
+App_Data/

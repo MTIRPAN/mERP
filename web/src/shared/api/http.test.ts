@@ -42,6 +42,21 @@ describe('customFetch', () => {
     expect((error as ApiError).message).toBe('Bir veya daha fazla alan geçersiz.');
   });
 
+  it('keeps attachments binary, even text files', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('Ad;Şehir', {
+        status: 200,
+        headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename=liste.csv' },
+      }),
+    );
+
+    const result = await customFetch<Blob>('/api/platform/files/1');
+
+    // Not instanceof: under jsdom, fetch's Blob may come from Node's realm, not the window's
+    expect(typeof result).toBe('object');
+    expect(await result.text()).toBe('Ad;Şehir');
+  });
+
   it('reports 401 and 403 to the application', async () => {
     const onUnauthorized = vi.fn();
     const onForbidden = vi.fn();

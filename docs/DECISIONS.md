@@ -187,6 +187,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
   - `S3` (AWSSDK.S3, her S3 uyumlu depoyla çalışır)
 - Metadata Platform'da `stored_files` tablosunda tutulur. İndirme yetki kontrollü endpoint üzerinden yapılır.
 - MinIO kullanılmaz. Topluluk sürümü 2025'te bakım moduna alındı ve hazır imaj dağıtımı durdu. S3 gerekirse SeaweedFS veya Garage değerlendirilir.
+- Uygulama ayrıntıları D31'dedir. Metadata tablosu kural 2 gereği Platform'da değil, her modülün kendi şemasındadır.
 
 ## D17 — Gözlemlenebilirlik
 
@@ -240,6 +241,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
 | E-posta | MailKit | MIT |
 | Takvim daveti | Ical.Net | MIT |
 | CV metni çıkarma | PdfPig, DocumentFormat.OpenXml | Apache-2.0 / MIT |
+| Dosya depolama (D16, D31) | AWSSDK.S3 (S3 uyumlu depolar için; testlerde SeaweedFS konteyneri) | Apache-2.0 |
 | Yapay zeka (D24) | Anthropic (resmi C# SDK; bağımlılıkları Microsoft.Extensions.AI.Abstractions, System.Net.ServerSentEvents) | MIT |
 | Health check | AspNetCore.HealthChecks.* | Apache-2.0 |
 | Test | xunit.v3, Shouldly, NSubstitute, Testcontainers, Respawn, Bogus, NetArchTest.Rules, coverlet | Apache-2.0 / BSD / MIT |
@@ -300,6 +302,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/api/platform/locations/provinces`, `/api/platform/locations/provinces/{provinceCode}/districts` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kamuya açık referans veri (il/ilçe, `docs/reference-data.md`); her modülün adres formunda kullanılır. Kullanıcı onayıyla eklendi (P1). |
 | `/api/platform/me/preferences` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi tercihleri (dil); hiç rolü olmayan kullanıcı da değiştirebilmeli (P2). |
 | `/api/platform/custom-fields/form` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Bir formun göstereceği özel alan tanımları (etiket, tip, seçenek). Hassas değil; özel alanı olan her formda gerekir (P6, D30). |
+| `/api/platform/attachments`, `/api/platform/attachments/{id}`, `/api/platform/files/{id}` | Oturum zorunlu; yetkiyi dosyanın sahibi olan kaydın `IFileAccessPolicy`'si verir | Dosyaların kendi yetkisi yoktur, ait oldukları kaydın yetkisi ve veri kapsamı geçerlidir (şirket için `platform.companies.read/manage`). Kaydı göremeyen 404, salt okuyabilen yükleme ve silmede 403 alır (P7, D31). |
 
 **Karar — Hangfire paneli (kullanıcı, 2026-10-05):** Panel, şirketlerdeki yaygın uygulamaya uygun olarak sadece bilgi işlem / sistem yöneticilerine açıktır.
 - `platform.jobs.view` yetkisi sadece "Sistem Yöneticisi" sistem rolüne seed edilir (P2). İK ve diğer iş kullanıcıları paneli görmez.
@@ -516,3 +519,39 @@ Seçilen kültür `Content-Language` başlığında döner.
 - `DynamicFields` tüm veri tiplerini gösterir (`shared/customFields`).
 - Listelerde özel alanlar isteğe bağlı kolon ve tek alanlık filtre olarak kullanılır.
 - İlk kullanan: Şirketler.
+
+## D31 — Dosyaların uygulanması (öneri — onay bekliyor)
+
+**Durum:** Öneri. PLAN P7 ile uygulandı. Tabloların her modülde olması P7 öncesinde kullanıcı tarafından onaylandı; ayrıntılar P7 incelemesinde onaya sunuldu. D16'yı ayrıntılandırır.
+
+**Sorun:** D16 metadata'yı Platform'daki `stored_files` tablosunda tutar. Ama dosyayı yükleyen komut başka modülde olabilir (HR, Recruitment). Kural 2 başka şemaya yazmayı, kural 3 modüller arası senkron yazmayı yasaklar (D29'daki numaralandırma sorunuyla aynı).
+
+**Karar — metadata modülde, depolama ortak:**
+- `stored_files` her modülün şemasındadır (`ModuleDbContext`, `audit_entries` ve `number_counters` gibi). Varlık `Merp.Application.Persistence`'tadır, komutlar onu kendi DbContext'leriyle ekler. Böylece metadata iş verisiyle aynı transaction'da kaydedilir veya geri alınır.
+- Kayıt türü (sahip) `{modül}.{tür}` biçimindedir (`platform.company`). İlk parça metadata'nın hangi şemada olduğunu belirler.
+- Ekler için ayrı `*_attachments` tabloları yoktur: dosya, sahibi ve amacıyla (`attachment`, `logo`) `stored_files`'ta durur. PLAN P7'deki "her modül kendi ekler tablosunu tutar" maddesi bu tabloyla karşılanır.
+- Bir kaydın tek resmi (şirket logosu) kaydın alanı değil, amacı `logo` olan dosyasıdır. Böylece logo değişince kaydın sürümü değişmez; formu açık olan kullanıcı kaydederken 409 almaz.
+
+**Depolama (`IFileStorage`):**
+- `Files:Storage`: `FileSystem` (varsayılan, `Files:FileSystem:RootPath`) veya `S3` (`Files:S3:*`, AWSSDK.S3; kova önceden oluşturulur, kimlik bilgileri yalnızca yapılandırmadan okunur).
+- Anahtar: `{tenantId}/{modül}/{yyyy}/{MM}/{dosyaId}`. Kullanıcının verdiği ad yolda kullanılmaz.
+
+**Yükleme (`IFileStore.SaveAsync`):**
+- Boyut sınırı ve uzantı beyaz listesi: ekler için `Files:MaxBytes` (varsayılan 20 MB) ve `Files:AllowedExtensions` (pdf, docx, xlsx, pptx, png, jpg, jpeg, webp, txt, csv). Logo için PNG, JPEG veya WebP, en fazla 1 MB. SVG kabul edilmez, çünkü betik taşıyabilir.
+- İçerik denetimi: baştaki baytlar (magic bytes) uzantıyla uyuşmalıdır. Office belgelerinde paketin ana parçası aranır, VBA projesi olan (makrolu) paket reddedilir. Metin dosyası geçerli UTF-8 olmalı ve kontrol karakteri içermemelidir. Yalnızca içeriği denetlenebilen uzantılara izin verilebilir; yapılandırma bu kurala uymazsa uygulama başlamaz.
+- SHA-256 saklanır. İndirmede gönderilen içerik türü sunucunun belirlediği türdür, istemcinin bildirdiği değil.
+- Hatalar `file` alanına yazılan doğrulama hatalarıdır (`common.files.errors.*`).
+
+**Erişim (`IFileAccessPolicy`):**
+- Dosyaların kendi yetkileri yoktur. Kaydın sahibi olan modül, sahip türü için politika kaydeder ve kaydın kendi yetkisi ile veri kapsamını uygular (şirket: `platform.companies.read` okur, `platform.companies.manage` yükler ve siler).
+- Kaydı göremeyen kullanıcı için dosya yoktur (404). Salt okuyabilen kullanıcı yükleme ve silmede 403 alır. Uç noktalar bu yüzden yalnızca oturum ister (D22).
+- İndirme: `X-Content-Type-Options: nosniff`, `Content-Security-Policy: sandbox`, `Cache-Control: private, no-store`. Resimler sayfada gösterilir, diğer dosyalar indirilir.
+
+**Silme ve temizlik:**
+- Silme yumuşak silmedir: satır audit için kalır, içerik commit'ten hemen sonra depodan silinir.
+- Gece işi `files.sweep` (02:00 UTC), her kiracı ve modül için iki iş yapar:
+  - Silinmiş dosyaların depoda kalan içeriğini temizler ve satıra `purged_at` yazar.
+  - Geri alınan komutlardan kalan, metadata'sı olmayan içeriği `Files:OrphanGracePeriod` (1 gün) sonra siler.
+- Tekrarlanan işler `RecurringJobDefinition` ile kaydedilir. İş sunucusu açık olan host (`Jobs:EnableServer`) bunları açılışta Hangfire'a yazar.
+
+**Web:** `<Attachments ownerType ownerId />` (`shared/files`) sürükle-bırak, liste, indirme ve silme sunar. Liste yanıtı kabul edilen uzantıları ve boyut sınırını da döndürür. Başka bir modül ek kullanmaya başladığında, uç noktalarını bu bileşenin modül listesine ekler. İlk kullanan: şirket formu (logo ve ekler).
