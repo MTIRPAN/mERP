@@ -66,4 +66,10 @@ public static class PlatformPermissions
         public const string Read = "platform.custom_fields.read";
         public const string Manage = "platform.custom_fields.manage";
     }
+
+    public static class NotificationTemplates
+    {
+        public const string Read = "platform.notification_templates.read";
+        public const string Manage = "platform.notification_templates.manage";
+    }
 }

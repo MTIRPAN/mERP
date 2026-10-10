@@ -3,6 +3,7 @@ using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.CustomFields;
 using Merp.Modules.Platform.Domain.Localization;
+using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Numbering;
 using Merp.Modules.Platform.Domain.Locations;
 using Merp.Modules.Platform.Domain.Roles;
@@ -37,6 +38,12 @@ public interface IPlatformDbContext
     DbSet<NumberSequence> NumberSequences { get; }
 
     DbSet<CustomFieldDefinition> CustomFieldDefinitions { get; }
+
+    DbSet<Notification> Notifications { get; }
+
+    DbSet<EmailMessage> EmailMessages { get; }
+
+    DbSet<NotificationTemplate> NotificationTemplates { get; }
 
     /// <summary>Files of Platform records: company logos and attachments (D31).</summary>
     DbSet<StoredFile> StoredFiles { get; }

@@ -121,7 +121,7 @@ public sealed class AuditEndpointsTests(AccessFactory factory) : IClassFixture<A
         // A table every module has, labeled once for all (D31)
         types.ShouldContain(new AuditEntityType("platform", "StoredFile", "Dosya"));
         types.Where(t => t.Module == "platform").Select(t => t.EntityType)
-            .ShouldBe(["Branch", "Company", "Culture", "CultureText", "CustomFieldDefinition", "NumberSequence", "Role", "RoleAssignment", "RolePermission", "StoredFile", "User"], ignoreOrder: true);
+            .ShouldBe(["Branch", "Company", "Culture", "CultureText", "CustomFieldDefinition", "NotificationTemplate", "NumberSequence", "Role", "RoleAssignment", "RolePermission", "StoredFile", "User"], ignoreOrder: true);
     }
 
     [Fact]

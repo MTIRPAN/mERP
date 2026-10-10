@@ -11,6 +11,10 @@ export interface AiUsageSummaryResponse {
   providerConfigured: boolean;
   enabled: boolean;
   /** @nullable */
+  transferBasis: string | null;
+  /** @nullable */
+  transferReference: string | null;
+  /** @nullable */
   model: string | null;
   monthlyBudgetUsd: number;
   costUsd: number;

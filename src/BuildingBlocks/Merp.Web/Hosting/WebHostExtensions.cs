@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text.Json.Serialization;
 using Merp.Application.Abstractions.Localization;
+using Merp.Application.Abstractions.Notifications;
 using Merp.Infrastructure.Localization;
 using Merp.Web.Errors;
 using Merp.Web.Health;
@@ -16,8 +17,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
@@ -110,7 +113,10 @@ public static class WebHostExtensions
 
         services.AddMerpHealthChecks(configuration);
         services.AddMerpOpenApi(configuration);
+        // Notifications reach a user's open tabs (PLAN P8); one API instance until a backplane is added (D32)
         services.AddSignalR();
+        services.AddSingleton<IUserIdProvider, TenantUserIdProvider>();
+        services.Replace(ServiceDescriptor.Scoped<IRealtimeNotifier, HubRealtimeNotifier>());
         services.AddMerpJobs(configuration);
         return builder;
     }

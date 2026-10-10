@@ -795,6 +795,214 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                     b.ToTable("provinces", "platform");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Notifications.EmailMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempt_count");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("HtmlBody")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("html_body");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_at");
+
+                    b.Property<string>("NotificationType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("notification_type");
+
+                    b.Property<Guid?>("RecipientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipient_id");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("TextBody")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("text_body");
+
+                    b.Property<string>("To")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("to");
+
+                    b.Property<string>("ToName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("to_name");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_email_messages");
+
+                    b.HasIndex("NextAttemptAt")
+                        .HasDatabaseName("ix_email_messages_due")
+                        .HasFilter("status = 'Pending'");
+
+                    b.ToTable("email_messages", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Args")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("args");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("link");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipient_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("type");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("RecipientId")
+                        .HasDatabaseName("ix_notifications_unread")
+                        .HasFilter("read_at IS NULL");
+
+                    b.HasIndex("RecipientId", "CreatedAt")
+                        .HasDatabaseName("ix_notifications_recipient_id_created_at");
+
+                    b.ToTable("notifications", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Notifications.NotificationTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("body");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Culture")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("culture");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("NotificationType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("notification_type");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("subject");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notification_templates");
+
+                    b.HasIndex("NotificationType", "CompanyId", "Culture")
+                        .IsUnique()
+                        .HasDatabaseName("ix_notification_templates_notification_type_company_id_culture");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("NotificationType", "CompanyId", "Culture"), false);
+
+                    b.ToTable("notification_templates", "platform");
+                });
+
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Numbering.NumberSequence", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1090,6 +1298,11 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("modified_by");
 
+                    b.Property<string>("NotificationPreferences")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("notification_preferences");
+
                     b.Property<string>("Subject")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -1380,6 +1593,16 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_districts_provinces_province_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Notifications.Notification", b =>
+                {
+                    b.HasOne("Merp.Modules.Platform.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_users_recipient_id");
                 });
 
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Roles.RolePermission", b =>

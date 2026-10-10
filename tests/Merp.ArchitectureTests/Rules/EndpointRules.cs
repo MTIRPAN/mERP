@@ -36,6 +36,12 @@ public static class EndpointRules
         "/api/platform/attachments",
         "/api/platform/attachments/{id:guid}",
         "/api/platform/files/{id:guid}",
+        "/api/platform/notifications",
+        "/api/platform/notifications/unread-count",
+        "/api/platform/notifications/{id:guid}/read",
+        "/api/platform/notifications/read-all",
+        "/api/platform/notifications/preferences",
+        "/api/platform/notifications/test",
         "/api/platform/locations/provinces",
         "/api/platform/locations/provinces/{provinceCode:int}/districts",
     ];

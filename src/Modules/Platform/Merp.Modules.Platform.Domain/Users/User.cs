@@ -2,6 +2,7 @@ using Merp.Modules.Platform.Domain.Roles;
 using Merp.SharedKernel.Domain;
 using Merp.SharedKernel.Identity;
 using Merp.SharedKernel.Markers;
+using Merp.SharedKernel.Notifications;
 using Merp.SharedKernel.Results;
 
 namespace Merp.Modules.Platform.Domain.Users;
@@ -52,6 +53,9 @@ public sealed class User : AuditableAggregateRoot<UserId>
     /// <summary>Preferred culture; null follows the browser (D11).</summary>
     public string? Culture { get; private set; }
 
+    /// <summary>The user's choices that differ from the notification types' defaults (PLAN P8).</summary>
+    public IReadOnlyList<NotificationPreference> NotificationPreferences { get; private set; } = [];
+
     public IReadOnlyCollection<RoleAssignment> Assignments => _assignments.AsReadOnly();
 
     public string DisplayName =>
@@ -91,6 +95,19 @@ public sealed class User : AuditableAggregateRoot<UserId>
     public void Deactivate() => IsActive = false;
 
     public void SetCulture(string? culture) => Culture = string.IsNullOrWhiteSpace(culture) ? null : culture.Trim();
+
+    /// <summary>Whether the user gets a notification type on a channel: their choice, otherwise the type's default.</summary>
+    public bool Receives(string notificationType, NotificationChannel channel, bool byDefault) =>
+        NotificationPreferences.FirstOrDefault(p => p.Type == notificationType && p.Channel == channel)?.Enabled ?? byDefault;
+
+    /// <summary>Records the user's choice; a choice equal to the default is not kept, so later default changes apply.</summary>
+    public void SetNotificationPreference(string notificationType, NotificationChannel channel, bool enabled, bool byDefault)
+    {
+        var type = Text.Required(notificationType, 100, nameof(notificationType));
+        var others = NotificationPreferences.Where(p => !(p.Type == type && p.Channel == channel));
+        var choices = enabled == byDefault ? others : others.Append(new NotificationPreference(type, channel, enabled));
+        NotificationPreferences = [.. choices.OrderBy(p => p.Type, StringComparer.Ordinal).ThenBy(p => p.Channel)];
+    }
 
     public Result<RoleAssignment> Assign(RoleId roleId, AssignmentScope scope, DateOnly? validFrom, DateOnly? validTo)
     {
@@ -216,3 +233,6 @@ public static class UserErrors
 {
     public static readonly Error DuplicateAssignment = Error.Conflict("platform.users.errors.duplicate_assignment");
 }
+
+/// <summary>A user's choice for a notification type on a channel.</summary>
+public sealed record NotificationPreference(string Type, NotificationChannel Channel, bool Enabled);

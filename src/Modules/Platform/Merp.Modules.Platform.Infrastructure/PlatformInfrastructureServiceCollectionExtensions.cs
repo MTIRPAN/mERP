@@ -1,5 +1,7 @@
 using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Files;
+using Merp.Application.Abstractions.Jobs;
+using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Localization;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
@@ -12,6 +14,7 @@ using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Platform.Application.CustomFields;
 using Merp.Modules.Platform.Application.Files;
 using Merp.Modules.Platform.Application.Localization;
+using Merp.Modules.Platform.Application.Notifications;
 using Merp.Modules.Platform.Application.Numbering;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Infrastructure.Access;
@@ -19,6 +22,7 @@ using Merp.Modules.Platform.Infrastructure.AI;
 using Merp.Modules.Platform.Infrastructure.CustomFields;
 using Merp.Modules.Platform.Infrastructure.Identity;
 using Merp.Modules.Platform.Infrastructure.Localization;
+using Merp.Modules.Platform.Infrastructure.Notifications;
 using Merp.Modules.Platform.Infrastructure.Numbering;
 using Merp.Modules.Platform.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
@@ -67,6 +71,16 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddSingleton<ICustomFieldEntityProvider, PlatformCustomFieldEntities>();
         services.AddScoped<ICustomFieldValidator, PlatformCustomFieldValidator>();
         services.AddScoped<ICustomFieldCache, CustomFieldCache>();
+
+        // Notifications of all modules: bell, e-mail queue and templates (PLAN P8, D32)
+        services.AddSingleton<INotificationTypeProvider, PlatformNotificationTypes>();
+        services.TryAddSingleton<NotificationTypeRegistry>();
+        services.AddScoped<EmailComposer>();
+        var notificationSettings = new NotificationSettings();
+        configuration?.GetSection(NotificationSettings.SectionName).Bind(notificationSettings);
+        services.AddSingleton(notificationSettings);
+        services.AddScoped<EmailRetryJob>();
+        services.AddSingleton(RecurringJobDefinition.For<EmailRetryJob>(EmailRetryJob.JobId, "* * * * *"));
 
         // Files of Platform records follow the records' permissions (D31)
         services.AddScoped<IFileAccessPolicy, CompanyFileAccessPolicy>();

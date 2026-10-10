@@ -2,6 +2,7 @@ using Merp.Application.Abstractions.Messaging;
 using Merp.Infrastructure;
 using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Documents;
+using Merp.Infrastructure.Email;
 using Merp.Infrastructure.Files;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
@@ -40,6 +41,7 @@ builder.Services.AddMerpMultiTenancy(builder.Configuration);
 builder.Services.AddMerpAi(builder.Configuration);
 builder.Services.AddMerpDocuments();
 builder.Services.AddMerpFiles(builder.Configuration);
+builder.Services.AddMerpEmail(builder.Configuration);
 builder.Services.AddPlatformInfrastructure(builder.Configuration);
 builder.Services.AddRecruitmentInfrastructure();
 
