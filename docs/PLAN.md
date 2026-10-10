@@ -285,7 +285,7 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
 - Olaylar `CompanyCreated/Updated`, `BranchCreated/Updated` outbox ile yayınlanır.
 - Web: Organizasyon → Şirketler ve Şubeler ekranları, il/ilçe seçen ortak adres alanları.
 - Altyapı: `Merp.Application.Persistence` (sayfalama, sıralama, arama, sürüm), geçici kapsam sağlayıcıları (P2'ye kadar), owned değerlerin audit'i (D25).
-- Logo P7 ile eklendi (şirket kaydının alanı değil, şirketin dosyası; D31). Çalışma takvimi P9 ile eklenir. Özel alan sütunu (`custom_fields`) hazır; tanımlar ve doğrulama P6 ile gelir.
+- Logo P7 ile eklendi (şirket kaydının alanı değil, şirketin dosyası; D31). Çalışma takvimi P9 ile eklendi (şube formunda seçilir). Özel alan sütunu (`custom_fields`) hazır; tanımlar ve doğrulama P6 ile gelir.
 - Yetkiler: `platform.companies.read/manage`, `platform.branches.read/manage`. Sistem rolleri P2 ile gelir; bu yetkiler Sistem Yöneticisi rolünün `platform.*` kümesine girer. Development'ta `admin` (`*`) hepsine sahiptir.
 - Kabul testleri: `CompanyEndpointsTests.Create_WithInvalidTaxNumber_Returns400WithATurkishMessage`, `CompanyEndpointsTests.UserScopedToOneCompany_SeesOnlyThatCompany_InTheListAndTheSelector`.
 
@@ -501,7 +501,7 @@ Kurallar: D16, D31.
 - Olay gelince alıcıya anında bildirim düşer ve Mailpit'e e-posta gelir.
 - Kullanıcı e-postayı kapatırsa sadece uygulama içi bildirim gelir.
 
-### [ ] P9 Çalışma takvimi ve resmi tatiller — M (2 PR: P9a backend, P9b web)
+### [x] P9 Çalışma takvimi ve resmi tatiller — M (2 PR: P9a backend, P9b web)
 
 - [x] **P9a — backend (D33):**
   - `HolidayCalendar` ve `Holiday` (tam ya da yarım gün, hareketli mi), seed 2026–2027, sabit tatilleri önceki yıldan kopyalama.
@@ -509,7 +509,10 @@ Kurallar: D16, D31.
   - `IWorkingCalendar` (Platform.Contracts): takvim çözümü, gün ve aralık sorgusu, önbellek.
   - Hatırlatma işi `calendars.holiday-reminder` (1 Ekim) ve `platform.holidays_missing` bildirimi.
   - Kabul testleri: `WorkingDaysTests` (S1–S7, 6 günlük hafta) ve seed'lenmiş takvimlerle `CalendarEndpointsTests.Days_OfTheSeededSchedules_CountAsTheRulesSay`.
-- [ ] **P9b — web:** resmi tatiller (yıl görünümü), çalışma takvimleri, şube formunda takvim seçimi.
+- [x] **P9b — web:**
+  - Sistem → Resmi tatiller: takvim ve yıl seçimi, 12 aylık görünüm (tam ve yarım gün), güne tıklayarak ekleme ve düzenleme, liste, önceki yılın sabit tatillerini kopyalama, dini bayramlar girilmemişse uyarı.
+  - Sistem → Çalışma takvimleri: liste (haftalık gün ve saat), gün başına mesai ve mola düzenlenen çekmece; gün hataları (`days[i]`) ilgili satırda gösterilir.
+  - Şube formunda çalışma takvimi seçimi; boş bırakılırsa şirketin varsayılanı geçerlidir.
 
 
 **Yapılacaklar:**

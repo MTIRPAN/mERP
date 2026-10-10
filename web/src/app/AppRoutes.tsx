@@ -30,6 +30,8 @@ const AuditLogPage = page(() => import('@/modules/platform/audit/AuditLogPage'),
 const LocalizationPage = page(() => import('@/modules/platform/localization/LocalizationPage'), 'LocalizationPage');
 const NumberingPage = page(() => import('@/modules/platform/numbering/NumberingPage'), 'NumberingPage');
 const CustomFieldsPage = page(() => import('@/modules/platform/customFields/CustomFieldsPage'), 'CustomFieldsPage');
+const HolidaysPage = page(() => import('@/modules/platform/calendars/HolidaysPage'), 'HolidaysPage');
+const WorkSchedulesPage = page(() => import('@/modules/platform/calendars/WorkSchedulesPage'), 'WorkSchedulesPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -147,6 +149,22 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={platformPermissions.customFieldsRead}>
               <CustomFieldsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/holidays"
+          element={
+            <RequirePermission permission={platformPermissions.calendarsRead}>
+              <HolidaysPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/work-schedules"
+          element={
+            <RequirePermission permission={platformPermissions.calendarsRead}>
+              <WorkSchedulesPage />
             </RequirePermission>
           }
         />

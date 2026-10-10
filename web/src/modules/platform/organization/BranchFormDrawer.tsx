@@ -8,6 +8,7 @@ import {
   getListBranchesQueryKey,
   useCreateBranch,
   useGetBranch,
+  useListWorkSchedules,
   useUpdateBranch,
 } from '@/shared/api/generated/endpoints/platform/platform';
 import { BranchType, type BranchDetails } from '@/shared/api/generated/model';
@@ -24,6 +25,7 @@ interface BranchFormValues {
   phone?: string;
   isActive?: boolean;
   address?: AddressValues;
+  workScheduleId?: string | null;
 }
 
 const blank = (value?: string) => (value?.trim() ? value.trim() : null);
@@ -39,6 +41,7 @@ const toValues = (branch: BranchDetails | undefined, defaultCompanyId?: string):
         phone: branch.phone ?? undefined,
         isActive: branch.isActive,
         address: fromAddressDto(branch.address),
+        workScheduleId: branch.workScheduleId,
       }
     : { companyId: defaultCompanyId, type: BranchType.Office, isActive: true };
 
@@ -59,6 +62,9 @@ export const BranchFormDrawer = ({ branchId, open, onClose }: BranchFormDrawerPr
   const branch = useGetBranch(branchId ?? '', { query: { enabled: open && editing } });
   const create = useCreateBranch();
   const update = useUpdateBranch();
+  const [form] = Form.useForm<BranchFormValues>();
+  const companyId = Form.useWatch('companyId', form) ?? branch.data?.companyId ?? activeCompanyId;
+  const schedules = useListWorkSchedules({ companyId }, { query: { enabled: open && !!companyId } });
 
   const submit = async (values: BranchFormValues) => {
     const fields = {
@@ -67,6 +73,7 @@ export const BranchFormDrawer = ({ branchId, open, onClose }: BranchFormDrawerPr
       address: toAddressInput(values.address),
       sgkWorkplaceNumber: blank(values.sgkWorkplaceNumber),
       phone: blank(values.phone),
+      workScheduleId: values.workScheduleId ?? null,
     };
 
     if (editing && branch.data) {
@@ -97,6 +104,7 @@ export const BranchFormDrawer = ({ branchId, open, onClose }: BranchFormDrawerPr
       open={open}
       onClose={onClose}
       onSubmit={submit}
+      form={form}
       initialValues={toValues(branch.data, activeCompanyId)}
       width={640}
     >
@@ -105,7 +113,12 @@ export const BranchFormDrawer = ({ branchId, open, onClose }: BranchFormDrawerPr
       ) : (
         <>
           <Form.Item name="companyId" label={t('web.platform.branches.company')} rules={required}>
-            <Select showSearch={{ optionFilterProp: 'label' }} disabled={editing} options={companies} />
+            <Select
+              showSearch={{ optionFilterProp: 'label' }}
+              disabled={editing}
+              options={companies}
+              onChange={() => form.setFieldValue('workScheduleId', null)}
+            />
           </Form.Item>
           <Row gutter={12}>
             <Col span={8}>
@@ -143,6 +156,20 @@ export const BranchFormDrawer = ({ branchId, open, onClose }: BranchFormDrawerPr
           </Row>
           <Form.Item name="sgkWorkplaceNumber" label={t('web.platform.fields.sgk_workplace_number')}>
             <Input maxLength={40} inputMode="numeric" />
+          </Form.Item>
+          <Form.Item
+            name="workScheduleId"
+            label={t('web.platform.branches.work_schedule')}
+            extra={t('web.platform.branches.work_schedule_hint')}
+          >
+            <Select
+              allowClear
+              loading={schedules.isLoading}
+              placeholder={t('web.platform.branches.work_schedule_default')}
+              options={(schedules.data ?? [])
+                .filter((s) => s.isActive || s.id === branch.data?.workScheduleId)
+                .map((s) => ({ value: s.id, label: s.displayName }))}
+            />
           </Form.Item>
           {editing && (
             <Form.Item name="isActive" label={t('web.platform.fields.active')} valuePropName="checked">
