@@ -1,5 +1,4 @@
 import {
-  BellOutlined,
   CheckSquareOutlined,
   DesktopOutlined,
   GlobalOutlined,
@@ -10,20 +9,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Avatar,
-  Badge,
-  Button,
-  Dropdown,
-  Empty,
-  Flex,
-  Popover,
-  Segmented,
-  Select,
-  Tooltip,
-  Typography,
-  theme,
-} from 'antd';
+import { Avatar, Badge, Button, Dropdown, Flex, Segmented, Select, Tooltip, Typography, theme } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'react-oidc-context';
 import { useNavigate } from 'react-router';
@@ -91,22 +77,6 @@ export const ThemeSwitcher = () => {
         ]}
       />
     </Tooltip>
-  );
-};
-
-export const NotificationBell = () => {
-  const { t } = useTranslation();
-  return (
-    <Popover
-      trigger="click"
-      placement="bottomRight"
-      title={t('web.shell.header.notifications')}
-      content={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('web.shell.notifications.empty')} />}
-    >
-      <Badge count={0} size="small">
-        <Button type="text" shape="circle" icon={<BellOutlined />} aria-label={t('web.shell.header.notifications')} />
-      </Badge>
-    </Popover>
   );
 };
 
