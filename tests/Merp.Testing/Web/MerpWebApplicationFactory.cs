@@ -103,6 +103,7 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         builder.UseSetting("Ai:Provider", nameof(AiProvider.Anthropic));
         builder.UseSetting("Ai:Defaults:Enabled", "true");
         builder.UseSetting("Ai:Defaults:Features:0", "*");
+        builder.UseSetting("Ai:Defaults:TransferBasis", nameof(AiTransferBasis.StandardContract));
         builder.UseSetting("RateLimiting:Ai:PermitLimit", "1000");
         foreach (var (key, value) in Settings)
         {

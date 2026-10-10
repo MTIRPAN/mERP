@@ -20,7 +20,7 @@ public sealed class FakeAiModelClient : IAiModelClient
     /// <summary>Returns <paramref name="output"/> serialized the way the model would write it.</summary>
     public void Returns<T>(T output, long inputTokens = 4_000, long outputTokens = 1_500) =>
         _responses.Enqueue(_ => new AiModelResponse(
-            "claude-opus-5-5",
+            "claude-sonnet-5-5",
             AiStopReason.Completed,
             JsonSerializer.Serialize(output, AiSchema.SerializerOptions),
             inputTokens,
@@ -29,7 +29,7 @@ public sealed class FakeAiModelClient : IAiModelClient
             0));
 
     public void Stops(AiStopReason stopReason, string text = "", long inputTokens = 4_000, long outputTokens = 0) =>
-        _responses.Enqueue(_ => new AiModelResponse("claude-opus-5-5", stopReason, text, inputTokens, outputTokens, 0, 0));
+        _responses.Enqueue(_ => new AiModelResponse("claude-sonnet-5-5", stopReason, text, inputTokens, outputTokens, 0, 0));
 
     public void Fails() =>
         _responses.Enqueue(_ => throw new AiProviderException("Fake provider failure."));

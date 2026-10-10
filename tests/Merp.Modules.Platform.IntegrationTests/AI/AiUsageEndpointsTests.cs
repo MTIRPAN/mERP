@@ -56,7 +56,8 @@ public sealed class AiUsageEndpointsTests(AiUsageFactory factory) : IClassFixtur
         summary.Month.ShouldBe($"{year:D4}-{month:D2}");
         summary.ProviderConfigured.ShouldBeTrue();
         summary.Enabled.ShouldBeTrue();
-        summary.Model.ShouldBe("claude-opus-5-5");
+        summary.TransferBasis.ShouldBe("StandardContract");
+        summary.Model.ShouldBe("claude-sonnet-5-5");
         summary.MonthlyBudgetUsd.ShouldBe(25m);
         summary.CostUsd.ShouldBe(0.08m);
         summary.Requests.ShouldBe(3);
@@ -109,5 +110,5 @@ public sealed class AiUsageEndpointsTests(AiUsageFactory factory) : IClassFixtur
     private HttpClient Client(string tenant) => factory.CreateClientFor("admin-1", tenant, PlatformPermissions.AiUsage.Read);
 
     private static AiUsageEntry Entry(string feature, DateTimeOffset at, AiUsageOutcome outcome, decimal cost) =>
-        new(at, feature, "v1", "claude-opus-5-5", outcome, Guid.CreateVersion7(), 1_000, 300, 200, 50, cost, 1200, null, null, null);
+        new(at, feature, "v1", "claude-sonnet-5-5", outcome, Guid.CreateVersion7(), 1_000, 300, 200, 50, cost, 1200, null, null, null);
 }
