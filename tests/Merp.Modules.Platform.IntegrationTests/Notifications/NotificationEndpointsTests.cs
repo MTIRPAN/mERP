@@ -21,7 +21,7 @@ public sealed class NotificationEndpointsTests(NotificationFactory factory) : IC
         var subject = NewSubject();
         var email = $"{subject}@acme.test";
         var client = factory.User(subject, email);
-        await using var hub = await factory.ConnectAsync(subject);
+        await using var hub = await factory.ConnectAsync(subject, email);
         var pushed = new TaskCompletionSource<NotificationPushed>(TaskCreationOptions.RunContinuationsAsynchronously);
         hub.On<NotificationPushed>("notificationReceived", pushed.SetResult);
 

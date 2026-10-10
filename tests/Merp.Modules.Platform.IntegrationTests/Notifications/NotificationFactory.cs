@@ -77,8 +77,11 @@ public sealed class NotificationFactory(PostgresFixture postgres) : MerpWebAppli
             .ToListAsync(TestContext.Current.CancellationToken);
     }
 
-    /// <summary>The user's connection to <c>/hubs/notifications</c> (long polling through the test server).</summary>
-    public async Task<HubConnection> ConnectAsync(string subject)
+    /// <summary>
+    /// The user's connection to <c>/hubs/notifications</c> (long polling through the test server). It carries the same
+    /// token claims as <see cref="User"/>: when it is the user's first request, it creates the user.
+    /// </summary>
+    public async Task<HubConnection> ConnectAsync(string subject, string? email = null)
     {
         var connection = new HubConnectionBuilder()
             .WithUrl(new Uri(Server.BaseAddress, "hubs/notifications"), options =>
@@ -87,6 +90,10 @@ public sealed class NotificationFactory(PostgresFixture postgres) : MerpWebAppli
                 options.HttpMessageHandlerFactory = _ => Server.CreateHandler();
                 options.Headers[TestAuthHandler.SubjectHeader] = subject;
                 options.Headers[TestAuthHandler.TenantHeader] = "acme";
+                if (email is not null)
+                {
+                    options.Headers[TestAuthHandler.EmailHeader] = email;
+                }
             })
             .Build();
         await connection.StartAsync(TestContext.Current.CancellationToken);
