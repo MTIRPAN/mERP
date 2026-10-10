@@ -18,4 +18,6 @@ export const platformPermissions = {
   numberingManage: 'platform.numbering.manage',
   customFieldsRead: 'platform.custom_fields.read',
   customFieldsManage: 'platform.custom_fields.manage',
+  calendarsRead: 'platform.calendars.read',
+  calendarsManage: 'platform.calendars.manage',
 } as const;

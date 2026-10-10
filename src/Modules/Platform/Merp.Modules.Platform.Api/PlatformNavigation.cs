@@ -27,6 +27,8 @@ internal sealed class PlatformMenu : IMenuContributor
             new("localization", "web.shell.menu.localization", Path: "/system/localization", Icon: "language", Permission: PlatformPermissions.Localization.Read, Order: 40),
             new("numbering", "web.shell.menu.numbering", Path: "/system/numbering", Icon: "numbering", Permission: PlatformPermissions.Numbering.Read, Order: 50),
             new("custom-fields", "web.shell.menu.custom_fields", Path: "/system/custom-fields", Icon: "custom-fields", Permission: PlatformPermissions.CustomFields.Read, Order: 60),
+            new("holidays", "web.shell.menu.holidays", Path: "/system/holidays", Icon: "holidays", Permission: PlatformPermissions.Calendars.Read, Order: 70),
+            new("work-schedules", "web.shell.menu.work_schedules", Path: "/system/work-schedules", Icon: "work-schedules", Permission: PlatformPermissions.Calendars.Read, Order: 80),
         ]),
     ];
 }

@@ -1,8 +1,10 @@
 import {
   ApartmentOutlined,
   AppstoreOutlined,
+  CalendarOutlined,
   BankOutlined,
   FieldNumberOutlined,
+  FieldTimeOutlined,
   FormOutlined,
   HistoryOutlined,
   HomeOutlined,
@@ -39,6 +41,8 @@ const icons: Record<string, ReactNode> = {
   language: <TranslationOutlined />,
   numbering: <FieldNumberOutlined />,
   'custom-fields': <FormOutlined />,
+  holidays: <CalendarOutlined />,
+  'work-schedules': <FieldTimeOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;
