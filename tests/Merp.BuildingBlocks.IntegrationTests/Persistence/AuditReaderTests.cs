@@ -25,7 +25,8 @@ public sealed class AuditReaderTests(PostgresFixture postgres) : IAsyncLifetime
         var reader = scope.ServiceProvider.GetServices<IAuditReader>().ShouldHaveSingleItem();
 
         reader.Module.ShouldBe(WidgetDbContext.SchemaName);
-        reader.EntityTypes.ShouldBe([nameof(Widget)]);
+        // Every module has the shared stored_files table (D31)
+        reader.EntityTypes.ShouldBe(["StoredFile", nameof(Widget)], ignoreOrder: true);
     }
 
     [Fact]

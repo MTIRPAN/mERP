@@ -50,9 +50,11 @@ describe('customFetch', () => {
       }),
     );
 
-    const result = await customFetch<unknown>('/api/platform/files/1');
+    const result = await customFetch<Blob>('/api/platform/files/1');
 
-    expect(result).toBeInstanceOf(Blob);
+    // Not instanceof: under jsdom, fetch's Blob may come from Node's realm, not the window's
+    expect(typeof result).toBe('object');
+    expect(await result.text()).toBe('Ad;Şehir');
   });
 
   it('reports 401 and 403 to the application', async () => {

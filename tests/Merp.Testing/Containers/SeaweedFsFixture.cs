@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -10,7 +11,7 @@ namespace Merp.Testing.Containers;
 
 /// <summary>
 /// SeaweedFS (Apache-2.0) with its S3 gateway, the S3 compatible store of the file storage tests (D16, D31). MinIO is
-/// not used (D19). Without an identity configuration the gateway accepts any key pair.
+/// not used (D19). The gateway gets one identity with the test key pair; it refuses signed requests without one.
 /// </summary>
 public sealed class SeaweedFsFixture : IAsyncLifetime
 {
@@ -18,9 +19,15 @@ public sealed class SeaweedFsFixture : IAsyncLifetime
     public const string AccessKey = "test";
     public const string SecretKey = "test-secret";
     private const int S3Port = 8333;
+    private const string ConfigPath = "/etc/seaweedfs/s3.json";
+
+    private static readonly string IdentityConfig = $$"""
+        {"identities":[{"name":"merp","credentials":[{"accessKey":"{{AccessKey}}","secretKey":"{{SecretKey}}"}],"actions":["Admin","Read","Write","List","Tagging"]}]}
+        """;
 
     private readonly IContainer _container = new ContainerBuilder("chrislusf/seaweedfs:4.47")
-        .WithCommand("server", "-s3", $"-s3.port={S3Port}", "-dir=/data", "-volume.max=10")
+        .WithResourceMapping(Encoding.UTF8.GetBytes(IdentityConfig), ConfigPath)
+        .WithCommand("server", "-s3", $"-s3.port={S3Port}", $"-s3.config={ConfigPath}", "-dir=/data", "-volume.max=10")
         .WithPortBinding(S3Port, assignRandomHostPort: true)
         .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request
             .ForPort(S3Port)

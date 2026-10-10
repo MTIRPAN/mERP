@@ -166,15 +166,21 @@ internal sealed class GetAuditEntityTypesQueryHandler(IEnumerable<IAuditReader> 
 
 /// <summary>
 /// Labels of entity types and fields: <c>{module}.entities.{Type}</c> and <c>{module}.entities.{Type}.{Field}</c>
-/// (e.g. <c>platform.entities.Company.Address.City</c>). Without a text the technical name is shown.
+/// (e.g. <c>platform.entities.Company.Address.City</c>). Tables every module has (<c>StoredFile</c>, D31) fall back to
+/// <c>common.entities.{Type}</c>. Without a text the technical name is shown.
 /// </summary>
 internal sealed class AuditLabels(ITextLocalizer localizer)
 {
-    public string Entity(string module, string entityType) => Text($"{module}.entities.{entityType}", entityType);
+    private const string Common = "common";
+
+    public string Entity(string module, string entityType) =>
+        Text($"{module}.entities.{entityType}", Text($"{Common}.entities.{entityType}", entityType));
 
     /// <remarks>The key of an entity (<c>Id</c>) has one shared text.</remarks>
     public string Field(string module, string entityType, string field) =>
-        Text($"{module}.entities.{entityType}.{field}", string.Equals(field, "Id", StringComparison.Ordinal) ? Text(IdKey, field) : field);
+        Text(
+            $"{module}.entities.{entityType}.{field}",
+            Text($"{Common}.entities.{entityType}.{field}", string.Equals(field, "Id", StringComparison.Ordinal) ? Text(IdKey, field) : field));
 
     private const string IdKey = "platform.audit.fields.id";
 
