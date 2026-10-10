@@ -285,7 +285,7 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
 - Olaylar `CompanyCreated/Updated`, `BranchCreated/Updated` outbox ile yayınlanır.
 - Web: Organizasyon → Şirketler ve Şubeler ekranları, il/ilçe seçen ortak adres alanları.
 - Altyapı: `Merp.Application.Persistence` (sayfalama, sıralama, arama, sürüm), geçici kapsam sağlayıcıları (P2'ye kadar), owned değerlerin audit'i (D25).
-- Logo P7, çalışma takvimi P9 ile eklenir. Özel alan sütunu (`custom_fields`) hazır; tanımlar ve doğrulama P6 ile gelir.
+- Logo P7 ile eklendi (şirket kaydının alanı değil, şirketin dosyası; D31). Çalışma takvimi P9 ile eklenir. Özel alan sütunu (`custom_fields`) hazır; tanımlar ve doğrulama P6 ile gelir.
 - Yetkiler: `platform.companies.read/manage`, `platform.branches.read/manage`. Sistem rolleri P2 ile gelir; bu yetkiler Sistem Yöneticisi rolünün `platform.*` kümesine girer. Development'ta `admin` (`*`) hepsine sahiptir.
 - Kabul testleri: `CompanyEndpointsTests.Create_WithInvalidTaxNumber_Returns400WithATurkishMessage`, `CompanyEndpointsTests.UserScopedToOneCompany_SeesOnlyThatCompany_InTheListAndTheSelector`.
 
@@ -444,9 +444,18 @@ Kurallar: D12.
   - Boş bırakılırsa Türkçe hata verir.
   - Listede filtrelenebilir.
 
-### [ ] P7 Dosyalar — M
+### [x] P7 Dosyalar — M
 
-Kurallar: D16.
+Yapılanlar (D31):
+- `IFileStorage`: dosya sistemi (varsayılan) ve S3 uyumlu depo (AWSSDK.S3; testlerde SeaweedFS).
+- `stored_files` her modülün kendi şemasında (`ModuleDbContext`). Ekler ayrı bir `*_attachments` tablosu yerine bu tabloda sahip ve amaçla (`attachment`, `logo`) tutulur.
+- `IFileStore`: boyut, uzantı beyaz listesi (`Files:AllowedExtensions`), içerik denetimi (magic bytes, makrolu Office belgeleri reddedilir), SHA-256. Silinen ve sahipsiz içerik commit sonrasında ve gece işinde (`files.sweep`) temizlenir.
+- Erişim: kaydın modülü `IFileAccessPolicy` ile karar verir; dosyaların ayrı yetkisi yoktur. Kapsam dışı kayıt 404, salt okuma yetkisiyle yükleme/silme 403.
+- API: `/api/platform/attachments` (listele, yükle, sil), `/api/platform/files/{id}` (indir), `/api/platform/companies/{id}/logo`.
+- Web: `<Attachments ownerType ownerId />`; şirket formunda logo ve ekler.
+- Kabul testleri: `AttachmentEndpointsTests`, `CompanyLogoTests`, `StoredFileSweepTests`, `FileContentInspectorTests`, `S3FileStorageTests`.
+
+Kurallar: D16, D31.
 
 **Yapılacaklar:**
 - `IFileStorage` (FileSystem, S3) ve `stored_files` metadata tablosu.

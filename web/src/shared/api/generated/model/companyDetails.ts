@@ -32,4 +32,6 @@ export interface CompanyDetails {
   /** @nullable */
   modifiedAt: string | null;
   customFields: CompanyDetailsCustomFields;
+  /** @nullable */
+  logoFileId: string | null;
 }

@@ -25,6 +25,7 @@ import type {
   AddCultureCommand,
   AiUsageSummaryResponse,
   AssignRoleCommand,
+  AttachmentList,
   AuditEntityType,
   BranchDetails,
   ChangeAssignmentCommand,
@@ -46,6 +47,7 @@ import type {
   HttpValidationProblemDetails,
   ImportTextsBody,
   ImportTextsResult,
+  ListAttachmentsParams,
   ListBranchesParams,
   ListCompaniesParams,
   ListCustomFieldDefinitionsParams,
@@ -66,6 +68,7 @@ import type {
   RoleDetails,
   ScopeTypeItem,
   SearchAuditParams,
+  SetCompanyLogoBody,
   SetTextCommand,
   SetUserActiveCommand,
   SystemInfoResponse,
@@ -76,6 +79,7 @@ import type {
   UpdateMyPreferencesCommand,
   UpdateNumberSequenceCommand,
   UpdateRoleCommand,
+  UploadAttachmentBody,
   UserDetails,
 } from '../../model';
 
@@ -1112,6 +1116,418 @@ export function useListScopeTypes<TData = Awaited<ReturnType<typeof listScopeTyp
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListScopeTypesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListAttachmentsUrl = (params: ListAttachmentsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/platform/attachments?${stringifiedParams}` : `/api/platform/attachments`;
+};
+
+/**
+ * @summary Attachments of a record, newest first, and whether the caller may change them
+ */
+export const listAttachments = async (
+  params: ListAttachmentsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<AttachmentList> => {
+  return customFetch<AttachmentList>(getListAttachmentsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListAttachmentsQueryKey = (params?: ListAttachmentsParams) => {
+  return [`/api/platform/attachments`, ...(params ? [params] : [])] as const;
+};
+
+export const getListAttachmentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAttachments>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: ListAttachmentsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAttachments>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAttachmentsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listAttachments>>> = ({ signal }) =>
+    listAttachments(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAttachments>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListAttachmentsQueryResult = NonNullable<Awaited<ReturnType<typeof listAttachments>>>;
+export type ListAttachmentsQueryError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+
+export function useListAttachments<
+  TData = Awaited<ReturnType<typeof listAttachments>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: ListAttachmentsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAttachments>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAttachments>>,
+          TError,
+          Awaited<ReturnType<typeof listAttachments>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListAttachments<
+  TData = Awaited<ReturnType<typeof listAttachments>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: ListAttachmentsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAttachments>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAttachments>>,
+          TError,
+          Awaited<ReturnType<typeof listAttachments>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListAttachments<
+  TData = Awaited<ReturnType<typeof listAttachments>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: ListAttachmentsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAttachments>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Attachments of a record, newest first, and whether the caller may change them
+ */
+
+export function useListAttachments<
+  TData = Awaited<ReturnType<typeof listAttachments>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: ListAttachmentsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listAttachments>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListAttachmentsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUploadAttachmentUrl = () => {
+  return `/api/platform/attachments`;
+};
+
+/**
+ * @summary Attach a file to a record; size, extension and content are checked
+ */
+export const uploadAttachment = async (
+  uploadAttachmentBody: UploadAttachmentBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const formData = new FormData();
+  if (uploadAttachmentBody.ownerType !== undefined) {
+    formData.append(`ownerType`, uploadAttachmentBody.ownerType);
+  }
+
+  if (uploadAttachmentBody.ownerId !== undefined) {
+    formData.append(`ownerId`, uploadAttachmentBody.ownerId);
+  }
+
+  if (uploadAttachmentBody.file !== undefined) {
+    formData.append(`file`, uploadAttachmentBody.file);
+  }
+
+  return customFetch<EntityCreatedResponse>(getUploadAttachmentUrl(), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getUploadAttachmentMutationKey = () => ['uploadAttachment'] as const;
+
+export const getUploadAttachmentMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadAttachment>>,
+    TError,
+    UploadAttachmentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadAttachment>>,
+  TError,
+  UploadAttachmentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUploadAttachmentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadAttachment>>,
+    UploadAttachmentMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return uploadAttachment(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadAttachmentMutationResult = NonNullable<Awaited<ReturnType<typeof uploadAttachment>>>;
+export type UploadAttachmentMutationBody = UploadAttachmentBody;
+export type UploadAttachmentMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UploadAttachmentMutationVariables = { data: UploadAttachmentBody };
+
+/**
+ * @summary Attach a file to a record; size, extension and content are checked
+ */
+export const useUploadAttachment = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof uploadAttachment>>,
+      TError,
+      UploadAttachmentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof uploadAttachment>>,
+  TError,
+  UploadAttachmentMutationVariables,
+  TContext
+> => {
+  return useMutation(getUploadAttachmentMutationOptions(options), queryClient);
+};
+export const getDeleteAttachmentUrl = (id: string) => {
+  return `/api/platform/attachments/${id}`;
+};
+
+/**
+ * @summary Delete an attachment
+ */
+export const deleteAttachment = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getDeleteAttachmentUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getDeleteAttachmentMutationKey = () => ['deleteAttachment'] as const;
+
+export const getDeleteAttachmentMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteAttachment>>,
+    TError,
+    DeleteAttachmentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteAttachment>>,
+  TError,
+  DeleteAttachmentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteAttachmentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteAttachment>>,
+    DeleteAttachmentMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteAttachment(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteAttachmentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAttachment>>>;
+
+export type DeleteAttachmentMutationError = ErrorType<ProblemDetails>;
+export type DeleteAttachmentMutationVariables = { id: string };
+
+/**
+ * @summary Delete an attachment
+ */
+export const useDeleteAttachment = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteAttachment>>,
+      TError,
+      DeleteAttachmentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteAttachment>>,
+  TError,
+  DeleteAttachmentMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteAttachmentMutationOptions(options), queryClient);
+};
+export const getDownloadFileUrl = (id: string) => {
+  return `/api/platform/files/${id}`;
+};
+
+/**
+ * @summary Content of a file (attachment or logo); 404 unless the caller sees its record
+ */
+export const downloadFile = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getDownloadFileUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getDownloadFileQueryKey = (id: string) => {
+  return [`/api/platform/files/${id}`] as const;
+};
+
+export const getDownloadFileQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getDownloadFileQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadFile>>> = ({ signal }) =>
+    downloadFile(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof downloadFile>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type DownloadFileQueryResult = NonNullable<Awaited<ReturnType<typeof downloadFile>>>;
+export type DownloadFileQueryError = ErrorType<ProblemDetails>;
+
+export function useDownloadFile<TData = Awaited<ReturnType<typeof downloadFile>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadFile>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadFile>>,
+          TError,
+          Awaited<ReturnType<typeof downloadFile>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadFile<TData = Awaited<ReturnType<typeof downloadFile>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadFile>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadFile>>,
+          TError,
+          Awaited<ReturnType<typeof downloadFile>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadFile<TData = Awaited<ReturnType<typeof downloadFile>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Content of a file (attachment or logo); 404 unless the caller sees its record
+ */
+
+export function useDownloadFile<TData = Awaited<ReturnType<typeof downloadFile>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getDownloadFileQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -2270,6 +2686,170 @@ export const useUpdateCompany = <TError = ErrorType<HttpValidationProblemDetails
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof updateCompany>>, TError, UpdateCompanyMutationVariables, TContext> => {
   return useMutation(getUpdateCompanyMutationOptions(options), queryClient);
+};
+export const getSetCompanyLogoUrl = (id: string) => {
+  return `/api/platform/companies/${id}/logo`;
+};
+
+/**
+ * Requires permission: platform.companies.manage.
+ * @summary Set or replace the logo: PNG, JPEG or WebP, at most 1 MB; download it from /api/platform/files/{logoFileId}
+ */
+export const setCompanyLogo = async (
+  id: string,
+  setCompanyLogoBody: SetCompanyLogoBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const formData = new FormData();
+  if (setCompanyLogoBody.file !== undefined) {
+    formData.append(`file`, setCompanyLogoBody.file);
+  }
+
+  return customFetch<EntityCreatedResponse>(getSetCompanyLogoUrl(id), {
+    ...options,
+    method: 'PUT',
+    body: formData,
+  });
+};
+
+export const getSetCompanyLogoMutationKey = () => ['setCompanyLogo'] as const;
+
+export const getSetCompanyLogoMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setCompanyLogo>>,
+    TError,
+    SetCompanyLogoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setCompanyLogo>>,
+  TError,
+  SetCompanyLogoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSetCompanyLogoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof setCompanyLogo>>, SetCompanyLogoMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return setCompanyLogo(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetCompanyLogoMutationResult = NonNullable<Awaited<ReturnType<typeof setCompanyLogo>>>;
+export type SetCompanyLogoMutationBody = SetCompanyLogoBody;
+export type SetCompanyLogoMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SetCompanyLogoMutationVariables = { id: string; data: SetCompanyLogoBody };
+
+/**
+ * @summary Set or replace the logo: PNG, JPEG or WebP, at most 1 MB; download it from /api/platform/files/{logoFileId}
+ */
+export const useSetCompanyLogo = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setCompanyLogo>>,
+      TError,
+      SetCompanyLogoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof setCompanyLogo>>, TError, SetCompanyLogoMutationVariables, TContext> => {
+  return useMutation(getSetCompanyLogoMutationOptions(options), queryClient);
+};
+export const getRemoveCompanyLogoUrl = (id: string) => {
+  return `/api/platform/companies/${id}/logo`;
+};
+
+/**
+ * Requires permission: platform.companies.manage.
+ * @summary Remove the logo
+ */
+export const removeCompanyLogo = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getRemoveCompanyLogoUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveCompanyLogoMutationKey = () => ['removeCompanyLogo'] as const;
+
+export const getRemoveCompanyLogoMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeCompanyLogo>>,
+    TError,
+    RemoveCompanyLogoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeCompanyLogo>>,
+  TError,
+  RemoveCompanyLogoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoveCompanyLogoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeCompanyLogo>>,
+    RemoveCompanyLogoMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return removeCompanyLogo(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveCompanyLogoMutationResult = NonNullable<Awaited<ReturnType<typeof removeCompanyLogo>>>;
+
+export type RemoveCompanyLogoMutationError = ErrorType<ProblemDetails>;
+export type RemoveCompanyLogoMutationVariables = { id: string };
+
+/**
+ * @summary Remove the logo
+ */
+export const useRemoveCompanyLogo = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeCompanyLogo>>,
+      TError,
+      RemoveCompanyLogoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeCompanyLogo>>,
+  TError,
+  RemoveCompanyLogoMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoveCompanyLogoMutationOptions(options), queryClient);
 };
 export const getListBranchesUrl = (params?: ListBranchesParams) => {
   const normalizedParams = new URLSearchParams();

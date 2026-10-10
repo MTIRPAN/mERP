@@ -11,6 +11,15 @@
           "Microsoft.Extensions.AI.Abstractions": "10.5.1"
         }
       },
+      "AWSSDK.S3": {
+        "type": "Direct",
+        "requested": "[4.0.103, )",
+        "resolved": "4.0.103",
+        "contentHash": "EdAz6+CfwELKXJF0KlUvLFORX5j0zTxadkSBfLMbTzYwhxvn3u7Fg6cZyQqixqqjMQE94H7gQP0kd1KXe9kfpw==",
+        "dependencies": {
+          "AWSSDK.Core": "[4.0.102.3, 5.0.0)"
+        }
+      },
       "ClosedXML": {
         "type": "Direct",
         "requested": "[0.105.1, )",
@@ -119,6 +128,11 @@
         "dependencies": {
           "Microsoft.Extensions.DependencyModel": "10.0.0"
         }
+      },
+      "AWSSDK.Core": {
+        "type": "Transitive",
+        "resolved": "4.0.102.3",
+        "contentHash": "hGysXQOtru5CQmROaDLQURs5HK3W385ClLodTKZcLnd6o64YDOwvBaQrjYlfU9BEVLv7sdDR/ZRaATjpdBJ5Xw=="
       },
       "ClosedXML.Parser": {
         "type": "Transitive",

@@ -1,3 +1,4 @@
+using Merp.Application.Persistence.Files;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.CustomFields;
@@ -36,6 +37,9 @@ public interface IPlatformDbContext
     DbSet<NumberSequence> NumberSequences { get; }
 
     DbSet<CustomFieldDefinition> CustomFieldDefinitions { get; }
+
+    /// <summary>Files of Platform records: company logos and attachments (D31).</summary>
+    DbSet<StoredFile> StoredFiles { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

@@ -35,6 +35,9 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
     /// </summary>
     public FakeAiModelClient Ai { get; } = new();
 
+    /// <summary>Folder of the file storage (D31); a fresh one per host.</summary>
+    public string FilesRoot { get; } = Path.Combine(Path.GetTempPath(), "merp-tests", Guid.NewGuid().ToString("N"));
+
     /// <summary>Replace the system clock with <see cref="Time"/>.</summary>
     protected virtual bool UseFakeTime => false;
 
@@ -96,6 +99,7 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         builder.UseSetting("Jobs:EnableServer", "false");
         builder.UseSetting("Messaging:EnableBackgroundProcessing", "false");
         builder.UseSetting("ApiDocs:Enabled", "true");
+        builder.UseSetting("Files:FileSystem:RootPath", FilesRoot);
         builder.UseSetting("Ai:Provider", nameof(AiProvider.Anthropic));
         builder.UseSetting("Ai:Defaults:Enabled", "true");
         builder.UseSetting("Ai:Defaults:Features:0", "*");
@@ -136,6 +140,11 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
+        if (Directory.Exists(FilesRoot))
+        {
+            Directory.Delete(FilesRoot, recursive: true);
+        }
+
         GC.SuppressFinalize(this);
     }
 }

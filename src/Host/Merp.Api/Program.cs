@@ -3,6 +3,7 @@ using Merp.Infrastructure;
 using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Caching;
 using Merp.Infrastructure.Documents;
+using Merp.Infrastructure.Files;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
@@ -22,6 +23,7 @@ builder.Services.AddMerpCaching(builder.Configuration);
 builder.Services.AddMerpMessaging(builder.Configuration);
 builder.Services.AddMerpAi(builder.Configuration);
 builder.Services.AddMerpDocuments();
+builder.Services.AddMerpFiles(builder.Configuration);
 builder.AddMerpWebHost();
 
 builder.Services.Configure<PersistenceOptions>(options =>

@@ -49,7 +49,10 @@ public sealed record GetCompanyQuery(Guid Id) : IQuery<CompanyDetails>, IRequire
     public string Permission => PlatformPermissions.Companies.Read;
 }
 
-/// <remarks>Send Version back when updating (optimistic concurrency).</remarks>
+/// <remarks>
+/// Send Version back when updating (optimistic concurrency). LogoFileId is the current logo, downloaded from
+/// <c>/api/platform/files/{id}</c>.
+/// </remarks>
 public sealed record CompanyDetails(
     Guid Id,
     string Code,
@@ -68,7 +71,8 @@ public sealed record CompanyDetails(
     uint Version,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ModifiedAt,
-    IReadOnlyDictionary<string, JsonElement> CustomFields);
+    IReadOnlyDictionary<string, JsonElement> CustomFields,
+    Guid? LogoFileId);
 
 /// <summary>
 /// Active companies the caller can work in, for the company selector (D4): the union of the scopes of the given
@@ -143,6 +147,10 @@ internal sealed class GetCompanyQueryHandler(IPlatformDbContext db, IAccessScope
         }
 
         var c = company.Company;
+        var logoFileId = await CompanyLogo.Files(db, request.Id)
+            .OrderByDescending(f => f.CreatedAt)
+            .Select(f => (Guid?)f.Id)
+            .FirstOrDefaultAsync(cancellationToken);
         return new CompanyDetails(
             c.Id.Value,
             c.Code,
@@ -161,7 +169,8 @@ internal sealed class GetCompanyQueryHandler(IPlatformDbContext db, IAccessScope
             company.Version,
             c.CreatedAt,
             c.ModifiedAt,
-            c.CustomFields.Values);
+            c.CustomFields.Values,
+            logoFileId);
     }
 }
 

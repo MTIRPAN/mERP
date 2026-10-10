@@ -41,6 +41,7 @@ public static class JobsHostingExtensions
         if (configuration.GetValue("Jobs:EnableServer", true))
         {
             services.AddHangfireServer(options => options.ServerName = $"merp-{Environment.MachineName}");
+            services.AddHostedService<RecurringJobRegistrar>();
         }
 
         // A short-lived cookie lets the browser open the dashboard, which cannot send bearer tokens.

@@ -3,10 +3,12 @@ using Merp.Application.Abstractions.Paging;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Companies;
 using Merp.Web.Errors;
+using Merp.Web.Files;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 namespace Merp.Modules.Platform.Api.Endpoints;
@@ -43,6 +45,22 @@ internal static class CompanyEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        companies.MapPut("/{id:guid}/logo", SetLogoAsync)
+            .RequirePermission(PlatformPermissions.Companies.Manage)
+            .WithMetadata(new RequestSizeLimitAttribute(FileTransfer.RequestLimit(SetCompanyLogoCommand.MaxBytes)))
+            // Authentication is a bearer token, never a cookie, so cross-site request forgery does not apply.
+            .DisableAntiforgery()
+            .WithName("SetCompanyLogo")
+            .WithSummary("Set or replace the logo: PNG, JPEG or WebP, at most 1 MB; download it from /api/platform/files/{logoFileId}")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        companies.MapDelete("/{id:guid}/logo", RemoveLogoAsync)
+            .RequirePermission(PlatformPermissions.Companies.Manage)
+            .WithName("RemoveCompanyLogo")
+            .WithSummary("Remove the logo")
+            .ProducesProblem(StatusCodes.Status404NotFound);
     }
 
     /// <param name="page">1-based page number.</param>
@@ -91,6 +109,26 @@ internal static class CompanyEndpoints
         CancellationToken cancellationToken)
     {
         var result = await sender.Send(command with { Id = id }, cancellationToken);
+        return result.IsSuccess ? TypedResults.NoContent() : (ProblemHttpResult)result.Error.ToProblem();
+    }
+
+    /// <param name="id">The company.</param>
+    /// <param name="file">The logo.</param>
+    /// <param name="sender">Mediator.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    private static async Task<Results<Ok<EntityCreatedResponse>, ProblemHttpResult>> SetLogoAsync(
+        Guid id,
+        IFormFile? file,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new SetCompanyLogoCommand(id, file.ToUpload()), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(new EntityCreatedResponse(result.Value)) : (ProblemHttpResult)result.Error.ToProblem();
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> RemoveLogoAsync(Guid id, ISender sender, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new RemoveCompanyLogoCommand(id), cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : (ProblemHttpResult)result.Error.ToProblem();
     }
 }

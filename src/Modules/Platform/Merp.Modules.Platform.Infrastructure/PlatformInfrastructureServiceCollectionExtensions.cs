@@ -1,4 +1,5 @@
 using Merp.Application.Abstractions.CustomFields;
+using Merp.Application.Abstractions.Files;
 using Merp.Application.Abstractions.Localization;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
@@ -9,6 +10,7 @@ using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Platform.Application.CustomFields;
+using Merp.Modules.Platform.Application.Files;
 using Merp.Modules.Platform.Application.Localization;
 using Merp.Modules.Platform.Application.Numbering;
 using Merp.Modules.Platform.Application.Organization;
@@ -65,6 +67,9 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddSingleton<ICustomFieldEntityProvider, PlatformCustomFieldEntities>();
         services.AddScoped<ICustomFieldValidator, PlatformCustomFieldValidator>();
         services.AddScoped<ICustomFieldCache, CustomFieldCache>();
+
+        // Files of Platform records follow the records' permissions (D31)
+        services.AddScoped<IFileAccessPolicy, CompanyFileAccessPolicy>();
 
         var keycloak = services.AddOptions<KeycloakAdminOptions>();
         if (configuration is not null)
