@@ -19,6 +19,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LastName).HasMaxLength(User.NameMaxLength);
         builder.Property(u => u.Culture).HasMaxLength(20);
         builder.Ignore(u => u.DisplayName);
+        builder.Property(u => u.NotificationPreferences).HasJson();
         builder.HasMany(u => u.Assignments).WithOne().HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(u => u.Assignments).UsePropertyAccessMode(PropertyAccessMode.Field);
 

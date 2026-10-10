@@ -17,7 +17,8 @@ namespace Merp.Infrastructure.Messaging.Integration;
 /// <summary>
 /// Runs integration event handlers for pending inbox rows of one module and tenant. Each message is handled in the
 /// module's unit of work together with marking the row processed, so a handler's changes and its inbox entry
-/// commit or roll back together (D8).
+/// commit or roll back together (D8). Work the handler queued with <see cref="Application.Abstractions.Messaging.IAfterCommit"/>
+/// runs after the commit, as it does for commands.
 /// </summary>
 public sealed partial class InboxProcessor(
     TenantScopeFactory scopeFactory,
@@ -53,10 +54,12 @@ public sealed partial class InboxProcessor(
         var db = (ModuleDbContext)services.GetRequiredService(module.DbContextType);
         var unitOfWork = (IUnitOfWork)services.GetRequiredService(module.UnitOfWorkType);
         var accessor = services.GetRequiredService<UnitOfWorkAccessor>();
+        var afterCommit = services.GetRequiredService<AfterCommitQueue>();
 
         await unitOfWork.BeginAsync(cancellationToken);
         accessor.Push(unitOfWork);
         Persistence.Inbox.InboxMessage? message = null;
+        var committed = false;
         try
         {
             var now = timeProvider.GetUtcNow();
@@ -81,22 +84,43 @@ public sealed partial class InboxProcessor(
             }
 
             MessagingTelemetry.InboxProcessed.Add(1);
+            committed = true;
             return true;
         }
         catch (Exception exception) when (exception is not OperationCanceledException && message is not null)
         {
+            afterCommit.Clear();
             await unitOfWork.RollbackAsync(CancellationToken.None);
             await RecordFailureAsync(db, module, message, exception, tenant.Code);
             return true;
         }
         catch
         {
+            afterCommit.Clear();
             await unitOfWork.RollbackAsync(CancellationToken.None);
             throw;
         }
         finally
         {
             accessor.Pop(unitOfWork);
+            // Outside the finished unit of work, so commands sent from here open their own (as after a command)
+            if (committed)
+            {
+                await RunAfterCommitAsync(afterCommit, message!, tenant.Code, cancellationToken);
+            }
+        }
+    }
+
+    /// <summary>The message is processed; a failure here is logged, never retried (the handler's work is committed).</summary>
+    private async Task RunAfterCommitAsync(AfterCommitQueue afterCommit, Persistence.Inbox.InboxMessage message, string tenantCode, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await afterCommit.RunAsync(cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogAfterCommitFailed(logger, exception, message.MessageId, message.Handler, tenantCode);
         }
     }
 
@@ -156,6 +180,9 @@ public sealed partial class InboxProcessor(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Handler {Handler} failed for message {MessageId} of tenant {TenantCode}, attempt {Attempt}")]
     private static partial void LogRetry(ILogger logger, Exception exception, Guid messageId, string handler, string tenantCode, int attempt);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "After-commit work of handler {Handler} failed for message {MessageId} of tenant {TenantCode}")]
+    private static partial void LogAfterCommitFailed(ILogger logger, Exception exception, Guid messageId, string handler, string tenantCode);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Message {MessageId} for handler {Handler} of tenant {TenantCode} was dead-lettered")]
     private static partial void LogDeadLettered(ILogger logger, Exception exception, Guid messageId, string handler, string tenantCode);

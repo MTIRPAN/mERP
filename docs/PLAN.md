@@ -471,7 +471,17 @@ Kurallar: D16, D31.
 - İzinsiz uzantı ve uzantısıyla uyuşmayan içerik reddedilir.
 - Yetkisiz kullanıcı dosyayı indiremez (404).
 
-### [ ] P8 Bildirimler — M
+### [ ] P8 Bildirimler — M (2 PR: P8a backend, P8b web)
+
+- [x] **P8a — backend (D32):**
+  - `NotificationRequested` (Platform.Contracts) ve modüllerin tür kaydı (`INotificationTypeProvider`).
+  - Zil kayıtları (`notifications`), SignalR ile anında iletim, e-posta kuyruğu (`email_messages`): MailKit, commit sonrası gönderim, `notifications.email` işiyle yeniden deneme.
+  - Fluid şablonları (tür × şirket × kültür), yönetim API'si ve `platform.notification_templates.read/manage`.
+  - Kullanıcı tercihleri (tür × kanal), okundu işaretleme, test bildirimi.
+  - Inbox işleyicileri de commit sonrası işleri (`IAfterCommit`) çalıştırır.
+  - Kabul testleri: `NotificationEndpointsTests.Notification_ArrivesAtOnce_InTheBell_AndByEmail` (SignalR + Mailpit), `NotificationEndpointsTests.UserWhoSwitchedEmailOff_GetsOnlyTheInAppNotification`.
+- [ ] **P8b — web:** zil, açılır liste, bildirimler sayfası, tercihler ve SignalR istemcisi.
+
 
 **Yapılacaklar:**
 - `notifications` tablosu: alıcı, tür, başlık anahtarı ve argümanları, gövde, bağlantı, okunma zamanı.

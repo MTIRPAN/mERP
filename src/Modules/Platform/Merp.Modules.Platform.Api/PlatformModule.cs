@@ -34,5 +34,6 @@ public sealed class PlatformModule : IModule
         group.MapNumberingEndpoints();
         group.MapCustomFieldEndpoints();
         group.MapFileEndpoints();
+        group.MapNotificationEndpoints();
     }
 }

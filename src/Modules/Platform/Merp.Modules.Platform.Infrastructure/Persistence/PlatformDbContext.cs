@@ -4,6 +4,7 @@ using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.CustomFields;
 using Merp.Modules.Platform.Domain.Localization;
+using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Numbering;
 using Merp.Modules.Platform.Domain.Locations;
 using Merp.Modules.Platform.Domain.Roles;
@@ -24,6 +25,7 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
 
         // Options are stored as jsonb by a value converter, not as entities
         modelBuilder.Ignore<CustomFieldOption>();
+        modelBuilder.Ignore<NotificationPreference>();
         base.OnModelCreating(modelBuilder);
     }
 
@@ -46,4 +48,10 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
 
     public DbSet<CustomFieldDefinition> CustomFieldDefinitions => Set<CustomFieldDefinition>();
+
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
+
+    public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
 }

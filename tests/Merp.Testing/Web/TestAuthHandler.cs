@@ -17,6 +17,9 @@ public sealed class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions>
     public const string SubjectHeader = "X-Test-Sub";
     public const string TenantHeader = "X-Test-Tenant";
 
+    /// <summary>Optional e-mail address of the user, as Keycloak puts it in the token (notifications, PLAN P8).</summary>
+    public const string EmailHeader = "X-Test-Email";
+
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue(SubjectHeader, out var subject) || string.IsNullOrWhiteSpace(subject))
@@ -28,6 +31,11 @@ public sealed class TestAuthHandler(IOptionsMonitor<AuthenticationSchemeOptions>
         if (Request.Headers.TryGetValue(TenantHeader, out var tenant) && !string.IsNullOrWhiteSpace(tenant))
         {
             claims.Add(new Claim("tenant", tenant.ToString()));
+        }
+
+        if (Request.Headers.TryGetValue(EmailHeader, out var email) && !string.IsNullOrWhiteSpace(email))
+        {
+            claims.Add(new Claim("email", email.ToString()));
         }
 
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, SchemeName));

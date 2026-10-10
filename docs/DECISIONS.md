@@ -244,7 +244,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
 | Dosya depolama (D16, D31) | AWSSDK.S3 (S3 uyumlu depolar için; testlerde SeaweedFS konteyneri) | Apache-2.0 |
 | Yapay zeka (D24) | Anthropic (resmi C# SDK; bağımlılıkları Microsoft.Extensions.AI.Abstractions, System.Net.ServerSentEvents) | MIT |
 | Health check | AspNetCore.HealthChecks.* | Apache-2.0 |
-| Test | xunit.v3, Shouldly, NSubstitute, Testcontainers, Respawn, Bogus, NetArchTest.Rules, coverlet | Apache-2.0 / BSD / MIT |
+| Test | xunit.v3, Shouldly, Microsoft.AspNetCore.SignalR.Client, NSubstitute, Testcontainers, Respawn, Bogus, NetArchTest.Rules, coverlet | Apache-2.0 / BSD / MIT |
 
 ### Altyapı (docker-compose)
 
@@ -303,6 +303,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/api/platform/me/preferences` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi tercihleri (dil); hiç rolü olmayan kullanıcı da değiştirebilmeli (P2). |
 | `/api/platform/custom-fields/form` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Bir formun göstereceği özel alan tanımları (etiket, tip, seçenek). Hassas değil; özel alanı olan her formda gerekir (P6, D30). |
 | `/api/platform/attachments`, `/api/platform/attachments/{id}`, `/api/platform/files/{id}` | Oturum zorunlu; yetkiyi dosyanın sahibi olan kaydın `IFileAccessPolicy`'si verir | Dosyaların kendi yetkisi yoktur, ait oldukları kaydın yetkisi ve veri kapsamı geçerlidir (şirket için `platform.companies.read/manage`). Kaydı göremeyen 404, salt okuyabilen yükleme ve silmede 403 alır (P7, D31). |
+| `/api/platform/notifications`, `/api/platform/notifications/unread-count`, `/api/platform/notifications/{id}/read`, `/api/platform/notifications/read-all`, `/api/platform/notifications/preferences`, `/api/platform/notifications/test` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi bildirimleri ve tercihleri; başka kullanıcının bildirimi 404 (P8, D32). |
 
 **Karar — Hangfire paneli (kullanıcı, 2026-10-05):** Panel, şirketlerdeki yaygın uygulamaya uygun olarak sadece bilgi işlem / sistem yöneticilerine açıktır.
 - `platform.jobs.view` yetkisi sadece "Sistem Yöneticisi" sistem rolüne seed edilir (P2). İK ve diğer iş kullanıcıları paneli görmez.
@@ -555,3 +556,44 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Tekrarlanan işler `RecurringJobDefinition` ile kaydedilir. İş sunucusu açık olan host (`Jobs:EnableServer`) bunları açılışta Hangfire'a yazar.
 
 **Web:** `<Attachments ownerType ownerId />` (`shared/files`) sürükle-bırak, liste, indirme ve silme sunar. Liste yanıtı kabul edilen uzantıları ve boyut sınırını da döndürür. Başka bir modül ek kullanmaya başladığında, uç noktalarını bu bileşenin modül listesine ekler. İlk kullanan: şirket formu (logo ve ekler).
+
+## D32 — Bildirimlerin uygulanması (öneri — onay bekliyor)
+
+**Durum:** Öneri. PLAN P8a ile uygulandı; P8 incelemesinde kullanıcı onayına sunuldu.
+
+**Akış:**
+- Bildirim isteyen modül `NotificationRequested` olayını (Platform.Contracts) kendi outbox'ıyla yayınlar. Olay türü, alıcı kullanıcılar, argümanlar ve uygulama içi bir bağlantı taşır; `CompanyId` e-posta şablonunu seçer.
+- Platform olayı inbox'tan işler. Her etkin alıcı için tercihler izin veriyorsa zile bir bildirim ve kuyruğa bir e-posta yazar.
+- Commit'ten sonra kullanıcının açık sekmelerine SignalR ile `notificationReceived` gönderilir ve e-postalar hemen gönderilir.
+- Inbox işleyicileri de komutlar gibi `IAfterCommit` kuyruğunu kullanır: işler commit'ten sonra ve transaction dışında çalışır; hataları yalnızca loglanır.
+
+**Bildirim türleri:**
+- Modüller türlerini `INotificationTypeProvider` ile bildirir (yetkiler gibi): kod `{modül}.{ad}`, varsayılan kanallar ve kullanıcının kapatıp kapatamayacağı (`Mandatory`).
+- Metinler modülün yerelleştirme anahtarlarıdır: `{modül}.notifications.{ad}.title`, `.body` (isteğe bağlı) ve tercih listesindeki ad `.label`. Bildirim metin değil tür ve argüman saklar; başlık ve gövde okunurken okuyanın dilinde üretilir.
+
+**Kayıtlar aggregate değildir:** `notifications` ve `email_messages`, outbox ve audit kayıtları gibi teslim kayıtlarıdır. Böylece bir olay birçok alıcıya tek transaction'da yazılabilir; kural 7 aggregate'leri sayar ve bunları saymaz.
+
+**Bağlantılar:** Yalnızca uygulama içi yollar kabul edilir (`/` ile başlar, `//` ve `\` içermez). Bildirim kullanıcıyı başka bir siteye götüremez. E-postada bağlantının önüne `Notifications:WebBaseUrl` eklenir.
+
+**Tercihler:**
+- Kullanıcı her tür için uygulama içi ve e-posta kanallarını açar veya kapatır.
+- Yalnızca varsayılandan farklı seçimler saklanır (`users.notification_preferences`, jsonb). Böylece varsayılan sonradan değişirse seçim yapmamış kullanıcılara uygulanır.
+- `Mandatory` türlerde seçim dikkate alınmaz.
+
+**E-posta:**
+- MailKit ile SMTP üzerinden gönderilir (`Email` bölümü; geliştirmede Mailpit).
+- Kuyruk `email_messages` tablosudur. Gönderilemeyen ileti 1, 2, 4… dakika (en fazla 1 saat) sonra yeniden denenir; 8 denemeden sonra `Failed` olur. Yeniden denemeyi her dakika çalışan `notifications.email` işi yapar.
+- Konu tek satırdır; şablon başlık ekleyemez.
+
+**Şablonlar:**
+- Liquid (Fluid) kullanılır. Modelde yalnızca değerler, sözlükler ve listeler vardır; şablondan hiçbir .NET üyesine erişilemez. HTML'de değerler kodlanır, Türkçe harfler korunur.
+- Şablon tür veya tüm türler × şirket veya tüm şirketler × kültür için tanımlanır (`notification_templates`, null değerler dahil tekil).
+- Seçim sırası: önce alıcının kültürü (okuyabilmesi için), sonra türün kendi şablonu, sonra şirketinki. Hiçbiri yoksa yerleşik düzen kullanılır.
+- Kaydedilen şablon ayrıştırılır; hata satır numarasıyla döner. Çalışma anında yine de hata çıkarsa ileti yerleşik düzenle gider.
+- Yönetim API'si `platform.notification_templates.read/manage` yetkisi ister ve yalnızca Tenant kapsamıyla geçerlidir. Düzenleme ekranı P12'deki şablon editörüyle gelir.
+
+**Anlık kanal:**
+- SignalR kullanıcıyı `{tenant}:{sub}` ile tanır (`IUserIdProvider`).
+- Tek API örneği varsayılır. Birden çok örnekte Valkey backplane'i (`Microsoft.AspNetCore.SignalR.StackExchangeRedis`, MIT) eklenmelidir (X5).
+
+**Uç noktalar:** Kullanıcının kendi bildirimleri ve tercihleri yalnızca oturum ister (D22). `POST /api/platform/notifications/test` kullanıcıya kendi kanallarından bir test bildirimi gönderir (`platform.test`).

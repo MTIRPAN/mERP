@@ -55,6 +55,7 @@
   "common.files.errors.too_large": "Dosya en fazla {maxMegabytes} MB olabilir.",
   "common.files.errors.extension_not_allowed": "Bu dosya türü yüklenemez. İzin verilen türler: {extensions}.",
   "common.files.errors.content_mismatch": "Dosyanın içeriği uzantısıyla uyuşmuyor. Dosya bozuk olabilir ya da uzantısı değiştirilmiş olabilir.",
+  "common.templates.errors.invalid": "Şablon {line}. satırda hatalı: {message}",
   "common.entities.StoredFile": "Dosya",
   "common.entities.StoredFile.OwnerType": "Kayıt türü",
   "common.entities.StoredFile.OwnerId": "Kayıt",

@@ -7,6 +7,11 @@
         "resolved": "4.0.102.3",
         "contentHash": "hGysXQOtru5CQmROaDLQURs5HK3W385ClLodTKZcLnd6o64YDOwvBaQrjYlfU9BEVLv7sdDR/ZRaATjpdBJ5Xw=="
       },
+      "BouncyCastle.Cryptography": {
+        "type": "Transitive",
+        "resolved": "2.7.0",
+        "contentHash": "U+12df8UEWHgBi04YVf/Lgi2dy3SItlIYvHjjEVa/BngCQIzDCDRBk50DDByCfDvSbe5pRNFr3b7UrVK2kMcLw=="
+      },
       "ClosedXML.Parser": {
         "type": "Transitive",
         "resolved": "2.0.0",
@@ -146,6 +151,15 @@
         "resolved": "2.12.0",
         "contentHash": "0xB/be+f6qYOhvQPUrVsLrau+fkowYv6gt9RIkajMhwT7sZnqtcA797yW3bS5kgSje+AQW4xZgyLnW641YFioQ=="
       },
+      "MimeKit": {
+        "type": "Transitive",
+        "resolved": "4.18.0",
+        "contentHash": "foq2guy0YL0l0WuHrW4CuYicooXDpXlTOG1kuzlw9VcWfZpaf6zu3nX2kV3n6VKTrMy24vQJgE2TepszntVd3A==",
+        "dependencies": {
+          "BouncyCastle.Cryptography": "2.7.0",
+          "System.Security.Cryptography.Pkcs": "10.0.0"
+        }
+      },
       "Npgsql": {
         "type": "Transitive",
         "resolved": "10.0.3",
@@ -171,6 +185,11 @@
         "dependencies": {
           "OpenTelemetry.Api": "1.19.1"
         }
+      },
+      "Parlot": {
+        "type": "Transitive",
+        "resolved": "1.5.2",
+        "contentHash": "idEOR6WU8WvnaDhFcj9PkWv8r/Actca8KfV9kw94//QEC0iQJVB9w/Z4ZLY8LxwSVMuNPuuLB649kCcVb+HrLw=="
       },
       "Pipelines.Sockets.Unofficial": {
         "type": "Transitive",
@@ -272,6 +291,16 @@
         "resolved": "10.0.2",
         "contentHash": "JTpM4z0wpoIHHDvlCU27HsXo+zVnpWib94HXQpzzr+jc/P9NYf4w353AK4MXyGq/grm1mbLi7eXsOsDU8sGmNg=="
       },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "Transitive",
+        "resolved": "10.0.0",
+        "contentHash": "UPWqLSygJlFerRi9XNIuM0a1VC8gHUIufyP24xQ0sc+XimqUAEcjpOz9DhKpyDjH+5B/wO3RpC0KpkEeDj/ddg=="
+      },
+      "TimeZoneConverter": {
+        "type": "Transitive",
+        "resolved": "7.2.0",
+        "contentHash": "4Poqu79dTmacVETqUJ53g3x4U21V/cmWPSlehdsVE4Q00akavvlRq+SRjcg/CmfO9ibOCjRl6TeUV7hkC5RC4w=="
+      },
       "merp.application.abstractions": {
         "type": "Project",
         "dependencies": {
@@ -294,8 +323,10 @@
           "ClosedXML": "[0.105.1, )",
           "DocumentFormat.OpenXml": "[3.5.1, )",
           "EFCore.NamingConventions": "[10.0.1, )",
+          "Fluid.Core": "[2.40.0, )",
           "Hangfire.Core": "[1.8.25, )",
           "Hangfire.PostgreSql": "[1.21.1, )",
+          "MailKit": "[4.18.0, )",
           "Merp.Application.Persistence": "[1.0.0, )",
           "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.12, )",
           "Microsoft.Extensions.Caching.Hybrid": "[10.10.0, )",
@@ -447,6 +478,16 @@
         "resolved": "12.1.1",
         "contentHash": "EPpkIe1yh1a0OXyC100oOA8WMbZvqUu5plwhvYcb7oSELfyUZzfxV48BLhvs3kKo4NwG7MGLNgy1RJiYtT8Dpw=="
       },
+      "Fluid.Core": {
+        "type": "CentralTransitive",
+        "requested": "[2.40.0, )",
+        "resolved": "2.40.0",
+        "contentHash": "bBI5NejSVAU4Ug1eSodIZXUfjtOWpSUC5pXxMW1jfdKZn3LgLZuVtBDpidl7odaVQL4oGE9nili+JFfs5q6BYQ==",
+        "dependencies": {
+          "Parlot": "1.5.2",
+          "TimeZoneConverter": "7.2.0"
+        }
+      },
       "Hangfire.AspNetCore": {
         "type": "CentralTransitive",
         "requested": "[1.8.25, )",
@@ -475,6 +516,15 @@
           "Dapper.AOT": "1.0.48",
           "Hangfire.Core": "1.8.0",
           "Npgsql": "6.0.11"
+        }
+      },
+      "MailKit": {
+        "type": "CentralTransitive",
+        "requested": "[4.18.0, )",
+        "resolved": "4.18.0",
+        "contentHash": "Sk+n5f4uVKiQKECOCPcFcYtYpIt9rcli7dDboSkWM2TBbTYE7EpfudL+e5a6TFp9eMHOzNYOydzZh0b+zFGK4A==",
+        "dependencies": {
+          "MimeKit": "4.18.0"
         }
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
