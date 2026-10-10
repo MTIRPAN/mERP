@@ -23,6 +23,7 @@ import type {
 import type {
   AddCompanyNumberSequenceCommand,
   AddCultureCommand,
+  AddHolidayCommand,
   AiUsageSummaryResponse,
   AssignRoleCommand,
   AttachmentList,
@@ -30,12 +31,15 @@ import type {
   BranchDetails,
   ChangeAssignmentCommand,
   CompanyDetails,
+  CopiedHolidays,
+  CopyFixedHolidaysRequest,
   CreateBranchCommand,
   CreateCompanyCommand,
   CreateCustomFieldCommand,
   CreateNotificationTemplateCommand,
   CreateRoleCommand,
   CreateUserCommand,
+  CreateWorkScheduleCommand,
   CultureCreatedResponse,
   CultureItem,
   CustomFieldDefinitionItem,
@@ -45,6 +49,8 @@ import type {
   GetAiUsageSummaryParams,
   GetCustomFieldFormParams,
   GetLocalizationBundle200,
+  HolidayCalendarItem,
+  HolidayYear,
   HttpValidationProblemDetails,
   ImportTextsBody,
   ImportTextsResult,
@@ -52,10 +58,13 @@ import type {
   ListBranchesParams,
   ListCompaniesParams,
   ListCustomFieldDefinitionsParams,
+  ListHolidaysParams,
   ListMyNotificationsParams,
   ListRolesParams,
   ListTextsParams,
   ListUsersParams,
+  ListWorkSchedulesParams,
+  ListWorkingDaysParams,
   LocationOption,
   MeResponse,
   NotificationPreferenceItem,
@@ -83,13 +92,17 @@ import type {
   UpdateCompanyCommand,
   UpdateCultureCommand,
   UpdateCustomFieldCommand,
+  UpdateHolidayCommand,
   UpdateMyNotificationPreferencesCommand,
   UpdateMyPreferencesCommand,
   UpdateNotificationTemplateCommand,
   UpdateNumberSequenceCommand,
   UpdateRoleCommand,
+  UpdateWorkScheduleCommand,
   UploadAttachmentBody,
   UserDetails,
+  WorkScheduleItem,
+  WorkingDay,
 } from '../../model';
 
 import { customFetch } from '../../../http';
@@ -6901,3 +6914,1068 @@ export const useDeleteNotificationTemplate = <TError = ErrorType<ProblemDetails>
 > => {
   return useMutation(getDeleteNotificationTemplateMutationOptions(options), queryClient);
 };
+export const getListHolidayCalendarsUrl = () => {
+  return `/api/platform/holiday-calendars`;
+};
+
+/**
+ * Requires permission: platform.calendars.read.
+ * @summary Holiday calendars of the tenant
+ */
+export const listHolidayCalendars = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<HolidayCalendarItem[]> => {
+  return customFetch<HolidayCalendarItem[]>(getListHolidayCalendarsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListHolidayCalendarsQueryKey = () => {
+  return [`/api/platform/holiday-calendars`] as const;
+};
+
+export const getListHolidayCalendarsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listHolidayCalendars>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidayCalendars>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListHolidayCalendarsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listHolidayCalendars>>> = ({ signal }) =>
+    listHolidayCalendars({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listHolidayCalendars>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListHolidayCalendarsQueryResult = NonNullable<Awaited<ReturnType<typeof listHolidayCalendars>>>;
+export type ListHolidayCalendarsQueryError = ErrorType<unknown>;
+
+export function useListHolidayCalendars<
+  TData = Awaited<ReturnType<typeof listHolidayCalendars>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidayCalendars>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listHolidayCalendars>>,
+          TError,
+          Awaited<ReturnType<typeof listHolidayCalendars>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListHolidayCalendars<
+  TData = Awaited<ReturnType<typeof listHolidayCalendars>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidayCalendars>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listHolidayCalendars>>,
+          TError,
+          Awaited<ReturnType<typeof listHolidayCalendars>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListHolidayCalendars<
+  TData = Awaited<ReturnType<typeof listHolidayCalendars>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidayCalendars>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Holiday calendars of the tenant
+ */
+
+export function useListHolidayCalendars<
+  TData = Awaited<ReturnType<typeof listHolidayCalendars>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidayCalendars>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListHolidayCalendarsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListHolidaysUrl = (id: string, params: ListHolidaysParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/holiday-calendars/${id}/holidays?${stringifiedParams}`
+    : `/api/platform/holiday-calendars/${id}/holidays`;
+};
+
+/**
+ * Requires permission: platform.calendars.read.
+ * @summary Holidays of a year, and whether its religious holidays are entered
+ */
+export const listHolidays = async (
+  id: string,
+  params: ListHolidaysParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<HolidayYear> => {
+  return customFetch<HolidayYear>(getListHolidaysUrl(id, params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListHolidaysQueryKey = (id: string, params?: ListHolidaysParams) => {
+  return [`/api/platform/holiday-calendars/${id}/holidays`, ...(params ? [params] : [])] as const;
+};
+
+export const getListHolidaysQueryOptions = <
+  TData = Awaited<ReturnType<typeof listHolidays>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  params: ListHolidaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidays>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListHolidaysQueryKey(id, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listHolidays>>> = ({ signal }) =>
+    listHolidays(id, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listHolidays>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListHolidaysQueryResult = NonNullable<Awaited<ReturnType<typeof listHolidays>>>;
+export type ListHolidaysQueryError = ErrorType<ProblemDetails>;
+
+export function useListHolidays<TData = Awaited<ReturnType<typeof listHolidays>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  params: ListHolidaysParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidays>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listHolidays>>,
+          TError,
+          Awaited<ReturnType<typeof listHolidays>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListHolidays<TData = Awaited<ReturnType<typeof listHolidays>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  params: ListHolidaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidays>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listHolidays>>,
+          TError,
+          Awaited<ReturnType<typeof listHolidays>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListHolidays<TData = Awaited<ReturnType<typeof listHolidays>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  params: ListHolidaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidays>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Holidays of a year, and whether its religious holidays are entered
+ */
+
+export function useListHolidays<TData = Awaited<ReturnType<typeof listHolidays>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  params: ListHolidaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listHolidays>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListHolidaysQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAddHolidayUrl = (id: string) => {
+  return `/api/platform/holiday-calendars/${id}/holidays`;
+};
+
+/**
+ * Requires permission: platform.calendars.manage.
+ * @summary Add a holiday; a half day starts at 13:00 unless given
+ */
+export const addHoliday = async (
+  id: string,
+  addHolidayCommand: AddHolidayCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getAddHolidayUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addHolidayCommand),
+  });
+};
+
+export const getAddHolidayMutationKey = () => ['addHoliday'] as const;
+
+export const getAddHolidayMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof addHoliday>>, TError, AddHolidayMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof addHoliday>>, TError, AddHolidayMutationVariables, TContext> => {
+  const mutationKey = getAddHolidayMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof addHoliday>>, AddHolidayMutationVariables> = (props) => {
+    const { id, data } = props ?? {};
+
+    return addHoliday(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddHolidayMutationResult = NonNullable<Awaited<ReturnType<typeof addHoliday>>>;
+export type AddHolidayMutationBody = AddHolidayCommand;
+export type AddHolidayMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AddHolidayMutationVariables = { id: string; data: AddHolidayCommand };
+
+/**
+ * @summary Add a holiday; a half day starts at 13:00 unless given
+ */
+export const useAddHoliday = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addHoliday>>,
+      TError,
+      AddHolidayMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof addHoliday>>, TError, AddHolidayMutationVariables, TContext> => {
+  return useMutation(getAddHolidayMutationOptions(options), queryClient);
+};
+export const getUpdateHolidayUrl = (id: string, holidayId: string) => {
+  return `/api/platform/holiday-calendars/${id}/holidays/${holidayId}`;
+};
+
+/**
+ * Requires permission: platform.calendars.manage.
+ * @summary Change a holiday
+ */
+export const updateHoliday = async (
+  id: string,
+  holidayId: string,
+  updateHolidayCommand: UpdateHolidayCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateHolidayUrl(id, holidayId), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateHolidayCommand),
+  });
+};
+
+export const getUpdateHolidayMutationKey = () => ['updateHoliday'] as const;
+
+export const getUpdateHolidayMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateHoliday>>,
+    TError,
+    UpdateHolidayMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof updateHoliday>>, TError, UpdateHolidayMutationVariables, TContext> => {
+  const mutationKey = getUpdateHolidayMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateHoliday>>, UpdateHolidayMutationVariables> = (
+    props,
+  ) => {
+    const { id, holidayId, data } = props ?? {};
+
+    return updateHoliday(id, holidayId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateHolidayMutationResult = NonNullable<Awaited<ReturnType<typeof updateHoliday>>>;
+export type UpdateHolidayMutationBody = UpdateHolidayCommand;
+export type UpdateHolidayMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateHolidayMutationVariables = { id: string; holidayId: string; data: UpdateHolidayCommand };
+
+/**
+ * @summary Change a holiday
+ */
+export const useUpdateHoliday = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateHoliday>>,
+      TError,
+      UpdateHolidayMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof updateHoliday>>, TError, UpdateHolidayMutationVariables, TContext> => {
+  return useMutation(getUpdateHolidayMutationOptions(options), queryClient);
+};
+export const getRemoveHolidayUrl = (id: string, holidayId: string) => {
+  return `/api/platform/holiday-calendars/${id}/holidays/${holidayId}`;
+};
+
+/**
+ * Requires permission: platform.calendars.manage.
+ * @summary Remove a holiday
+ */
+export const removeHoliday = async (
+  id: string,
+  holidayId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getRemoveHolidayUrl(id, holidayId), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveHolidayMutationKey = () => ['removeHoliday'] as const;
+
+export const getRemoveHolidayMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeHoliday>>,
+    TError,
+    RemoveHolidayMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof removeHoliday>>, TError, RemoveHolidayMutationVariables, TContext> => {
+  const mutationKey = getRemoveHolidayMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeHoliday>>, RemoveHolidayMutationVariables> = (
+    props,
+  ) => {
+    const { id, holidayId } = props ?? {};
+
+    return removeHoliday(id, holidayId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveHolidayMutationResult = NonNullable<Awaited<ReturnType<typeof removeHoliday>>>;
+
+export type RemoveHolidayMutationError = ErrorType<ProblemDetails>;
+export type RemoveHolidayMutationVariables = { id: string; holidayId: string };
+
+/**
+ * @summary Remove a holiday
+ */
+export const useRemoveHoliday = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeHoliday>>,
+      TError,
+      RemoveHolidayMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof removeHoliday>>, TError, RemoveHolidayMutationVariables, TContext> => {
+  return useMutation(getRemoveHolidayMutationOptions(options), queryClient);
+};
+export const getCopyFixedHolidaysUrl = (id: string) => {
+  return `/api/platform/holiday-calendars/${id}/copy-fixed-holidays`;
+};
+
+/**
+ * Requires permission: platform.calendars.manage.
+ * @summary Copy the previous year's fixed holidays to a year; religious holidays are entered by hand
+ */
+export const copyFixedHolidays = async (
+  id: string,
+  copyFixedHolidaysRequest: CopyFixedHolidaysRequest,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CopiedHolidays> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<CopiedHolidays>(getCopyFixedHolidaysUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(copyFixedHolidaysRequest),
+  });
+};
+
+export const getCopyFixedHolidaysMutationKey = () => ['copyFixedHolidays'] as const;
+
+export const getCopyFixedHolidaysMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof copyFixedHolidays>>,
+    TError,
+    CopyFixedHolidaysMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof copyFixedHolidays>>,
+  TError,
+  CopyFixedHolidaysMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCopyFixedHolidaysMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof copyFixedHolidays>>,
+    CopyFixedHolidaysMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return copyFixedHolidays(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CopyFixedHolidaysMutationResult = NonNullable<Awaited<ReturnType<typeof copyFixedHolidays>>>;
+export type CopyFixedHolidaysMutationBody = CopyFixedHolidaysRequest;
+export type CopyFixedHolidaysMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CopyFixedHolidaysMutationVariables = { id: string; data: CopyFixedHolidaysRequest };
+
+/**
+ * @summary Copy the previous year's fixed holidays to a year; religious holidays are entered by hand
+ */
+export const useCopyFixedHolidays = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof copyFixedHolidays>>,
+      TError,
+      CopyFixedHolidaysMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof copyFixedHolidays>>,
+  TError,
+  CopyFixedHolidaysMutationVariables,
+  TContext
+> => {
+  return useMutation(getCopyFixedHolidaysMutationOptions(options), queryClient);
+};
+export const getListWorkSchedulesUrl = (params?: ListWorkSchedulesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/work-schedules?${stringifiedParams}`
+    : `/api/platform/work-schedules`;
+};
+
+/**
+ * Requires permission: platform.calendars.read.
+ * @summary Work schedules; with companyId, the company's own and the shared ones
+ */
+export const listWorkSchedules = async (
+  params?: ListWorkSchedulesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<WorkScheduleItem[]> => {
+  return customFetch<WorkScheduleItem[]>(getListWorkSchedulesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListWorkSchedulesQueryKey = (params?: ListWorkSchedulesParams) => {
+  return [`/api/platform/work-schedules`, ...(params ? [params] : [])] as const;
+};
+
+export const getListWorkSchedulesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listWorkSchedules>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListWorkSchedulesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkSchedules>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListWorkSchedulesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listWorkSchedules>>> = ({ signal }) =>
+    listWorkSchedules(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listWorkSchedules>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListWorkSchedulesQueryResult = NonNullable<Awaited<ReturnType<typeof listWorkSchedules>>>;
+export type ListWorkSchedulesQueryError = ErrorType<unknown>;
+
+export function useListWorkSchedules<
+  TData = Awaited<ReturnType<typeof listWorkSchedules>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | ListWorkSchedulesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkSchedules>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listWorkSchedules>>,
+          TError,
+          Awaited<ReturnType<typeof listWorkSchedules>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListWorkSchedules<
+  TData = Awaited<ReturnType<typeof listWorkSchedules>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListWorkSchedulesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkSchedules>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listWorkSchedules>>,
+          TError,
+          Awaited<ReturnType<typeof listWorkSchedules>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListWorkSchedules<
+  TData = Awaited<ReturnType<typeof listWorkSchedules>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListWorkSchedulesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkSchedules>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Work schedules; with companyId, the company's own and the shared ones
+ */
+
+export function useListWorkSchedules<
+  TData = Awaited<ReturnType<typeof listWorkSchedules>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListWorkSchedulesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkSchedules>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListWorkSchedulesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateWorkScheduleUrl = () => {
+  return `/api/platform/work-schedules`;
+};
+
+/**
+ * Requires permission: platform.calendars.manage.
+ * @summary Add a work schedule; days are Monday to Sunday
+ */
+export const createWorkSchedule = async (
+  createWorkScheduleCommand: CreateWorkScheduleCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateWorkScheduleUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createWorkScheduleCommand),
+  });
+};
+
+export const getCreateWorkScheduleMutationKey = () => ['createWorkSchedule'] as const;
+
+export const getCreateWorkScheduleMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createWorkSchedule>>,
+    TError,
+    CreateWorkScheduleMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createWorkSchedule>>,
+  TError,
+  CreateWorkScheduleMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateWorkScheduleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createWorkSchedule>>,
+    CreateWorkScheduleMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createWorkSchedule(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateWorkScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof createWorkSchedule>>>;
+export type CreateWorkScheduleMutationBody = CreateWorkScheduleCommand;
+export type CreateWorkScheduleMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateWorkScheduleMutationVariables = { data: CreateWorkScheduleCommand };
+
+/**
+ * @summary Add a work schedule; days are Monday to Sunday
+ */
+export const useCreateWorkSchedule = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createWorkSchedule>>,
+      TError,
+      CreateWorkScheduleMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createWorkSchedule>>,
+  TError,
+  CreateWorkScheduleMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateWorkScheduleMutationOptions(options), queryClient);
+};
+export const getUpdateWorkScheduleUrl = (id: string) => {
+  return `/api/platform/work-schedules/${id}`;
+};
+
+/**
+ * Requires permission: platform.calendars.manage.
+ * @summary Change a work schedule; the code and the company never change
+ */
+export const updateWorkSchedule = async (
+  id: string,
+  updateWorkScheduleCommand: UpdateWorkScheduleCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateWorkScheduleUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateWorkScheduleCommand),
+  });
+};
+
+export const getUpdateWorkScheduleMutationKey = () => ['updateWorkSchedule'] as const;
+
+export const getUpdateWorkScheduleMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWorkSchedule>>,
+    TError,
+    UpdateWorkScheduleMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateWorkSchedule>>,
+  TError,
+  UpdateWorkScheduleMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateWorkScheduleMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateWorkSchedule>>,
+    UpdateWorkScheduleMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateWorkSchedule(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateWorkScheduleMutationResult = NonNullable<Awaited<ReturnType<typeof updateWorkSchedule>>>;
+export type UpdateWorkScheduleMutationBody = UpdateWorkScheduleCommand;
+export type UpdateWorkScheduleMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateWorkScheduleMutationVariables = { id: string; data: UpdateWorkScheduleCommand };
+
+/**
+ * @summary Change a work schedule; the code and the company never change
+ */
+export const useUpdateWorkSchedule = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateWorkSchedule>>,
+      TError,
+      UpdateWorkScheduleMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateWorkSchedule>>,
+  TError,
+  UpdateWorkScheduleMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateWorkScheduleMutationOptions(options), queryClient);
+};
+export const getListWorkingDaysUrl = (id: string, params: ListWorkingDaysParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/work-schedules/${id}/days?${stringifiedParams}`
+    : `/api/platform/work-schedules/${id}/days`;
+};
+
+/**
+ * Requires permission: platform.calendars.read.
+ * @summary Days of a schedule with holidays and working hours (at most 400 days)
+ */
+export const listWorkingDays = async (
+  id: string,
+  params: ListWorkingDaysParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<WorkingDay[]> => {
+  return customFetch<WorkingDay[]>(getListWorkingDaysUrl(id, params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListWorkingDaysQueryKey = (id: string, params?: ListWorkingDaysParams) => {
+  return [`/api/platform/work-schedules/${id}/days`, ...(params ? [params] : [])] as const;
+};
+
+export const getListWorkingDaysQueryOptions = <
+  TData = Awaited<ReturnType<typeof listWorkingDays>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  id: string,
+  params: ListWorkingDaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkingDays>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListWorkingDaysQueryKey(id, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listWorkingDays>>> = ({ signal }) =>
+    listWorkingDays(id, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listWorkingDays>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListWorkingDaysQueryResult = NonNullable<Awaited<ReturnType<typeof listWorkingDays>>>;
+export type ListWorkingDaysQueryError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+
+export function useListWorkingDays<
+  TData = Awaited<ReturnType<typeof listWorkingDays>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  id: string,
+  params: ListWorkingDaysParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkingDays>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listWorkingDays>>,
+          TError,
+          Awaited<ReturnType<typeof listWorkingDays>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListWorkingDays<
+  TData = Awaited<ReturnType<typeof listWorkingDays>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  id: string,
+  params: ListWorkingDaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkingDays>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listWorkingDays>>,
+          TError,
+          Awaited<ReturnType<typeof listWorkingDays>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListWorkingDays<
+  TData = Awaited<ReturnType<typeof listWorkingDays>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  id: string,
+  params: ListWorkingDaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkingDays>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Days of a schedule with holidays and working hours (at most 400 days)
+ */
+
+export function useListWorkingDays<
+  TData = Awaited<ReturnType<typeof listWorkingDays>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  id: string,
+  params: ListWorkingDaysParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listWorkingDays>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListWorkingDaysQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

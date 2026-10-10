@@ -9,9 +9,13 @@ public sealed class PlatformNotificationTypes : INotificationTypeProvider
     /// <summary>A user sends it to themself to check their channels (Profile → Notifications).</summary>
     public const string Test = "platform.test";
 
+    /// <summary>The religious holidays of next year are not entered yet (PLAN P9, every 1 October).</summary>
+    public const string HolidaysMissing = "platform.holidays_missing";
+
     public IEnumerable<NotificationTypeDefinition> GetNotificationTypes() =>
     [
         new(Test, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(HolidaysMissing, [NotificationChannel.InApp, NotificationChannel.Email]),
     ];
 }
 

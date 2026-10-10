@@ -18,4 +18,6 @@ export interface UpdateBranchCommand {
   /** @nullable */
   phone: string | null;
   isActive: boolean;
+  /** @nullable */
+  workScheduleId?: string | null;
 }

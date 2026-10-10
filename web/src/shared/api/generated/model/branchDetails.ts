@@ -24,4 +24,6 @@ export interface BranchDetails {
   createdAt: string;
   /** @nullable */
   modifiedAt: string | null;
+  /** @nullable */
+  workScheduleId: string | null;
 }

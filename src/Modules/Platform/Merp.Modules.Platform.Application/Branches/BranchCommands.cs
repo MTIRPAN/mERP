@@ -6,7 +6,9 @@ using Merp.Application.Abstractions.Security;
 using Merp.Application.Abstractions.Validation;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Contracts.Organization;
+using Merp.Modules.Platform.Application.Calendars;
 using Merp.Modules.Platform.Domain.Branches;
+using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.SharedKernel.Results;
 using Merp.SharedKernel.ValueObjects;
@@ -25,7 +27,8 @@ public sealed record CreateBranchCommand(
     BranchType? Type,
     AddressInput? Address,
     string? SgkWorkplaceNumber,
-    string? Phone) : ICommand<Guid>, IRequirePermission, IBranchFields
+    string? Phone,
+    Guid? WorkScheduleId = null) : ICommand<Guid>, IRequirePermission, IBranchFields
 {
     [JsonIgnore]
     public string Permission => PlatformPermissions.Branches.Manage;
@@ -40,7 +43,8 @@ public sealed record UpdateBranchCommand(
     AddressInput? Address,
     string? SgkWorkplaceNumber,
     string? Phone,
-    bool IsActive) : ICommand, IRequirePermission, IBranchFields
+    bool IsActive,
+    Guid? WorkScheduleId = null) : ICommand, IRequirePermission, IBranchFields
 {
     /// <summary>From the route.</summary>
     [JsonIgnore]
@@ -62,6 +66,9 @@ public interface IBranchFields
     string? SgkWorkplaceNumber { get; }
 
     string? Phone { get; }
+
+    /// <summary>A work schedule of the tenant or of the branch's company; null follows the company's default (PLAN P9).</summary>
+    Guid? WorkScheduleId { get; }
 }
 
 internal static class BranchRules
@@ -106,6 +113,17 @@ internal static class BranchRules
             errors.AddRange(address.Error.Fields);
         }
 
+        if (fields.WorkScheduleId is { } scheduleId)
+        {
+            var usable = await db.WorkSchedules.AnyAsync(
+                s => s.Id == WorkScheduleId.From(scheduleId) && s.IsActive && (s.CompanyId == null || s.CompanyId == companyId),
+                cancellationToken);
+            if (!usable)
+            {
+                errors.Add(new FieldError("workScheduleId", CalendarRequests.UnknownScheduleCode));
+            }
+        }
+
         if (errors.Count > 0)
         {
             return Error.Validation(errors);
@@ -116,7 +134,8 @@ internal static class BranchRules
             fields.Type!.Value,
             address.Value,
             string.IsNullOrWhiteSpace(fields.SgkWorkplaceNumber) ? null : SgkWorkplaceNumber.Create(fields.SgkWorkplaceNumber).Value,
-            string.IsNullOrWhiteSpace(fields.Phone) ? null : PhoneNumber.Create(fields.Phone).Value);
+            string.IsNullOrWhiteSpace(fields.Phone) ? null : PhoneNumber.Create(fields.Phone).Value,
+            fields.WorkScheduleId is { } id ? WorkScheduleId.From(id) : null);
     }
 
     public static BranchCreated ToCreatedEvent(Branch branch) =>
@@ -151,7 +170,9 @@ internal sealed class CreateBranchCommandHandler(
     IPlatformDbContext db,
     IAccessScopeProvider scopes,
     AddressResolver addressResolver,
-    IIntegrationEventPublisher publisher) : ICommandHandler<CreateBranchCommand, Guid>
+    IIntegrationEventPublisher publisher,
+    ICalendarCache calendarCache,
+    IAfterCommit afterCommit) : ICommandHandler<CreateBranchCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateBranchCommand request, CancellationToken cancellationToken)
     {
@@ -194,6 +215,8 @@ internal sealed class CreateBranchCommandHandler(
         var branch = Branch.Create(companyId, code, profile.Value);
         db.Branches.Add(branch);
         await publisher.PublishAsync(BranchRules.ToCreatedEvent(branch), cancellationToken);
+        // The branch's schedule takes part in resolving working days (PLAN P9)
+        afterCommit.Enqueue(calendarCache.InvalidateAsync);
         return branch.Id.Value;
     }
 }
@@ -202,7 +225,9 @@ internal sealed class UpdateBranchCommandHandler(
     IPlatformDbContext db,
     IAccessScopeProvider scopes,
     AddressResolver addressResolver,
-    IIntegrationEventPublisher publisher) : ICommandHandler<UpdateBranchCommand>
+    IIntegrationEventPublisher publisher,
+    ICalendarCache calendarCache,
+    IAfterCommit afterCommit) : ICommandHandler<UpdateBranchCommand>
 {
     public async Task<Result> Handle(UpdateBranchCommand request, CancellationToken cancellationToken)
     {
@@ -233,6 +258,7 @@ internal sealed class UpdateBranchCommandHandler(
         }
 
         await publisher.PublishAsync(BranchRules.ToUpdatedEvent(branch), cancellationToken);
+        afterCommit.Enqueue(calendarCache.InvalidateAsync);
         return Result.Success();
     }
 }

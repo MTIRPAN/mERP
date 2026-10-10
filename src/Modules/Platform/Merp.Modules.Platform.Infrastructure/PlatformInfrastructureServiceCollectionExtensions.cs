@@ -9,8 +9,10 @@ using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
+using Merp.Modules.Platform.Contracts.Calendars;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
+using Merp.Modules.Platform.Application.Calendars;
 using Merp.Modules.Platform.Application.CustomFields;
 using Merp.Modules.Platform.Application.Files;
 using Merp.Modules.Platform.Application.Localization;
@@ -18,6 +20,7 @@ using Merp.Modules.Platform.Application.Notifications;
 using Merp.Modules.Platform.Application.Numbering;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Infrastructure.Access;
+using Merp.Modules.Platform.Infrastructure.Calendars;
 using Merp.Modules.Platform.Infrastructure.AI;
 using Merp.Modules.Platform.Infrastructure.CustomFields;
 using Merp.Modules.Platform.Infrastructure.Identity;
@@ -71,6 +74,13 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddSingleton<ICustomFieldEntityProvider, PlatformCustomFieldEntities>();
         services.AddScoped<ICustomFieldValidator, PlatformCustomFieldValidator>();
         services.AddScoped<ICustomFieldCache, CustomFieldCache>();
+
+        // Public holidays and work schedules; other modules read them through IWorkingCalendar (PLAN P9, D33)
+        services.AddScoped<IWorkingCalendar, PlatformWorkingCalendar>();
+        services.AddScoped<ICalendarCache, CalendarCache>();
+        services.AddSingleton<ITenantDataSeeder, CalendarSeeder>();
+        services.AddScoped<HolidayReminderJob>();
+        services.AddSingleton(RecurringJobDefinition.For<HolidayReminderJob>(HolidayReminderJob.JobId, HolidayReminderJob.Cron));
 
         // Notifications of all modules: bell, e-mail queue and templates (PLAN P8, D32)
         services.AddSingleton<INotificationTypeProvider, PlatformNotificationTypes>();

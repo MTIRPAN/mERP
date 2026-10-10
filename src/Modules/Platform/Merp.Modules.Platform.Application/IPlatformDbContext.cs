@@ -1,5 +1,6 @@
 using Merp.Application.Persistence.Files;
 using Merp.Modules.Platform.Domain.Branches;
+using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.CustomFields;
 using Merp.Modules.Platform.Domain.Localization;
@@ -38,6 +39,10 @@ public interface IPlatformDbContext
     DbSet<NumberSequence> NumberSequences { get; }
 
     DbSet<CustomFieldDefinition> CustomFieldDefinitions { get; }
+
+    DbSet<HolidayCalendar> HolidayCalendars { get; }
+
+    DbSet<WorkSchedule> WorkSchedules { get; }
 
     DbSet<Notification> Notifications { get; }
 

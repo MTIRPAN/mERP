@@ -1,4 +1,5 @@
 using Merp.Modules.Platform.Domain.Branches;
+using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.Locations;
 using Merp.SharedKernel.ValueObjects;
@@ -39,6 +40,7 @@ internal sealed class BranchConfiguration : IEntityTypeConfiguration<Branch>
         builder.ToTable("branches");
         builder.HasKey(b => b.Id);
         builder.Property(b => b.Id).ValueGeneratedNever();
+        builder.HasOne<WorkSchedule>().WithMany().HasForeignKey(b => b.WorkScheduleId).OnDelete(DeleteBehavior.Restrict);
         builder.Property(b => b.Code).HasMaxLength(Branch.CodeMaxLength);
         builder.Property(b => b.Name).HasMaxLength(Branch.NameMaxLength);
         builder.Property(b => b.Type).HasConversion<string>().HasMaxLength(20);

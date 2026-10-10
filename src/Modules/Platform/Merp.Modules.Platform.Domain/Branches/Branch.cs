@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.SharedKernel.Domain;
 using Merp.SharedKernel.Identity;
@@ -56,6 +57,9 @@ public sealed class Branch : AuditableAggregateRoot<BranchId>, ICompanyScoped
 
     public bool IsActive { get; private set; }
 
+    /// <summary>Work schedule of the branch; null follows the company's default (PLAN P9, D33).</summary>
+    public WorkScheduleId? WorkScheduleId { get; private set; }
+
     public static Branch Create(CompanyId companyId, Code code, BranchProfile profile)
     {
         ArgumentNullException.ThrowIfNull(code);
@@ -93,6 +97,7 @@ public sealed class Branch : AuditableAggregateRoot<BranchId>, ICompanyScoped
         Address = profile.Address ?? throw new ArgumentNullException(nameof(profile), "A branch has an address.");
         SgkWorkplaceNumber = profile.SgkWorkplaceNumber?.Value;
         Phone = profile.Phone?.Value;
+        WorkScheduleId = profile.WorkScheduleId;
     }
 }
 
@@ -102,4 +107,5 @@ public sealed record BranchProfile(
     BranchType Type,
     Address Address,
     SgkWorkplaceNumber? SgkWorkplaceNumber,
-    PhoneNumber? Phone);
+    PhoneNumber? Phone,
+    WorkScheduleId? WorkScheduleId = null);

@@ -599,3 +599,29 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Web (P8b):** Sunucu yalnızca "yeni bildirim var" der (`notificationReceived`: kimlik ve tür); istemci okunmamış sayısını ve listeleri yeniden okur. Metinler böylece her zaman okuyanın dilinde, tek yerden (API) gelir. Bağlantı kurulamazsa zil sayfa odaklanınca güncellenir.
 
 **Uç noktalar:** Kullanıcının kendi bildirimleri ve tercihleri yalnızca oturum ister (D22). `POST /api/platform/notifications/test` kullanıcıya kendi kanallarından bir test bildirimi gönderir (`platform.test`).
+
+## D33 — Çalışma takvimi ve resmi tatiller (öneri — onay bekliyor)
+
+**Durum:** Öneri. PLAN P9a ile uygulandı; P9 incelemesinde kullanıcı onayına sunuldu.
+
+**Resmi tatiller:**
+- `HolidayCalendar` (ör. `TR`) tatilleri tutar: tarih, çok dilli ad, tam veya yarım gün, yarım günün başlangıç saati (varsayılan 13:00) ve hareketli (dini) mi.
+- Bir tarihte bir tatil olur. İki bayram aynı güne denk gelirse tek kayıtta adlandırılır (2027'de 19 Mayıs ile Kurban Bayramı).
+- Sabit tatiller "önceki yıldan kopyala" ile yeni yıla taşınır (29 Şubat atlanır). Dini bayramlar her yıl Diyanet takviminden elle girilir.
+- Seed: `izin-kurallari.md` §7'deki 2026 ve 2027 tatilleri. Kiracının takvimi varsa seed dokunmaz.
+
+**Çalışma takvimi (`WorkSchedule`):**
+- Haftanın her günü (pazartesiden pazara) için çalışma günü mü, başlangıç, bitiş ve isteğe bağlı mola (başlangıç ve bitiş saati) tutulur. Mola mesai içinde kalır. Takvim bir resmi tatil takvimine bağlıdır.
+- Takvim bir şirketin ya da (şirketi yoksa) bütün kiracınındır. Her şirketin ve kiracının bir varsayılanı olur. Yeni varsayılan, eskisini domain olayıyla (`WorkScheduleMadeDefault`) bırakır (kural 7). Tekil indeks kullanılmaz, çünkü iki güncellemenin sırası belli değildir. Varsayılan takvim pasifleştirilemez.
+- Şube kendi takvimini seçebilir (`branches.work_schedule_id`). Seçilen takvim ya kiracının ortak takvimi ya da şubenin şirketinin takvimi olmalıdır.
+- Seed: kiracı varsayılanı "Standart (Pzt–Cum)" 08:30–18:00, mola 12:30–13:30. Varsayılan olmayan "Haftada 6 gün (Pzt–Cmt)": cumartesi 08:30–13:30.
+
+**`IWorkingCalendar` (Platform.Contracts, salt okunur):**
+- `ResolveScheduleIdAsync(şirket, şube)` önce şubenin takvimini, yoksa şirketin varsayılanını, yoksa kiracının varsayılanını döndürür. İstihdam ezmesi HR'da (L2) bunun önüne eklenir.
+- `GetDayAsync` ve `GetDaysAsync` (en fazla 400 gün) her gün için şunları döndürür: çalışma günü mü, tatil oranı (0, 0,5 veya 1), tatil adı ve yarım günün başlangıcı, mesai ve çalışma saati.
+- `LeaveDayValue` iş günü tabanlı izin hesabının günlük değeridir (`izin-kurallari.md` §4): çalışma günüyse 1 eksi tatil oranı, değilse 0. Yarım gün tatilde çalışma saati tatil başlayınca biter; mola o saate kadar olan kısmıyla düşülür.
+- Takvimler, yıllık tatiller ve çözümler HybridCache'te bir saat tutulur. Takvim, tatil veya şube değişince kiracının tüm takvim önbelleği temizlenir.
+
+**Hatırlatma:** `calendars.holiday-reminder` işi her 1 Ekim 06:00 UTC'de (09:00 TSİ) çalışır. Ertesi yılın dini bayramları girilmemiş her takvim için, `platform.calendars.manage` yetkisini bugün Tenant kapsamıyla taşıyan kullanıcılara `platform.holidays_missing` bildirimi gönderir (D32).
+
+**Yetkiler:** `platform.calendars.read/manage`. Değişiklikler yalnızca Tenant kapsamıyla yapılır, çünkü takvimler bütün şirketlerce paylaşılır.

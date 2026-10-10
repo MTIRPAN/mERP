@@ -406,6 +406,10 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
+                    b.Property<Guid?>("WorkScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("work_schedule_id");
+
                     b.HasKey("Id")
                         .HasName("pk_branches");
 
@@ -414,11 +418,188 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_branches_company_id_head_office")
                         .HasFilter("type = 'HeadOffice'");
 
+                    b.HasIndex("WorkScheduleId")
+                        .HasDatabaseName("ix_branches_work_schedule_id");
+
                     b.HasIndex("CompanyId", "Code")
                         .IsUnique()
                         .HasDatabaseName("ix_branches_company_id_code");
 
                     b.ToTable("branches", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Calendars.Holiday", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CalendarId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("calendar_id");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Duration")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("duration");
+
+                    b.Property<bool>("IsMovable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_movable");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("name");
+
+                    b.Property<TimeOnly?>("StartsAt")
+                        .HasColumnType("time without time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_holidays");
+
+                    b.HasIndex("CalendarId", "Date")
+                        .IsUnique()
+                        .HasDatabaseName("ix_holidays_calendar_id_date");
+
+                    b.ToTable("holidays", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Calendars.HolidayCalendar", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("name");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_holiday_calendars");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_holiday_calendars_code");
+
+                    b.ToTable("holiday_calendars", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Calendars.WorkSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Days")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("days");
+
+                    b.Property<Guid>("HolidayCalendarId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("holiday_calendar_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_default");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("name");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_work_schedules");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_work_schedules_code");
+
+                    b.HasIndex("HolidayCalendarId")
+                        .HasDatabaseName("ix_work_schedules_holiday_calendar_id");
+
+                    b.HasIndex("CompanyId", "IsDefault")
+                        .HasDatabaseName("ix_work_schedules_company_id_is_default");
+
+                    b.ToTable("work_schedules", "platform");
                 });
 
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Companies.Company", b =>
@@ -1448,6 +1629,12 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_branches_companies_company_id");
 
+                    b.HasOne("Merp.Modules.Platform.Domain.Calendars.WorkSchedule", null)
+                        .WithMany()
+                        .HasForeignKey("WorkScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_branches_work_schedules_work_schedule_id");
+
                     b.OwnsOne("Merp.SharedKernel.ValueObjects.Address", "Address", b1 =>
                         {
                             b1.Property<Guid>("BranchId")
@@ -1509,6 +1696,32 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
 
                     b.Navigation("Address")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Calendars.Holiday", b =>
+                {
+                    b.HasOne("Merp.Modules.Platform.Domain.Calendars.HolidayCalendar", null)
+                        .WithMany("Holidays")
+                        .HasForeignKey("CalendarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_holidays_holiday_calendars_calendar_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Calendars.WorkSchedule", b =>
+                {
+                    b.HasOne("Merp.Modules.Platform.Domain.Companies.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_work_schedules_companies_company_id");
+
+                    b.HasOne("Merp.Modules.Platform.Domain.Calendars.HolidayCalendar", null)
+                        .WithMany()
+                        .HasForeignKey("HolidayCalendarId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_work_schedules_holiday_calendars_holiday_calendar_id");
                 });
 
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Companies.Company", b =>
@@ -1637,6 +1850,11 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_role_assignments_users_user_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Calendars.HolidayCalendar", b =>
+                {
+                    b.Navigation("Holidays");
                 });
 
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Localization.Culture", b =>

@@ -19,4 +19,6 @@ export interface CreateBranchCommand {
   sgkWorkplaceNumber: string | null;
   /** @nullable */
   phone: string | null;
+  /** @nullable */
+  workScheduleId?: string | null;
 }
