@@ -325,9 +325,9 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 
 **Not:** TypeScript 6.0 kullanılır. TypeScript 7 yayınlandı ama typescript-eslint henüz desteklemiyor (`<6.1`).
 
-## D24 — Yapay zeka (öneri — onay bekliyor)
+## D24 — Yapay zeka
 
-**Durum:** Öneri. Kullanıcının isteği üzerine ("yapay zekayı kullanılabilecek aşamalarda kullan, örneğin işe alımda CV analizi") altyapı ve ilk özellik (CV analizi) geliştirildi. Aşağıdaki kararlar ve açık sorular kullanıcı onayı bekliyor. Özellik kataloğu ve kurallar: `docs/domain/yapay-zeka.md`.
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-11). Kullanıcının isteği üzerine ("yapay zekayı kullanılabilecek aşamalarda kullan, örneğin işe alımda CV analizi") altyapı ve ilk özellik (CV analizi) geliştirildi. Özellik kataloğu ve kurallar: `docs/domain/yapay-zeka.md`.
 
 **Mimari:**
 - Modüller yapay zekayı yalnızca `IAiService` (`Merp.Application.Abstractions.AI`) üzerinden kullanır; sağlayıcı SDK'sına referans vermez. Çıktı her zaman tiplidir: sonuç tipinden JSON şeması üretilir ve sağlayıcı yanıtın şemaya uymasını garanti eder (structured outputs). Serbest metin ayrıştırma yoktur.
@@ -356,8 +356,8 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 **Açık sorular (kullanıcıya):**
 1. ~~Sağlayıcı ve model~~ — karar verildi: Claude Sonnet 5.5.
 2. ~~Yurt dışına aktarım (KVKK md. 9)~~ — karar verildi: standart sözleşme (veya bağlayıcı şirket kuralları / yeterlilik kararı); dayanak kayıtlı değilse yapay zeka kapalı. Aydınlatma metinlerine yapay zeka maddesi R1 ile eklenecek.
-3. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için. Gereksinimler ve seçenekler `docs/domain/yapay-zeka.md` §9'da. Öneri: talep eden ilk müşteriyle birlikte yapılsın (PLAN A15, A16).
-4. Sıra: Yapay zeka altyapısı ve durumsuz CV analizi plan sırasından önce yapıldı. Diğer özellikler (`docs/PLAN.md` "Yapay zeka" bölümü) ait oldukları görevlerle birlikte mi yapılsın?
+3. ~~Kurum içi (on-prem) model~~ — karar verildi (2026-10-11): önerildiği gibi talep eden ilk müşteriyle birlikte yapılır. Kurum içi (on-prem) model gerekiyor mu? Örneğin verinin yurt dışına çıkmasını istemeyen müşteriler için. Gereksinimler ve seçenekler `docs/domain/yapay-zeka.md` §9'da. Öneri: talep eden ilk müşteriyle birlikte yapılsın (PLAN A15, A16).
+4. ~~Sıra~~ — karar verildi (2026-10-11): diğer özellikler ait oldukları görevlerle birlikte yapılır. Yapay zeka altyapısı ve durumsuz CV analizi plan sırasından önce yapıldı. Diğer özellikler (`docs/PLAN.md` "Yapay zeka" bölümü) ait oldukları görevlerle birlikte mi yapılsın?
 
 ## D25 — Uygulama katmanında veri erişimi
 
@@ -490,9 +490,9 @@ Seçilen kültür `Content-Language` başlığında döner.
 
 **Seed:** Şimdilik `recruitment.requisition` (`PT-{yyyy}-{seq:5}`) ve `recruitment.offer` (`TKL-{yyyy}-{seq:5}`), yıllık. `hr.employee` ve `hr.leave-request` HR modülü (H1/H2) eklenince onun tanımlarıyla gelir.
 
-## D30 — Özel alanların uygulanması (öneri — onay bekliyor)
+## D30 — Özel alanların uygulanması
 
-**Durum:** Öneri. PLAN P6 ile uygulandı; P6 incelemesinde kullanıcı onayına sunuldu. D12'yi ayrıntılandırır.
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-11). PLAN P6 ile uygulandı. D12'yi ayrıntılandırır.
 
 **Tanımlar Platform'da, değerler kaydın kendisinde:**
 - Tanımlar `platform.custom_field_definitions` tablosundadır: kayıt türü, kod, veri tipi, şirket, çok dilli ad, zorunluluk, seçenekler, sınırlar, grup, sıra, aktiflik.
@@ -521,9 +521,9 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Listelerde özel alanlar isteğe bağlı kolon ve tek alanlık filtre olarak kullanılır.
 - İlk kullanan: Şirketler.
 
-## D31 — Dosyaların uygulanması (öneri — onay bekliyor)
+## D31 — Dosyaların uygulanması
 
-**Durum:** Öneri. PLAN P7 ile uygulandı. Tabloların her modülde olması P7 öncesinde kullanıcı tarafından onaylandı; ayrıntılar P7 incelemesinde onaya sunuldu. D16'yı ayrıntılandırır.
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-11). PLAN P7 ile uygulandı. D16'yı ayrıntılandırır.
 
 **Sorun:** D16 metadata'yı Platform'daki `stored_files` tablosunda tutar. Ama dosyayı yükleyen komut başka modülde olabilir (HR, Recruitment). Kural 2 başka şemaya yazmayı, kural 3 modüller arası senkron yazmayı yasaklar (D29'daki numaralandırma sorunuyla aynı).
 
@@ -557,9 +557,9 @@ Seçilen kültür `Content-Language` başlığında döner.
 
 **Web:** `<Attachments ownerType ownerId />` (`shared/files`) sürükle-bırak, liste, indirme ve silme sunar. Liste yanıtı kabul edilen uzantıları ve boyut sınırını da döndürür. Başka bir modül ek kullanmaya başladığında, uç noktalarını bu bileşenin modül listesine ekler. İlk kullanan: şirket formu (logo ve ekler).
 
-## D32 — Bildirimlerin uygulanması (öneri — onay bekliyor)
+## D32 — Bildirimlerin uygulanması
 
-**Durum:** Öneri. PLAN P8a ile uygulandı; P8 incelemesinde kullanıcı onayına sunuldu.
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-11). PLAN P8a ile uygulandı.
 
 **Akış:**
 - Bildirim isteyen modül `NotificationRequested` olayını (Platform.Contracts) kendi outbox'ıyla yayınlar. Olay türü, alıcı kullanıcılar, argümanlar ve uygulama içi bir bağlantı taşır; `CompanyId` e-posta şablonunu seçer.
@@ -600,9 +600,9 @@ Seçilen kültür `Content-Language` başlığında döner.
 
 **Uç noktalar:** Kullanıcının kendi bildirimleri ve tercihleri yalnızca oturum ister (D22). `POST /api/platform/notifications/test` kullanıcıya kendi kanallarından bir test bildirimi gönderir (`platform.test`).
 
-## D33 — Çalışma takvimi ve resmi tatiller (öneri — onay bekliyor)
+## D33 — Çalışma takvimi ve resmi tatiller
 
-**Durum:** Öneri. PLAN P9a ile uygulandı; P9 incelemesinde kullanıcı onayına sunuldu.
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-11). PLAN P9a ile uygulandı.
 
 **Resmi tatiller:**
 - `HolidayCalendar` (ör. `TR`) tatilleri tutar: tarih, çok dilli ad, tam veya yarım gün, yarım günün başlangıç saati (varsayılan 13:00) ve hareketli (dini) mi.
@@ -625,3 +625,41 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Hatırlatma:** `calendars.holiday-reminder` işi her 1 Ekim 06:00 UTC'de (09:00 TSİ) çalışır. Ertesi yılın dini bayramları girilmemiş her takvim için, `platform.calendars.manage` yetkisini bugün Tenant kapsamıyla taşıyan kullanıcılara `platform.holidays_missing` bildirimi gönderir (D32).
 
 **Yetkiler:** `platform.calendars.read/manage`. Değişiklikler yalnızca Tenant kapsamıyla yapılır, çünkü takvimler bütün şirketlerce paylaşılır.
+
+## D34 — Onay motorunun uygulanması
+
+**Durum:** Öneri (kullanıcı onayı bekleniyor). PLAN P10a ile uygulandı; P10b ve P10c buna göre ilerler.
+
+`docs/domain/yetki-ve-onay.md` §2 birebir uygulanır. Belgede açık bırakılan noktalar şöyle çözüldü:
+
+**Talep ve tur:**
+- Bir belgenin tek onay talebi olur (`approval_requests` üzerinde `(document_type, document_id)` tekil). İade edilen belge için `ApprovalRequested` yeniden yayınlanınca aynı talepte yeni bir tur başlar: tur numarası artar, akış 1. adımdan başlar, olgular yenilenir, adımlar ilk gönderimdeki snapshot'tan kullanılır. Eski kararlar geçmişte tur numarasıyla kalır.
+- Akışta veya karardayken gelen tekrar `ApprovalRequested` görmezden gelinir (loglanır).
+- İptal, talebi henüz yoksa inbox'ta yeniden denenir. Böylece talebinin önüne geçen iptal de sonunda uygulanır.
+- `SkipIfAlreadyApproved` aynı turdaki onayları sayar. `Any` modunda onaylayıcılardan biri önceki adımda onay verdiyse adım atlanır. `All` modunda yalnızca onay vermemiş olanlara sorulur.
+- Talep eden onaylayıcı listesinden çıkarılır. Geriye kimse kalmazsa adım "talep eden" gerekçesiyle atlanır. Çözücü kimseyi bulamazsa önce fallback denenir, sonra talep `NeedsAttention` olur.
+- Tanım bulunmayan ve otomatik onaylanmayan talepte adım yoktur. Yönetici onaylayıcı atayamaz, talebi zorla onaylayabilir.
+
+**Eşzamanlılık:** Her değişiklik talebin `last_activity_at` alanını günceller. Böylece aynı talebe aynı anda gelen iki karardan ikincisi talebin sürümünde (`xmin`) çakışır ve 409 alır, yalnızca görev değişse bile. Geçmiş satırlarının kendi kimliği vardır, bu yüzden çakışma birincil anahtarda değil sürümde yakalanır.
+
+**Süre ve eskalasyon:**
+- `DueHours` takvim saatidir; çalışma takvimi (D33) hesaba katılmaz. İş günü bazlı süre gerekirse ayrı bir seçenek olarak eklenir.
+- `approvals.escalation` işi 15 dakikada bir çalışır. Süresi geçmiş ve henüz işlenmemiş görevi olan talepleri bulur ve her talep için ayrı komut gönderir (kural 7). Bir talepteki hata diğerlerini durdurmaz.
+- `notify` (ve eskalasyonu olmayan süreli adım): hatırlatma bir kez gönderilir.
+- `escalate-to-manager`: görev, onaylayıcının yöneticisine aynı karar süresiyle aktarılır. Yönetici HR'ın uygulayacağı `IApproverManagerLookup` ile bulunur. HR yoksa, yönetici yoksa, yönetici pasifse ya da zaten onaylayıcıysa hatırlatma gönderilir. Aktarılan görev de süresi geçince yeniden eskale olur.
+- `auto-approve` / `auto-reject`: sistem adımı onaylar ya da talebi reddeder. Geçmişte kullanıcı olmadan "overdue" gerekçesiyle görünür.
+
+**Vekalet:** Kullanıcı kendi vekaletini verir ve sonlandırır. Başka kullanıcının vekaleti 404 döner. Vekil, asılın bugün kapsanan belge türlerindeki görevlerine karar verebilir; kendi talebine karar veremez. Görev atandığında asıl ve vekilleri bildirim alır.
+
+**Bildirimler (D32):** `platform.approval_assigned` (onaylayıcı ve vekilleri), `platform.approval_needs_attention` (`platform.approvals.admin` yetkisini Tenant kapsamıyla taşıyanlar), `platform.approval_overdue` (hatırlatma). Bağlantı: `/approvals/requests/{id}`.
+
+**Yetkiler:**
+- `platform.approvals.definitions.read/manage`: akış tanımları.
+- `platform.approvals.admin`: yeniden atama, zorla onay, dikkat bekleyen talebe onaylayıcı atama.
+- Bu işlemler yalnızca Tenant kapsamıyla yapılır.
+- Görevlerim, karar ve vekaletlerim oturum açmış her kullanıcıya açıktır. P10b'de D22 listesine eklenir.
+
+**Sözleşmeler:**
+- Belge türü bildirimi (`IApprovalDocumentTypeProvider`, `ApprovalDocumentType`, `ApprovalFact`) `Merp.Application.Abstractions.Approvals` içindedir, bildirim türleri gibi. Contracts'ta yalnızca olaylar, sorgu arayüzleri ve çözücü sözleşmesi (`IApproverResolver`, `IApproverManagerLookup`) bulunur.
+- Olgu türleri: `Text`, `Number`, `Boolean`, `Date` (`yyyy-MM-dd`), `Identifier`, `TextList`.
+- `role` çözücüsü, rolü bugün geçerli bir atamayla taşıyan aktif kullanıcıları döndürür. Kapsam şöyle değerlendirilir: Tenant her belgeyi kapsar. Company belgenin şirketini kapsar. Branch ve OrgUnit, olgulardaki `branchId` / `orgUnitId` ile eşleşirse kapsar. Alt birimler izlenmez, çünkü birim ağacı HR'dadır.

@@ -14,6 +14,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     public const string Image = "postgres:18";
 
     private readonly PostgreSqlContainer _container = new PostgreSqlBuilder(Image)
+        .WithName(ContainerNames.Next("postgres"))
         .WithDatabase("postgres")
         .WithUsername("merp")
         .WithPassword("merp")

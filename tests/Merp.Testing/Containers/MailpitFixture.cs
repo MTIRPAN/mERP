@@ -13,6 +13,7 @@ public sealed class MailpitFixture : IAsyncLifetime
     private const int ApiPort = 8025;
 
     private readonly IContainer _container = new ContainerBuilder("axllent/mailpit:v1.31.1")
+        .WithName(ContainerNames.Next("mailpit"))
         .WithPortBinding(SmtpPort, assignRandomHostPort: true)
         .WithPortBinding(ApiPort, assignRandomHostPort: true)
         .WithEnvironment("MP_SMTP_AUTH_ACCEPT_ANY", "true")

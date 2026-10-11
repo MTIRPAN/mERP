@@ -1,5 +1,6 @@
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
+using Merp.Modules.Platform.Domain.Approvals;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
@@ -28,6 +29,8 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
         modelBuilder.Ignore<CustomFieldOption>();
         modelBuilder.Ignore<NotificationPreference>();
         modelBuilder.Ignore<WorkDay>();
+        modelBuilder.Ignore<ApprovalStep>();
+        modelBuilder.Ignore<ApproverRule>();
         base.OnModelCreating(modelBuilder);
     }
 
@@ -60,4 +63,10 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
 
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
+
+    public DbSet<ApprovalDefinition> ApprovalDefinitions => Set<ApprovalDefinition>();
+
+    public DbSet<ApprovalRequest> ApprovalRequests => Set<ApprovalRequest>();
+
+    public DbSet<Delegation> Delegations => Set<Delegation>();
 }
