@@ -557,6 +557,21 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
 - §2.9'daki 11 senaryo integration testiyle geçer.
 - Testlere özel bir belge türüyle akış arayüzden uçtan uca tamamlanır.
 
+**Alt PR'lar (D34):**
+- [x] **P10a domain + motor:**
+  - tanım, talep, görev, vekalet, koşul dili
+  - `user` / `role` / `fact-user` çözücüleri
+  - başlatma, karar, iade, yeniden gönderim, iptal, admin işlemleri, eskalasyon işi
+  - bildirim türleri, yetkiler, migration
+  - §2.9 senaryo 1–10 motor düzeyinde integration testiyle
+- [ ] **P10b API + olaylar:**
+  - endpoint'ler (tanım CRUD, önizleme, görevlerim, talep detayı ve zaman çizelgesi, karar, vekalet, admin)
+  - `IApprovalPreview`, `IApprovalAccess`
+  - D22 listesi
+  - seed tanımlar (§2.8)
+  - senaryo 10'un HTTP 409'u ve senaryo 11 (inbox)
+- [ ] **P10c web:** Onay Kutum, `<ApprovalTimeline />`, akış editörü, Vekaletlerim. 🔍 demo.
+
 ### [ ] P11 Ayarlar ve içe/dışa aktarma altyapısı — M
 
 **Yapılacaklar:**

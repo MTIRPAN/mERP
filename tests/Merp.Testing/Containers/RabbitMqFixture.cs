@@ -7,6 +7,7 @@ namespace Merp.Testing.Containers;
 public sealed class RabbitMqFixture : IAsyncLifetime
 {
     private readonly RabbitMqContainer _container = new RabbitMqBuilder("rabbitmq:4-management")
+        .WithName(ContainerNames.Next("rabbitmq"))
         .WithUsername("merp")
         .WithPassword("merp")
         .Build();

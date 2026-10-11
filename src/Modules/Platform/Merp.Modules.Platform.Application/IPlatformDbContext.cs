@@ -1,4 +1,5 @@
 using Merp.Application.Persistence.Files;
+using Merp.Modules.Platform.Domain.Approvals;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
@@ -52,6 +53,12 @@ public interface IPlatformDbContext
 
     /// <summary>Files of Platform records: company logos and attachments (D31).</summary>
     DbSet<StoredFile> StoredFiles { get; }
+
+    DbSet<ApprovalDefinition> ApprovalDefinitions { get; }
+
+    DbSet<ApprovalRequest> ApprovalRequests { get; }
+
+    DbSet<Delegation> Delegations { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

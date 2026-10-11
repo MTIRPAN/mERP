@@ -26,6 +26,7 @@ public sealed class SeaweedFsFixture : IAsyncLifetime
         """;
 
     private readonly IContainer _container = new ContainerBuilder("chrislusf/seaweedfs:4.47")
+        .WithName(ContainerNames.Next("seaweedfs"))
         .WithResourceMapping(Encoding.UTF8.GetBytes(IdentityConfig), ConfigPath)
         .WithCommand("server", "-s3", $"-s3.port={S3Port}", $"-s3.config={ConfigPath}", "-dir=/data", "-volume.max=10")
         .WithPortBinding(S3Port, assignRandomHostPort: true)

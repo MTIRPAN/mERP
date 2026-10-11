@@ -342,6 +342,425 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "platform");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Approvals.ApprovalDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_type");
+
+                    b.Property<string>("EntryCondition")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("entry_condition");
+
+                    b.Property<string>("Fallback")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("fallback");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer")
+                        .HasColumnName("priority");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer")
+                        .HasColumnName("revision");
+
+                    b.Property<string>("Steps")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("steps");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_approval_definitions");
+
+                    b.HasIndex("DocumentType", "CompanyId", "Priority")
+                        .HasDatabaseName("ix_approval_definitions_document_type_company_id_priority");
+
+                    b.ToTable("approval_definitions", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Approvals.ApprovalHistoryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("detail");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid?>("OnBehalfOfUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("on_behalf_of_user_id");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<int>("Round")
+                        .HasColumnType("integer")
+                        .HasColumnName("round");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence");
+
+                    b.Property<int?>("Step")
+                        .HasColumnType("integer")
+                        .HasColumnName("step");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_approval_history");
+
+                    b.HasIndex("RequestId", "Sequence")
+                        .HasDatabaseName("ix_approval_history_request_id_sequence");
+
+                    b.ToTable("approval_history", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Approvals.ApprovalRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<int?>("CurrentStep")
+                        .HasColumnType("integer")
+                        .HasColumnName("current_step");
+
+                    b.Property<Guid?>("DefinitionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("definition_id");
+
+                    b.Property<int?>("DefinitionRevision")
+                        .HasColumnType("integer")
+                        .HasColumnName("definition_revision");
+
+                    b.Property<string>("DocumentId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_id");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("document_type");
+
+                    b.Property<string>("Facts")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("facts");
+
+                    b.Property<string>("Fallback")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("fallback");
+
+                    b.Property<DateTimeOffset>("LastActivityAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_activity_at");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("link");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<Guid?>("RequesterEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requester_employee_id");
+
+                    b.Property<Guid>("RequesterUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requester_user_id");
+
+                    b.Property<int>("Round")
+                        .HasColumnType("integer")
+                        .HasColumnName("round");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Steps")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("steps");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("summary");
+
+                    b.Property<string>("TitleArgs")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("title_args");
+
+                    b.Property<string>("TitleKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title_key");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_approval_requests");
+
+                    b.HasIndex("RequesterUserId")
+                        .HasDatabaseName("ix_approval_requests_requester_user_id");
+
+                    b.HasIndex("DocumentType", "DocumentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_approval_requests_document_type_document_id");
+
+                    b.HasIndex("Status", "SubmittedAt")
+                        .HasDatabaseName("ix_approval_requests_status_submitted_at");
+
+                    b.ToTable("approval_requests", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Approvals.ApprovalTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AssigneeUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignee_user_id");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("comment");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("decided_at");
+
+                    b.Property<Guid?>("DecidedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("decided_by_user_id");
+
+                    b.Property<DateTimeOffset?>("DueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("due_at");
+
+                    b.Property<DateTimeOffset?>("EscalatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("escalated_at");
+
+                    b.Property<Guid?>("OnBehalfOfUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("on_behalf_of_user_id");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<int>("Round")
+                        .HasColumnType("integer")
+                        .HasColumnName("round");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("Step")
+                        .HasColumnType("integer")
+                        .HasColumnName("step");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_approval_tasks");
+
+                    b.HasIndex("AssigneeUserId")
+                        .HasDatabaseName("ix_approval_tasks_open")
+                        .HasFilter("status = 'Pending'");
+
+                    b.HasIndex("DueAt")
+                        .HasDatabaseName("ix_approval_tasks_due")
+                        .HasFilter("status = 'Pending' AND escalated_at IS NULL");
+
+                    b.HasIndex("RequestId")
+                        .HasDatabaseName("ix_approval_tasks_request_id");
+
+                    b.ToTable("approval_tasks", "platform");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Approvals.Delegation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("DelegateUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("delegate_user_id");
+
+                    b.Property<string>("DocumentTypes")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("document_types");
+
+                    b.Property<DateOnly>("From")
+                        .HasColumnType("date")
+                        .HasColumnName("from");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_revoked");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<Guid>("PrincipalUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("principal_user_id");
+
+                    b.Property<DateOnly>("To")
+                        .HasColumnType("date")
+                        .HasColumnName("to");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_delegations");
+
+                    b.HasIndex("DelegateUserId")
+                        .HasDatabaseName("ix_delegations_delegate_user_id");
+
+                    b.HasIndex("PrincipalUserId", "From", "To")
+                        .HasDatabaseName("ix_delegations_principal_user_id_from_to");
+
+                    b.ToTable("delegations", "platform");
+                });
+
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Branches.Branch", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1620,6 +2039,26 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                     b.ToTable("ai_usage", "platform");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Approvals.ApprovalHistoryEntry", b =>
+                {
+                    b.HasOne("Merp.Modules.Platform.Domain.Approvals.ApprovalRequest", null)
+                        .WithMany("History")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_approval_history_approval_requests_request_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Approvals.ApprovalTask", b =>
+                {
+                    b.HasOne("Merp.Modules.Platform.Domain.Approvals.ApprovalRequest", null)
+                        .WithMany("Tasks")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_approval_tasks_approval_requests_request_id");
+                });
+
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Branches.Branch", b =>
                 {
                     b.HasOne("Merp.Modules.Platform.Domain.Companies.Company", null)
@@ -1850,6 +2289,13 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_role_assignments_users_user_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Platform.Domain.Approvals.ApprovalRequest", b =>
+                {
+                    b.Navigation("History");
+
+                    b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("Merp.Modules.Platform.Domain.Calendars.HolidayCalendar", b =>

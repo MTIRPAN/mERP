@@ -29,6 +29,9 @@ public sealed class PlatformPermissionDefinitions : IPermissionDefinitionProvide
         new(PlatformPermissions.NotificationTemplates.Manage),
         new(PlatformPermissions.Calendars.Read),
         new(PlatformPermissions.Calendars.Manage),
+        new(PlatformPermissions.ApprovalDefinitions.Read),
+        new(PlatformPermissions.ApprovalDefinitions.Manage),
+        new(PlatformPermissions.Approvals.Admin),
     ];
 }
 

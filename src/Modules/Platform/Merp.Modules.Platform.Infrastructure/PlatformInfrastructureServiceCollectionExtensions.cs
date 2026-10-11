@@ -9,9 +9,11 @@ using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
+using Merp.Modules.Platform.Contracts.Approvals;
 using Merp.Modules.Platform.Contracts.Calendars;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
+using Merp.Modules.Platform.Application.Approvals;
 using Merp.Modules.Platform.Application.Calendars;
 using Merp.Modules.Platform.Application.CustomFields;
 using Merp.Modules.Platform.Application.Files;
@@ -20,6 +22,7 @@ using Merp.Modules.Platform.Application.Notifications;
 using Merp.Modules.Platform.Application.Numbering;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Infrastructure.Access;
+using Merp.Modules.Platform.Infrastructure.Approvals;
 using Merp.Modules.Platform.Infrastructure.Calendars;
 using Merp.Modules.Platform.Infrastructure.AI;
 using Merp.Modules.Platform.Infrastructure.CustomFields;
@@ -91,6 +94,16 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddSingleton(notificationSettings);
         services.AddScoped<EmailRetryJob>();
         services.AddSingleton(RecurringJobDefinition.For<EmailRetryJob>(EmailRetryJob.JobId, "* * * * *"));
+
+        // Approval engine of all modules: document types and resolvers come from the modules (docs/domain/yetki-ve-onay.md §2, D34)
+        services.AddScoped<ApprovalDocumentTypeRegistry>();
+        services.AddScoped<ApproverResolverRegistry>();
+        services.AddScoped<IApproverResolver, UserApproverResolver>();
+        services.AddScoped<IApproverResolver, RoleApproverResolver>();
+        services.AddScoped<IApproverResolver, FactUserApproverResolver>();
+        services.AddScoped<ApprovalEngine>();
+        services.AddScoped<ApprovalEscalationJob>();
+        services.AddSingleton(RecurringJobDefinition.For<ApprovalEscalationJob>(ApprovalEscalationJob.JobId, ApprovalEscalationJob.Cron));
 
         // Files of Platform records follow the records' permissions (D31)
         services.AddScoped<IFileAccessPolicy, CompanyFileAccessPolicy>();

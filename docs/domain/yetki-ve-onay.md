@@ -214,8 +214,10 @@ LeaveRequest.Submit()
 Inbox handler:
   Outcome=Approved → LeaveRequest.Approve()
   Outcome=Rejected → LeaveRequest.Reject()
-  Outcome=Returned → LeaveRequest.Return()
+ApprovalRequestReturned → LeaveRequest.Return()
 ```
+
+- **İade:** Ayrı bir olayla (`ApprovalRequestReturned`: iade eden ve açıklama) bildirilir. Modül belgeyi düzeltip `ApprovalRequested` olayını yeniden yayınlar ve aynı talepte yeni tur başlar (D34).
 
 - **Gönderim öncesi önizleme:** `IApprovalPreview.PreviewAsync(documentType, companyId, facts, requester)` (Contracts, salt-okunur) "Bu talebi kimler onaylayacak?" listesini döner. Form ekranında gösterilir.
 - **İptal:** Modül `ApprovalCancellationRequested` olayını yayınlar. Platform açık görevleri kapatır.

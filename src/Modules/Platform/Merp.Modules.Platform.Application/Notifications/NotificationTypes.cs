@@ -12,10 +12,22 @@ public sealed class PlatformNotificationTypes : INotificationTypeProvider
     /// <summary>The religious holidays of next year are not entered yet (PLAN P9, every 1 October).</summary>
     public const string HolidaysMissing = "platform.holidays_missing";
 
+    /// <summary>A request waits for the recipient's approval, as approver or delegate (§2.7).</summary>
+    public const string ApprovalAssigned = "platform.approval_assigned";
+
+    /// <summary>A request found no approver or no flow; administrators must act (§2.2, §2.4).</summary>
+    public const string ApprovalNeedsAttention = "platform.approval_needs_attention";
+
+    /// <summary>A task is past its due time (§2.5).</summary>
+    public const string ApprovalOverdue = "platform.approval_overdue";
+
     public IEnumerable<NotificationTypeDefinition> GetNotificationTypes() =>
     [
         new(Test, [NotificationChannel.InApp, NotificationChannel.Email]),
         new(HolidaysMissing, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(ApprovalAssigned, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(ApprovalNeedsAttention, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(ApprovalOverdue, [NotificationChannel.InApp, NotificationChannel.Email]),
     ];
 }
 

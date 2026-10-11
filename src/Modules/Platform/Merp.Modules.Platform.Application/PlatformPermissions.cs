@@ -78,4 +78,16 @@ public static class PlatformPermissions
         public const string Read = "platform.calendars.read";
         public const string Manage = "platform.calendars.manage";
     }
+
+    public static class ApprovalDefinitions
+    {
+        public const string Read = "platform.approvals.definitions.read";
+        public const string Manage = "platform.approvals.definitions.manage";
+    }
+
+    public static class Approvals
+    {
+        /// <summary>Reassign tasks, approve in place of approvers, handle requests that need attention (§2.6).</summary>
+        public const string Admin = "platform.approvals.admin";
+    }
 }
