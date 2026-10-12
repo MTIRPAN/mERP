@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using Merp.Application.Abstractions.Paging;
+using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Notifications;
+using Merp.Modules.Platform.Application.Settings;
 using Merp.Modules.Platform.IntegrationTests.Organization;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -67,6 +69,33 @@ public sealed class NotificationEndpointsTests(NotificationFactory factory) : IC
         // E-mails are sent right after the commit that also pushes; give a stray one time to arrive
         await Task.Delay(TimeSpan.FromSeconds(2), Ct);
         (await factory.Mailpit.MessagesToAsync(email, Ct)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task TenantWithEmailOff_GetsNotificationsOnlyInTheBell()
+    {
+        var subject = NewSubject();
+        var email = $"{subject}@acme.test";
+        var client = factory.User(subject, email);
+        var settings = factory.CreateClientFor("settings-admin", "acme", PlatformPermissions.Settings.Read, PlatformPermissions.Settings.Manage);
+        var off = new { values = new Dictionary<string, object?> { [PlatformSettingDefinitions.EmailNotificationsEnabled] = false } };
+        (await settings.PutAsJsonAsync("/api/platform/settings", off, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        try
+        {
+            await using var hub = await factory.ConnectAsync(subject, email);
+            var pushed = new TaskCompletionSource<NotificationPushed>(TaskCreationOptions.RunContinuationsAsynchronously);
+            hub.On<NotificationPushed>("notificationReceived", pushed.SetResult);
+            (await client.PostAsync($"{Url}/test", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+            await pushed.Task.WaitAsync(Wait, Ct);
+            await Task.Delay(TimeSpan.FromSeconds(2), Ct);
+            (await factory.Mailpit.MessagesToAsync(email, Ct)).ShouldBeEmpty();
+        }
+        finally
+        {
+            var back = new { values = new Dictionary<string, object?> { [PlatformSettingDefinitions.EmailNotificationsEnabled] = null } };
+            (await settings.PutAsJsonAsync("/api/platform/settings", back, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        }
     }
 
     [Fact]

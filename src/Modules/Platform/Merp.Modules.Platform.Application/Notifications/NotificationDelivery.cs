@@ -1,5 +1,7 @@
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Notifications;
+using Merp.Application.Abstractions.Settings;
+using Merp.Modules.Platform.Application.Settings;
 using Merp.Modules.Platform.Contracts.Notifications;
 using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Users;
@@ -14,8 +16,8 @@ public sealed record NotificationPushed(Guid Id, string Type);
 
 /// <summary>
 /// Delivers <see cref="NotificationRequested"/> (PLAN P8, D32): for each active recipient, a notification in the bell
-/// and an e-mail in the queue, each as their preferences allow. After the commit the open browser tabs are told at
-/// once and the e-mails are sent.
+/// and an e-mail in the queue, each as their preferences allow. E-mails go out only where the tenant or the company
+/// keeps them on (D35). After the commit the open browser tabs are told at once and the e-mails are sent.
 /// </summary>
 internal sealed class NotificationRequestedHandler(
     IPlatformDbContext db,
@@ -24,6 +26,7 @@ internal sealed class NotificationRequestedHandler(
     IRealtimeNotifier realtime,
     IAfterCommit afterCommit,
     ISender sender,
+    ISettings settings,
     TimeProvider timeProvider) : IIntegrationEventHandler<NotificationRequested>
 {
     public async Task Handle(NotificationRequested integrationEvent, CancellationToken cancellationToken)
@@ -38,6 +41,7 @@ internal sealed class NotificationRequestedHandler(
 
         var ids = integrationEvent.RecipientUserIds.Distinct().Select(UserId.From).ToList();
         var users = await db.Users.AsNoTracking().Where(u => ids.Contains(u.Id) && u.IsActive).ToListAsync(cancellationToken);
+        var emailEnabled = await settings.GetAsync<bool>(PlatformSettingDefinitions.EmailNotificationsEnabled, integrationEvent.CompanyId, cancellationToken);
 
         var pushes = new List<(string Subject, NotificationPushed Payload)>();
         var emails = new List<Guid>();
@@ -50,7 +54,7 @@ internal sealed class NotificationRequestedHandler(
                 pushes.Add((user.Subject, new NotificationPushed(notification.Id.Value, type.Type)));
             }
 
-            if (user.Email is not null && NotificationTypeRegistry.Receives(user, type, NotificationChannel.Email))
+            if (emailEnabled && user.Email is not null && NotificationTypeRegistry.Receives(user, type, NotificationChannel.Email))
             {
                 var email = await composer.ComposeAsync(type, user, integrationEvent.Args, link, integrationEvent.CompanyId, now, cancellationToken);
                 db.EmailMessages.Add(email);

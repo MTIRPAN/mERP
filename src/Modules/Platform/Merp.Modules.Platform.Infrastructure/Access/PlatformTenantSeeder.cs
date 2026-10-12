@@ -59,6 +59,13 @@ internal sealed partial class PlatformTenantSeeder(ILogger<PlatformTenantSeeder>
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        // Users keep cached permissions for an hour; a release that adds or removes permissions applies at once
+        if (added.Count > 0 || removed.Count > 0)
+        {
+            await services.GetRequiredService<IAccessCache>().InvalidateAllAsync(cancellationToken);
+        }
+
         LogSynchronized(logger, added.Count, removed.Count);
     }
 

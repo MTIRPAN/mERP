@@ -36,6 +36,7 @@ internal sealed class PlatformMenu : IMenuContributor
             new("work-schedules", "web.shell.menu.work_schedules", Path: "/system/work-schedules", Icon: "work-schedules", Permission: PlatformPermissions.Calendars.Read, Order: 80),
             new("approval-flows", "web.shell.menu.approval_flows", Path: "/system/approval-flows", Icon: "approval-flows", Permission: PlatformPermissions.ApprovalDefinitions.Read, Order: 90),
             new("approval-requests", "web.shell.menu.approval_requests", Path: "/system/approval-requests", Icon: "approval-requests", Permission: PlatformPermissions.Approvals.Admin, Order: 100),
+            new("settings", "web.shell.menu.settings", Path: "/system/settings", Icon: "settings", Permission: PlatformPermissions.Settings.Read, Order: 110),
         ]),
     ];
 }

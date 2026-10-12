@@ -589,6 +589,15 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
 - 5.000 satırlık örnek dosya 1 dakikadan kısa sürede doğrulanır.
 - Hatalar Excel raporunda hücre bazında açıklanır.
 
+**Alt PR'lar (D35):**
+- [x] **P11a ayarlar:**
+  - `ISettingDefinitionProvider` / `ISettings` (şirket → kiracı → varsayılan)
+  - Platform'da ayar profilleri, önbellek, API
+  - Sistem → Ayarlar ekranı
+  - ilk ayar: bildirim e-postaları
+- [ ] **P11b içe aktarma:** `IImportDefinition`, şablon, doğrulama ve hata raporu, batch commit, büyük dosyalar için arka plan işi.
+- [ ] **P11c dışa aktarma:** liste sorgularının Excel'e aktarımı (kolon seçimi, veri kapsamı, maskeleme).
+
 ### [ ] P12 Belge şablonları ve PDF — M
 
 Kurallar: D14.

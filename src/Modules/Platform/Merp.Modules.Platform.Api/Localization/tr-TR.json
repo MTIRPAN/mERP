@@ -634,5 +634,21 @@
   "web.approvals.timeline.reminded": "{user} kullanıcısına hatırlatma gönderildi",
   "web.approvals.timeline.force_approved": "{user}, {step} adımını onaylayıcılar yerine onayladı",
   "web.approvals.timeline.completed": "Talep onaylandı",
-  "web.approvals.timeline.completed_without_flow": "Onay akışı olmadığından talep otomatik onaylandı"
+  "web.approvals.timeline.completed_without_flow": "Onay akışı olmadığından talep otomatik onaylandı",
+  "web.shell.menu.settings": "Ayarlar",
+  "web.settings.title": "Ayarlar",
+  "web.settings.subtitle": "Modüllerin davranışını kiracı geneli veya şirket bazında ayarlayın.",
+  "web.settings.level": "Ayar seviyesi",
+  "web.settings.tenant": "Tüm şirketler (kiracı geneli)",
+  "web.settings.company_hint": "Şirket seçildiğinde yalnızca şirket bazında değiştirilebilen ayarlar gösterilir; boş bırakılanlar kiracı genelinden gelir.",
+  "web.settings.empty": "Bu seviyede değiştirilebilen ayar yok.",
+  "web.settings.inherited": "Şu an: {value}",
+  "web.settings.inherited_from_tenant": "Kiracı genelinden",
+  "web.settings.default": "Varsayılan",
+  "web.settings.reset": "Varsayılana dön",
+  "web.settings.reset_company": "Kiracı geneline dön",
+  "web.settings.saved": "Ayarlar kaydedildi.",
+  "web.settings.save": "Kaydet",
+  "web.settings.yes": "Açık",
+  "web.settings.no": "Kapalı"
 }

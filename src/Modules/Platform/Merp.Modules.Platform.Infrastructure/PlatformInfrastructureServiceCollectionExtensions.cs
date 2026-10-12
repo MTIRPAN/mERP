@@ -6,6 +6,7 @@ using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Localization;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
+using Merp.Application.Abstractions.Settings;
 using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
@@ -22,6 +23,7 @@ using Merp.Modules.Platform.Application.Localization;
 using Merp.Modules.Platform.Application.Notifications;
 using Merp.Modules.Platform.Application.Numbering;
 using Merp.Modules.Platform.Application.Organization;
+using Merp.Modules.Platform.Application.Settings;
 using Merp.Modules.Platform.Infrastructure.Access;
 using Merp.Modules.Platform.Infrastructure.Approvals;
 using Merp.Modules.Platform.Infrastructure.Calendars;
@@ -32,6 +34,7 @@ using Merp.Modules.Platform.Infrastructure.Localization;
 using Merp.Modules.Platform.Infrastructure.Notifications;
 using Merp.Modules.Platform.Infrastructure.Numbering;
 using Merp.Modules.Platform.Infrastructure.Persistence;
+using Merp.Modules.Platform.Infrastructure.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -117,6 +120,11 @@ public static class PlatformInfrastructureServiceCollectionExtensions
 
         services.AddScoped<ApprovalEscalationJob>();
         services.AddSingleton(RecurringJobDefinition.For<ApprovalEscalationJob>(ApprovalEscalationJob.JobId, ApprovalEscalationJob.Cron));
+
+        // Settings of all modules; Platform keeps the values (D35)
+        services.AddSingleton<ISettingDefinitionProvider, PlatformSettingDefinitions>();
+        services.Replace(ServiceDescriptor.Scoped<ISettings, PlatformSettings>());
+        services.AddScoped<ISettingsCache, SettingsCache>();
 
         // Files of Platform records follow the records' permissions (D31)
         services.AddScoped<IFileAccessPolicy, CompanyFileAccessPolicy>();

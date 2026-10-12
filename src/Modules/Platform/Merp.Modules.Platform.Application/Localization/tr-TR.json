@@ -301,5 +301,20 @@
   "platform.approvals.test_document.title": "Deneme talebi {number}",
   "platform.approvals.test_document.amount": "Tutar",
   "platform.approvals.test_document.category": "Kategori",
-  "platform.approvals.test_document.approver": "Belgedeki onaylayıcı"
+  "platform.approvals.test_document.approver": "Belgedeki onaylayıcı",
+  "permissions.platform.settings": "Ayarlar",
+  "permissions.platform.settings.read": "Görüntüleme",
+  "permissions.platform.settings.manage": "Değiştirme",
+  "platform.settings.errors.tenant_scope_required": "Ayarlar yalnızca tüm şirketlerde yetkisi olan kullanıcılar tarafından görülüp değiştirilebilir.",
+  "platform.settings.errors.unknown_company": "Şirket bulunamadı.",
+  "platform.settings.errors.unknown_setting": "Böyle bir ayar yok.",
+  "platform.settings.errors.not_company_setting": "Bu ayar şirket bazında değiştirilemez; yalnızca tüm şirketler için ayarlanır.",
+  "platform.settings.errors.invalid_value": "Değer bu ayarın türüne uymuyor.",
+  "platform.settings.errors.out_of_range": "Değer {min} ile {max} arasında olmalıdır.",
+  "platform.settings.errors.too_long": "En fazla {maxLength} karakter girilebilir.",
+  "platform.settings.notifications.email_enabled": "Bildirimleri e-postayla da gönder",
+  "platform.settings.notifications.email_enabled_hint": "Kapalıyken bildirimler yalnızca uygulamadaki zile düşer; kullanıcıların e-posta tercihleri uygulanmaz.",
+  "platform.entities.SettingsProfile": "Ayarlar",
+  "platform.entities.SettingsProfile.CompanyId": "Şirket",
+  "platform.entities.SettingsProfile.Values": "Değerler"
 }
