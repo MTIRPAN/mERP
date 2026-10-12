@@ -20,4 +20,7 @@ export const platformPermissions = {
   customFieldsManage: 'platform.custom_fields.manage',
   calendarsRead: 'platform.calendars.read',
   calendarsManage: 'platform.calendars.manage',
+  approvalDefinitionsRead: 'platform.approvals.definitions.read',
+  approvalDefinitionsManage: 'platform.approvals.definitions.manage',
+  approvalsAdmin: 'platform.approvals.admin',
 } as const;

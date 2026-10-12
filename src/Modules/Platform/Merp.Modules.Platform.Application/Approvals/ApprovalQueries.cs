@@ -241,7 +241,8 @@ public sealed record GetMyDelegationsQuery : IQuery<IReadOnlyList<DelegationItem
 public sealed record ApprovalUserOption(Guid Id, string Name);
 
 /// <summary>Active users matching a search, at most 20, to pick a delegate or an approver.</summary>
-public sealed record SearchApprovalUsersQuery(string? Search) : IQuery<IReadOnlyList<ApprovalUserOption>>;
+/// <remarks>Ids adds the named users (active or not), so a picker can show the names of what is already chosen.</remarks>
+public sealed record SearchApprovalUsersQuery(string? Search, IReadOnlyList<Guid>? Ids = null) : IQuery<IReadOnlyList<ApprovalUserOption>>;
 
 internal static class ApprovalNames
 {
@@ -779,6 +780,14 @@ internal sealed class SearchApprovalUsersQueryHandler(IPlatformDbContext db)
         }
 
         var found = await users.OrderBy(u => u.FirstName).ThenBy(u => u.LastName).ThenBy(u => u.UserName).Take(Limit).ToListAsync(cancellationToken);
+        var named = (request.Ids ?? []).Take(Limit).Select(UserId.From).ToList();
+        if (named.Count > 0)
+        {
+            var known = found.Select(u => u.Id).ToHashSet();
+            var others = await db.Users.AsNoTracking().Where(u => named.Contains(u.Id)).ToListAsync(cancellationToken);
+            found.AddRange(others.Where(u => !known.Contains(u.Id)));
+        }
+
         return found.Select(u => new ApprovalUserOption(u.Id.Value, u.DisplayName)).ToList();
     }
 }

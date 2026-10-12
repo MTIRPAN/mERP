@@ -32,6 +32,17 @@ const NumberingPage = page(() => import('@/modules/platform/numbering/NumberingP
 const CustomFieldsPage = page(() => import('@/modules/platform/customFields/CustomFieldsPage'), 'CustomFieldsPage');
 const HolidaysPage = page(() => import('@/modules/platform/calendars/HolidaysPage'), 'HolidaysPage');
 const WorkSchedulesPage = page(() => import('@/modules/platform/calendars/WorkSchedulesPage'), 'WorkSchedulesPage');
+const ApprovalInboxPage = page(() => import('@/modules/platform/approvals/ApprovalInboxPage'), 'ApprovalInboxPage');
+const ApprovalRequestPage = page(
+  () => import('@/modules/platform/approvals/ApprovalRequestPage'),
+  'ApprovalRequestPage',
+);
+const DelegationsPage = page(() => import('@/modules/platform/approvals/DelegationsPage'), 'DelegationsPage');
+const ApprovalFlowsPage = page(() => import('@/modules/platform/approvals/ApprovalFlowsPage'), 'ApprovalFlowsPage');
+const ApprovalRequestsPage = page(
+  () => import('@/modules/platform/approvals/ApprovalRequestsPage'),
+  'ApprovalRequestsPage',
+);
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -96,6 +107,25 @@ export const AppRoutes = () => (
         />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="approvals" element={<ApprovalInboxPage />} />
+        <Route path="approvals/requests/:id" element={<ApprovalRequestPage />} />
+        <Route path="approvals/delegations" element={<DelegationsPage />} />
+        <Route
+          path="system/approval-flows"
+          element={
+            <RequirePermission permission={platformPermissions.approvalDefinitionsRead}>
+              <ApprovalFlowsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/approval-requests"
+          element={
+            <RequirePermission permission={platformPermissions.approvalsAdmin}>
+              <ApprovalRequestsPage />
+            </RequirePermission>
+          }
+        />
         <Route
           path="system/info"
           element={

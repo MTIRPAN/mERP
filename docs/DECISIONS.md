@@ -631,7 +631,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 
 ## D34 — Onay motorunun uygulanması
 
-**Durum:** Öneri (kullanıcı onayı bekleniyor). PLAN P10a ile uygulandı; P10b ve P10c buna göre ilerler.
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-12). PLAN P10a ile uygulandı; P10b ve P10c buna göre ilerler.
 
 `docs/domain/yetki-ve-onay.md` §2 birebir uygulanır. Belgede açık bırakılan noktalar şöyle çözüldü:
 
@@ -667,10 +667,16 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Olgu türleri: `Text`, `Number`, `Boolean`, `Date` (`yyyy-MM-dd`), `Identifier`, `TextList`.
 - `role` çözücüsü, rolü bugün geçerli bir atamayla taşıyan aktif kullanıcıları döndürür. Kapsam şöyle değerlendirilir: Tenant her belgeyi kapsar. Company belgenin şirketini kapsar. Branch ve OrgUnit, olgulardaki `branchId` / `orgUnitId` ile eşleşirse kapsar. Alt birimler izlenmez, çünkü birim ağacı HR'dadır.
 
-**P10b ile eklenenler (öneri):**
+**P10b ile eklenenler:**
 - **Varsayılan akışlar (§2.8):** Belge türü, varsayılan akışını `ApprovalDocumentType.DefaultFlow` ile bildirir. `ApprovalDefinitionSeeder` her kiracıda, o türde hiç tanım yoksa (aktif ya da pasif) bunu genel tanım olarak ekler. Kiracının sonraki değişikliklerine dokunmaz. `role` adımı sistem rolünü koduyla anar (`roleCode`, ör. `hr-specialist`); seeder kiracının rol kimliğini yazar. Ad ve adım adları tr-TR metinlerinden alınır. §2.8'deki tanımlar, belge türleri HR ve Recruitment'ta tanımlanınca o görevlerle gelir (PLAN L ve R görevleri).
 - **Zaman çizelgesi erişimi:** Talep eden, onaylayıcılar (geçmiş ya da bekleyen), açık görevin bugünkü vekili ve `platform.approvals.admin` (Tenant) talebi görür. Bunlara ek olarak belgenin modülü, `IApprovalDocumentAccessPolicy` (`Merp.Application.Abstractions.Approvals`) ile belgeyi kendi yetkisi ve veri kapsamıyla görenlere izin verir. Bu, dosyalardaki `IFileAccessPolicy` (D31) ile aynı kalıptır. Diğerleri 404 alır.
 - **`IApprovalAccess.HasTaskAsync`** (Contracts): yetki modelindeki görev bazlı erişim (§1 madde 5) içindir. Görevin onaylayıcısı ya da kararı veren kişi (geçmiş görev dahil) ve açık görevin bugünkü vekili belgeyi görebilir.
 - **`IApprovalPreview`** (Contracts) ve `POST /approvals/preview`: Seçilecek akışı ve adımların onaylayıcılarını bugünkü atamalarla döndürür, hiçbir şey kaydetmez. Önizlemede `Any` modunda kimin onaylayacağı bilinmez. Bu yüzden "önceden onay verdi" kuralı yalnızca tek onaylayıcılı adımlar ve `All` adımları için uygulanır.
 - **Görevlerim:** Kullanıcının ve bugün vekili olduğu kişilerin açık görevleri listelenir, vekilin kendi talepleri hariç tutulur. Kişi başına açık görev az olduğu için vekalet kapsamı bellekte süzülür. Sıralama: süresi olanlar süreye göre, sonra en eskiler.
 - **Kullanıcı seçimi:** `GET /approvals/users?search=` vekil ve onaylayıcı seçiminde kullanılır. Oturum açmış herkese açıktır ve aktif kullanıcıların yalnızca kimliğini ve adını döndürür (en fazla 20).
+
+**P10c ile eklenenler:**
+- **Deneme talebi:** `Platform:Approvals:EnableTestDocuments` açıkken (geliştirmede açık) `platform.approval-test` belge türü kaydedilir. Bu türün alanları: tutar, kategori, belgedeki onaylayıcı. Akış yöneticisi `POST /approvals/test-documents` (`platform.approvals.definitions.manage`) ile, akış ekranından deneme belgesi gönderir. Belge bir modülün belgesi gibi outbox üzerinden `ApprovalRequested` ile gider; PLAN P10'un uçtan uca kabul kriteri bununla sağlanır. Kapalıyken endpoint 404 döner.
+- **Menü:** "Onaylar" grubu (Onay Kutum, Vekaletlerim) her oturum açmış kullanıcıya görünür. Onay akışları ve onay talepleri Sistem menüsündedir ve yetkiye bağlıdır.
+- **Canlı güncelleme:** Bir `platform.approval_*` bildirimi geldiğinde Onay Kutum ve rozet yeniden yüklenir (D32 SignalR).
+- **Sessiz sorgular:** Kendi boş/yok durumunu gösteren sorgular (`meta.silent`), örneğin hiç gönderilmemiş belgenin zaman çizelgesi, genel hata bildirimini göstermez.

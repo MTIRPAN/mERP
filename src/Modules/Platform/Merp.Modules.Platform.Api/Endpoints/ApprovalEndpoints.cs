@@ -151,6 +151,14 @@ internal static class ApprovalEndpoints
             .WithSummary("End one of the caller's delegations")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        approvals.MapPost("/test-documents", SubmitTestDocumentAsync)
+            .RequirePermission(PlatformPermissions.ApprovalDefinitions.Manage)
+            .WithName("SubmitTestApprovalDocument")
+            .WithSummary("Send a test document through the flows (only where test documents are enabled)")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         approvals.MapGet("/users", SearchUsersAsync)
             .RequireAuthenticatedUser()
             .WithName("SearchApprovalUsers")
@@ -282,9 +290,19 @@ internal static class ApprovalEndpoints
 
     private static async Task<Results<Ok<IReadOnlyList<ApprovalUserOption>>, ProblemHttpResult>> SearchUsersAsync(
         string? search,
+        Guid[]? ids,
         ISender sender,
         CancellationToken cancellationToken) =>
-        Respond(await sender.Send(new SearchApprovalUsersQuery(search), cancellationToken));
+        Respond(await sender.Send(new SearchApprovalUsersQuery(search, ids), cancellationToken));
+
+    private static async Task<Results<Ok<TestApprovalDocumentResponse>, ProblemHttpResult>> SubmitTestDocumentAsync(
+        SubmitTestApprovalCommand command,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(new TestApprovalDocumentResponse(result.Value)) : (ProblemHttpResult)result.Error.ToProblem();
+    }
 
     private static Results<Ok<T>, ProblemHttpResult> Respond<T>(Result<T> result) =>
         result.IsSuccess ? TypedResults.Ok(result.Value) : (ProblemHttpResult)result.Error.ToProblem();
@@ -292,3 +310,6 @@ internal static class ApprovalEndpoints
     private static Results<NoContent, ProblemHttpResult> NoContentOrProblem(Result result) =>
         result.IsSuccess ? TypedResults.NoContent() : (ProblemHttpResult)result.Error.ToProblem();
 }
+
+/// <summary>Id of the test document sent for approval.</summary>
+public sealed record TestApprovalDocumentResponse(string DocumentId);

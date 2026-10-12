@@ -59,6 +59,7 @@ public sealed class ApprovalFactory(PostgresFixture postgres) : MerpWebApplicati
     protected override IReadOnlyDictionary<string, string?> Settings => new Dictionary<string, string?>
     {
         [$"Platform:Bootstrap:Users:{Root}:0"] = "system-admin",
+        ["Platform:Approvals:EnableTestDocuments"] = "true",
     };
 
     public override async ValueTask InitializeAsync()

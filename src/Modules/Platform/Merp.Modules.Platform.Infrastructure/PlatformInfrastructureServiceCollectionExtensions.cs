@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.Approvals;
 using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Files;
 using Merp.Application.Abstractions.Jobs;
@@ -106,6 +107,14 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddScoped<IApprovalPreview, ApprovalPreviewService>();
         services.AddScoped<IApprovalAccess, ApprovalAccess>();
         services.AddSingleton<ITenantDataSeeder, ApprovalDefinitionSeeder>();
+        var approvalSettings = new ApprovalSettings();
+        configuration?.GetSection(ApprovalSettings.SectionName).Bind(approvalSettings);
+        services.AddSingleton(approvalSettings);
+        if (approvalSettings.EnableTestDocuments)
+        {
+            services.AddSingleton<IApprovalDocumentTypeProvider, ApprovalTestDocumentTypes>();
+        }
+
         services.AddScoped<ApprovalEscalationJob>();
         services.AddSingleton(RecurringJobDefinition.For<ApprovalEscalationJob>(ApprovalEscalationJob.JobId, ApprovalEscalationJob.Cron));
 

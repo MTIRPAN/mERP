@@ -3,6 +3,11 @@ import {
   AppstoreOutlined,
   CalendarOutlined,
   BankOutlined,
+  AuditOutlined,
+  CheckSquareOutlined,
+  InboxOutlined,
+  NodeIndexOutlined,
+  UserSwitchOutlined,
   FieldNumberOutlined,
   FieldTimeOutlined,
   FormOutlined,
@@ -43,6 +48,11 @@ const icons: Record<string, ReactNode> = {
   'custom-fields': <FormOutlined />,
   holidays: <CalendarOutlined />,
   'work-schedules': <FieldTimeOutlined />,
+  approvals: <CheckSquareOutlined />,
+  'approval-inbox': <InboxOutlined />,
+  delegations: <UserSwitchOutlined />,
+  'approval-flows': <NodeIndexOutlined />,
+  'approval-requests': <AuditOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;

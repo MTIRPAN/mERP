@@ -8,6 +8,11 @@ internal sealed class PlatformMenu : IMenuContributor
     public IEnumerable<MenuItem> GetMenuItems() =>
     [
         new("home", "web.shell.menu.home", Path: "/", Icon: "home", Order: 0),
+        new("approvals", "web.shell.menu.approvals", Icon: "approvals", Order: 10, Children:
+        [
+            new("approval-inbox", "web.shell.menu.approval_inbox", Path: "/approvals", Icon: "approval-inbox"),
+            new("delegations", "web.shell.menu.delegations", Path: "/approvals/delegations", Icon: "delegations", Order: 10),
+        ]),
         new("organization", "web.shell.menu.organization", Icon: "organization", Order: 800, Children:
         [
             new("companies", "web.shell.menu.companies", Path: "/organization/companies", Icon: "company", Permission: PlatformPermissions.Companies.Read),
@@ -29,6 +34,8 @@ internal sealed class PlatformMenu : IMenuContributor
             new("custom-fields", "web.shell.menu.custom_fields", Path: "/system/custom-fields", Icon: "custom-fields", Permission: PlatformPermissions.CustomFields.Read, Order: 60),
             new("holidays", "web.shell.menu.holidays", Path: "/system/holidays", Icon: "holidays", Permission: PlatformPermissions.Calendars.Read, Order: 70),
             new("work-schedules", "web.shell.menu.work_schedules", Path: "/system/work-schedules", Icon: "work-schedules", Permission: PlatformPermissions.Calendars.Read, Order: 80),
+            new("approval-flows", "web.shell.menu.approval_flows", Path: "/system/approval-flows", Icon: "approval-flows", Permission: PlatformPermissions.ApprovalDefinitions.Read, Order: 90),
+            new("approval-requests", "web.shell.menu.approval_requests", Path: "/system/approval-requests", Icon: "approval-requests", Permission: PlatformPermissions.Approvals.Admin, Order: 100),
         ]),
     ];
 }

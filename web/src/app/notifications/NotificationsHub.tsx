@@ -2,7 +2,9 @@ import type { HubConnection } from '@microsoft/signalr';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import {
+  getCountMyApprovalTasksQueryKey,
   getCountMyUnreadNotificationsQueryKey,
+  getListMyApprovalTasksQueryKey,
   getListMyNotificationsQueryKey,
 } from '@/shared/api/generated/endpoints/platform/platform';
 import { createNotificationsConnection } from './notificationsConnection';
@@ -16,9 +18,14 @@ export const NotificationsHub = ({ connect = createNotificationsConnection }: { 
 
   useEffect(() => {
     const connection = connect();
-    connection.on('notificationReceived', () => {
+    connection.on('notificationReceived', (payload?: { type?: string }) => {
       void queryClient.invalidateQueries({ queryKey: getCountMyUnreadNotificationsQueryKey() });
       void queryClient.invalidateQueries({ queryKey: getListMyNotificationsQueryKey() });
+      // Approval notifications mean the caller's tasks changed (D34)
+      if (payload?.type?.startsWith('platform.approval_')) {
+        void queryClient.invalidateQueries({ queryKey: getCountMyApprovalTasksQueryKey() });
+        void queryClient.invalidateQueries({ queryKey: [getListMyApprovalTasksQueryKey()[0]] });
+      }
     });
     // A failed start only means no live updates; the bell falls back to refetching
     connection.start().catch(() => undefined);
