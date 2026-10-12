@@ -36,5 +36,6 @@ public sealed class PlatformModule : IModule
         group.MapFileEndpoints();
         group.MapNotificationEndpoints();
         group.MapCalendarEndpoints();
+        group.MapApprovalEndpoints();
     }
 }

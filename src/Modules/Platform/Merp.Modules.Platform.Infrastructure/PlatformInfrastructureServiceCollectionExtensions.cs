@@ -102,6 +102,10 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddScoped<IApproverResolver, RoleApproverResolver>();
         services.AddScoped<IApproverResolver, FactUserApproverResolver>();
         services.AddScoped<ApprovalEngine>();
+        services.AddScoped<ApprovalRequestReader>();
+        services.AddScoped<IApprovalPreview, ApprovalPreviewService>();
+        services.AddScoped<IApprovalAccess, ApprovalAccess>();
+        services.AddSingleton<ITenantDataSeeder, ApprovalDefinitionSeeder>();
         services.AddScoped<ApprovalEscalationJob>();
         services.AddSingleton(RecurringJobDefinition.For<ApprovalEscalationJob>(ApprovalEscalationJob.JobId, ApprovalEscalationJob.Cron));
 

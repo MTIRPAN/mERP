@@ -219,7 +219,10 @@ public sealed partial class ApprovalEngine(
     /// the step at once, in All mode only those who did not approve yet are asked. Empty without a reason: nobody
     /// was found.
     /// </summary>
-    internal static (IReadOnlyList<Guid> Approvers, string? Skip) Choose(ApprovalRequest request, ApprovalStep step, IReadOnlyList<Guid> resolved)
+    internal static (IReadOnlyList<Guid> Approvers, string? Skip) Choose(ApprovalRequest request, ApprovalStep step, IReadOnlyList<Guid> resolved) =>
+        Choose(request.RequesterUserId, request.ApprovedInRound(), step, resolved);
+
+    internal static (IReadOnlyList<Guid> Approvers, string? Skip) Choose(Guid requester, IReadOnlySet<Guid> approved, ApprovalStep step, IReadOnlyList<Guid> resolved)
     {
         if (resolved.Count == 0)
         {
@@ -229,7 +232,7 @@ public sealed partial class ApprovalEngine(
         var approvers = resolved.Distinct().ToList();
         if (step.SkipIfApproverIsRequester)
         {
-            approvers.Remove(request.RequesterUserId);
+            approvers.Remove(requester);
             if (approvers.Count == 0)
             {
                 return ([], Reasons.Requester);
@@ -238,7 +241,6 @@ public sealed partial class ApprovalEngine(
 
         if (step.SkipIfAlreadyApproved)
         {
-            var approved = request.ApprovedInRound();
             if (step.Mode == ApprovalMode.Any && approvers.Exists(approved.Contains))
             {
                 return ([], Reasons.AlreadyApproved);
@@ -254,6 +256,62 @@ public sealed partial class ApprovalEngine(
         return (approvers, null);
     }
 
+    /// <summary>
+    /// The steps a document would go through now, with their approvers (§2.7 preview). Nothing is saved. Who
+    /// approves a step of several approvers in Any mode is not known yet, so only a step's single approver, or every
+    /// approver of an All step, counts as having approved for <see cref="ApprovalStep.SkipIfAlreadyApproved"/>.
+    /// </summary>
+    public async Task<ApprovalPreviewPlan> PreviewAsync(ApprovalDocumentType type, ApproverResolutionContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+        ArgumentNullException.ThrowIfNull(context);
+        var definition = await SelectDefinitionAsync(type, context.CompanyId, context.Facts, cancellationToken);
+        if (definition is null)
+        {
+            return new ApprovalPreviewPlan(null, []);
+        }
+
+        var approved = new HashSet<Guid>();
+        var steps = new List<ApprovalPreviewPlanStep>();
+        for (var index = 0; index < definition.Steps.Count; index++)
+        {
+            var step = definition.Steps[index];
+            var condition = ApprovalConditions.Parse(step.Condition, type.Facts, "condition");
+            if (condition.IsFailure)
+            {
+                steps.Add(new ApprovalPreviewPlanStep(index, step, [], null, NeedsAttention: true));
+                break;
+            }
+
+            if (!ApprovalConditions.Evaluate(condition.Value, context.Facts))
+            {
+                steps.Add(new ApprovalPreviewPlanStep(index, step, [], Reasons.Condition, NeedsAttention: false));
+                continue;
+            }
+
+            var (approvers, skip) = Choose(context.RequesterUserId, approved, step, await ResolveAsync(step.Approver, context, cancellationToken));
+            if (skip is null && approvers.Count == 0 && definition.Fallback is { } fallback)
+            {
+                approvers = [.. (await ResolveAsync(fallback, context, cancellationToken))
+                    .Where(user => !step.SkipIfApproverIsRequester || user != context.RequesterUserId)];
+            }
+
+            var needsAttention = skip is null && approvers.Count == 0;
+            steps.Add(new ApprovalPreviewPlanStep(index, step, approvers, skip, needsAttention));
+            if (needsAttention)
+            {
+                break;
+            }
+
+            if (approvers.Count == 1 || step.Mode == ApprovalMode.All)
+            {
+                approved.UnionWith(approvers);
+            }
+        }
+
+        return new ApprovalPreviewPlan(definition, steps);
+    }
+
     private async Task NeedAttentionAsync(ApprovalRequest request, int? step, string reason, DateTimeOffset now, CancellationToken cancellationToken)
     {
         request.NeedAttention(step, reason, now);
@@ -267,3 +325,8 @@ public sealed partial class ApprovalEngine(
     [LoggerMessage(Level = LogLevel.Warning, Message = "Approver resolver {Resolver} used by {DocumentType} is not registered")]
     private static partial void LogUnknownResolver(ILogger logger, string resolver, string documentType);
 }
+
+/// <summary>The flow a document would get (null: none matches) and what each step would do.</summary>
+public sealed record ApprovalPreviewPlan(ApprovalDefinition? Definition, IReadOnlyList<ApprovalPreviewPlanStep> Steps);
+
+public sealed record ApprovalPreviewPlanStep(int Index, ApprovalStep Step, IReadOnlyList<Guid> Approvers, string? SkipReason, bool NeedsAttention);

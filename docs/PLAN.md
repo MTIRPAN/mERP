@@ -564,11 +564,11 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
   - başlatma, karar, iade, yeniden gönderim, iptal, admin işlemleri, eskalasyon işi
   - bildirim türleri, yetkiler, migration
   - §2.9 senaryo 1–10 motor düzeyinde integration testiyle
-- [ ] **P10b API + olaylar:**
+- [x] **P10b API + olaylar:**
   - endpoint'ler (tanım CRUD, önizleme, görevlerim, talep detayı ve zaman çizelgesi, karar, vekalet, admin)
-  - `IApprovalPreview`, `IApprovalAccess`
+  - `IApprovalPreview`, `IApprovalAccess`, modüllerin zaman çizelgesi erişimi için `IApprovalDocumentAccessPolicy`
   - D22 listesi
-  - seed tanımlar (§2.8)
+  - varsayılan akış seed altyapısı (`DefaultFlow`); §2.8 tanımları belge türleriyle HR ve Recruitment görevlerinde gelir
   - senaryo 10'un HTTP 409'u ve senaryo 11 (inbox)
 - [ ] **P10c web:** Onay Kutum, `<ApprovalTimeline />`, akış editörü, Vekaletlerim. 🔍 demo.
 
