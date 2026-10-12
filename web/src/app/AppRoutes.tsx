@@ -43,6 +43,7 @@ const ApprovalRequestsPage = page(
   () => import('@/modules/platform/approvals/ApprovalRequestsPage'),
   'ApprovalRequestsPage',
 );
+const SettingsPage = page(() => import('@/modules/platform/settings/SettingsPage'), 'SettingsPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -115,6 +116,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={platformPermissions.approvalDefinitionsRead}>
               <ApprovalFlowsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/settings"
+          element={
+            <RequirePermission permission={platformPermissions.settingsRead}>
+              <SettingsPage />
             </RequirePermission>
           }
         />

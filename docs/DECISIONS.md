@@ -680,3 +680,29 @@ Seçilen kültür `Content-Language` başlığında döner.
 - **Menü:** "Onaylar" grubu (Onay Kutum, Vekaletlerim) her oturum açmış kullanıcıya görünür. Onay akışları ve onay talepleri Sistem menüsündedir ve yetkiye bağlıdır.
 - **Canlı güncelleme:** Bir `platform.approval_*` bildirimi geldiğinde Onay Kutum ve rozet yeniden yüklenir (D32 SignalR).
 - **Sessiz sorgular:** Kendi boş/yok durumunu gösteren sorgular (`meta.silent`), örneğin hiç gönderilmemiş belgenin zaman çizelgesi, genel hata bildirimini göstermez.
+
+## D35 — Ayarlar, içe ve dışa aktarma altyapısı
+
+**Durum:** Öneri (kullanıcı onayı bekleniyor). PLAN P11 ile uygulanır.
+
+**Bölünme:** P11 üç PR'a ayrılır: P11a ayarlar, P11b içe aktarma, P11c dışa aktarma.
+
+**Ayarlar (P11a):**
+- **Tanımlar:** Modüller ayarlarını `ISettingDefinitionProvider` ile kodda tanımlar (`Merp.Application.Abstractions.Settings`), yetkiler gibi. Bir tanım şunları içerir:
+  - anahtar (`{modül}.{grup}.{ad}`)
+  - tip: `Boolean`, `Number` (tam sayı seçeneği, en az ve en çok), `Text` (en fazla uzunluk), `Choice` (seçenekler ve etiketleri)
+  - varsayılan değer
+  - ad ve açıklama anahtarları
+  - şirket bazında değiştirilebilir mi
+- **Değerler:** Değerler Platform'da `settings_profiles` tablosunda tutulur: kiracı için bir profil, şirket başına bir profil, değerler jsonb. Bir profil bir aggregate'tir. Böylece ekrandan birden çok ayarı kaydeden komut tek aggregate değiştirir (kural 7), ve değişiklik audit'e girer.
+- **Okuma:** Modüller ayarı `ISettings.GetAsync<T>(anahtar, şirket)` ile okur. Sıra şöyledir: şirketin değeri, yoksa kiracının değeri, yoksa varsayılan.
+  - Platform tüm profilleri kiracı başına bir önbellek kaydında tutar. Kayıttan sonra önbellek temizlenir.
+  - Platform yoksa varsayılanlar döner (D29 ve D30'daki gibi).
+- **Doğrulama:** Kaydederken tip, seçenek, sınırlar ve şirket bazında değiştirilebilirlik kontrol edilir. Bilinmeyen anahtar reddedilir. Boş gönderilen değer kaldırılır, ayar üst seviyeden gelir.
+- **Yetki ve ekran:**
+  - `platform.settings.read/manage`, yalnızca Tenant kapsamıyla (numaralandırma ve takvimlerdeki gibi).
+  - Ekran Sistem → Ayarlar. Ayarlar modüllere göre gruplanır.
+  - Kiracı geneli ya da şirket seçilir. Şirket görünümünde sadece şirket bazında değiştirilebilen ayarlar ve devralınan değer gösterilir.
+- **İlk kullanım:** A14 ile yapay zeka özellikleri ve aylık bütçe ayarlara taşınır. Yurt dışına aktarım dayanağı ve kanıtı hukuki kayıt olduğu için yapılandırmada kalır (D24).
+
+**İçe aktarma (P11b) ve dışa aktarma (P11c):** Ayrıntılar kendi PR'larıyla bu karara eklenecek.

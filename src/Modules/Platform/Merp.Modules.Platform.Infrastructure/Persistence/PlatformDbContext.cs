@@ -10,6 +10,7 @@ using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Numbering;
 using Merp.Modules.Platform.Domain.Locations;
 using Merp.Modules.Platform.Domain.Roles;
+using Merp.Modules.Platform.Domain.Settings;
 using Merp.Modules.Platform.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -69,4 +70,6 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<ApprovalRequest> ApprovalRequests => Set<ApprovalRequest>();
 
     public DbSet<Delegation> Delegations => Set<Delegation>();
+
+    public DbSet<SettingsProfile> SettingsProfiles => Set<SettingsProfile>();
 }

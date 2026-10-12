@@ -9,6 +9,7 @@ using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Numbering;
 using Merp.Modules.Platform.Domain.Locations;
 using Merp.Modules.Platform.Domain.Roles;
+using Merp.Modules.Platform.Domain.Settings;
 using Merp.Modules.Platform.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -59,6 +60,8 @@ public interface IPlatformDbContext
     DbSet<ApprovalRequest> ApprovalRequests { get; }
 
     DbSet<Delegation> Delegations { get; }
+
+    DbSet<SettingsProfile> SettingsProfiles { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

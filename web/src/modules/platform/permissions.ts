@@ -23,4 +23,6 @@ export const platformPermissions = {
   approvalDefinitionsRead: 'platform.approvals.definitions.read',
   approvalDefinitionsManage: 'platform.approvals.definitions.manage',
   approvalsAdmin: 'platform.approvals.admin',
+  settingsRead: 'platform.settings.read',
+  settingsManage: 'platform.settings.manage',
 } as const;

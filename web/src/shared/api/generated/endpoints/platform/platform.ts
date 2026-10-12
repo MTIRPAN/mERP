@@ -64,6 +64,7 @@ import type {
   GetApprovalTimelineParams,
   GetCustomFieldFormParams,
   GetLocalizationBundle200,
+  GetSettingsParams,
   HolidayCalendarItem,
   HolidayYear,
   HttpValidationProblemDetails,
@@ -109,6 +110,7 @@ import type {
   SetCompanyLogoBody,
   SetTextCommand,
   SetUserActiveCommand,
+  SettingModuleGroup,
   SubmitTestApprovalCommand,
   SystemInfoResponse,
   TestApprovalDocumentResponse,
@@ -124,6 +126,7 @@ import type {
   UpdateNotificationTemplateCommand,
   UpdateNumberSequenceCommand,
   UpdateRoleCommand,
+  UpdateSettingsCommand,
   UpdateWorkScheduleCommand,
   UploadAttachmentBody,
   UserDetails,
@@ -2341,6 +2344,222 @@ export function useListNotificationTypes<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getGetSettingsUrl = (params?: GetSettingsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/platform/settings?${stringifiedParams}` : `/api/platform/settings`;
+};
+
+/**
+ * Requires permission: platform.settings.read.
+ * @summary Settings of all modules with their values for the tenant or a company
+ */
+export const getSettings = async (
+  params?: GetSettingsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<SettingModuleGroup[]> => {
+  return customFetch<SettingModuleGroup[]>(getGetSettingsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetSettingsQueryKey = (params?: GetSettingsParams) => {
+  return [`/api/platform/settings`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetSettingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSettings>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: GetSettingsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetSettingsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettings>>> = ({ signal }) =>
+    getSettings(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSettings>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getSettings>>>;
+export type GetSettingsQueryError = ErrorType<ProblemDetails>;
+
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<ProblemDetails>>(
+  params: undefined | GetSettingsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<ProblemDetails>>(
+  params?: GetSettingsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSettings>>,
+          TError,
+          Awaited<ReturnType<typeof getSettings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<ProblemDetails>>(
+  params?: GetSettingsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Settings of all modules with their values for the tenant or a company
+ */
+
+export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<ProblemDetails>>(
+  params?: GetSettingsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getSettings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetSettingsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateSettingsUrl = () => {
+  return `/api/platform/settings`;
+};
+
+/**
+ * Requires permission: platform.settings.manage.
+ * @summary Save setting values for the tenant or a company; null falls back to the level above
+ */
+export const updateSettings = async (
+  updateSettingsCommand: UpdateSettingsCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateSettingsUrl(), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateSettingsCommand),
+  });
+};
+
+export const getUpdateSettingsMutationKey = () => ['updateSettings'] as const;
+
+export const getUpdateSettingsMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSettings>>,
+    TError,
+    UpdateSettingsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateSettings>>,
+  TError,
+  UpdateSettingsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateSettingsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSettings>>, UpdateSettingsMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return updateSettings(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof updateSettings>>>;
+export type UpdateSettingsMutationBody = UpdateSettingsCommand;
+export type UpdateSettingsMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateSettingsMutationVariables = { data: UpdateSettingsCommand };
+
+/**
+ * @summary Save setting values for the tenant or a company; null falls back to the level above
+ */
+export const useUpdateSettings = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateSettings>>,
+      TError,
+      UpdateSettingsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof updateSettings>>, TError, UpdateSettingsMutationVariables, TContext> => {
+  return useMutation(getUpdateSettingsMutationOptions(options), queryClient);
+};
 export const getListCulturesUrl = () => {
   return `/api/platform/localization/cultures`;
 };

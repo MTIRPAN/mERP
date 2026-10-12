@@ -90,4 +90,10 @@ public static class PlatformPermissions
         /// <summary>Reassign tasks, approve in place of approvers, handle requests that need attention (§2.6).</summary>
         public const string Admin = "platform.approvals.admin";
     }
+
+    public static class Settings
+    {
+        public const string Read = "platform.settings.read";
+        public const string Manage = "platform.settings.manage";
+    }
 }
