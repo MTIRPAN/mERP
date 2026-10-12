@@ -1,10 +1,13 @@
-using Merp.Application.Abstractions.Approvals;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Merp.Application.Abstractions.Approvals;
 using Merp.Application.Abstractions.Messaging;
+using Merp.Infrastructure.Messaging.Integration;
 using Merp.Infrastructure.MultiTenancy;
+using Merp.Infrastructure.Persistence;
+using Merp.Infrastructure.Persistence.Outbox;
 using Merp.Infrastructure.Security;
 using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application.Approvals;
@@ -38,6 +41,9 @@ public sealed class ApprovalFactory(PostgresFixture postgres) : MerpWebApplicati
 
     /// <summary>No definition is ever made: requests need attention.</summary>
     public const string Undefined = "test.undefined";
+
+    /// <summary>Its default flow (fact-user, then the HR Specialist role above 5) is seeded in every tenant.</summary>
+    public const string Seeded = "test.seeded";
 
     /// <summary>Only general definitions, for the definition selection test.</summary>
     public const string Purchase = "test.purchase";
@@ -73,6 +79,43 @@ public sealed class ApprovalFactory(PostgresFixture postgres) : MerpWebApplicati
 
     public HttpClient AsRoot() => CreateClientFor(Root, Tenant);
 
+    /// <summary>A new signed-in user and their client; they hold no role.</summary>
+    public async Task<(HttpClient Client, Guid UserId)> ClientAsync()
+    {
+        var subject = "u" + Guid.NewGuid().ToString("N")[..10];
+        var userId = await UserAsync(subject);
+        return (CreateClientFor(subject, Tenant), userId);
+    }
+
+    /// <summary>
+    /// A module's event reaches the Platform inbox twice (the transport delivers at least once), then the inbox is
+    /// processed twice (§2.9 scenario 11).
+    /// </summary>
+    public async Task DeliverTwiceAsync(ApprovalRequested requested)
+    {
+        var tenant = (await Services.GetRequiredService<ITenantStore>().FindByCodeAsync(Tenant, TestContext.Current.CancellationToken))!;
+        var now = Time.GetUtcNow();
+        var stamped = requested with { TenantId = tenant.Id, OccurredAt = now };
+        var envelope = new MessageEnvelope(
+            stamped.EventId,
+            typeof(ApprovalRequested).FullName!,
+            JsonSerializer.Serialize(stamped, OutboxIntegrationEventPublisher.SerializerOptions),
+            tenant.Id,
+            now,
+            null);
+        var transport = Services.GetRequiredService<IMessageTransport>();
+        await using (var scope = Services.GetRequiredService<TenantScopeFactory>().CreateScope(tenant))
+        {
+            await transport.SendAsync(envelope, scope.ServiceProvider, TestContext.Current.CancellationToken);
+            await transport.SendAsync(envelope, scope.ServiceProvider, TestContext.Current.CancellationToken);
+        }
+
+        var platform = Services.GetServices<ModuleDatabase>().Single(m => m.Schema == PlatformDbContext.SchemaName);
+        var inbox = Services.GetRequiredService<InboxProcessor>();
+        await inbox.ProcessAsync(tenant, platform, TestContext.Current.CancellationToken);
+        await inbox.ProcessAsync(tenant, platform, TestContext.Current.CancellationToken);
+    }
+
     /// <summary>Signs a new identity in (just-in-time provisioning) and returns its platform user id.</summary>
     public async Task<Guid> UserAsync(string? subject = null)
     {
@@ -83,11 +126,11 @@ public sealed class ApprovalFactory(PostgresFixture postgres) : MerpWebApplicati
 
     public Task<Guid> CompanyAsync() => OrganizationFactory.CreateCompanyAsync(AsRoot());
 
-    public async Task<Guid> RoleAsync()
+    public async Task<Guid> RoleAsync(params string[] permissions)
     {
         var response = await AsRoot().PostAsJsonAsync(
             "/api/platform/roles",
-            new { code = "R" + Guid.NewGuid().ToString("N")[..10], name = new Dictionary<string, string> { ["tr-TR"] = "Onaycı" }, permissions = new[] { "platform.companies.read" } },
+            new { code = "R" + Guid.NewGuid().ToString("N")[..10], name = new Dictionary<string, string> { ["tr-TR"] = "Onaycı" }, permissions = permissions.Length > 0 ? permissions : ["platform.companies.read"] },
             TestContext.Current.CancellationToken);
         response.StatusCode.ShouldBe(HttpStatusCode.Created, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         return (await response.Content.ReadFromJsonAsync<EntityCreatedResponse>(TestContext.Current.CancellationToken))!.Id;
@@ -197,6 +240,19 @@ public sealed class TestDocumentTypes : IApprovalDocumentTypeProvider
         new(ApprovalFactory.Purchase, "test.purchase", Facts()),
         new(ApprovalFactory.Note, "test.note", Facts(), AutoApproveWhenNoDefinition: true),
         new(ApprovalFactory.Undefined, "test.undefined", Facts()),
+        new(
+            ApprovalFactory.Seeded,
+            "test.seeded",
+            Facts(),
+            DefaultFlow:
+            [
+                new("test.step.manager", "fact-user", new Dictionary<string, string> { ["factName"] = "approverUserId" }),
+                new(
+                    "test.step.hr",
+                    "role",
+                    new Dictionary<string, string> { [ApprovalDefaultStep.RoleCodeParameter] = "hr-specialist" },
+                    """{ "fact": "amount", "op": "gt", "value": 5 }"""),
+            ]),
     ];
 
     private static ApprovalFact[] Facts() =>

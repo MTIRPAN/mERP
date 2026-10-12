@@ -25,6 +25,15 @@ import type {
   AddCultureCommand,
   AddHolidayCommand,
   AiUsageSummaryResponse,
+  ApprovalDefinitionDetails,
+  ApprovalDefinitionListItem,
+  ApprovalDocumentTypeItem,
+  ApprovalPreview,
+  ApprovalRequestDetails,
+  ApprovalTaskCount,
+  ApprovalUserOption,
+  ApproverResolverItem,
+  AssignApproversCommand,
   AssignRoleCommand,
   AttachmentList,
   AuditEntityType,
@@ -33,9 +42,11 @@ import type {
   CompanyDetails,
   CopiedHolidays,
   CopyFixedHolidaysRequest,
+  CreateApprovalDefinitionCommand,
   CreateBranchCommand,
   CreateCompanyCommand,
   CreateCustomFieldCommand,
+  CreateDelegationCommand,
   CreateNotificationTemplateCommand,
   CreateRoleCommand,
   CreateUserCommand,
@@ -45,8 +56,12 @@ import type {
   CustomFieldDefinitionItem,
   CustomFieldEntityItem,
   CustomFieldFormItem,
+  DecideApprovalTaskCommand,
+  DelegationItem,
   EntityCreatedResponse,
+  ForceApproveApprovalCommand,
   GetAiUsageSummaryParams,
+  GetApprovalTimelineParams,
   GetCustomFieldFormParams,
   GetLocalizationBundle200,
   HolidayCalendarItem,
@@ -54,11 +69,14 @@ import type {
   HttpValidationProblemDetails,
   ImportTextsBody,
   ImportTextsResult,
+  ListApprovalDefinitionsParams,
+  ListApprovalRequestsParams,
   ListAttachmentsParams,
   ListBranchesParams,
   ListCompaniesParams,
   ListCustomFieldDefinitionsParams,
   ListHolidaysParams,
+  ListMyApprovalTasksParams,
   ListMyNotificationsParams,
   ListRolesParams,
   ListTextsParams,
@@ -71,23 +89,29 @@ import type {
   NotificationTemplateList,
   NotificationTypeItem,
   NumberSequenceItem,
+  PagedResultOfApprovalRequestListItem,
   PagedResultOfAuditItem,
   PagedResultOfBranchListItem,
   PagedResultOfCompanyListItem,
+  PagedResultOfMyApprovalTaskItem,
   PagedResultOfNotificationItem,
   PagedResultOfRoleListItem,
   PagedResultOfTextItem,
   PagedResultOfUserListItem,
   PermissionModuleNode,
+  PreviewApprovalQuery,
   ProblemDetails,
+  ReassignApprovalTaskCommand,
   RoleDetails,
   ScopeTypeItem,
+  SearchApprovalUsersParams,
   SearchAuditParams,
   SetCompanyLogoBody,
   SetTextCommand,
   SetUserActiveCommand,
   SystemInfoResponse,
   UnreadNotificationCount,
+  UpdateApprovalDefinitionCommand,
   UpdateBranchCommand,
   UpdateCompanyCommand,
   UpdateCultureCommand,
@@ -7972,6 +7996,2250 @@ export function useListWorkingDays<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListWorkingDaysQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListApprovalDocumentTypesUrl = () => {
+  return `/api/platform/approvals/document-types`;
+};
+
+/**
+ * @summary Approvable document types of all modules with their facts
+ */
+export const listApprovalDocumentTypes = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApprovalDocumentTypeItem[]> => {
+  return customFetch<ApprovalDocumentTypeItem[]>(getListApprovalDocumentTypesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListApprovalDocumentTypesQueryKey = () => {
+  return [`/api/platform/approvals/document-types`] as const;
+};
+
+export const getListApprovalDocumentTypesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listApprovalDocumentTypes>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDocumentTypes>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListApprovalDocumentTypesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listApprovalDocumentTypes>>> = ({ signal }) =>
+    listApprovalDocumentTypes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listApprovalDocumentTypes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListApprovalDocumentTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listApprovalDocumentTypes>>>;
+export type ListApprovalDocumentTypesQueryError = ErrorType<unknown>;
+
+export function useListApprovalDocumentTypes<
+  TData = Awaited<ReturnType<typeof listApprovalDocumentTypes>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDocumentTypes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApprovalDocumentTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listApprovalDocumentTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListApprovalDocumentTypes<
+  TData = Awaited<ReturnType<typeof listApprovalDocumentTypes>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDocumentTypes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApprovalDocumentTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listApprovalDocumentTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListApprovalDocumentTypes<
+  TData = Awaited<ReturnType<typeof listApprovalDocumentTypes>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDocumentTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Approvable document types of all modules with their facts
+ */
+
+export function useListApprovalDocumentTypes<
+  TData = Awaited<ReturnType<typeof listApprovalDocumentTypes>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDocumentTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListApprovalDocumentTypesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListApproverResolversUrl = () => {
+  return `/api/platform/approvals/resolvers`;
+};
+
+/**
+ * Requires permission: platform.approvals.definitions.read.
+ * @summary Approver resolvers of all modules with their parameters
+ */
+export const listApproverResolvers = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApproverResolverItem[]> => {
+  return customFetch<ApproverResolverItem[]>(getListApproverResolversUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListApproverResolversQueryKey = () => {
+  return [`/api/platform/approvals/resolvers`] as const;
+};
+
+export const getListApproverResolversQueryOptions = <
+  TData = Awaited<ReturnType<typeof listApproverResolvers>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApproverResolvers>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListApproverResolversQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listApproverResolvers>>> = ({ signal }) =>
+    listApproverResolvers({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listApproverResolvers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListApproverResolversQueryResult = NonNullable<Awaited<ReturnType<typeof listApproverResolvers>>>;
+export type ListApproverResolversQueryError = ErrorType<ProblemDetails>;
+
+export function useListApproverResolvers<
+  TData = Awaited<ReturnType<typeof listApproverResolvers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApproverResolvers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApproverResolvers>>,
+          TError,
+          Awaited<ReturnType<typeof listApproverResolvers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListApproverResolvers<
+  TData = Awaited<ReturnType<typeof listApproverResolvers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApproverResolvers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApproverResolvers>>,
+          TError,
+          Awaited<ReturnType<typeof listApproverResolvers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListApproverResolvers<
+  TData = Awaited<ReturnType<typeof listApproverResolvers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApproverResolvers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Approver resolvers of all modules with their parameters
+ */
+
+export function useListApproverResolvers<
+  TData = Awaited<ReturnType<typeof listApproverResolvers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApproverResolvers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListApproverResolversQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListApprovalDefinitionsUrl = (params?: ListApprovalDefinitionsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/approvals/definitions?${stringifiedParams}`
+    : `/api/platform/approvals/definitions`;
+};
+
+/**
+ * Requires permission: platform.approvals.definitions.read.
+ * @summary Approval flows of a document type, or of all
+ */
+export const listApprovalDefinitions = async (
+  params?: ListApprovalDefinitionsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApprovalDefinitionListItem[]> => {
+  return customFetch<ApprovalDefinitionListItem[]>(getListApprovalDefinitionsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListApprovalDefinitionsQueryKey = (params?: ListApprovalDefinitionsParams) => {
+  return [`/api/platform/approvals/definitions`, ...(params ? [params] : [])] as const;
+};
+
+export const getListApprovalDefinitionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listApprovalDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListApprovalDefinitionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDefinitions>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListApprovalDefinitionsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listApprovalDefinitions>>> = ({ signal }) =>
+    listApprovalDefinitions(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listApprovalDefinitions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListApprovalDefinitionsQueryResult = NonNullable<Awaited<ReturnType<typeof listApprovalDefinitions>>>;
+export type ListApprovalDefinitionsQueryError = ErrorType<ProblemDetails>;
+
+export function useListApprovalDefinitions<
+  TData = Awaited<ReturnType<typeof listApprovalDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | ListApprovalDefinitionsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDefinitions>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApprovalDefinitions>>,
+          TError,
+          Awaited<ReturnType<typeof listApprovalDefinitions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListApprovalDefinitions<
+  TData = Awaited<ReturnType<typeof listApprovalDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListApprovalDefinitionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDefinitions>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApprovalDefinitions>>,
+          TError,
+          Awaited<ReturnType<typeof listApprovalDefinitions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListApprovalDefinitions<
+  TData = Awaited<ReturnType<typeof listApprovalDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListApprovalDefinitionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDefinitions>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Approval flows of a document type, or of all
+ */
+
+export function useListApprovalDefinitions<
+  TData = Awaited<ReturnType<typeof listApprovalDefinitions>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListApprovalDefinitionsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalDefinitions>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListApprovalDefinitionsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateApprovalDefinitionUrl = () => {
+  return `/api/platform/approvals/definitions`;
+};
+
+/**
+ * Requires permission: platform.approvals.definitions.manage.
+ * @summary Define an approval flow for every company or one
+ */
+export const createApprovalDefinition = async (
+  createApprovalDefinitionCommand: CreateApprovalDefinitionCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateApprovalDefinitionUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createApprovalDefinitionCommand),
+  });
+};
+
+export const getCreateApprovalDefinitionMutationKey = () => ['createApprovalDefinition'] as const;
+
+export const getCreateApprovalDefinitionMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createApprovalDefinition>>,
+    TError,
+    CreateApprovalDefinitionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createApprovalDefinition>>,
+  TError,
+  CreateApprovalDefinitionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateApprovalDefinitionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createApprovalDefinition>>,
+    CreateApprovalDefinitionMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createApprovalDefinition(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateApprovalDefinitionMutationResult = NonNullable<Awaited<ReturnType<typeof createApprovalDefinition>>>;
+export type CreateApprovalDefinitionMutationBody = CreateApprovalDefinitionCommand;
+export type CreateApprovalDefinitionMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateApprovalDefinitionMutationVariables = { data: CreateApprovalDefinitionCommand };
+
+/**
+ * @summary Define an approval flow for every company or one
+ */
+export const useCreateApprovalDefinition = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createApprovalDefinition>>,
+      TError,
+      CreateApprovalDefinitionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createApprovalDefinition>>,
+  TError,
+  CreateApprovalDefinitionMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateApprovalDefinitionMutationOptions(options), queryClient);
+};
+export const getGetApprovalDefinitionUrl = (id: string) => {
+  return `/api/platform/approvals/definitions/${id}`;
+};
+
+/**
+ * Requires permission: platform.approvals.definitions.read.
+ * @summary An approval flow with its steps
+ */
+export const getApprovalDefinition = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApprovalDefinitionDetails> => {
+  return customFetch<ApprovalDefinitionDetails>(getGetApprovalDefinitionUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetApprovalDefinitionQueryKey = (id: string) => {
+  return [`/api/platform/approvals/definitions/${id}`] as const;
+};
+
+export const getGetApprovalDefinitionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApprovalDefinition>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalDefinition>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetApprovalDefinitionQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getApprovalDefinition>>> = ({ signal }) =>
+    getApprovalDefinition(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApprovalDefinition>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApprovalDefinitionQueryResult = NonNullable<Awaited<ReturnType<typeof getApprovalDefinition>>>;
+export type GetApprovalDefinitionQueryError = ErrorType<ProblemDetails>;
+
+export function useGetApprovalDefinition<
+  TData = Awaited<ReturnType<typeof getApprovalDefinition>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalDefinition>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApprovalDefinition>>,
+          TError,
+          Awaited<ReturnType<typeof getApprovalDefinition>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApprovalDefinition<
+  TData = Awaited<ReturnType<typeof getApprovalDefinition>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalDefinition>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApprovalDefinition>>,
+          TError,
+          Awaited<ReturnType<typeof getApprovalDefinition>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApprovalDefinition<
+  TData = Awaited<ReturnType<typeof getApprovalDefinition>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalDefinition>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary An approval flow with its steps
+ */
+
+export function useGetApprovalDefinition<
+  TData = Awaited<ReturnType<typeof getApprovalDefinition>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalDefinition>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetApprovalDefinitionQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateApprovalDefinitionUrl = (id: string) => {
+  return `/api/platform/approvals/definitions/${id}`;
+};
+
+/**
+ * Requires permission: platform.approvals.definitions.manage.
+ * @summary Change an approval flow; running requests keep their steps
+ */
+export const updateApprovalDefinition = async (
+  id: string,
+  updateApprovalDefinitionCommand: UpdateApprovalDefinitionCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateApprovalDefinitionUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateApprovalDefinitionCommand),
+  });
+};
+
+export const getUpdateApprovalDefinitionMutationKey = () => ['updateApprovalDefinition'] as const;
+
+export const getUpdateApprovalDefinitionMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateApprovalDefinition>>,
+    TError,
+    UpdateApprovalDefinitionMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateApprovalDefinition>>,
+  TError,
+  UpdateApprovalDefinitionMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateApprovalDefinitionMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateApprovalDefinition>>,
+    UpdateApprovalDefinitionMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateApprovalDefinition(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateApprovalDefinitionMutationResult = NonNullable<Awaited<ReturnType<typeof updateApprovalDefinition>>>;
+export type UpdateApprovalDefinitionMutationBody = UpdateApprovalDefinitionCommand;
+export type UpdateApprovalDefinitionMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateApprovalDefinitionMutationVariables = { id: string; data: UpdateApprovalDefinitionCommand };
+
+/**
+ * @summary Change an approval flow; running requests keep their steps
+ */
+export const useUpdateApprovalDefinition = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateApprovalDefinition>>,
+      TError,
+      UpdateApprovalDefinitionMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateApprovalDefinition>>,
+  TError,
+  UpdateApprovalDefinitionMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateApprovalDefinitionMutationOptions(options), queryClient);
+};
+export const getPreviewApprovalUrl = () => {
+  return `/api/platform/approvals/preview`;
+};
+
+/**
+ * @summary Who would approve a document of the caller now
+ */
+export const previewApproval = async (
+  previewApprovalQuery: PreviewApprovalQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApprovalPreview> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<ApprovalPreview>(getPreviewApprovalUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewApprovalQuery),
+  });
+};
+
+export const getPreviewApprovalMutationKey = () => ['previewApproval'] as const;
+
+export const getPreviewApprovalMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewApproval>>,
+    TError,
+    PreviewApprovalMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewApproval>>,
+  TError,
+  PreviewApprovalMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewApprovalMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewApproval>>, PreviewApprovalMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return previewApproval(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof previewApproval>>>;
+export type PreviewApprovalMutationBody = PreviewApprovalQuery;
+export type PreviewApprovalMutationError = ErrorType<HttpValidationProblemDetails>;
+export type PreviewApprovalMutationVariables = { data: PreviewApprovalQuery };
+
+/**
+ * @summary Who would approve a document of the caller now
+ */
+export const usePreviewApproval = <TError = ErrorType<HttpValidationProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewApproval>>,
+      TError,
+      PreviewApprovalMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewApproval>>,
+  TError,
+  PreviewApprovalMutationVariables,
+  TContext
+> => {
+  return useMutation(getPreviewApprovalMutationOptions(options), queryClient);
+};
+export const getListMyApprovalTasksUrl = (params?: ListMyApprovalTasksParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/approvals/my-tasks?${stringifiedParams}`
+    : `/api/platform/approvals/my-tasks`;
+};
+
+/**
+ * @summary The caller's open approval tasks and those of the approvers they act for
+ */
+export const listMyApprovalTasks = async (
+  params?: ListMyApprovalTasksParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfMyApprovalTaskItem> => {
+  return customFetch<PagedResultOfMyApprovalTaskItem>(getListMyApprovalTasksUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListMyApprovalTasksQueryKey = (params?: ListMyApprovalTasksParams) => {
+  return [`/api/platform/approvals/my-tasks`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMyApprovalTasksQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMyApprovalTasksParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApprovalTasks>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyApprovalTasksQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyApprovalTasks>>> = ({ signal }) =>
+    listMyApprovalTasks(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyApprovalTasks>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMyApprovalTasksQueryResult = NonNullable<Awaited<ReturnType<typeof listMyApprovalTasks>>>;
+export type ListMyApprovalTasksQueryError = ErrorType<unknown>;
+
+export function useListMyApprovalTasks<
+  TData = Awaited<ReturnType<typeof listMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | ListMyApprovalTasksParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApprovalTasks>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyApprovalTasks>>,
+          TError,
+          Awaited<ReturnType<typeof listMyApprovalTasks>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyApprovalTasks<
+  TData = Awaited<ReturnType<typeof listMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMyApprovalTasksParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApprovalTasks>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyApprovalTasks>>,
+          TError,
+          Awaited<ReturnType<typeof listMyApprovalTasks>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyApprovalTasks<
+  TData = Awaited<ReturnType<typeof listMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMyApprovalTasksParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApprovalTasks>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The caller's open approval tasks and those of the approvers they act for
+ */
+
+export function useListMyApprovalTasks<
+  TData = Awaited<ReturnType<typeof listMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListMyApprovalTasksParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApprovalTasks>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMyApprovalTasksQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCountMyApprovalTasksUrl = () => {
+  return `/api/platform/approvals/my-tasks/count`;
+};
+
+/**
+ * @summary The number on the approval badge
+ */
+export const countMyApprovalTasks = async (options?: Parameters<typeof customFetch>[1]): Promise<ApprovalTaskCount> => {
+  return customFetch<ApprovalTaskCount>(getCountMyApprovalTasksUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getCountMyApprovalTasksQueryKey = () => {
+  return [`/api/platform/approvals/my-tasks/count`] as const;
+};
+
+export const getCountMyApprovalTasksQueryOptions = <
+  TData = Awaited<ReturnType<typeof countMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof countMyApprovalTasks>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getCountMyApprovalTasksQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof countMyApprovalTasks>>> = ({ signal }) =>
+    countMyApprovalTasks({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof countMyApprovalTasks>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type CountMyApprovalTasksQueryResult = NonNullable<Awaited<ReturnType<typeof countMyApprovalTasks>>>;
+export type CountMyApprovalTasksQueryError = ErrorType<unknown>;
+
+export function useCountMyApprovalTasks<
+  TData = Awaited<ReturnType<typeof countMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof countMyApprovalTasks>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof countMyApprovalTasks>>,
+          TError,
+          Awaited<ReturnType<typeof countMyApprovalTasks>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCountMyApprovalTasks<
+  TData = Awaited<ReturnType<typeof countMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof countMyApprovalTasks>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof countMyApprovalTasks>>,
+          TError,
+          Awaited<ReturnType<typeof countMyApprovalTasks>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useCountMyApprovalTasks<
+  TData = Awaited<ReturnType<typeof countMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof countMyApprovalTasks>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The number on the approval badge
+ */
+
+export function useCountMyApprovalTasks<
+  TData = Awaited<ReturnType<typeof countMyApprovalTasks>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof countMyApprovalTasks>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getCountMyApprovalTasksQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getDecideApprovalTaskUrl = (id: string) => {
+  return `/api/platform/approvals/tasks/${id}/decision`;
+};
+
+/**
+ * @summary Approve, reject or return a task as its approver or their delegate
+ */
+export const decideApprovalTask = async (
+  id: string,
+  decideApprovalTaskCommand: DecideApprovalTaskCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getDecideApprovalTaskUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(decideApprovalTaskCommand),
+  });
+};
+
+export const getDecideApprovalTaskMutationKey = () => ['decideApprovalTask'] as const;
+
+export const getDecideApprovalTaskMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof decideApprovalTask>>,
+    TError,
+    DecideApprovalTaskMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof decideApprovalTask>>,
+  TError,
+  DecideApprovalTaskMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDecideApprovalTaskMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof decideApprovalTask>>,
+    DecideApprovalTaskMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return decideApprovalTask(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DecideApprovalTaskMutationResult = NonNullable<Awaited<ReturnType<typeof decideApprovalTask>>>;
+export type DecideApprovalTaskMutationBody = DecideApprovalTaskCommand;
+export type DecideApprovalTaskMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type DecideApprovalTaskMutationVariables = { id: string; data: DecideApprovalTaskCommand };
+
+/**
+ * @summary Approve, reject or return a task as its approver or their delegate
+ */
+export const useDecideApprovalTask = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof decideApprovalTask>>,
+      TError,
+      DecideApprovalTaskMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof decideApprovalTask>>,
+  TError,
+  DecideApprovalTaskMutationVariables,
+  TContext
+> => {
+  return useMutation(getDecideApprovalTaskMutationOptions(options), queryClient);
+};
+export const getReassignApprovalTaskUrl = (id: string) => {
+  return `/api/platform/approvals/tasks/${id}/reassign`;
+};
+
+/**
+ * Requires permission: platform.approvals.admin.
+ * @summary Move an open task to another user
+ */
+export const reassignApprovalTask = async (
+  id: string,
+  reassignApprovalTaskCommand: ReassignApprovalTaskCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getReassignApprovalTaskUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(reassignApprovalTaskCommand),
+  });
+};
+
+export const getReassignApprovalTaskMutationKey = () => ['reassignApprovalTask'] as const;
+
+export const getReassignApprovalTaskMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reassignApprovalTask>>,
+    TError,
+    ReassignApprovalTaskMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reassignApprovalTask>>,
+  TError,
+  ReassignApprovalTaskMutationVariables,
+  TContext
+> => {
+  const mutationKey = getReassignApprovalTaskMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reassignApprovalTask>>,
+    ReassignApprovalTaskMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return reassignApprovalTask(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReassignApprovalTaskMutationResult = NonNullable<Awaited<ReturnType<typeof reassignApprovalTask>>>;
+export type ReassignApprovalTaskMutationBody = ReassignApprovalTaskCommand;
+export type ReassignApprovalTaskMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type ReassignApprovalTaskMutationVariables = { id: string; data: ReassignApprovalTaskCommand };
+
+/**
+ * @summary Move an open task to another user
+ */
+export const useReassignApprovalTask = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof reassignApprovalTask>>,
+      TError,
+      ReassignApprovalTaskMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof reassignApprovalTask>>,
+  TError,
+  ReassignApprovalTaskMutationVariables,
+  TContext
+> => {
+  return useMutation(getReassignApprovalTaskMutationOptions(options), queryClient);
+};
+export const getListApprovalRequestsUrl = (params?: ListApprovalRequestsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/approvals/requests?${stringifiedParams}`
+    : `/api/platform/approvals/requests`;
+};
+
+/**
+ * Requires permission: platform.approvals.admin.
+ * @summary Approval requests of all modules, newest first
+ */
+export const listApprovalRequests = async (
+  params?: ListApprovalRequestsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfApprovalRequestListItem> => {
+  return customFetch<PagedResultOfApprovalRequestListItem>(getListApprovalRequestsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListApprovalRequestsQueryKey = (params?: ListApprovalRequestsParams) => {
+  return [`/api/platform/approvals/requests`, ...(params ? [params] : [])] as const;
+};
+
+export const getListApprovalRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listApprovalRequests>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListApprovalRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListApprovalRequestsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listApprovalRequests>>> = ({ signal }) =>
+    listApprovalRequests(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listApprovalRequests>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListApprovalRequestsQueryResult = NonNullable<Awaited<ReturnType<typeof listApprovalRequests>>>;
+export type ListApprovalRequestsQueryError = ErrorType<ProblemDetails>;
+
+export function useListApprovalRequests<
+  TData = Awaited<ReturnType<typeof listApprovalRequests>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | ListApprovalRequestsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalRequests>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApprovalRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listApprovalRequests>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListApprovalRequests<
+  TData = Awaited<ReturnType<typeof listApprovalRequests>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListApprovalRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalRequests>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApprovalRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listApprovalRequests>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListApprovalRequests<
+  TData = Awaited<ReturnType<typeof listApprovalRequests>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListApprovalRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Approval requests of all modules, newest first
+ */
+
+export function useListApprovalRequests<
+  TData = Awaited<ReturnType<typeof listApprovalRequests>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListApprovalRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovalRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListApprovalRequestsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetApprovalRequestUrl = (id: string) => {
+  return `/api/platform/approvals/requests/${id}`;
+};
+
+/**
+ * @summary A request with its tasks and timeline
+ */
+export const getApprovalRequest = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApprovalRequestDetails> => {
+  return customFetch<ApprovalRequestDetails>(getGetApprovalRequestUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetApprovalRequestQueryKey = (id: string) => {
+  return [`/api/platform/approvals/requests/${id}`] as const;
+};
+
+export const getGetApprovalRequestQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApprovalRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetApprovalRequestQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getApprovalRequest>>> = ({ signal }) =>
+    getApprovalRequest(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApprovalRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApprovalRequestQueryResult = NonNullable<Awaited<ReturnType<typeof getApprovalRequest>>>;
+export type GetApprovalRequestQueryError = ErrorType<ProblemDetails>;
+
+export function useGetApprovalRequest<
+  TData = Awaited<ReturnType<typeof getApprovalRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalRequest>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApprovalRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getApprovalRequest>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApprovalRequest<
+  TData = Awaited<ReturnType<typeof getApprovalRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalRequest>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApprovalRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getApprovalRequest>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApprovalRequest<
+  TData = Awaited<ReturnType<typeof getApprovalRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A request with its tasks and timeline
+ */
+
+export function useGetApprovalRequest<
+  TData = Awaited<ReturnType<typeof getApprovalRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetApprovalRequestQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetApprovalTimelineUrl = (params?: GetApprovalTimelineParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/approvals/timeline?${stringifiedParams}`
+    : `/api/platform/approvals/timeline`;
+};
+
+/**
+ * @summary The approval request of a document with its timeline
+ */
+export const getApprovalTimeline = async (
+  params?: GetApprovalTimelineParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApprovalRequestDetails> => {
+  return customFetch<ApprovalRequestDetails>(getGetApprovalTimelineUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetApprovalTimelineQueryKey = (params?: GetApprovalTimelineParams) => {
+  return [`/api/platform/approvals/timeline`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetApprovalTimelineQueryOptions = <
+  TData = Awaited<ReturnType<typeof getApprovalTimeline>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: GetApprovalTimelineParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalTimeline>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetApprovalTimelineQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getApprovalTimeline>>> = ({ signal }) =>
+    getApprovalTimeline(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getApprovalTimeline>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetApprovalTimelineQueryResult = NonNullable<Awaited<ReturnType<typeof getApprovalTimeline>>>;
+export type GetApprovalTimelineQueryError = ErrorType<ProblemDetails>;
+
+export function useGetApprovalTimeline<
+  TData = Awaited<ReturnType<typeof getApprovalTimeline>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | GetApprovalTimelineParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalTimeline>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApprovalTimeline>>,
+          TError,
+          Awaited<ReturnType<typeof getApprovalTimeline>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApprovalTimeline<
+  TData = Awaited<ReturnType<typeof getApprovalTimeline>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: GetApprovalTimelineParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalTimeline>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApprovalTimeline>>,
+          TError,
+          Awaited<ReturnType<typeof getApprovalTimeline>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetApprovalTimeline<
+  TData = Awaited<ReturnType<typeof getApprovalTimeline>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: GetApprovalTimelineParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalTimeline>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The approval request of a document with its timeline
+ */
+
+export function useGetApprovalTimeline<
+  TData = Awaited<ReturnType<typeof getApprovalTimeline>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: GetApprovalTimelineParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getApprovalTimeline>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetApprovalTimelineQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getForceApproveApprovalRequestUrl = (id: string) => {
+  return `/api/platform/approvals/requests/${id}/force-approve`;
+};
+
+/**
+ * Requires permission: platform.approvals.admin.
+ * @summary Approve the current step in place of its approvers
+ */
+export const forceApproveApprovalRequest = async (
+  id: string,
+  forceApproveApprovalCommand: ForceApproveApprovalCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getForceApproveApprovalRequestUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(forceApproveApprovalCommand),
+  });
+};
+
+export const getForceApproveApprovalRequestMutationKey = () => ['forceApproveApprovalRequest'] as const;
+
+export const getForceApproveApprovalRequestMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof forceApproveApprovalRequest>>,
+    TError,
+    ForceApproveApprovalRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof forceApproveApprovalRequest>>,
+  TError,
+  ForceApproveApprovalRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getForceApproveApprovalRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof forceApproveApprovalRequest>>,
+    ForceApproveApprovalRequestMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return forceApproveApprovalRequest(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ForceApproveApprovalRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof forceApproveApprovalRequest>>
+>;
+export type ForceApproveApprovalRequestMutationBody = ForceApproveApprovalCommand;
+export type ForceApproveApprovalRequestMutationError = ErrorType<ProblemDetails>;
+export type ForceApproveApprovalRequestMutationVariables = { id: string; data: ForceApproveApprovalCommand };
+
+/**
+ * @summary Approve the current step in place of its approvers
+ */
+export const useForceApproveApprovalRequest = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof forceApproveApprovalRequest>>,
+      TError,
+      ForceApproveApprovalRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof forceApproveApprovalRequest>>,
+  TError,
+  ForceApproveApprovalRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getForceApproveApprovalRequestMutationOptions(options), queryClient);
+};
+export const getAssignApproversUrl = (id: string) => {
+  return `/api/platform/approvals/requests/${id}/approvers`;
+};
+
+/**
+ * Requires permission: platform.approvals.admin.
+ * @summary Give approvers to a request that needs attention
+ */
+export const assignApprovers = async (
+  id: string,
+  assignApproversCommand: AssignApproversCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getAssignApproversUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(assignApproversCommand),
+  });
+};
+
+export const getAssignApproversMutationKey = () => ['assignApprovers'] as const;
+
+export const getAssignApproversMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof assignApprovers>>,
+    TError,
+    AssignApproversMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof assignApprovers>>,
+  TError,
+  AssignApproversMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAssignApproversMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignApprovers>>, AssignApproversMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return assignApprovers(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AssignApproversMutationResult = NonNullable<Awaited<ReturnType<typeof assignApprovers>>>;
+export type AssignApproversMutationBody = AssignApproversCommand;
+export type AssignApproversMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AssignApproversMutationVariables = { id: string; data: AssignApproversCommand };
+
+/**
+ * @summary Give approvers to a request that needs attention
+ */
+export const useAssignApprovers = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof assignApprovers>>,
+      TError,
+      AssignApproversMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof assignApprovers>>,
+  TError,
+  AssignApproversMutationVariables,
+  TContext
+> => {
+  return useMutation(getAssignApproversMutationOptions(options), queryClient);
+};
+export const getListMyDelegationsUrl = () => {
+  return `/api/platform/approvals/delegations`;
+};
+
+/**
+ * @summary Delegations the caller gave and received
+ */
+export const listMyDelegations = async (options?: Parameters<typeof customFetch>[1]): Promise<DelegationItem[]> => {
+  return customFetch<DelegationItem[]>(getListMyDelegationsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListMyDelegationsQueryKey = () => {
+  return [`/api/platform/approvals/delegations`] as const;
+};
+
+export const getListMyDelegationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyDelegations>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyDelegations>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyDelegationsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyDelegations>>> = ({ signal }) =>
+    listMyDelegations({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyDelegations>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMyDelegationsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyDelegations>>>;
+export type ListMyDelegationsQueryError = ErrorType<unknown>;
+
+export function useListMyDelegations<
+  TData = Awaited<ReturnType<typeof listMyDelegations>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyDelegations>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyDelegations>>,
+          TError,
+          Awaited<ReturnType<typeof listMyDelegations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyDelegations<
+  TData = Awaited<ReturnType<typeof listMyDelegations>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyDelegations>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyDelegations>>,
+          TError,
+          Awaited<ReturnType<typeof listMyDelegations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyDelegations<
+  TData = Awaited<ReturnType<typeof listMyDelegations>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyDelegations>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Delegations the caller gave and received
+ */
+
+export function useListMyDelegations<
+  TData = Awaited<ReturnType<typeof listMyDelegations>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyDelegations>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMyDelegationsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateDelegationUrl = () => {
+  return `/api/platform/approvals/delegations`;
+};
+
+/**
+ * @summary Hand the caller's approvals to another user for a period
+ */
+export const createDelegation = async (
+  createDelegationCommand: CreateDelegationCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateDelegationUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createDelegationCommand),
+  });
+};
+
+export const getCreateDelegationMutationKey = () => ['createDelegation'] as const;
+
+export const getCreateDelegationMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDelegation>>,
+    TError,
+    CreateDelegationMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createDelegation>>,
+  TError,
+  CreateDelegationMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateDelegationMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createDelegation>>,
+    CreateDelegationMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createDelegation(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateDelegationMutationResult = NonNullable<Awaited<ReturnType<typeof createDelegation>>>;
+export type CreateDelegationMutationBody = CreateDelegationCommand;
+export type CreateDelegationMutationError = ErrorType<HttpValidationProblemDetails>;
+export type CreateDelegationMutationVariables = { data: CreateDelegationCommand };
+
+/**
+ * @summary Hand the caller's approvals to another user for a period
+ */
+export const useCreateDelegation = <TError = ErrorType<HttpValidationProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createDelegation>>,
+      TError,
+      CreateDelegationMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createDelegation>>,
+  TError,
+  CreateDelegationMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateDelegationMutationOptions(options), queryClient);
+};
+export const getRevokeDelegationUrl = (id: string) => {
+  return `/api/platform/approvals/delegations/${id}/revoke`;
+};
+
+/**
+ * @summary End one of the caller's delegations
+ */
+export const revokeDelegation = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getRevokeDelegationUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getRevokeDelegationMutationKey = () => ['revokeDelegation'] as const;
+
+export const getRevokeDelegationMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeDelegation>>,
+    TError,
+    RevokeDelegationMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof revokeDelegation>>,
+  TError,
+  RevokeDelegationMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRevokeDelegationMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof revokeDelegation>>,
+    RevokeDelegationMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return revokeDelegation(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RevokeDelegationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeDelegation>>>;
+
+export type RevokeDelegationMutationError = ErrorType<ProblemDetails>;
+export type RevokeDelegationMutationVariables = { id: string };
+
+/**
+ * @summary End one of the caller's delegations
+ */
+export const useRevokeDelegation = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof revokeDelegation>>,
+      TError,
+      RevokeDelegationMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof revokeDelegation>>,
+  TError,
+  RevokeDelegationMutationVariables,
+  TContext
+> => {
+  return useMutation(getRevokeDelegationMutationOptions(options), queryClient);
+};
+export const getSearchApprovalUsersUrl = (params?: SearchApprovalUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/approvals/users?${stringifiedParams}`
+    : `/api/platform/approvals/users`;
+};
+
+/**
+ * @summary Active users to pick as a delegate or an approver
+ */
+export const searchApprovalUsers = async (
+  params?: SearchApprovalUsersParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApprovalUserOption[]> => {
+  return customFetch<ApprovalUserOption[]>(getSearchApprovalUsersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchApprovalUsersQueryKey = (params?: SearchApprovalUsersParams) => {
+  return [`/api/platform/approvals/users`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchApprovalUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchApprovalUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchApprovalUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchApprovalUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchApprovalUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchApprovalUsers>>> = ({ signal }) =>
+    searchApprovalUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchApprovalUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchApprovalUsersQueryResult = NonNullable<Awaited<ReturnType<typeof searchApprovalUsers>>>;
+export type SearchApprovalUsersQueryError = ErrorType<unknown>;
+
+export function useSearchApprovalUsers<
+  TData = Awaited<ReturnType<typeof searchApprovalUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | SearchApprovalUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchApprovalUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchApprovalUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchApprovalUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchApprovalUsers<
+  TData = Awaited<ReturnType<typeof searchApprovalUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchApprovalUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchApprovalUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchApprovalUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchApprovalUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchApprovalUsers<
+  TData = Awaited<ReturnType<typeof searchApprovalUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchApprovalUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchApprovalUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active users to pick as a delegate or an approver
+ */
+
+export function useSearchApprovalUsers<
+  TData = Awaited<ReturnType<typeof searchApprovalUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchApprovalUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchApprovalUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchApprovalUsersQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

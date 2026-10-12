@@ -44,6 +44,16 @@ public static class EndpointRules
         "/api/platform/notifications/test",
         "/api/platform/locations/provinces",
         "/api/platform/locations/provinces/{provinceCode:int}/districts",
+        "/api/platform/approvals/document-types",
+        "/api/platform/approvals/preview",
+        "/api/platform/approvals/my-tasks",
+        "/api/platform/approvals/my-tasks/count",
+        "/api/platform/approvals/tasks/{id:guid}/decision",
+        "/api/platform/approvals/requests/{id:guid}",
+        "/api/platform/approvals/timeline",
+        "/api/platform/approvals/delegations",
+        "/api/platform/approvals/delegations/{id:guid}/revoke",
+        "/api/platform/approvals/users",
     ];
 
     public static IReadOnlyList<string> Violations(IEnumerable<EndpointInfo> endpoints) =>

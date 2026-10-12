@@ -107,3 +107,41 @@ public sealed record ApprovalTaskAssigned(
     Guid RequestId,
     int Step,
     IReadOnlyList<Guid> AssigneeUserIds) : IntegrationEvent;
+
+/// <summary>
+/// "Who will approve this?" before a document is sent (§2.7): the flow that would be chosen and the approvers of
+/// each step, as the engine would assign them now. Shown on the module's form.
+/// </summary>
+public interface IApprovalPreview
+{
+    Task<ApprovalPreview> PreviewAsync(
+        string documentType,
+        Guid? companyId,
+        JsonElement facts,
+        Guid requesterUserId,
+        Guid? requesterEmployeeId,
+        CancellationToken cancellationToken = default);
+}
+
+/// <param name="HasDefinition">A flow matches the document.</param>
+/// <param name="AutoApproved">No flow matches and the type approves such documents at once.</param>
+/// <param name="Steps">The flow's steps in order; empty without a flow.</param>
+public sealed record ApprovalPreview(bool HasDefinition, bool AutoApproved, IReadOnlyList<ApprovalPreviewStep> Steps);
+
+/// <param name="Index">0-based step index.</param>
+/// <param name="Name">Step name in the caller's language.</param>
+/// <param name="Approvers">Who gets the task; empty when skipped or nobody was found.</param>
+/// <param name="SkipReason"><c>condition</c>, <c>requester</c> or <c>already_approved</c>; null when the step applies.</param>
+/// <param name="NeedsAttention">Nobody was found, not even a fallback: an administrator would have to assign.</param>
+public sealed record ApprovalPreviewStep(int Index, string Name, IReadOnlyList<ApprovalPreviewApprover> Approvers, string? SkipReason, bool NeedsAttention);
+
+public sealed record ApprovalPreviewApprover(Guid UserId, string Name);
+
+/// <summary>
+/// Task-based access (docs/domain/yetki-ve-onay.md §1, rule 5): a user with a pending or past task on a document, or
+/// acting for its approver today, may see the document without the module's permission.
+/// </summary>
+public interface IApprovalAccess
+{
+    Task<bool> HasTaskAsync(Guid userId, string documentType, string documentId, CancellationToken cancellationToken = default);
+}
