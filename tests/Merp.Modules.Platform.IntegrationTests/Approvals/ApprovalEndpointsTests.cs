@@ -295,6 +295,28 @@ public sealed class ApprovalEndpointsTests(ApprovalFactory factory) : IClassFixt
         var found = (await user.GetFromJsonAsync<List<ApprovalUserOption>>($"{Url}/users?search={subject}", Ct))!;
 
         found.ShouldHaveSingleItem().Id.ShouldBe(zeynep);
+        (await user.GetFromJsonAsync<List<ApprovalUserOption>>($"{Url}/users?search=nobody-matches-this&ids={zeynep}", Ct))!
+            .ShouldHaveSingleItem().Id.ShouldBe(zeynep);
+    }
+
+    [Fact]
+    public async Task TestDocuments_GoThroughTheOutbox_LikeAModulesDocument()
+    {
+        var (user, _) = await factory.ClientAsync();
+        var approver = await factory.UserAsync();
+
+        (await user.PostAsJsonAsync($"{Url}/test-documents", new { summary = "Deneme" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await Problem.ReadAsync(await factory.AsRoot().PostAsJsonAsync($"{Url}/test-documents", new { amount = 5 }, Ct))).Errors!.ShouldContainKey("summary");
+
+        var sent = await factory.AsRoot().PostAsJsonAsync($"{Url}/test-documents", new { summary = "Deneme masrafı", amount = 1250.5m, approverUserId = approver }, Ct);
+
+        sent.StatusCode.ShouldBe(HttpStatusCode.OK, await sent.Content.ReadAsStringAsync(Ct));
+        var documentId = (await sent.Content.ReadFromJsonAsync<TestApprovalDocumentResponse>(Ct))!.DocumentId;
+        var requested = (await factory.OutboxAsync<ApprovalRequested>()).Single(e => e.DocumentId == documentId);
+        (requested.DocumentType, requested.RequesterUserId, requested.Summary).ShouldBe((ApprovalTestDocumentTypes.Key, factory.RootId, "Deneme masrafı"));
+        requested.Facts.GetProperty("amount").GetDecimal().ShouldBe(1250.5m);
+        requested.Facts.GetProperty("approverUserId").GetGuid().ShouldBe(approver);
+        (await user.GetFromJsonAsync<List<ApprovalDocumentTypeItem>>($"{Url}/document-types", Ct))!.ShouldContain(t => t.Key == ApprovalTestDocumentTypes.Key);
     }
 
     private static object Definition(Guid? companyId, Guid approver, string? entryCondition = null) => new

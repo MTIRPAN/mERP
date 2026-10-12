@@ -2,14 +2,26 @@ import { BellOutlined, CheckSquareOutlined, LinkOutlined, StarFilled } from '@an
 import { Card, Col, Empty, Flex, Row, Statistic, Tag, Typography, theme } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { useMe } from '@/app/me/meContext';
 import { brand } from '@/app/theme/tokens';
+import { useCountMyApprovalTasks } from '@/shared/api/generated/endpoints/platform/platform';
 
-const StatCard = ({ icon, titleKey }: { icon: ReactNode; titleKey: string }) => {
+const StatCard = ({
+  icon,
+  titleKey,
+  value = 0,
+  onClick,
+}: {
+  icon: ReactNode;
+  titleKey: string;
+  value?: number;
+  onClick?: () => void;
+}) => {
   const { t } = useTranslation();
   const { token } = theme.useToken();
   return (
-    <Card variant="outlined" style={{ height: '100%' }}>
+    <Card variant="outlined" hoverable={!!onClick} onClick={onClick} style={{ height: '100%' }}>
       <Flex align="center" gap={14}>
         <div
           style={{
@@ -25,7 +37,7 @@ const StatCard = ({ icon, titleKey }: { icon: ReactNode; titleKey: string }) => 
         >
           {icon}
         </div>
-        <Statistic title={t(titleKey)} value={0} />
+        <Statistic title={t(titleKey)} value={value} />
       </Flex>
     </Card>
   );
@@ -36,6 +48,8 @@ export const DashboardPage = () => {
   const { token } = theme.useToken();
   const me = useMe();
   const name = me.user.displayName ?? me.user.userName ?? '';
+  const navigate = useNavigate();
+  const approvals = useCountMyApprovalTasks().data?.count ?? 0;
 
   return (
     <Flex vertical gap={token.marginLG}>
@@ -51,7 +65,12 @@ export const DashboardPage = () => {
 
       <Row gutter={[token.margin, token.margin]}>
         <Col xs={24} md={8}>
-          <StatCard icon={<CheckSquareOutlined />} titleKey="web.dashboard.cards.approvals" />
+          <StatCard
+            icon={<CheckSquareOutlined />}
+            titleKey="web.dashboard.cards.approvals"
+            value={approvals}
+            onClick={() => void navigate('/approvals')}
+          />
         </Col>
         <Col xs={24} md={8}>
           <StatCard icon={<BellOutlined />} titleKey="web.dashboard.cards.notifications" />

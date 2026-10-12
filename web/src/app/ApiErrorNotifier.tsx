@@ -35,7 +35,8 @@ export const ApiErrorNotifier = () => {
     };
 
     const unsubscribeQueries = queryClient.getQueryCache().subscribe((event) => {
-      if (event.type === 'updated' && event.action.type === 'error') {
+      // Queries marked silent show their own state, e.g. a timeline of a document never sent (404)
+      if (event.type === 'updated' && event.action.type === 'error' && !event.query.meta?.silent) {
         notify(event.action.error);
       }
     });

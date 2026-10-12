@@ -296,5 +296,10 @@
   "platform.entities.Delegation.From": "Başlangıç",
   "platform.entities.Delegation.To": "Bitiş",
   "platform.entities.Delegation.DocumentTypes": "Belge türleri",
-  "platform.entities.Delegation.IsRevoked": "Sonlandırıldı"
+  "platform.entities.Delegation.IsRevoked": "Sonlandırıldı",
+  "platform.approvals.test_document.name": "Deneme talebi",
+  "platform.approvals.test_document.title": "Deneme talebi {number}",
+  "platform.approvals.test_document.amount": "Tutar",
+  "platform.approvals.test_document.category": "Kategori",
+  "platform.approvals.test_document.approver": "Belgedeki onaylayıcı"
 }

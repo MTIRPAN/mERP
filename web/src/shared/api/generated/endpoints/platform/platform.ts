@@ -109,7 +109,9 @@ import type {
   SetCompanyLogoBody,
   SetTextCommand,
   SetUserActiveCommand,
+  SubmitTestApprovalCommand,
   SystemInfoResponse,
+  TestApprovalDocumentResponse,
   UnreadNotificationCount,
   UpdateApprovalDefinitionCommand,
   UpdateBranchCommand,
@@ -10115,10 +10117,123 @@ export const useRevokeDelegation = <TError = ErrorType<ProblemDetails>, TContext
 > => {
   return useMutation(getRevokeDelegationMutationOptions(options), queryClient);
 };
+export const getSubmitTestApprovalDocumentUrl = () => {
+  return `/api/platform/approvals/test-documents`;
+};
+
+/**
+ * Requires permission: platform.approvals.definitions.manage.
+ * @summary Send a test document through the flows (only where test documents are enabled)
+ */
+export const submitTestApprovalDocument = async (
+  submitTestApprovalCommand: SubmitTestApprovalCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<TestApprovalDocumentResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<TestApprovalDocumentResponse>(getSubmitTestApprovalDocumentUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(submitTestApprovalCommand),
+  });
+};
+
+export const getSubmitTestApprovalDocumentMutationKey = () => ['submitTestApprovalDocument'] as const;
+
+export const getSubmitTestApprovalDocumentMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitTestApprovalDocument>>,
+    TError,
+    SubmitTestApprovalDocumentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitTestApprovalDocument>>,
+  TError,
+  SubmitTestApprovalDocumentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubmitTestApprovalDocumentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitTestApprovalDocument>>,
+    SubmitTestApprovalDocumentMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return submitTestApprovalDocument(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitTestApprovalDocumentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitTestApprovalDocument>>
+>;
+export type SubmitTestApprovalDocumentMutationBody = SubmitTestApprovalCommand;
+export type SubmitTestApprovalDocumentMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SubmitTestApprovalDocumentMutationVariables = { data: SubmitTestApprovalCommand };
+
+/**
+ * @summary Send a test document through the flows (only where test documents are enabled)
+ */
+export const useSubmitTestApprovalDocument = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof submitTestApprovalDocument>>,
+      TError,
+      SubmitTestApprovalDocumentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof submitTestApprovalDocument>>,
+  TError,
+  SubmitTestApprovalDocumentMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubmitTestApprovalDocumentMutationOptions(options), queryClient);
+};
 export const getSearchApprovalUsersUrl = (params?: SearchApprovalUsersParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['ids'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
     if (value !== undefined) {
       normalizedParams.append(key, value === null ? 'null' : String(value));
     }

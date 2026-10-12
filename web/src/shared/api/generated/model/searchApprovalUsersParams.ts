@@ -7,4 +7,5 @@
 
 export type SearchApprovalUsersParams = {
   search?: string;
+  ids?: string[];
 };

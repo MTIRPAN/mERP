@@ -17,6 +17,7 @@ import { setActiveCompanyId, useActiveCompanyId } from '@/app/company/companySto
 import { useMe } from '@/app/me/meContext';
 import { useCulturePreference } from '@/app/me/useCulturePreference';
 import { useThemeMode, type ThemeMode } from '@/app/theme/themeModeContext';
+import { useCountMyApprovalTasks } from '@/shared/api/generated/endpoints/platform/platform';
 
 export const SearchTrigger = ({ onOpen }: { onOpen: () => void }) => {
   const { t } = useTranslation();
@@ -80,16 +81,20 @@ export const ThemeSwitcher = () => {
   );
 };
 
+/** Open approval tasks of the caller and of those they act for (§2.7); opens the approval inbox. */
 export const ApprovalsBadge = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const count = useCountMyApprovalTasks().data?.count ?? 0;
   return (
     <Tooltip title={t('web.shell.header.approvals')}>
-      <Badge count={0} size="small">
+      <Badge count={count} size="small" overflowCount={99}>
         <Button
           type="text"
           shape="circle"
           icon={<CheckSquareOutlined />}
           aria-label={t('web.shell.header.approvals')}
+          onClick={() => void navigate('/approvals')}
         />
       </Badge>
     </Tooltip>

@@ -53,7 +53,8 @@ public sealed class ShellEndpointsTests(WebHostFactory factory) : IClassFixture<
         me.Tenant.Code.ShouldBe("acme");
         me.User.Subject.ShouldBe("employee-1");
         me.Permissions.ShouldBeEmpty();
-        me.Menu.Select(m => m.Key).ShouldBe(["home"]);
+        // The approval inbox and delegations are every user's own (D34)
+        me.Menu.Select(m => m.Key).ShouldBe(["home", "approvals"]);
         me.Preferences.Culture.ShouldBe("tr-TR");
         me.Cultures.Select(c => c.Code).ShouldBe(["tr-TR"]);
     }

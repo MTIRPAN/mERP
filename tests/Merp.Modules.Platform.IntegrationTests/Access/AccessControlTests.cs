@@ -106,7 +106,8 @@ public sealed class AccessControlTests(AccessFactory factory) : IClassFixture<Ac
 
         me.User.Id.ShouldNotBeNull();
         me.Permissions.ShouldBeEmpty();
-        MenuPaths(me).ShouldBe(["/"]);
+        // Only what every user has: home, the approval inbox and delegations (D34)
+        MenuPaths(me).ShouldBe(["/", "/approvals", "/approvals/delegations"]);
         (await factory.As(subject).GetAsync("/api/platform/system/info", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
 
         var details = await factory.UserAsync(me.User.Id!.Value);

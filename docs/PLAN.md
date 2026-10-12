@@ -532,7 +532,7 @@ Kurallar: D16, D31.
 - `izin-kurallari.md` §8.1 S1–S7'deki günlerin gün bazlı değerleri doğru hesaplanır.
 - 6 günlük takvimde cumartesi çalışma günü sayılır.
 
-### [ ] P10 Onay motoru 🔍 — XL (3 PR: P10a domain + motor, P10b API + olaylar, P10c web)
+### [x] P10 Onay motoru 🔍 — XL (3 PR: P10a domain + motor, P10b API + olaylar, P10c web)
 
 Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
 
@@ -570,7 +570,7 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
   - D22 listesi
   - varsayılan akış seed altyapısı (`DefaultFlow`); §2.8 tanımları belge türleriyle HR ve Recruitment görevlerinde gelir
   - senaryo 10'un HTTP 409'u ve senaryo 11 (inbox)
-- [ ] **P10c web:** Onay Kutum, `<ApprovalTimeline />`, akış editörü, Vekaletlerim. 🔍 demo.
+- [x] **P10c web:** Onay Kutum, `<ApprovalTimeline />`, akış editörü, Vekaletlerim, yönetici talep listesi, deneme talebi (D34). 🔍 demo.
 
 ### [ ] P11 Ayarlar ve içe/dışa aktarma altyapısı — M
 
