@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
+using Merp.Application.Abstractions.Jobs;
 using Merp.Infrastructure.Jobs;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Web.MultiTenancy;
@@ -28,6 +29,7 @@ public static class JobsHostingExtensions
     {
         ArgumentNullException.ThrowIfNull(configuration);
         services.AddSingleton<JobActivator, TenantAwareJobActivator>();
+        services.AddScoped<IBackgroundTasks, HangfireBackgroundTasks>();
         services.AddHangfire((serviceProvider, config) => config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
             .UseSimpleAssemblyNameTypeSerializer()

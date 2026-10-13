@@ -1,6 +1,7 @@
-import { EditOutlined, PlusOutlined } from '@ant-design/icons';
+import { EditOutlined, FileExcelOutlined, PlusOutlined } from '@ant-design/icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, Flex, Input, Segmented, Select, Space } from 'antd';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useActiveCompanyId } from '@/app/company/companyStore';
 import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
@@ -12,6 +13,7 @@ import { useHasPermission } from '@/shared/auth/permissionContext';
 import { Can } from '@/shared/components/Can';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { ImportDrawer } from '@/shared/imports/ImportDrawer';
 import { StatusTag } from '@/shared/components/StatusTag';
 import { BranchFormDrawer } from './BranchFormDrawer';
 import { activeFilter, toActiveParam, type ActiveFilter } from './filters';
@@ -26,6 +28,12 @@ export const BranchesPage = () => {
   const [type, setType] = useState<BranchType>();
   const [active, setActive] = useState<ActiveFilter>('active');
   const [drawer, setDrawer] = useState<{ open: boolean; branchId?: string }>({ open: false });
+  const [importing, setImporting] = useState(false);
+  const queryClient = useQueryClient();
+  const refresh = useCallback(
+    () => void queryClient.invalidateQueries({ queryKey: getListBranchesQueryKey() }),
+    [queryClient],
+  );
 
   const columns = useMemo<DataTableColumn<BranchListItem>[]>(
     () => [
@@ -95,9 +103,14 @@ export const BranchesPage = () => {
         subtitle={t('web.platform.branches.subtitle')}
         extra={
           <Can permission={platformPermissions.branchesManage}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setDrawer({ open: true })}>
-              {t('web.platform.branches.new')}
-            </Button>
+            <Space>
+              <Button icon={<FileExcelOutlined />} onClick={() => setImporting(true)}>
+                {t('web.imports.button')}
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setDrawer({ open: true })}>
+                {t('web.platform.branches.new')}
+              </Button>
+            </Space>
           </Can>
         }
       />
@@ -136,6 +149,13 @@ export const BranchesPage = () => {
         }
       />
       <BranchFormDrawer open={drawer.open} branchId={drawer.branchId} onClose={() => setDrawer({ open: false })} />
+      <ImportDrawer
+        importKey="platform.branches"
+        name={t('web.platform.branches.title')}
+        open={importing}
+        onClose={() => setImporting(false)}
+        onImported={refresh}
+      />
     </>
   );
 };

@@ -19,6 +19,7 @@ public sealed class ModuleUnitOfWork<TContext>(
     where TContext : ModuleDbContext
 {
     private IDbContextTransaction? _transaction;
+    private bool _manyAggregates;
 
     public TContext DbContext => dbContext;
 
@@ -30,7 +31,10 @@ public sealed class ModuleUnitOfWork<TContext>(
         }
 
         _transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        _manyAggregates = false;
     }
+
+    public void AllowManyAggregates() => _manyAggregates = true;
 
     public void AddOutboxMessage(OutboxMessage message)
     {
@@ -43,7 +47,7 @@ public sealed class ModuleUnitOfWork<TContext>(
         var transaction = _transaction ?? throw new InvalidOperationException("CommitAsync was called without BeginAsync.");
 
         dbContext.ChangeTracker.DetectChanges();
-        if (options.Value.EnforceSingleAggregatePerCommand)
+        if (options.Value.EnforceSingleAggregatePerCommand && !_manyAggregates)
         {
             EnsureSingleAggregateChanged();
         }
@@ -61,6 +65,12 @@ public sealed class ModuleUnitOfWork<TContext>(
 
         await transaction.CommitAsync(cancellationToken);
         await DisposeTransactionAsync();
+        if (_manyAggregates)
+        {
+            // The next batch of an import runs in the same scope: entities kept tracked would slow every later save
+            dbContext.ChangeTracker.Clear();
+        }
+
         return Result.Success();
     }
 

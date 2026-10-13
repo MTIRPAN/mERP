@@ -595,7 +595,10 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
   - Platform'da ayar profilleri, önbellek, API
   - Sistem → Ayarlar ekranı
   - ilk ayar: bildirim e-postaları
-- [ ] **P11b içe aktarma:** `IImportDefinition`, şablon, doğrulama ve hata raporu, batch commit, büyük dosyalar için arka plan işi.
+- [x] **P11b içe aktarma:**
+  - `IImportDefinition`, şablon, doğrulama ve hata raporu
+  - 100'lük partilerle commit (`IBulkCommand` istisnası), büyük dosyalar için arka plan işi (`IBackgroundTasks`)
+  - ilk tanım: şubeler (Organizasyon → Şubeler → Excel'den içe aktar)
 - [ ] **P11c dışa aktarma:** liste sorgularının Excel'e aktarımı (kolon seçimi, veri kapsamı, maskeleme).
 
 ### [ ] P12 Belge şablonları ve PDF — M

@@ -1,6 +1,7 @@
 using Merp.Application.Abstractions.Approvals;
 using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Files;
+using Merp.Application.Abstractions.Imports;
 using Merp.Application.Abstractions.Jobs;
 using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Localization;
@@ -18,7 +19,9 @@ using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Platform.Application.Approvals;
 using Merp.Modules.Platform.Application.Calendars;
 using Merp.Modules.Platform.Application.CustomFields;
+using Merp.Modules.Platform.Application.Branches;
 using Merp.Modules.Platform.Application.Files;
+using Merp.Modules.Platform.Application.Imports;
 using Merp.Modules.Platform.Application.Localization;
 using Merp.Modules.Platform.Application.Notifications;
 using Merp.Modules.Platform.Application.Numbering;
@@ -125,6 +128,15 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddSingleton<ISettingDefinitionProvider, PlatformSettingDefinitions>();
         services.Replace(ServiceDescriptor.Scoped<ISettings, PlatformSettings>());
         services.AddScoped<ISettingsCache, SettingsCache>();
+
+        // Excel imports of all modules (D35)
+        var importSettings = new ImportSettings();
+        configuration?.GetSection(ImportSettings.SectionName).Bind(importSettings);
+        services.AddSingleton(importSettings);
+        services.AddScoped<ImportRegistry>();
+        services.AddScoped<ImportReader>();
+        services.AddScoped<ImportRunner>();
+        services.AddScoped<IImportDefinition, BranchImport>();
 
         // Files of Platform records follow the records' permissions (D31)
         services.AddScoped<IFileAccessPolicy, CompanyFileAccessPolicy>();

@@ -12,6 +12,9 @@ public static class PlatformFileOwners
 {
     public const string Company = "platform.company";
 
+    /// <summary>The file of an import job (D35); only the importing user reads it, through the import endpoints.</summary>
+    public const string Import = "platform.import";
+
     /// <summary>Owner types of this module start with <c>platform.</c>; their files are in the <c>platform</c> schema.</summary>
     public static bool IsPlatformOwner(string? ownerType) =>
         ownerType is not null && ownerType.StartsWith(PlatformPermissions.Module + ".", StringComparison.Ordinal);
