@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Merp.Modules.Platform.Application.Access;
 using Merp.SharedKernel.Results;
@@ -67,6 +68,12 @@ internal sealed partial class KeycloakIdentityAdmin(
                 return IdentityErrors.AlreadyExists;
             }
 
+            // Keycloak refuses a value its user profile does not allow, e.g. a parenthesis in a name
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                return await RejectedAsync(response, ct);
+            }
+
             response.EnsureSuccessStatusCode();
             var location = response.Headers.Location ?? throw new HttpRequestException("Keycloak returned no user location.");
             return location.Segments[^1];
@@ -128,6 +135,54 @@ internal sealed partial class KeycloakIdentityAdmin(
         }
     }
 
+    /// <summary>
+    /// A value Keycloak refused, as a field error of the form: the field and its reason, never the value (personal data).
+    /// An answer that is not a field error is treated as Keycloak being unavailable.
+    /// </summary>
+    private async Task<Error> RejectedAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        KeycloakError? error = null;
+        try
+        {
+            error = await response.Content.ReadFromJsonAsync<KeycloakError>(cancellationToken);
+        }
+        catch (JsonException)
+        {
+        }
+
+        LogRejected(logger, error?.Field, error?.ErrorMessage);
+        var field = error?.Field switch
+        {
+            "username" => "userName",
+            "email" => "email",
+            "firstName" => "firstName",
+            "lastName" => "lastName",
+            _ => null,
+        };
+        if (field is null)
+        {
+            return IdentityErrors.Unavailable;
+        }
+
+        // e.g. ["username", 3, 255]
+        if (error!.ErrorMessage == "error-invalid-length" && error.Params is [_, { ValueKind: JsonValueKind.Number } min, { ValueKind: JsonValueKind.Number } max])
+        {
+            return Error.Validation([new FieldError(field, "common.errors.length", new Dictionary<string, object?> { ["minLength"] = min.GetInt32(), ["maxLength"] = max.GetInt32() })]);
+        }
+
+        var code = error.ErrorMessage switch
+        {
+            "error-username-invalid-character" => IdentityErrors.InvalidUserNameCode,
+            "error-invalid-email" => IdentityErrors.InvalidEmailCode,
+            "error-person-name-invalid-character" => IdentityErrors.InvalidPersonNameCode,
+            _ => IdentityErrors.RejectedCode,
+        };
+        return Error.Validation([new FieldError(field, code)]);
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Keycloak refused field {Field}: {Reason}")]
+    private static partial void LogRejected(ILogger logger, string? field, string? reason);
+
     [LoggerMessage(Level = LogLevel.Warning, Message = "Keycloak admin API call failed")]
     private static partial void LogFailed(ILogger logger, Exception exception);
 
@@ -139,6 +194,8 @@ internal sealed partial class KeycloakIdentityAdmin(
         bool Enabled,
         bool EmailVerified,
         Dictionary<string, string[]> Attributes);
+
+    private sealed record KeycloakError(string? Field, string? ErrorMessage, JsonElement[]? Params);
 }
 
 /// <summary>Service account token of the admin client, reused until shortly before it expires.</summary>

@@ -5,4 +5,8 @@
     <ProjectReference Include="../../../BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Merp.Modules.Platform.IntegrationTests" />
+  </ItemGroup>
+
 </Project>

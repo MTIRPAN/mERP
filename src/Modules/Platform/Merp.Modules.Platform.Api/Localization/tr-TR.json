@@ -357,7 +357,7 @@
   "web.platform.users.search": "Kullanıcı adı, ad veya e-posta ara",
   "web.platform.users.role_filter": "Role göre",
   "web.platform.users.user_name": "Kullanıcı adı",
-  "web.platform.users.user_name_hint": "Giriş ekranında kullanılır. İngilizce harf, rakam, nokta, tire, alt çizgi ve @ içerebilir.",
+  "web.platform.users.user_name_hint": "Giriş ekranında kullanılır. En az 3 karakter; İngilizce harf, rakam, nokta, tire, alt çizgi ve @ içerebilir.",
   "web.platform.users.name": "Ad soyad",
   "web.platform.users.first_name": "Ad",
   "web.platform.users.last_name": "Soyad",

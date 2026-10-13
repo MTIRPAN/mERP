@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using Merp.Application.Abstractions.Context;
@@ -128,15 +129,25 @@ internal static class UserRules
     }
 }
 
+/// <summary>Keycloak refuses these characters in names (its person-name-prohibited-characters validator).</summary>
+internal static class PersonNames
+{
+    private static readonly SearchValues<char> Prohibited = SearchValues.Create(@"<>&""$%!#?§;*~/\|^=[]{}()");
+
+    public static bool IsValid(string? name) => name is null || name.AsSpan().IndexOfAny(Prohibited) < 0;
+}
+
 internal sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 {
     public CreateUserCommandValidator()
     {
-        RuleFor(c => c.UserName).Cascade(CascadeMode.Stop).NotEmpty().MaximumLength(User.UserNameMaxLength)
+        RuleFor(c => c.UserName).Cascade(CascadeMode.Stop).NotEmpty().Length(User.UserNameMinLength, User.UserNameMaxLength)
             .Matches("^[A-Za-z0-9._@-]+$").WithErrorCode("platform.users.errors.invalid_user_name");
         RuleFor(c => c.Email).Cascade(CascadeMode.Stop).NotEmpty().MustBeValid(Email.Create);
-        RuleFor(c => c.FirstName).NotEmpty().MaximumLength(User.NameMaxLength);
-        RuleFor(c => c.LastName).NotEmpty().MaximumLength(User.NameMaxLength);
+        RuleFor(c => c.FirstName).Cascade(CascadeMode.Stop).NotEmpty().MaximumLength(User.NameMaxLength)
+            .Must(PersonNames.IsValid).WithErrorCode(IdentityErrors.InvalidPersonNameCode);
+        RuleFor(c => c.LastName).Cascade(CascadeMode.Stop).NotEmpty().MaximumLength(User.NameMaxLength)
+            .Must(PersonNames.IsValid).WithErrorCode(IdentityErrors.InvalidPersonNameCode);
     }
 }
 

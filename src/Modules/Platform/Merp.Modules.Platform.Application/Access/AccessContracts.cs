@@ -60,4 +60,10 @@ public static class IdentityErrors
 
     /// <summary>The user name or e-mail address is already taken in the identity provider.</summary>
     public static readonly Error AlreadyExists = Error.Conflict("platform.users.errors.identity_exists");
+
+    /// <summary>Keycloak refused a value of the user (field errors of D5 identities).</summary>
+    public const string InvalidUserNameCode = "platform.users.errors.invalid_user_name";
+    public const string InvalidEmailCode = "common.errors.invalid_email";
+    public const string InvalidPersonNameCode = "platform.users.errors.invalid_person_name";
+    public const string RejectedCode = "platform.users.errors.identity_rejected";
 }
