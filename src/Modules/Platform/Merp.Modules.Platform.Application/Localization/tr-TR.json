@@ -316,5 +316,7 @@
   "platform.settings.notifications.email_enabled_hint": "Kapalıyken bildirimler yalnızca uygulamadaki zile düşer; kullanıcıların e-posta tercihleri uygulanmaz.",
   "platform.entities.SettingsProfile": "Ayarlar",
   "platform.entities.SettingsProfile.CompanyId": "Şirket",
-  "platform.entities.SettingsProfile.Values": "Değerler"
+  "platform.entities.SettingsProfile.Values": "Değerler",
+  "platform.users.errors.invalid_person_name": "Ad ve soyad özel karakter içeremez; örneğin parantez, köşeli parantez, < > & $ % ! # ; * / | = kullanılamaz.",
+  "platform.users.errors.identity_rejected": "Kimlik sunucusu bu değeri kabul etmedi. Lütfen değeri kontrol edin."
 }

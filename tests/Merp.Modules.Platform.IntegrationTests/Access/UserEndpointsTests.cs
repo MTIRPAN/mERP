@@ -52,6 +52,13 @@ public sealed class UserEndpointsTests(AccessFactory factory) : IClassFixture<Ac
         invalid.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await Problem.ReadAsync(invalid)).Errors!.Keys.ShouldBe(["userName", "email", "firstName"], ignoreOrder: true);
 
+        // What Keycloak would refuse is caught first: too short a user name, characters it does not allow in names
+        var keycloakRules = await factory.AsRoot().PostAsJsonAsync(Url, new { userName = "mt", email = "mt@example.com", firstName = "Ali (IT)", lastName = "Y" }, Ct);
+        var errors = (await Problem.ReadAsync(keycloakRules)).Errors!;
+        errors["userName"].ShouldBe(["3 ile 255 karakter arasında olmalıdır."]);
+        errors["firstName"].ShouldBe(["Ad ve soyad özel karakter içeremez; örneğin parantez, köşeli parantez, < > & $ % ! # ; * / | = kullanılamaz."]);
+        errors.ContainsKey("lastName").ShouldBeFalse();
+
         var userName = AccessFactory.NewSubject("dup.");
         (await factory.AsRoot().PostAsJsonAsync(Url, NewUserBody(userName), Ct)).StatusCode.ShouldBe(HttpStatusCode.Created);
         var taken = await factory.AsRoot().PostAsJsonAsync(Url, NewUserBody(userName), Ct);

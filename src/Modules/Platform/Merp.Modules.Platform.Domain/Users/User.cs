@@ -25,6 +25,9 @@ public readonly record struct RoleAssignmentId(Guid Value) : IEntityId<RoleAssig
 public sealed class User : AuditableAggregateRoot<UserId>
 {
     public const int SubjectMaxLength = 64;
+    /// <summary>Keycloak refuses shorter user names (its username length validator).</summary>
+    public const int UserNameMinLength = 3;
+
     public const int UserNameMaxLength = 255;
     public const int NameMaxLength = 100;
 
