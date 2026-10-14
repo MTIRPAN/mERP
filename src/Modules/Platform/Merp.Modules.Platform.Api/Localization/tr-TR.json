@@ -187,6 +187,8 @@
   "web.audit.action.Update": "Değişiklik",
   "web.audit.action.Delete": "Silme",
   "web.audit.action.Read": "Görüntüleme",
+  "web.audit.action.Export": "Dışa aktarma",
+  "web.audit.export_summary": "{rows} satır; sütunlar: {columns}; filtreler: {filters}",
   "web.shell.header.search": "Ara veya bir sayfaya git",
   "web.shell.header.search_hint": "Ctrl K",
   "web.shell.header.company": "Şirket",

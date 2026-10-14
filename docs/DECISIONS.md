@@ -723,4 +723,11 @@ Seçilen kültür `Content-Language` başlığında döner.
 - **Audit:** İçe aktarma işi audit'e dahil edilmez; işin kendisi kayıttır. Oluşan kayıtlar (örn. şubeler) kendi audit kayıtlarını yazar.
 - **İlk tanım:** Şubeler (`platform.branches`, `platform.branches.manage`). Şirket kodu, il adı ya da plaka kodu, ilçe adı ile eşlenir.
 
-**Dışa aktarma (P11c):** Ayrıntılar kendi PR'ıyla bu karara eklenecek.
+**Dışa aktarma (P11c):**
+- **Uç noktalar:** Her liste kendi yanında `GET …/{liste}/export` sunar (örn. `/api/platform/branches/export`). Liste ile aynı yetkiyi ve aynı filtre parametrelerini alır, ek olarak `columns` (virgülle ayrılmış sütun anahtarları) ve `sort`.
+- **Satırlar liste sorgusundan okunur:** `IListExporter` liste sorgusunu sayfa sayfa (200'er) çalıştırır. Böylece veri kapsamı, filtreler, aktif şirket ve `[Sensitive]` maskelemesi ekrandakiyle aynıdır; dışa aktarma ayrı bir sorgu yazmaz.
+- **Sütunlar:** Modül, listenin sütunlarını `ExportColumn<T>` ile tanımlar (ekrandaki sütun anahtarı, başlık anahtarı, değer). Ekranda görünen sütunlar ekrandaki sırayla aktarılır; bilinmeyen anahtarlar (örn. işlem sütunu) atlanır, hiç sütun verilmezse hepsi aktarılır. Özel alanlar `customFields.{kod}` sütunlarıyla aktarılır.
+- **Hücreler:** Sayılar, tarihler ve anlar tipli yazılır (Excel'de sıralanıp toplanabilir). Anlar `Exports:TimeZoneId` (varsayılan Europe/Istanbul) saatine çevrilir. Enum ve durum değerleri kullanıcının dilindeki etiketlerle, evet/hayır metinle yazılır. Başlık satırında filtre vardır ve sabittir.
+- **Boyut:** Dosya istek içinde üretilir. `Exports:MaxRows` (varsayılan 10.000) satırı aşan liste reddedilir (400, `filter` alanı), kullanıcı filtreyi daraltır.
+- **Denetim (KVKK):** Her dışa aktarma, satırların varlığının modülündeki audit tablosuna `Export` işlemi olarak yazılır: kim, ne zaman, kaç satır, hangi sütunlar, sıralama ve filtreler. Kayıt isteğin işleminden bağımsız, hemen yazılır.
+- **İlk listeler:** şirketler (özel alanlar dahil), şubeler, kullanıcılar.

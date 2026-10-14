@@ -34,4 +34,7 @@ public enum AuditAction
     Update,
     Delete,
     Read,
+
+    /// <summary>A list was exported to Excel (D35): NewValue holds the row count, columns, sort and filters.</summary>
+    Export,
 }

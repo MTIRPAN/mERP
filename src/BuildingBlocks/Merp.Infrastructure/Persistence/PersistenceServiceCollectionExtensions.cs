@@ -26,6 +26,7 @@ public static class PersistenceServiceCollectionExtensions
         services.TryAddScoped<SoftDeleteInterceptor>();
         services.TryAddScoped<AuditableInterceptor>();
         services.TryAddScoped<AuditLogInterceptor>();
+        services.TryAddScoped<IAuditWriter, DirectAuditWriter>();
         services.TryAddScoped<ISensitiveReadLog, SensitiveReadLog>();
         services.TryAddScoped<INumberGenerator, NumberGenerator>();
         services.TryAddScoped<INumberSequenceSettingsSource, NoNumberSequences>();

@@ -6,8 +6,13 @@ import { useTranslation } from 'react-i18next';
 import { useActiveCompanyId } from '@/app/company/companyStore';
 import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
 import { platformPermissions } from '@/modules/platform/permissions';
-import { getListBranchesQueryKey, listBranches } from '@/shared/api/generated/endpoints/platform/platform';
+import {
+  exportBranches,
+  getListBranchesQueryKey,
+  listBranches,
+} from '@/shared/api/generated/endpoints/platform/platform';
 import { BranchType, type BranchListItem } from '@/shared/api/generated/model';
+import { useListExport } from '@/shared/api/listExport';
 import type { ListParams } from '@/shared/api/paging';
 import { useHasPermission } from '@/shared/auth/permissionContext';
 import { Can } from '@/shared/components/Can';
@@ -86,6 +91,8 @@ export const BranchesPage = () => {
     [t, canManage, canAudit],
   );
 
+  const download = useListExport();
+
   const fetchPage = (params: ListParams) =>
     listBranches({
       page: params.page,
@@ -121,6 +128,18 @@ export const BranchesPage = () => {
         columns={columns}
         rowKey="id"
         filter={{ search, type, active }}
+        onExport={({ sort, filter, columns: keys }) =>
+          download(
+            exportBranches({
+              columns: keys.join(','),
+              sort,
+              search: filter?.search,
+              type: filter?.type as BranchType | undefined,
+              isActive: toActiveParam(filter?.active as ActiveFilter | undefined),
+            }),
+            t('web.platform.branches.title'),
+          )
+        }
         toolbar={
           <Space wrap>
             <Input.Search

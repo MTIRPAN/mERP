@@ -15,7 +15,7 @@ import { useHasPermission } from '@/shared/auth/permissionContext';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { formatDateTime } from '@/shared/format/date';
-import { actionColors, displayValue, type AuditAction } from './auditView';
+import { actionColors, displayValue, exportSummary, type AuditAction } from './auditView';
 
 /** Entity filter value: "module:EntityType". */
 const SEPARATOR = ':';
@@ -95,7 +95,8 @@ export const AuditLogPage = () => {
         key: 'newValue',
         title: t('web.audit.new_value'),
         ellipsis: true,
-        render: (_, row) => displayValue(row.newValue, t),
+        render: (_, row) =>
+          (row.action === 'Export' ? exportSummary(row.newValue, t) : undefined) ?? displayValue(row.newValue, t),
       },
       { key: 'module', title: t('web.audit.module'), hiddenByDefault: true, render: (_, row) => row.module },
     ],

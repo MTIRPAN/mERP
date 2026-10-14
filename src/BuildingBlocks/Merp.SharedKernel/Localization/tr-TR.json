@@ -1,5 +1,8 @@
 {
   "common.errors.validation": "Bir veya daha fazla alan geçersiz.",
+  "common.yes": "Evet",
+  "common.no": "Hayır",
+  "common.exports.errors.too_many_rows": "Liste {count} satır; dışa aktarmada en fazla {max} satır olabilir. Lütfen filtreyi daraltın.",
   "common.errors.not_found": "Kayıt bulunamadı.",
   "common.errors.forbidden": "Bu işlem için yetkiniz yok.",
   "common.errors.concurrency_conflict": "Kayıt siz düzenlerken başka biri tarafından değiştirildi. Sayfayı yenileyip tekrar deneyin.",
