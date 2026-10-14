@@ -1,7 +1,11 @@
+using Merp.Application.Abstractions.Exports;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Paging;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Companies;
+using Merp.Modules.Platform.Application.CustomFields;
+using Merp.Modules.Platform.Application.Exports;
+using Merp.Modules.Platform.Domain.Companies;
 using Merp.Web.Errors;
 using Merp.Web.Files;
 using Merp.Web.Security;
@@ -23,6 +27,12 @@ internal static class CompanyEndpoints
             .RequirePermission(PlatformPermissions.Companies.Read)
             .WithName("ListCompanies")
             .WithSummary("Companies in the caller's scope")
+            .ProducesValidationProblem();
+
+        companies.MapGet("/export", ExportAsync)
+            .RequirePermission(PlatformPermissions.Companies.Read)
+            .WithName("ExportCompanies")
+            .WithSummary("The company list as Excel, with the list's filters and sort and the chosen columns, custom fields included (D35)")
             .ProducesValidationProblem();
 
         companies.MapGet("/{id:guid}", GetAsync)
@@ -83,6 +93,43 @@ internal static class CompanyEndpoints
     {
         var result = await sender.Send(new GetCompaniesQuery(new PageRequest(page, pageSize, sort), search, isActive, customFields), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : (ProblemHttpResult)result.Error.ToProblem();
+    }
+
+    /// <param name="columns">Column keys, comma separated (code,customFields.region); every column when empty.</param>
+    /// <param name="sort">The list's sort.</param>
+    /// <param name="search">The list's filter.</param>
+    /// <param name="isActive">The list's filter.</param>
+    /// <param name="customFields">The list's custom field filter.</param>
+    /// <param name="sender">Mediator.</param>
+    /// <param name="exporter">Writes the file.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    private static async Task<Results<FileContentHttpResult, ProblemHttpResult>> ExportAsync(
+        string? columns,
+        string? sort,
+        string? search,
+        bool? isActive,
+        string? customFields,
+        ISender sender,
+        IListExporter exporter,
+        CancellationToken cancellationToken)
+    {
+        var fields = await sender.Send(new GetCustomFieldFormQuery(PlatformCustomFieldEntities.Company, null), cancellationToken);
+        if (fields.IsFailure)
+        {
+            return (ProblemHttpResult)fields.Error.ToProblem();
+        }
+
+        var result = await exporter.ExportAsync(
+            new ExportList<CompanyListItem>(
+                "web.platform.companies.title",
+                typeof(Company),
+                PlatformExports.Companies(fields.Value),
+                paging => new GetCompaniesQuery(paging, search, isActive, customFields),
+                sort,
+                ExportRules.ParseColumns(columns),
+                new Dictionary<string, object?> { ["search"] = search, ["isActive"] = isActive, ["customFields"] = customFields }),
+            cancellationToken);
+        return result.ToFile();
     }
 
     private static async Task<Results<Ok<CompanyDetails>, ProblemHttpResult>> GetAsync(Guid id, ISender sender, CancellationToken cancellationToken)

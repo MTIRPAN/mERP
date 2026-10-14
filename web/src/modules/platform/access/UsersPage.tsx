@@ -5,8 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { activeFilter, toActiveParam, type ActiveFilter } from '@/modules/platform/organization/filters';
 import { platformPermissions } from '@/modules/platform/permissions';
-import { getListUsersQueryKey, listUsers, useListRoles } from '@/shared/api/generated/endpoints/platform/platform';
+import {
+  exportUsers,
+  getListUsersQueryKey,
+  listUsers,
+  useListRoles,
+} from '@/shared/api/generated/endpoints/platform/platform';
 import type { UserListItem } from '@/shared/api/generated/model';
+import { useListExport } from '@/shared/api/listExport';
 import type { ListParams } from '@/shared/api/paging';
 import { Can } from '@/shared/components/Can';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
@@ -59,6 +65,8 @@ export const UsersPage = () => {
     [t],
   );
 
+  const download = useListExport();
+
   const fetchPage = (params: ListParams) =>
     listUsers({
       page: params.page,
@@ -88,6 +96,18 @@ export const UsersPage = () => {
         columns={columns}
         rowKey="id"
         filter={{ search, active, roleId }}
+        onExport={({ sort, filter, columns: keys }) =>
+          download(
+            exportUsers({
+              columns: keys.join(','),
+              sort,
+              search: filter?.search,
+              isActive: toActiveParam(filter?.active as ActiveFilter | undefined),
+              roleId: filter?.roleId,
+            }),
+            t('web.platform.users.title'),
+          )
+        }
         toolbar={
           <Space wrap>
             <Input.Search

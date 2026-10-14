@@ -59,6 +59,9 @@ import type {
   DecideApprovalTaskCommand,
   DelegationItem,
   EntityCreatedResponse,
+  ExportBranchesParams,
+  ExportCompaniesParams,
+  ExportUsersParams,
   ForceApproveApprovalCommand,
   GetAiUsageSummaryParams,
   GetApprovalTimelineParams,
@@ -3618,6 +3621,140 @@ export const useCreateCompany = <TError = ErrorType<HttpValidationProblemDetails
 ): UseMutationResult<Awaited<ReturnType<typeof createCompany>>, TError, CreateCompanyMutationVariables, TContext> => {
   return useMutation(getCreateCompanyMutationOptions(options), queryClient);
 };
+export const getExportCompaniesUrl = (params?: ExportCompaniesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/companies/export?${stringifiedParams}`
+    : `/api/platform/companies/export`;
+};
+
+/**
+ * Requires permission: platform.companies.read.
+ * @summary The company list as Excel, with the list's filters and sort and the chosen columns, custom fields included (D35)
+ */
+export const exportCompanies = async (
+  params?: ExportCompaniesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportCompaniesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportCompaniesQueryKey = (params?: ExportCompaniesParams) => {
+  return [`/api/platform/companies/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportCompaniesQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportCompaniesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompanies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportCompaniesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportCompanies>>> = ({ signal }) =>
+    exportCompanies(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportCompanies>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportCompaniesQueryResult = NonNullable<Awaited<ReturnType<typeof exportCompanies>>>;
+export type ExportCompaniesQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportCompanies<
+  TData = Awaited<ReturnType<typeof exportCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ExportCompaniesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompanies>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportCompanies>>,
+          TError,
+          Awaited<ReturnType<typeof exportCompanies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportCompanies<
+  TData = Awaited<ReturnType<typeof exportCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportCompaniesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompanies>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportCompanies>>,
+          TError,
+          Awaited<ReturnType<typeof exportCompanies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportCompanies<
+  TData = Awaited<ReturnType<typeof exportCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportCompaniesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompanies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The company list as Excel, with the list's filters and sort and the chosen columns, custom fields included (D35)
+ */
+
+export function useExportCompanies<
+  TData = Awaited<ReturnType<typeof exportCompanies>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportCompaniesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompanies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportCompaniesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getGetCompanyUrl = (id: string) => {
   return `/api/platform/companies/${id}`;
 };
@@ -4198,6 +4335,140 @@ export const useCreateBranch = <TError = ErrorType<HttpValidationProblemDetails 
 ): UseMutationResult<Awaited<ReturnType<typeof createBranch>>, TError, CreateBranchMutationVariables, TContext> => {
   return useMutation(getCreateBranchMutationOptions(options), queryClient);
 };
+export const getExportBranchesUrl = (params?: ExportBranchesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/branches/export?${stringifiedParams}`
+    : `/api/platform/branches/export`;
+};
+
+/**
+ * Requires permission: platform.branches.read.
+ * @summary The branch list as Excel, with the list's filters and sort and the chosen columns (D35)
+ */
+export const exportBranches = async (
+  params?: ExportBranchesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportBranchesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportBranchesQueryKey = (params?: ExportBranchesParams) => {
+  return [`/api/platform/branches/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportBranchesQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportBranchesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportBranches>>> = ({ signal }) =>
+    exportBranches(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportBranches>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportBranchesQueryResult = NonNullable<Awaited<ReturnType<typeof exportBranches>>>;
+export type ExportBranchesQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportBranches<
+  TData = Awaited<ReturnType<typeof exportBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ExportBranchesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportBranches>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportBranches>>,
+          TError,
+          Awaited<ReturnType<typeof exportBranches>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportBranches<
+  TData = Awaited<ReturnType<typeof exportBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportBranches>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportBranches>>,
+          TError,
+          Awaited<ReturnType<typeof exportBranches>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportBranches<
+  TData = Awaited<ReturnType<typeof exportBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The branch list as Excel, with the list's filters and sort and the chosen columns (D35)
+ */
+
+export function useExportBranches<
+  TData = Awaited<ReturnType<typeof exportBranches>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportBranchesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getGetBranchUrl = (id: string) => {
   return `/api/platform/branches/${id}`;
 };
@@ -4599,6 +4870,140 @@ export const useCreateUser = <TError = ErrorType<HttpValidationProblemDetails | 
 ): UseMutationResult<Awaited<ReturnType<typeof createUser>>, TError, CreateUserMutationVariables, TContext> => {
   return useMutation(getCreateUserMutationOptions(options), queryClient);
 };
+export const getExportUsersUrl = (params?: ExportUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/users/export?${stringifiedParams}`
+    : `/api/platform/users/export`;
+};
+
+/**
+ * Requires permission: platform.users.read.
+ * @summary The user list as Excel, with the list's filters and sort and the chosen columns (D35)
+ */
+export const exportUsers = async (
+  params?: ExportUsersParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportUsersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportUsersQueryKey = (params?: ExportUsersParams) => {
+  return [`/api/platform/users/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ExportUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportUsers>>> = ({ signal }) =>
+    exportUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportUsersQueryResult = NonNullable<Awaited<ReturnType<typeof exportUsers>>>;
+export type ExportUsersQueryError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+
+export function useExportUsers<
+  TData = Awaited<ReturnType<typeof exportUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: undefined | ExportUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportUsers>>,
+          TError,
+          Awaited<ReturnType<typeof exportUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportUsers<
+  TData = Awaited<ReturnType<typeof exportUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ExportUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportUsers>>,
+          TError,
+          Awaited<ReturnType<typeof exportUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportUsers<
+  TData = Awaited<ReturnType<typeof exportUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ExportUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The user list as Excel, with the list's filters and sort and the chosen columns (D35)
+ */
+
+export function useExportUsers<
+  TData = Awaited<ReturnType<typeof exportUsers>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ExportUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getGetUserUrl = (id: string) => {
   return `/api/platform/users/${id}`;
 };

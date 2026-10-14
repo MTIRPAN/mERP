@@ -572,7 +572,7 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
   - senaryo 10'un HTTP 409'u ve senaryo 11 (inbox)
 - [x] **P10c web:** Onay Kutum, `<ApprovalTimeline />`, akış editörü, Vekaletlerim, yönetici talep listesi, deneme talebi (D34). 🔍 demo.
 
-### [ ] P11 Ayarlar ve içe/dışa aktarma altyapısı — M
+### [x] P11 Ayarlar ve içe/dışa aktarma altyapısı — M
 
 **Yapılacaklar:**
 - **Ayarlar:** modüllerin kaydettiği tipli tanımlar (anahtar, tip, varsayılan, kapsam: Tenant / Company), API, önbellek, modüllere göre gruplu genel ayar ekranı.
@@ -599,7 +599,10 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
   - `IImportDefinition`, şablon, doğrulama ve hata raporu
   - 100'lük partilerle commit (`IBulkCommand` istisnası), büyük dosyalar için arka plan işi (`IBackgroundTasks`)
   - ilk tanım: şubeler (Organizasyon → Şubeler → Excel'den içe aktar)
-- [ ] **P11c dışa aktarma:** liste sorgularının Excel'e aktarımı (kolon seçimi, veri kapsamı, maskeleme).
+- [x] **P11c dışa aktarma:**
+  - liste sorgularının Excel'e aktarımı (kolon seçimi, veri kapsamı, maskeleme)
+  - her dışa aktarma audit'e yazılır, 10.000 satır sınırı
+  - ilk listeler: şirketler, şubeler, kullanıcılar
 
 ### [ ] P12 Belge şablonları ve PDF — M
 

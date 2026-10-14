@@ -4,7 +4,7 @@ import type { AuditItem } from '@/shared/api/generated/model';
 /** Value the API writes for a [Sensitive] field (backend AuditLogInterceptor.MaskedValue). */
 export const MASKED_VALUE = '***';
 
-export type AuditAction = 'Insert' | 'Update' | 'Delete' | 'Read';
+export type AuditAction = 'Insert' | 'Update' | 'Delete' | 'Read' | 'Export';
 
 export interface AuditChange {
   id: string;
@@ -102,4 +102,32 @@ export const actionColors: Record<AuditAction, string> = {
   Update: 'processing',
   Delete: 'error',
   Read: 'warning',
+  Export: 'purple',
+};
+
+interface ExportRecord {
+  rows?: number;
+  columns?: string[];
+  filters?: Record<string, string>;
+}
+
+/** What an export wrote (the entry's JSON record) as a sentence: rows, columns and filters (D35). */
+export const exportSummary = (value: string | null, t: TFunction): string | undefined => {
+  if (!value?.startsWith('{')) {
+    return undefined;
+  }
+
+  try {
+    const record = JSON.parse(value) as ExportRecord;
+    const filters = Object.entries(record.filters ?? {})
+      .map(([key, filter]) => `${key}=${filter}`)
+      .join(', ');
+    return t('web.audit.export_summary', {
+      rows: record.rows ?? 0,
+      columns: (record.columns ?? []).join(', '),
+      filters: filters || '—',
+    });
+  } catch {
+    return undefined;
+  }
 };

@@ -1,8 +1,12 @@
+using Merp.Application.Abstractions.Exports;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Paging;
 using Merp.Modules.Platform.Application;
+using Merp.Modules.Platform.Application.Exports;
 using Merp.Modules.Platform.Application.Users;
+using Merp.Modules.Platform.Domain.Users;
 using Merp.Web.Errors;
+using Merp.Web.Files;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,6 +26,13 @@ internal static class UserEndpoints
             .RequirePermission(PlatformPermissions.Users.Read)
             .WithName("ListUsers")
             .WithSummary("Users of the tenant with the roles in force today")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        users.MapGet("/export", ExportAsync)
+            .RequirePermission(PlatformPermissions.Users.Read)
+            .WithName("ExportUsers")
+            .WithSummary("The user list as Excel, with the list's filters and sort and the chosen columns (D35)")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
@@ -95,6 +106,32 @@ internal static class UserEndpoints
         ISender sender,
         CancellationToken cancellationToken) =>
         Respond(await sender.Send(new GetUsersQuery(new PageRequest(page, pageSize, sort), search, isActive, roleId), cancellationToken));
+
+    /// <param name="columns">Column keys, comma separated (userName,email); every column when empty.</param>
+    /// <param name="sort">The list's sort.</param>
+    /// <param name="search">The list's filter.</param>
+    /// <param name="isActive">The list's filter.</param>
+    /// <param name="roleId">The list's filter.</param>
+    /// <param name="exporter">Writes the file.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    private static async Task<Results<FileContentHttpResult, ProblemHttpResult>> ExportAsync(
+        string? columns,
+        string? sort,
+        string? search,
+        bool? isActive,
+        Guid? roleId,
+        IListExporter exporter,
+        CancellationToken cancellationToken) =>
+        (await exporter.ExportAsync(
+            new ExportList<UserListItem>(
+                "web.platform.users.title",
+                typeof(User),
+                PlatformExports.Users,
+                paging => new GetUsersQuery(paging, search, isActive, roleId),
+                sort,
+                ExportRules.ParseColumns(columns),
+                new Dictionary<string, object?> { ["search"] = search, ["isActive"] = isActive, ["roleId"] = roleId }),
+            cancellationToken)).ToFile();
 
     private static async Task<Results<Ok<UserDetails>, ProblemHttpResult>> GetAsync(Guid id, ISender sender, CancellationToken cancellationToken) =>
         Respond(await sender.Send(new GetUserQuery(id), cancellationToken));

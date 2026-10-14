@@ -106,6 +106,86 @@ internal sealed class ClosedXmlSpreadsheet : ISpreadsheet
         return stream.ToArray();
     }
 
+    public byte[] WriteTable(string sheetName, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<object?>> rows)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        ArgumentNullException.ThrowIfNull(rows);
+
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.AddWorksheet(SheetName(sheetName));
+        for (var column = 0; column < headers.Count; column++)
+        {
+            sheet.Cell(1, column + 1).SetValue(headers[column]);
+        }
+
+        var row = 2;
+        foreach (var values in rows)
+        {
+            for (var column = 0; column < values.Count; column++)
+            {
+                SetTyped(sheet.Cell(row, column + 1), values[column]);
+            }
+
+            row++;
+        }
+
+        var header = sheet.Row(1);
+        header.Style.Font.Bold = true;
+        sheet.SheetView.FreezeRows(1);
+        if (headers.Count > 0)
+        {
+            sheet.Range(1, 1, Math.Max(1, row - 1), headers.Count).SetAutoFilter();
+
+            // Widths from the first rows: measuring every cell of a large list is slow
+            sheet.Columns(1, headers.Count).AdjustToContents(1, Math.Min(row - 1, 200), 8, 60);
+        }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        return stream.ToArray();
+    }
+
+    private static void SetTyped(IXLCell cell, object? value)
+    {
+        switch (value)
+        {
+            case null:
+                return;
+            case string text:
+                // Text stays text, so codes such as 0123 are not turned into numbers
+                cell.SetValue(text);
+                break;
+            case bool flag:
+                cell.SetValue(flag);
+                break;
+            case DateOnly date:
+                cell.SetValue(date.ToDateTime(TimeOnly.MinValue));
+                cell.Style.NumberFormat.Format = "dd.mm.yyyy";
+                break;
+            case DateTime moment:
+                cell.SetValue(moment);
+                cell.Style.NumberFormat.Format = "dd.mm.yyyy hh:mm";
+                break;
+            case decimal number:
+                cell.SetValue(number);
+                break;
+            case int or long or short or double or float:
+                cell.SetValue(Convert.ToDouble(value, CultureInfo.InvariantCulture));
+                break;
+            default:
+                cell.SetValue(Convert.ToString(value, CultureInfo.InvariantCulture));
+                break;
+        }
+    }
+
+    /// <summary>Excel allows 31 characters and no <c>[]:*?/\</c> in sheet names.</summary>
+    private static string SheetName(string name)
+    {
+        var clean = new string([.. name.Where(c => "[]:*?/\\".IndexOf(c, StringComparison.Ordinal) < 0)]).Trim();
+        clean = clean.Length > 31 ? clean[..31] : clean;
+        return clean.Length == 0 ? "Sheet1" : clean;
+    }
+
     public IReadOnlyList<IReadOnlyList<string?>>? Read(Stream content, int maxRows)
     {
         ArgumentNullException.ThrowIfNull(content);

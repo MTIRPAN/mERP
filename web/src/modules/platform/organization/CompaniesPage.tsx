@@ -5,11 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
 import { platformPermissions } from '@/modules/platform/permissions';
 import {
+  exportCompanies,
   getListCompaniesQueryKey,
   listCompanies,
   useGetCustomFieldForm,
 } from '@/shared/api/generated/endpoints/platform/platform';
 import type { CompanyListItem } from '@/shared/api/generated/model';
+import { useListExport } from '@/shared/api/listExport';
 import type { ListParams } from '@/shared/api/paging';
 import { Can } from '@/shared/components/Can';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
@@ -91,6 +93,8 @@ export const CompaniesPage = () => {
     [t, i18n.language, canManage, canAudit, customFields],
   );
 
+  const download = useListExport();
+
   const fetchPage = (params: ListParams) =>
     listCompanies({
       page: params.page,
@@ -120,6 +124,18 @@ export const CompaniesPage = () => {
         columns={columns}
         rowKey="id"
         filter={{ search, active, customFields: customFilter }}
+        onExport={({ sort, filter, columns: keys }) =>
+          download(
+            exportCompanies({
+              columns: keys.join(','),
+              sort,
+              search: filter?.search,
+              isActive: toActiveParam(filter?.active as ActiveFilter | undefined),
+              customFields: filter?.customFields,
+            }),
+            t('web.platform.companies.title'),
+          )
+        }
         toolbar={
           <Space wrap>
             <Input.Search

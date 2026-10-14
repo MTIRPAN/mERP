@@ -40,6 +40,7 @@ export const DataTable = <T extends object>({
   const [pageSize, setPageSize] = useState(defaultPageSize);
   const [sort, setSort] = useState<string | undefined>();
   const [visible, setVisible] = useState<string[]>(() => columns.filter((c) => !c.hiddenByDefault).map((c) => c.key));
+  const [exporting, setExporting] = useState(false);
 
   const params: ListParams = { page, pageSize: Math.min(pageSize, MAX_PAGE_SIZE), sort, filter };
   const query = useQuery({
@@ -91,7 +92,16 @@ export const DataTable = <T extends object>({
         <div>{toolbar}</div>
         <Flex gap={8}>
           {onExport && (
-            <Button icon={<DownloadOutlined />} onClick={() => void onExport({ sort, filter, columns: visible })}>
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exporting}
+              onClick={() => {
+                setExporting(true);
+                // Visible columns in the table's order
+                const keys = columns.filter((c) => visible.includes(c.key)).map((c) => c.key);
+                void Promise.resolve(onExport({ sort, filter, columns: keys })).finally(() => setExporting(false));
+              }}
+            >
               {t('web.table.export')}
             </Button>
           )}

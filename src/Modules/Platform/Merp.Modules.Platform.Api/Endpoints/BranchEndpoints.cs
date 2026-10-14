@@ -1,9 +1,12 @@
+using Merp.Application.Abstractions.Exports;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Paging;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Branches;
+using Merp.Modules.Platform.Application.Exports;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Web.Errors;
+using Merp.Web.Files;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,6 +25,12 @@ internal static class BranchEndpoints
             .RequirePermission(PlatformPermissions.Branches.Read)
             .WithName("ListBranches")
             .WithSummary("Branches in the caller's scope, narrowed by the active company (X-Company-Id)")
+            .ProducesValidationProblem();
+
+        branches.MapGet("/export", ExportAsync)
+            .RequirePermission(PlatformPermissions.Branches.Read)
+            .WithName("ExportBranches")
+            .WithSummary("The branch list as Excel, with the list's filters and sort and the chosen columns (D35)")
             .ProducesValidationProblem();
 
         branches.MapGet("/{id:guid}", GetAsync)
@@ -73,6 +82,43 @@ internal static class BranchEndpoints
             cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : (ProblemHttpResult)result.Error.ToProblem();
     }
+
+    /// <param name="columns">Column keys, comma separated (code,name); every column when empty.</param>
+    /// <param name="sort">The list's sort.</param>
+    /// <param name="companyId">The list's filter.</param>
+    /// <param name="search">The list's filter.</param>
+    /// <param name="type">The list's filter.</param>
+    /// <param name="provinceCode">The list's filter.</param>
+    /// <param name="isActive">The list's filter.</param>
+    /// <param name="exporter">Writes the file.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    private static async Task<Results<FileContentHttpResult, ProblemHttpResult>> ExportAsync(
+        string? columns,
+        string? sort,
+        Guid? companyId,
+        string? search,
+        BranchType? type,
+        int? provinceCode,
+        bool? isActive,
+        IListExporter exporter,
+        CancellationToken cancellationToken) =>
+        (await exporter.ExportAsync(
+            new ExportList<BranchListItem>(
+                "web.platform.branches.title",
+                typeof(Branch),
+                PlatformExports.Branches,
+                paging => new GetBranchesQuery(paging, companyId, search, type, provinceCode, isActive),
+                sort,
+                ExportRules.ParseColumns(columns),
+                new Dictionary<string, object?>
+                {
+                    ["companyId"] = companyId,
+                    ["search"] = search,
+                    ["type"] = type,
+                    ["provinceCode"] = provinceCode,
+                    ["isActive"] = isActive,
+                }),
+            cancellationToken)).ToFile();
 
     private static async Task<Results<Ok<BranchDetails>, ProblemHttpResult>> GetAsync(Guid id, ISender sender, CancellationToken cancellationToken)
     {

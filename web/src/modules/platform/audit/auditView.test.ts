@@ -2,12 +2,13 @@ import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import type { AuditItem } from '@/shared/api/generated/model';
 import { createTestI18n } from '@/test/render';
-import { displayValue, groupOperations } from './auditView';
+import { displayValue, exportSummary, groupOperations } from './auditView';
 
 const t = createTestI18n({
   'web.audit.masked': 'Gizli (değer saklanmaz)',
   'web.common.yes': 'Evet',
   'web.common.no': 'Hayır',
+  'web.audit.export_summary': '{rows} satır; sütunlar: {columns}; filtreler: {filters}',
 }).t as TFunction;
 
 const item = (overrides: Partial<AuditItem>): AuditItem => ({
@@ -57,5 +58,16 @@ describe('displayValue', () => {
     expect(displayValue('{"tr-TR":"Bordro Uzmanı"}', t)).toBe('Bordro Uzmanı');
     expect(displayValue('{not json', t)).toBe('{not json');
     expect(displayValue('Ankara', t)).toBe('Ankara');
+  });
+});
+
+describe('exportSummary', () => {
+  it('describes what an export wrote', () => {
+    const record = JSON.stringify({ rows: 12, columns: ['code', 'name'], sort: 'code', filters: { search: 'gebze' } });
+    expect(exportSummary(record, t)).toBe('12 satır; sütunlar: code, name; filtreler: search=gebze');
+    expect(exportSummary(JSON.stringify({ rows: 1, columns: ['code'], filters: {} }), t)).toBe(
+      '1 satır; sütunlar: code; filtreler: —',
+    );
+    expect(exportSummary('Ankara', t)).toBeUndefined();
   });
 });

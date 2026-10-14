@@ -18,6 +18,12 @@ public interface ISpreadsheet
         int listRows = 1000);
 
     /// <summary>
+    /// A list as one worksheet (D35): numbers, dates (DateOnly, DateTime) and booleans keep their type, so the user
+    /// can sort and sum in Excel. The header row has a filter and stays visible.
+    /// </summary>
+    byte[] WriteTable(string sheetName, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<object?>> rows);
+
+    /// <summary>
     /// The rows of the first worksheet, the header row included, as text; empty cells are null. Numbers are in the
     /// invariant culture and dates are yyyy-MM-dd, whatever the cell format. Null when the content is not an xlsx file
     /// or has more than <paramref name="maxRows"/> rows.
