@@ -181,18 +181,19 @@ public sealed class ImportEndpointsTests(ImportFactory factory) : IClassFixture<
     }
 
     [Fact]
-    public async Task FiveThousandRows_AreValidatedAndCommittedInBatches_InUnderAMinute()
+    public async Task FiveThousandRows_AreValidatedInUnderAMinute_AndCommittedInBatches()
     {
         var root = factory.AsRoot();
         var (companyId, company) = await CompanyAsync();
         var rows = Enumerable.Range(1, 5000).Select(i => ImportFactory.BranchRow(company, $"N{i:D5}")).ToList();
         var watch = Stopwatch.StartNew();
 
+        // PLAN P11 acceptance: a file of 5,000 rows is validated in under a minute (upload included)
         var job = await ImportFactory.StartAsync(root, ImportFactory.Workbook(rows));
-        job.Status.ShouldBe(ImportStatus.Ready);
-        (await ImportFactory.CommitAsync(root, job.Id)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
-
         watch.Elapsed.ShouldBeLessThan(TimeSpan.FromMinutes(1));
+        job.Status.ShouldBe(ImportStatus.Ready);
+
+        (await ImportFactory.CommitAsync(root, job.Id)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await ImportFactory.JobAsync(root, job.Id)).CommittedRows.ShouldBe(5000);
         // 100 branches per transaction: the batch command is exempt from "one aggregate per command" (D35)
         (await factory.QueryAsync(db => db.Branches.CountAsync(b => b.CompanyId == CompanyId.From(companyId), Ct))).ShouldBe(5000);
