@@ -18,7 +18,7 @@ namespace Merp.Modules.Platform.IntegrationTests.Access;
 /// The real permission checks (role assignments, PLAN P2) with two tenants. <c>root</c> becomes System
 /// Administrator on first sign-in (bootstrap); Keycloak is replaced by <see cref="FakeIdentityAdmin"/>.
 /// </summary>
-public sealed class AccessFactory(PostgresFixture postgres) : MerpWebApplicationFactory(postgres)
+public class AccessFactory(PostgresFixture postgres) : MerpWebApplicationFactory(postgres)
 {
     public const string Root = "root";
 

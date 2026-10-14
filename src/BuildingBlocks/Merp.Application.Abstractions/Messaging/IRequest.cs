@@ -20,3 +20,9 @@ public interface ICommand<TResponse> : IRequest<Result<TResponse>>, IBaseCommand
 
 /// <summary>Read-only request. Queries never open a unit of work.</summary>
 public interface IQuery<TResponse> : IRequest<Result<TResponse>>;
+
+/// <summary>
+/// A command that writes many aggregates in one transaction on purpose: a batch of an import (D35). The only
+/// exception to "one command changes one aggregate" (CLAUDE.md rule 7, D21).
+/// </summary>
+public interface IBulkCommand : IBaseCommand;

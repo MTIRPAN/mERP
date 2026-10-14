@@ -102,6 +102,9 @@ public static class StoredFilePurposes
 
     /// <summary>A record's single picture, e.g. a company logo.</summary>
     public const string Logo = "logo";
+
+    /// <summary>A file uploaded to import records (D35).</summary>
+    public const string Import = "import";
 }
 
 /// <summary>

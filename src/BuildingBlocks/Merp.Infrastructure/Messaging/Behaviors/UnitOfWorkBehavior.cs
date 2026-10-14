@@ -33,6 +33,11 @@ internal sealed class UnitOfWorkBehavior<TRequest, TResponse>(
         }
 
         await unitOfWork.BeginAsync(cancellationToken);
+        if (request is IBulkCommand)
+        {
+            unitOfWork.AllowManyAggregates();
+        }
+
         accessor.Push(unitOfWork);
         var committed = false;
         try

@@ -307,6 +307,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/api/platform/approvals/my-tasks`, `/api/platform/approvals/my-tasks/count`, `/api/platform/approvals/tasks/{id}/decision`, `/api/platform/approvals/delegations`, `/api/platform/approvals/delegations/{id}/revoke`, `/api/platform/approvals/preview` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi onay görevleri, kararları, vekaletleri ve kendi belgesinin önizlemesi. Başka kullanıcının görevi ve vekaleti 404 (P10b, D34). |
 | `/api/platform/approvals/requests/{id}`, `/api/platform/approvals/timeline` | Oturum zorunlu; talep eden, onaylayıcılar ve vekilleri, `platform.approvals.admin` (Tenant) ya da belgenin modülündeki `IApprovalDocumentAccessPolicy` erişim verir | Onay geçmişi belgenin kendisini görenlere açıktır; diğerleri 404 alır (P10b, D34). |
 | `/api/platform/approvals/document-types`, `/api/platform/approvals/users` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Vekalet formunda belge türü adları ve vekil seçimi için aktif kullanıcıların adı (en fazla 20). Hassas alan (e-posta, telefon) dönmez (P10b, D34). |
+| `/api/platform/imports`, `/api/platform/imports/{key}`, `/api/platform/imports/{key}/template`, `/api/platform/imports/jobs`, `/api/platform/imports/jobs/{id}`, `/api/platform/imports/jobs/{id}/report`, `/api/platform/imports/jobs/{id}/commit` | Oturum zorunlu; şablon ve yükleme içe aktarma tanımının yetkisini ister (şubeler için `platform.branches.manage`), liste yalnızca yetkili tanımları döner | İçe aktarma tüm modüllerin ortak altyapısıdır, yetkiyi tanım verir. Kullanıcı yalnızca kendi işlerini görür; başkasının işi 404 (P11b, D35). |
 
 **Karar — Hangfire paneli (kullanıcı, 2026-10-05):** Panel, şirketlerdeki yaygın uygulamaya uygun olarak sadece bilgi işlem / sistem yöneticilerine açıktır.
 - `platform.jobs.view` yetkisi sadece "Sistem Yöneticisi" sistem rolüne seed edilir (P2). İK ve diğer iş kullanıcıları paneli görmez.
@@ -683,7 +684,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 
 ## D35 — Ayarlar, içe ve dışa aktarma altyapısı
 
-**Durum:** Öneri (kullanıcı onayı bekleniyor). PLAN P11 ile uygulanır.
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-13). PLAN P11 ile uygulanır.
 
 **Bölünme:** P11 üç PR'a ayrılır: P11a ayarlar, P11b içe aktarma, P11c dışa aktarma.
 
@@ -705,4 +706,21 @@ Seçilen kültür `Content-Language` başlığında döner.
   - Kiracı geneli ya da şirket seçilir. Şirket görünümünde sadece şirket bazında değiştirilebilen ayarlar ve devralınan değer gösterilir.
 - **İlk kullanım:** A14 ile yapay zeka özellikleri ve aylık bütçe ayarlara taşınır. Yurt dışına aktarım dayanağı ve kanıtı hukuki kayıt olduğu için yapılandırmada kalır (D24).
 
-**İçe aktarma (P11b) ve dışa aktarma (P11c):** Ayrıntılar kendi PR'larıyla bu karara eklenecek.
+**İçe aktarma (P11b):**
+- **Tanımlar:** Modüller içe aktarmalarını `IImportDefinition` ile tanımlar (`Merp.Application.Abstractions.Imports`). Bir tanım şunları içerir:
+  - anahtar (`{modül}.{kayıt}`), ad anahtarı ve gereken yetki
+  - sütunlar: anahtar, başlık ve açıklama anahtarı, tip (`Text`, `Number`, `WholeNumber`, `Date`, `Boolean`, `Choice`), zorunluluk, en fazla uzunluk, seçenekler
+  - satırların iş kurallarıyla doğrulanması (veri kapsamı, tekrar, referanslar) ve bir parti için yazma komutu
+- **Şablon:** Başlıklar kullanıcının dilindedir, zorunlu sütunlar `*` ile işaretlenir. Açıklamalar başlık notu, seçenekler ve Evet/Hayır açılır liste olarak gelir.
+- **Akış:**
+  1. Kullanıcı dolu şablonu yükler. Dosya `IFileStore` ile saklanır (D31) ve bir `import_jobs` kaydı açılır.
+  2. Dosya önce doğrulanır, hiçbir şey yazılmaz. Hücre hataları (tip, zorunluluk, uzunluk, seçenek) ve tanımın hataları satır ve sütunuyla, kullanıcının dilinde kaydedilir.
+  3. Hata varsa kullanıcı hata raporunu indirir: yüklediği satırlar, bir "Hatalar" sütunu ve hatalı hücrelerde kırmızı dolgu ile not.
+  4. Hata yoksa kullanıcı "İçe aktar" der. Satırlar 100'lük partiler hâlinde yazılır. Her parti kendi işlemindedir; hatalı parti tek başına geri alınır, diğerleri yazılır ("kısmen tamamlandı").
+- **Kural 7 istisnası:** Parti komutu (`IImportBatchCommand`, işaret arayüzü `IBulkCommand`) bir işlemde birden çok aggregate oluşturabilir. Unit of work bu komutlarda tek aggregate denetimini (D21) atlar. Başka hiçbir komut bu arayüzü kullanamaz.
+- **Arka plan:** `Platform:Imports:BackgroundThreshold` (varsayılan 1000) satırdan büyük dosyalar Hangfire ile arka planda doğrulanır ve yazılır. İş, kayıt işlendikten sonra kuyruğa girer (`IBackgroundTasks`, tenant bilgisini taşır). Arka planda kullanıcının veri kapsamı, işi başlatan kullanıcının kimliğiyle denetlenir. Küçük dosyalar istek bitince aynı süreçte işlenir. Ekran işin durumunu sorgulayarak izler.
+- **Sınırlar:** En fazla 10.000 satır (`MaxRows`) ve 10 MB. Bir işte en fazla 1000 hata saklanır, ekranda ilk 200'ü gösterilir.
+- **Audit:** İçe aktarma işi audit'e dahil edilmez; işin kendisi kayıttır. Oluşan kayıtlar (örn. şubeler) kendi audit kayıtlarını yazar.
+- **İlk tanım:** Şubeler (`platform.branches`, `platform.branches.manage`). Şirket kodu, il adı ya da plaka kodu, ilçe adı ile eşlenir.
+
+**Dışa aktarma (P11c):** Ayrıntılar kendi PR'ıyla bu karara eklenecek.

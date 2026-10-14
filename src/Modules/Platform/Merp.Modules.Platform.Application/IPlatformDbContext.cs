@@ -1,5 +1,6 @@
 using Merp.Application.Persistence.Files;
 using Merp.Modules.Platform.Domain.Approvals;
+using Merp.Modules.Platform.Domain.Imports;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
@@ -62,6 +63,8 @@ public interface IPlatformDbContext
     DbSet<Delegation> Delegations { get; }
 
     DbSet<SettingsProfile> SettingsProfiles { get; }
+
+    DbSet<ImportJob> ImportJobs { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

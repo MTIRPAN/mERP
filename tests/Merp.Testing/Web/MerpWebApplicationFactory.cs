@@ -1,4 +1,5 @@
 using Merp.Application.Abstractions.Context;
+using Merp.Application.Abstractions.Jobs;
 using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.AI;
 using Merp.Infrastructure.MultiTenancy;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
@@ -121,6 +123,8 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
             }
 
             services.AddSingleton<IAiModelClient>(Ai);
+            // No Hangfire server runs in tests: background work runs right after the commit
+            services.Replace(ServiceDescriptor.Scoped<IBackgroundTasks, InlineBackgroundTasks>());
             if (UseFakeTime)
             {
                 services.AddSingleton<TimeProvider>(Time);

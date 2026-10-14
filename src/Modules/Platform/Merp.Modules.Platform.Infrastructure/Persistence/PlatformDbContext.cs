@@ -1,6 +1,7 @@
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Domain.Approvals;
+using Merp.Modules.Platform.Domain.Imports;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
@@ -32,6 +33,7 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
         modelBuilder.Ignore<WorkDay>();
         modelBuilder.Ignore<ApprovalStep>();
         modelBuilder.Ignore<ApproverRule>();
+        modelBuilder.Ignore<ImportJobError>();
         base.OnModelCreating(modelBuilder);
     }
 
@@ -72,4 +74,6 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<Delegation> Delegations => Set<Delegation>();
 
     public DbSet<SettingsProfile> SettingsProfiles => Set<SettingsProfile>();
+
+    public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
 }

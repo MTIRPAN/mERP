@@ -69,6 +69,16 @@ public sealed class MediatorPipelineTests : IAsyncDisposable
         UnitOfWork.Outbox.ShouldHaveSingleItem().ShouldBeOfType<ThingCreated>().Name.ShouldBe("desk");
     }
 
+    [Fact]
+    public async Task BulkCommand_MayChangeManyAggregates_OtherCommandsMayNot()
+    {
+        (await Sender.Send(new CreateThings(["desk", "chair"]), Ct)).IsSuccess.ShouldBeTrue();
+        Journal.Entries.ShouldBe(["begin", "many aggregates", "handler", "commit"]);
+
+        await Sender.Send(new CreateThing("desk"), Ct);
+        Journal.Entries.Count(e => e == "many aggregates").ShouldBe(1);
+    }
+
     [Theory]
     [InlineData("fail")]
     [InlineData("throw")]

@@ -9,6 +9,9 @@ public interface IUnitOfWork
 {
     Task BeginAsync(CancellationToken cancellationToken);
 
+    /// <summary>Lets the open transaction change many aggregates: a bulk command is running (D35).</summary>
+    void AllowManyAggregates();
+
     /// <summary>
     /// Dispatches domain events, saves changes (including outbox messages) and commits. Returns a conflict error
     /// when an optimistic concurrency check fails.

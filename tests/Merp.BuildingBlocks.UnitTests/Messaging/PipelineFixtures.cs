@@ -17,6 +17,9 @@ public sealed record GetThing(Guid Id) : IQuery<string>;
 
 public sealed record CommandWithoutHandler : ICommand;
 
+/// <summary>A batch of an import: may change many aggregates (D35).</summary>
+public sealed record CreateThings(string[] Names) : ICommand, IBulkCommand;
+
 public sealed record ThingCreated(string Name) : IntegrationEvent;
 
 internal sealed class CreateThingValidator : AbstractValidator<CreateThing>
@@ -42,6 +45,15 @@ internal sealed class CreateThingHandler(Journal journal, IIntegrationEventPubli
             "fail" => Error.Conflict("test.errors.duplicate"),
             _ => Guid.CreateVersion7(),
         };
+    }
+}
+
+internal sealed class CreateThingsHandler(Journal journal) : ICommandHandler<CreateThings>
+{
+    public Task<Result> Handle(CreateThings request, CancellationToken cancellationToken)
+    {
+        journal.Write("handler");
+        return Task.FromResult(Result.Success());
     }
 }
 
@@ -76,6 +88,8 @@ public sealed class FakeUnitOfWork(Journal journal) : IUnitOfWork, IIntegrationE
         journal.Write("begin");
         return Task.CompletedTask;
     }
+
+    public void AllowManyAggregates() => journal.Write("many aggregates");
 
     public Task<Result> CommitAsync(CancellationToken cancellationToken)
     {
