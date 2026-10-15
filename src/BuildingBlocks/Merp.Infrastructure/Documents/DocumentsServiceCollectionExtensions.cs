@@ -16,6 +16,10 @@ public static class DocumentsServiceCollectionExtensions
         // List exports to Excel (D35)
         services.AddOptions<ExportSettings>().BindConfiguration(ExportSettings.SectionName);
         services.TryAddScoped<IListExporter, ListExporter>();
+
+        // HTML to PDF with Gotenberg (D36); the timeout is applied per request from the options
+        services.AddOptions<PdfOptions>().BindConfiguration(PdfOptions.SectionName);
+        services.AddHttpClient<IPdfConverter, GotenbergPdfConverter>(GotenbergPdfConverter.HttpClientName, client => client.Timeout = Timeout.InfiniteTimeSpan);
         return services;
     }
 }

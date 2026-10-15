@@ -104,7 +104,8 @@ services:
 
   gotenberg:
     image: gotenberg/gotenberg:8
-    # Stateless: no volume needed
+    # Stateless: no volume needed. Pages may only load their own files and data: URIs, never the network (D36)
+    command: ["gotenberg", "--chromium-allow-list=^(file:///tmp/|data:)"]
     ports:
       - "${GOTENBERG_PORT:-3000}:3000"
     healthcheck:

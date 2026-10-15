@@ -6,6 +6,7 @@ using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.CustomFields;
+using Merp.Modules.Platform.Domain.Documents;
 using Merp.Modules.Platform.Domain.Localization;
 using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Numbering;
@@ -66,6 +67,8 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
     public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
 
     public DbSet<NotificationTemplate> NotificationTemplates => Set<NotificationTemplate>();
+
+    public DbSet<DocumentTemplate> DocumentTemplates => Set<DocumentTemplate>();
 
     public DbSet<ApprovalDefinition> ApprovalDefinitions => Set<ApprovalDefinition>();
 

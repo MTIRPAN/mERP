@@ -1,5 +1,6 @@
 using Merp.Application.Abstractions.Approvals;
 using Merp.Application.Abstractions.CustomFields;
+using Merp.Application.Abstractions.Documents;
 using Merp.Application.Abstractions.Files;
 using Merp.Application.Abstractions.Imports;
 using Merp.Application.Abstractions.Jobs;
@@ -14,11 +15,13 @@ using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Contracts.Approvals;
 using Merp.Modules.Platform.Contracts.Calendars;
+using Merp.Modules.Platform.Contracts.Documents;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Platform.Application.Approvals;
 using Merp.Modules.Platform.Application.Calendars;
 using Merp.Modules.Platform.Application.CustomFields;
+using Merp.Modules.Platform.Application.Documents;
 using Merp.Modules.Platform.Application.Branches;
 using Merp.Modules.Platform.Application.Files;
 using Merp.Modules.Platform.Application.Imports;
@@ -137,6 +140,12 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddScoped<ImportReader>();
         services.AddScoped<ImportRunner>();
         services.AddScoped<IImportDefinition, BranchImport>();
+
+        // Document templates and PDFs of all modules (PLAN P12, D36)
+        services.AddSingleton<IDocumentTypeProvider, PlatformDocumentTypes>();
+        services.TryAddSingleton<DocumentTypeRegistry>();
+        services.AddScoped<DocumentComposer>();
+        services.AddScoped<IDocumentGenerator, DocumentGenerator>();
 
         // Files of Platform records follow the records' permissions (D31)
         services.AddScoped<IFileAccessPolicy, CompanyFileAccessPolicy>();

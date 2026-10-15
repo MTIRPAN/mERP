@@ -47,6 +47,7 @@ import type {
   CreateCompanyCommand,
   CreateCustomFieldCommand,
   CreateDelegationCommand,
+  CreateDocumentTemplateCommand,
   CreateNotificationTemplateCommand,
   CreateRoleCommand,
   CreateUserCommand,
@@ -58,6 +59,10 @@ import type {
   CustomFieldFormItem,
   DecideApprovalTaskCommand,
   DelegationItem,
+  DocumentPreview,
+  DocumentTemplateDetails,
+  DocumentTemplateItem,
+  DocumentTypeItem,
   EntityCreatedResponse,
   ExportBranchesParams,
   ExportCompaniesParams,
@@ -81,6 +86,7 @@ import type {
   ListBranchesParams,
   ListCompaniesParams,
   ListCustomFieldDefinitionsParams,
+  ListDocumentTemplatesParams,
   ListHolidaysParams,
   ListImportJobsParams,
   ListMyApprovalTasksParams,
@@ -107,6 +113,8 @@ import type {
   PagedResultOfUserListItem,
   PermissionModuleNode,
   PreviewApprovalQuery,
+  PreviewDocumentPdfQuery,
+  PreviewDocumentQuery,
   ProblemDetails,
   ReassignApprovalTaskCommand,
   RoleDetails,
@@ -127,6 +135,7 @@ import type {
   UpdateCompanyCommand,
   UpdateCultureCommand,
   UpdateCustomFieldCommand,
+  UpdateDocumentTemplateCommand,
   UpdateHolidayCommand,
   UpdateMyNotificationPreferencesCommand,
   UpdateMyPreferencesCommand,
@@ -11698,4 +11707,863 @@ export const useCommitImport = <TError = ErrorType<ProblemDetails>, TContext = u
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof commitImport>>, TError, CommitImportMutationVariables, TContext> => {
   return useMutation(getCommitImportMutationOptions(options), queryClient);
+};
+export const getListDocumentTypesUrl = () => {
+  return `/api/platform/document-templates/types`;
+};
+
+/**
+ * Requires permission: platform.document_templates.read.
+ * @summary Document types of all modules with their built-in template, sample model and fields
+ */
+export const listDocumentTypes = async (options?: Parameters<typeof customFetch>[1]): Promise<DocumentTypeItem[]> => {
+  return customFetch<DocumentTypeItem[]>(getListDocumentTypesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListDocumentTypesQueryKey = () => {
+  return [`/api/platform/document-templates/types`] as const;
+};
+
+export const getListDocumentTypesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDocumentTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTypes>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListDocumentTypesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listDocumentTypes>>> = ({ signal }) =>
+    listDocumentTypes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listDocumentTypes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListDocumentTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listDocumentTypes>>>;
+export type ListDocumentTypesQueryError = ErrorType<ProblemDetails>;
+
+export function useListDocumentTypes<
+  TData = Awaited<ReturnType<typeof listDocumentTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTypes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDocumentTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listDocumentTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListDocumentTypes<
+  TData = Awaited<ReturnType<typeof listDocumentTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTypes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDocumentTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listDocumentTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListDocumentTypes<
+  TData = Awaited<ReturnType<typeof listDocumentTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Document types of all modules with their built-in template, sample model and fields
+ */
+
+export function useListDocumentTypes<
+  TData = Awaited<ReturnType<typeof listDocumentTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListDocumentTypesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListDocumentTemplatesUrl = (params?: ListDocumentTemplatesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/document-templates?${stringifiedParams}`
+    : `/api/platform/document-templates`;
+};
+
+/**
+ * Requires permission: platform.document_templates.read.
+ * @summary The tenant's document templates, optionally of one type
+ */
+export const listDocumentTemplates = async (
+  params?: ListDocumentTemplatesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<DocumentTemplateItem[]> => {
+  return customFetch<DocumentTemplateItem[]>(getListDocumentTemplatesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListDocumentTemplatesQueryKey = (params?: ListDocumentTemplatesParams) => {
+  return [`/api/platform/document-templates`, ...(params ? [params] : [])] as const;
+};
+
+export const getListDocumentTemplatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDocumentTemplates>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListDocumentTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListDocumentTemplatesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listDocumentTemplates>>> = ({ signal }) =>
+    listDocumentTemplates(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listDocumentTemplates>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListDocumentTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listDocumentTemplates>>>;
+export type ListDocumentTemplatesQueryError = ErrorType<ProblemDetails>;
+
+export function useListDocumentTemplates<
+  TData = Awaited<ReturnType<typeof listDocumentTemplates>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | ListDocumentTemplatesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTemplates>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDocumentTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listDocumentTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListDocumentTemplates<
+  TData = Awaited<ReturnType<typeof listDocumentTemplates>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListDocumentTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTemplates>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDocumentTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listDocumentTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListDocumentTemplates<
+  TData = Awaited<ReturnType<typeof listDocumentTemplates>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListDocumentTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The tenant's document templates, optionally of one type
+ */
+
+export function useListDocumentTemplates<
+  TData = Awaited<ReturnType<typeof listDocumentTemplates>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListDocumentTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listDocumentTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListDocumentTemplatesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateDocumentTemplateUrl = () => {
+  return `/api/platform/document-templates`;
+};
+
+/**
+ * Requires permission: platform.document_templates.manage.
+ * @summary Add a template for a document type, a company (or all) and a culture
+ */
+export const createDocumentTemplate = async (
+  createDocumentTemplateCommand: CreateDocumentTemplateCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateDocumentTemplateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createDocumentTemplateCommand),
+  });
+};
+
+export const getCreateDocumentTemplateMutationKey = () => ['createDocumentTemplate'] as const;
+
+export const getCreateDocumentTemplateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDocumentTemplate>>,
+    TError,
+    CreateDocumentTemplateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createDocumentTemplate>>,
+  TError,
+  CreateDocumentTemplateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateDocumentTemplateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createDocumentTemplate>>,
+    CreateDocumentTemplateMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createDocumentTemplate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateDocumentTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createDocumentTemplate>>>;
+export type CreateDocumentTemplateMutationBody = CreateDocumentTemplateCommand;
+export type CreateDocumentTemplateMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateDocumentTemplateMutationVariables = { data: CreateDocumentTemplateCommand };
+
+/**
+ * @summary Add a template for a document type, a company (or all) and a culture
+ */
+export const useCreateDocumentTemplate = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createDocumentTemplate>>,
+      TError,
+      CreateDocumentTemplateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createDocumentTemplate>>,
+  TError,
+  CreateDocumentTemplateMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateDocumentTemplateMutationOptions(options), queryClient);
+};
+export const getGetDocumentTemplateUrl = (id: string) => {
+  return `/api/platform/document-templates/${id}`;
+};
+
+/**
+ * Requires permission: platform.document_templates.read.
+ * @summary A document template with its content
+ */
+export const getDocumentTemplate = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<DocumentTemplateDetails> => {
+  return customFetch<DocumentTemplateDetails>(getGetDocumentTemplateUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetDocumentTemplateQueryKey = (id: string) => {
+  return [`/api/platform/document-templates/${id}`] as const;
+};
+
+export const getGetDocumentTemplateQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDocumentTemplate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getDocumentTemplate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDocumentTemplateQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDocumentTemplate>>> = ({ signal }) =>
+    getDocumentTemplate(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDocumentTemplate>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetDocumentTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof getDocumentTemplate>>>;
+export type GetDocumentTemplateQueryError = ErrorType<ProblemDetails>;
+
+export function useGetDocumentTemplate<
+  TData = Awaited<ReturnType<typeof getDocumentTemplate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getDocumentTemplate>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDocumentTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getDocumentTemplate>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetDocumentTemplate<
+  TData = Awaited<ReturnType<typeof getDocumentTemplate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getDocumentTemplate>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDocumentTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof getDocumentTemplate>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetDocumentTemplate<
+  TData = Awaited<ReturnType<typeof getDocumentTemplate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getDocumentTemplate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A document template with its content
+ */
+
+export function useGetDocumentTemplate<
+  TData = Awaited<ReturnType<typeof getDocumentTemplate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getDocumentTemplate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetDocumentTemplateQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateDocumentTemplateUrl = (id: string) => {
+  return `/api/platform/document-templates/${id}`;
+};
+
+/**
+ * Requires permission: platform.document_templates.manage.
+ * @summary Change a template's content or turn it off
+ */
+export const updateDocumentTemplate = async (
+  id: string,
+  updateDocumentTemplateCommand: UpdateDocumentTemplateCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateDocumentTemplateUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateDocumentTemplateCommand),
+  });
+};
+
+export const getUpdateDocumentTemplateMutationKey = () => ['updateDocumentTemplate'] as const;
+
+export const getUpdateDocumentTemplateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateDocumentTemplate>>,
+    TError,
+    UpdateDocumentTemplateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateDocumentTemplate>>,
+  TError,
+  UpdateDocumentTemplateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateDocumentTemplateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateDocumentTemplate>>,
+    UpdateDocumentTemplateMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateDocumentTemplate(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateDocumentTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof updateDocumentTemplate>>>;
+export type UpdateDocumentTemplateMutationBody = UpdateDocumentTemplateCommand;
+export type UpdateDocumentTemplateMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateDocumentTemplateMutationVariables = { id: string; data: UpdateDocumentTemplateCommand };
+
+/**
+ * @summary Change a template's content or turn it off
+ */
+export const useUpdateDocumentTemplate = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateDocumentTemplate>>,
+      TError,
+      UpdateDocumentTemplateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateDocumentTemplate>>,
+  TError,
+  UpdateDocumentTemplateMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateDocumentTemplateMutationOptions(options), queryClient);
+};
+export const getDeleteDocumentTemplateUrl = (id: string) => {
+  return `/api/platform/document-templates/${id}`;
+};
+
+/**
+ * Requires permission: platform.document_templates.manage.
+ * @summary Remove a template; the more general one or the built-in one applies again
+ */
+export const deleteDocumentTemplate = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getDeleteDocumentTemplateUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getDeleteDocumentTemplateMutationKey = () => ['deleteDocumentTemplate'] as const;
+
+export const getDeleteDocumentTemplateMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteDocumentTemplate>>,
+    TError,
+    DeleteDocumentTemplateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteDocumentTemplate>>,
+  TError,
+  DeleteDocumentTemplateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteDocumentTemplateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteDocumentTemplate>>,
+    DeleteDocumentTemplateMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteDocumentTemplate(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteDocumentTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof deleteDocumentTemplate>>>;
+
+export type DeleteDocumentTemplateMutationError = ErrorType<ProblemDetails>;
+export type DeleteDocumentTemplateMutationVariables = { id: string };
+
+/**
+ * @summary Remove a template; the more general one or the built-in one applies again
+ */
+export const useDeleteDocumentTemplate = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteDocumentTemplate>>,
+      TError,
+      DeleteDocumentTemplateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteDocumentTemplate>>,
+  TError,
+  DeleteDocumentTemplateMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteDocumentTemplateMutationOptions(options), queryClient);
+};
+export const getPreviewDocumentUrl = () => {
+  return `/api/platform/document-templates/preview`;
+};
+
+/**
+ * Requires permission: platform.document_templates.read.
+ * @summary The type's sample model rendered as HTML, without saving
+ */
+export const previewDocument = async (
+  previewDocumentQuery: PreviewDocumentQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<DocumentPreview> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<DocumentPreview>(getPreviewDocumentUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewDocumentQuery),
+  });
+};
+
+export const getPreviewDocumentMutationKey = () => ['previewDocument'] as const;
+
+export const getPreviewDocumentMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewDocument>>,
+    TError,
+    PreviewDocumentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewDocument>>,
+  TError,
+  PreviewDocumentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewDocumentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof previewDocument>>, PreviewDocumentMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return previewDocument(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof previewDocument>>>;
+export type PreviewDocumentMutationBody = PreviewDocumentQuery;
+export type PreviewDocumentMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type PreviewDocumentMutationVariables = { data: PreviewDocumentQuery };
+
+/**
+ * @summary The type's sample model rendered as HTML, without saving
+ */
+export const usePreviewDocument = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewDocument>>,
+      TError,
+      PreviewDocumentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewDocument>>,
+  TError,
+  PreviewDocumentMutationVariables,
+  TContext
+> => {
+  return useMutation(getPreviewDocumentMutationOptions(options), queryClient);
+};
+export const getPreviewDocumentPdfUrl = () => {
+  return `/api/platform/document-templates/preview/pdf`;
+};
+
+/**
+ * Requires permission: platform.document_templates.read.
+ * @summary The type's sample model as PDF, without saving
+ */
+export const previewDocumentPdf = async (
+  previewDocumentPdfQuery: PreviewDocumentPdfQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getPreviewDocumentPdfUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewDocumentPdfQuery),
+  });
+};
+
+export const getPreviewDocumentPdfMutationKey = () => ['previewDocumentPdf'] as const;
+
+export const getPreviewDocumentPdfMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewDocumentPdf>>,
+    TError,
+    PreviewDocumentPdfMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewDocumentPdf>>,
+  TError,
+  PreviewDocumentPdfMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewDocumentPdfMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof previewDocumentPdf>>,
+    PreviewDocumentPdfMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return previewDocumentPdf(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewDocumentPdfMutationResult = NonNullable<Awaited<ReturnType<typeof previewDocumentPdf>>>;
+export type PreviewDocumentPdfMutationBody = PreviewDocumentPdfQuery;
+export type PreviewDocumentPdfMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type PreviewDocumentPdfMutationVariables = { data: PreviewDocumentPdfQuery };
+
+/**
+ * @summary The type's sample model as PDF, without saving
+ */
+export const usePreviewDocumentPdf = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewDocumentPdf>>,
+      TError,
+      PreviewDocumentPdfMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewDocumentPdf>>,
+  TError,
+  PreviewDocumentPdfMutationVariables,
+  TContext
+> => {
+  return useMutation(getPreviewDocumentPdfMutationOptions(options), queryClient);
 };

@@ -18,6 +18,10 @@ internal sealed partial class FluidTemplateRenderer : ITemplateRenderer
     private static readonly FluidParser Parser = new();
     private static readonly TemplateOptions Options = new() { CultureInfo = CultureInfo.InvariantCulture };
 
+    // Documents (D36): enough for long tables, stops a loop that never ends
+    private const int MaxSteps = 200_000;
+    private const int MaxRecursion = 10;
+
     // Encodes what HTML needs (< > & quotes) but keeps letters such as ç, ğ, ı, ş readable
     private static readonly HtmlEncoder Html = HtmlEncoder.Create(UnicodeRanges.All);
 
@@ -27,22 +31,59 @@ internal sealed partial class FluidTemplateRenderer : ITemplateRenderer
         return parsed.IsSuccess ? Result.Success() : Result.Failure(parsed.Error);
     }
 
-    public Result<string> Render(string template, IReadOnlyDictionary<string, object?> model, bool html)
+    public Result<string> Render(string template, IReadOnlyDictionary<string, object?> model, bool html) =>
+        Render(template, model, new TemplateRenderOptions(html));
+
+    public Result<string> Render(string template, IReadOnlyDictionary<string, object?> model, TemplateRenderOptions options)
     {
         ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(options);
         var parsed = Parse(template);
         if (parsed.IsFailure)
         {
             return parsed.Error;
         }
 
-        var context = new TemplateContext(Options);
+        var context = new TemplateContext(OptionsFor(options));
         foreach (var (name, value) in model)
         {
             context.SetValue(name, ToFluid(value));
         }
 
-        return parsed.Value.Render(context, html ? Html : NullEncoder.Default);
+        try
+        {
+            return parsed.Value.Render(context, options.Html ? Html : NullEncoder.Default);
+        }
+        catch (InvalidOperationException) when (context.Options.MaxSteps > 0)
+        {
+            // Fluid stops a template that runs more statements than MaxSteps (a loop that never ends)
+            return Error.Validation(TemplateErrors.TooComplexCode);
+        }
+        catch (Exception exception) when (exception is ParseException or FileNotFoundException or ArgumentException)
+        {
+            // A partial that does not parse or does not exist
+            return Invalid(exception.Message);
+        }
+    }
+
+    /// <summary>
+    /// The shared options, unless a culture or partials are given. Partials only come from the given sources: the
+    /// file provider knows nothing else, so a template cannot read files.
+    /// </summary>
+    private static TemplateOptions OptionsFor(TemplateRenderOptions options)
+    {
+        if (options.Culture is null && options.Partials is null)
+        {
+            return Options;
+        }
+
+        return new TemplateOptions
+        {
+            CultureInfo = options.Culture ?? CultureInfo.InvariantCulture,
+            FileProvider = new PartialFileProvider(options.Partials ?? new Dictionary<string, string>()),
+            MaxSteps = MaxSteps,
+            MaxRecursion = MaxRecursion,
+        };
     }
 
     private static Result<IFluidTemplate> Parse(string template)
@@ -52,6 +93,11 @@ internal sealed partial class FluidTemplateRenderer : ITemplateRenderer
             return Result.Success(parsed);
         }
 
+        return Invalid(error);
+    }
+
+    private static Error Invalid(string? error)
+    {
         // Fluid reports "... at (line:column)"
         var position = Position().Match(error ?? string.Empty);
         var line = position.Success ? int.Parse(position.Groups[1].Value, CultureInfo.InvariantCulture) : 1;
