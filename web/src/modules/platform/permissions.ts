@@ -25,4 +25,8 @@ export const platformPermissions = {
   approvalsAdmin: 'platform.approvals.admin',
   settingsRead: 'platform.settings.read',
   settingsManage: 'platform.settings.manage',
+  notificationTemplatesRead: 'platform.notification_templates.read',
+  notificationTemplatesManage: 'platform.notification_templates.manage',
+  documentTemplatesRead: 'platform.document_templates.read',
+  documentTemplatesManage: 'platform.document_templates.manage',
 } as const;

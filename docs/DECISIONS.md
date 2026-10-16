@@ -208,7 +208,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
 | Zengin metin | TipTap (sadece MIT paketleri) |
 | Organizasyon şeması | d3-org-chart |
 | Grafikler | Apache ECharts (echarts-for-react) |
-| Kod editörü (şablonlar) | @monaco-editor/react |
+| Kod editörü (şablonlar) | @monaco-editor/react + monaco-editor (MIT), uygulamanın kendi paketinden yüklenir (D36); dolaylı bağımlılıklar `marked` (MIT) ve `dompurify` (MPL-2.0 / Apache-2.0) |
 | Routing ve veri | React Router, TanStack Query |
 | API istemcisi | orval (OpenAPI'den TanStack Query hook'ları) |
 | Kimlik | oidc-client-ts + react-oidc-context (Keycloak, PKCE, sessiz yenileme) |

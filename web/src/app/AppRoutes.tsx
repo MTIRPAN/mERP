@@ -44,6 +44,18 @@ const ApprovalRequestsPage = page(
   'ApprovalRequestsPage',
 );
 const SettingsPage = page(() => import('@/modules/platform/settings/SettingsPage'), 'SettingsPage');
+const DocumentTemplatesPage = page(
+  () => import('@/modules/platform/documents/DocumentTemplatesPage'),
+  'DocumentTemplatesPage',
+);
+const DocumentTemplateEditorPage = page(
+  () => import('@/modules/platform/documents/DocumentTemplateEditorPage'),
+  'DocumentTemplateEditorPage',
+);
+const NotificationTemplatesPage = page(
+  () => import('@/modules/platform/documents/NotificationTemplatesPage'),
+  'NotificationTemplatesPage',
+);
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -204,6 +216,38 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={platformPermissions.calendarsRead}>
               <WorkSchedulesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/document-templates"
+          element={
+            <RequirePermission permission={platformPermissions.documentTemplatesRead}>
+              <DocumentTemplatesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/document-templates/new"
+          element={
+            <RequirePermission permission={platformPermissions.documentTemplatesManage}>
+              <DocumentTemplateEditorPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/document-templates/:id"
+          element={
+            <RequirePermission permission={platformPermissions.documentTemplatesRead}>
+              <DocumentTemplateEditorPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="system/notification-templates"
+          element={
+            <RequirePermission permission={platformPermissions.notificationTemplatesRead}>
+              <NotificationTemplatesPage />
             </RequirePermission>
           }
         />
