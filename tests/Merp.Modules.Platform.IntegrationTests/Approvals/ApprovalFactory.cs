@@ -21,6 +21,7 @@ using Merp.Testing.Web;
 using Merp.Web.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Merp.Modules.Platform.IntegrationTests.Approvals;
 
@@ -73,6 +74,8 @@ public sealed class ApprovalFactory(PostgresFixture postgres) : MerpWebApplicati
     protected override void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<IApprovalDocumentTypeProvider, TestDocumentTypes>();
+        // Replaces HR's lookup: the engine asks the first registered one
+        services.RemoveAll<IApproverManagerLookup>();
         services.AddSingleton<IApproverManagerLookup>(Managers);
     }
 
