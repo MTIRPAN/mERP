@@ -97,7 +97,7 @@ npm install
 npm run dev                  # http://localhost:5173 — /api, /hubs ve /admin/jobs API'ye proxy'lenir
 ```
 
-- Giriş Keycloak üzerinden (PKCE) yapılır. Geliştirme kullanıcılarından `admin` "Sistem" menüsünü görür, `calisan` sadece ana sayfayı görür (yetkiler P2'ye kadar `appsettings.Development.json` → `Development:Permissions`).
+- Giriş Keycloak üzerinden (PKCE) yapılır. Geliştirme kullanıcılarından `admin` tüm Platform ekranlarını görür, `calisan` yalnızca Ana sayfa ve Onaylar'ı görür. Roller ilk girişte `Platform:Bootstrap:Users` ayarından gelir (D26). Uçtan uca demo: [`docs/demo/faz1.md`](docs/demo/faz1.md).
 - Bütün metinler API'den (`/api/platform/localization/bundles/tr-TR`) gelir. JSX içinde metin literal'i lint hatasıdır.
 - API istemcisi orval ile üretilir: API Development'ta `http://localhost:5000`'de çalışırken `npm run gen:api`. Üretilen kod `src/shared/api/generated/` altındadır ve elle düzenlenmez.
 - Tema: üst bardaki seçiciyle Açık / Koyu / Sistem. Hızlı geçiş: Ctrl/⌘+K.
@@ -110,7 +110,7 @@ npm run dev                  # http://localhost:5173 — /api, /hubs ve /admin/j
 
 ## Yapay zeka
 
-Yapay zeka özellikleri (şimdilik İşe alım → CV analizi) varsayılan olarak kapalıdır (`docs/DECISIONS.md` D24, öneri). Geliştirmede açmak için Anthropic API anahtarını user-secrets'a yazın; anahtar kaynak koda veya `appsettings` dosyalarına yazılmaz:
+Yapay zeka özellikleri (şimdilik İşe alım → CV analizi) varsayılan olarak kapalıdır (`docs/DECISIONS.md` D24). Geliştirmede açmak için Anthropic API anahtarını user-secrets'a yazın; anahtar kaynak koda veya `appsettings` dosyalarına yazılmaz:
 
 ```bash
 dotnet user-secrets --project src/Host/Merp.Api set "Ai:Anthropic:ApiKey" "<anahtar>"

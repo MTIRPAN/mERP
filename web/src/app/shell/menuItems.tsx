@@ -5,6 +5,8 @@ import {
   BankOutlined,
   AuditOutlined,
   CheckSquareOutlined,
+  ControlOutlined,
+  DesktopOutlined,
   FileTextOutlined,
   MailOutlined,
   InboxOutlined,
@@ -57,6 +59,8 @@ const icons: Record<string, ReactNode> = {
   'approval-requests': <AuditOutlined />,
   'document-templates': <FileTextOutlined />,
   'notification-templates': <MailOutlined />,
+  configuration: <ControlOutlined />,
+  system: <DesktopOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;
@@ -98,6 +102,24 @@ export const flattenMenu = (items: MenuItemResponse[], t: TFunction, section?: s
         ? [{ key: item.key, path: item.path, label: t(item.labelKey), section, icon: item.icon }]
         : [],
   );
+
+const flattenPaths = (items: MenuItemResponse[]): string[] =>
+  items.flatMap((item) => (item.children?.length ? flattenPaths(item.children) : item.path ? [item.path] : []));
+
+/** Keys of the groups that hold the entry with this path, outermost first: the sidebar opens where the user is. */
+export const openMenuKeys = (items: MenuItemResponse[], path: string | undefined): string[] => {
+  if (!path) {
+    return [];
+  }
+
+  for (const item of items) {
+    if (item.children?.length && flattenPaths(item.children).includes(path)) {
+      return [item.key, ...openMenuKeys(item.children, path)];
+    }
+  }
+
+  return [];
+};
 
 /** Case-insensitive search that respects Turkish İ/ı (CLAUDE.md culture safety). */
 export const filterMenuEntries = (entries: MenuEntry[], query: string, locale = 'tr-TR'): MenuEntry[] => {

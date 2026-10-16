@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application;
+using Merp.Modules.Platform.Application.Access;
 
 namespace Merp.BuildingBlocks.IntegrationTests.Web;
 
@@ -60,6 +61,24 @@ public sealed class ShellEndpointsTests(WebHostFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public async Task Me_WithEveryPlatformPermission_ListsEveryPlatformScreen()
+    {
+        var permissions = new PlatformPermissionDefinitions().GetPermissions().Select(p => p.Code).ToArray();
+
+        var me = (await factory.CreateClientFor("admin-all", "acme", permissions).GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!;
+
+        // PLAN P13: every Platform screen is reachable from the menu, grouped for administration
+        me.Menu.Select(m => m.Key).ShouldBe(["home", "approvals", "organization", "access", "configuration", "system"]);
+        Leaves(me.Menu).ShouldBe(
+            [
+                "/", "/approvals", "/approvals/delegations", "/system/approval-requests", "/organization/companies", "/organization/branches",
+                "/access/users", "/access/roles", "/system/settings", "/system/numbering", "/system/custom-fields", "/system/localization",
+                "/system/holidays", "/system/work-schedules", "/system/approval-flows", "/system/document-templates",
+                "/system/notification-templates", "/system/info", "/system/jobs", "/system/audit", "/system/ai-usage",
+            ]);
+    }
+
+    [Fact]
     public async Task Me_WithPermissions_ShowsPermittedMenuItems()
     {
         var me = (await factory.CreateClientFor("admin-1", "acme", PlatformPermissions.SystemInfo.Read)
@@ -79,4 +98,7 @@ public sealed class ShellEndpointsTests(WebHostFactory factory) : IClassFixture<
         var access = me.Menu.Single(m => m.Key == "access");
         access.Children!.Select(c => c.Path).ShouldBe(["/access/users"]);
     }
+
+    private static IEnumerable<string> Leaves(IEnumerable<MenuItemResponse> items) =>
+        items.SelectMany(i => i.Children is { Count: > 0 } children ? Leaves(children) : [i.Path!]);
 }

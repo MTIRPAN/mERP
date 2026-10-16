@@ -628,7 +628,13 @@ Kurallar: D14, D36.
 - Örnek şablon logo ve Türkçe karakterlerle doğru PDF üretir.
 - Şablon hatası satır numarasıyla gösterilir.
 
-### [ ] P13 Platform toparlama 🔍 — S
+### [x] P13 Platform toparlama 🔍 — S
+
+**Yapılanlar:**
+- Menü: Onaylar (Onay Kutum, Vekaletlerim, Onay talepleri), Organizasyon, Erişim yönetimi, **Tanımlar** (ayarlar, numaralandırma, özel alanlar, diller, takvimler, onay akışları, belge ve bildirim şablonları) ve **Sistem** (sistem bilgisi, arka plan işleri, denetim, yapay zeka kullanımı). Kenar çubuğu yalnızca açık sayfanın grubunu açık başlatır. Kabul testi: `ShellEndpointsTests.Me_WithEveryPlatformPermission_ListsEveryPlatformScreen`.
+- Ana sayfa: bekleyen onay ve okunmamış bildirim sayıları, son 5 bildirim, yetkiye göre hızlı bağlantılar.
+- Sistem bilgisi: sürüm, ortam, kiracı; yetkiye göre Hangfire paneli, denetim ve ayarlar bağlantıları.
+- Demo senaryosu: `docs/demo/faz1.md`.
 
 **Yapılacaklar:**
 - Admin menü yapısı.

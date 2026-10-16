@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import type { MenuItemResponse } from '@/shared/api/generated/model';
-import { filterMenuEntries, flattenMenu, selectedMenuKey } from './menuItems';
+import { filterMenuEntries, flattenMenu, openMenuKeys, selectedMenuKey } from './menuItems';
 
 const texts: Record<string, string> = {
   'web.home': 'Ana sayfa',
@@ -50,5 +50,35 @@ describe('menu helpers', () => {
     expect(selectedMenuKey('/system/info/details', entries)).toBe('/system/info');
     expect(selectedMenuKey('/', entries)).toBe('/');
     expect(selectedMenuKey('/unknown', entries)).toBeUndefined();
+  });
+
+  it('opens only the groups that hold the current page', () => {
+    const nested: MenuItemResponse[] = [
+      ...menu,
+      {
+        key: 'admin',
+        labelKey: 'web.admin',
+        path: null,
+        icon: null,
+        ai: false,
+        children: [
+          {
+            key: 'templates',
+            labelKey: 'web.templates',
+            path: null,
+            icon: null,
+            ai: false,
+            children: [
+              { key: 'docs', labelKey: 'web.docs', path: '/system/documents', icon: null, children: null, ai: false },
+            ],
+          },
+        ],
+      },
+    ];
+
+    expect(openMenuKeys(nested, '/system/jobs')).toEqual(['system']);
+    expect(openMenuKeys(nested, '/system/documents')).toEqual(['admin', 'templates']);
+    expect(openMenuKeys(nested, '/')).toEqual([]);
+    expect(openMenuKeys(nested, undefined)).toEqual([]);
   });
 });
