@@ -3,6 +3,7 @@ using Merp.Application.Abstractions.Paging;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Roles;
 using Merp.SharedKernel.Results;
+using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Merp.Infrastructure.MultiTenancy;
-using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Organization;
 using Merp.Modules.Platform.Domain.Branches;
@@ -10,6 +9,7 @@ using Merp.Modules.Platform.Infrastructure.Persistence;
 using Merp.Testing.Containers;
 using Merp.Testing.Data;
 using Merp.Testing.Web;
+using Merp.Web.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

@@ -5,6 +5,7 @@ using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Branches;
 using Merp.Modules.Platform.Application.Exports;
 using Merp.Modules.Platform.Domain.Branches;
+using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Files;
 using Merp.Web.Security;

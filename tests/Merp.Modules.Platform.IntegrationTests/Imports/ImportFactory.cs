@@ -2,11 +2,11 @@ using System.Net;
 using System.Net.Http.Json;
 using ClosedXML.Excel;
 using Merp.Infrastructure.MultiTenancy;
-using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application.Imports;
 using Merp.Modules.Platform.Infrastructure.Persistence;
 using Merp.Modules.Platform.IntegrationTests.Access;
 using Merp.Testing.Containers;
+using Merp.Web.Endpoints;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Merp.Modules.Platform.IntegrationTests.Imports;

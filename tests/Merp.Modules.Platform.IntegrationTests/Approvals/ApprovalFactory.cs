@@ -18,6 +18,7 @@ using Merp.Modules.Platform.IntegrationTests.Organization;
 using Merp.SharedKernel.Results;
 using Merp.Testing.Containers;
 using Merp.Testing.Web;
+using Merp.Web.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 

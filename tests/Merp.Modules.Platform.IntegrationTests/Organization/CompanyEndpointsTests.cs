@@ -8,6 +8,7 @@ using Merp.Modules.Platform.Application.Companies;
 using Merp.Modules.Platform.Contracts.Organization;
 using Merp.Testing.Data;
 using Merp.Testing.Web;
+using Merp.Web.Endpoints;
 
 namespace Merp.Modules.Platform.IntegrationTests.Organization;
 

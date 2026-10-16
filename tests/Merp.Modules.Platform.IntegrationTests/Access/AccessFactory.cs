@@ -9,6 +9,7 @@ using Merp.Modules.Platform.Application.Users;
 using Merp.SharedKernel.Results;
 using Merp.Testing.Containers;
 using Merp.Testing.Web;
+using Merp.Web.Endpoints;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

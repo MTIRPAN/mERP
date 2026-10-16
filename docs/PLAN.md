@@ -651,7 +651,12 @@ Kurallar: D14, D36.
 
 `HR` modülü burada kurulur: 5 proje, şema `hr`, test projeleri.
 
-### [ ] H1 Organizasyon yapısı — L
+### [ ] H1 Organizasyon yapısı — L (2 PR: H1a backend, H1b web)
+
+Kurallar: D37.
+
+- [x] **H1a backend:** İK modülünün kurulumu (5 proje, şema `hr`, test projeleri), `OrgUnit` (ltree), `Job`, `Position`, `reporting_lines`, `IOrgQuery`, çözücüler, `OrgUnit` ve `ManagedTeam` kapsamları, yetkiler ve uç noktalar.
+- [ ] **H1b web:** organizasyon ağacı ve detay, pozisyonlar (norm / dolu / boş), unvanlar, organizasyon şeması.
 
 **Yapılacaklar:**
 - `OrgUnit`:
@@ -676,7 +681,7 @@ Kurallar: D14, D36.
 
 **Kabul kriterleri:**
 - 3 seviyeli yapı kurulur ve boş kadrolar raporlanır.
-- `line-manager(2)` doğru kişiyi döner.
+- `line-manager(2)` doğru kişiyi döner. H1'de pozisyon sahipleri olmadığı için birim testiyle (sahte `IPositionHolders`) doğrulanır; uçtan uca test H3'te (D37).
 - Birim başka üst birime taşınınca alt birimlerin `path`'i ve kapsam sonuçları güncellenir.
 
 ### [ ] H2 Personel kartı ve yaşam döngüsü 🔍 — XL (3 PR: H2a domain + komutlar, H2b API, H2c web)
@@ -740,6 +745,7 @@ Kurallar: D6.
 - Çalışan kendi kartını görür, başkasınınkini göremez (404).
 - Onaylanan adres değişikliği karta yansır ve audit'te talep numarasıyla görünür.
 - Çıkış tarihinden sonra kullanıcı giriş yapamaz.
+- `line-manager(2)` onay akışında uçtan uca doğru kullanıcıyı döner (H1'den taşındı, D37).
 
 ### [ ] H4 Organizasyon ve personel içe aktarma — M
 

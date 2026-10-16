@@ -22,6 +22,13 @@
     <Project Path="src/Host/Merp.Migrator/Merp.Migrator.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/HR/">
+    <Project Path="src/Modules/HR/Merp.Modules.HR.Api/Merp.Modules.HR.Api.csproj" />
+    <Project Path="src/Modules/HR/Merp.Modules.HR.Application/Merp.Modules.HR.Application.csproj" />
+    <Project Path="src/Modules/HR/Merp.Modules.HR.Contracts/Merp.Modules.HR.Contracts.csproj" />
+    <Project Path="src/Modules/HR/Merp.Modules.HR.Domain/Merp.Modules.HR.Domain.csproj" />
+    <Project Path="src/Modules/HR/Merp.Modules.HR.Infrastructure/Merp.Modules.HR.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Platform/">
     <Project Path="src/Modules/Platform/Merp.Modules.Platform.Api/Merp.Modules.Platform.Api.csproj" />
     <Project Path="src/Modules/Platform/Merp.Modules.Platform.Application/Merp.Modules.Platform.Application.csproj" />
@@ -40,6 +47,8 @@
     <Project Path="tests/Merp.ArchitectureTests/Merp.ArchitectureTests.csproj" />
     <Project Path="tests/Merp.BuildingBlocks.IntegrationTests/Merp.BuildingBlocks.IntegrationTests.csproj" />
     <Project Path="tests/Merp.BuildingBlocks.UnitTests/Merp.BuildingBlocks.UnitTests.csproj" />
+    <Project Path="tests/Merp.Modules.HR.IntegrationTests/Merp.Modules.HR.IntegrationTests.csproj" />
+    <Project Path="tests/Merp.Modules.HR.UnitTests/Merp.Modules.HR.UnitTests.csproj" />
     <Project Path="tests/Merp.Modules.Platform.IntegrationTests/Merp.Modules.Platform.IntegrationTests.csproj" />
     <Project Path="tests/Merp.Modules.Platform.UnitTests/Merp.Modules.Platform.UnitTests.csproj" />
     <Project Path="tests/Merp.Modules.Recruitment.IntegrationTests/Merp.Modules.Recruitment.IntegrationTests.csproj" />

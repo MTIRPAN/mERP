@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 namespace Merp.Testing.Web;
 
 /// <summary>
-/// The caller has the scopes in the <see cref="ScopesHeader"/> request header (<c>Company:{id},Branch:{id}</c>) for
+/// The caller has the scopes in the <see cref="ScopesHeader"/> request header (<c>Company:{id},OrgUnit:{id}:sub</c>) for
 /// every permission granted by <see cref="TestPermissionChecker"/>; without the header the scope is Tenant.
 /// </summary>
 public sealed class TestAccessScopeProvider(IHttpContextAccessor httpContextAccessor, IPermissionChecker permissionChecker) : IAccessScopeProvider
@@ -28,14 +28,16 @@ public sealed class TestAccessScopeProvider(IHttpContextAccessor httpContextAcce
     }
 }
 
-/// <summary>Parses <c>Type</c> or <c>Type:id</c> entries; malformed entries are skipped.</summary>
+/// <summary>Parses <c>Type</c>, <c>Type:id</c> or <c>Type:id:sub</c> (with the sub units) entries; malformed entries are skipped.</summary>
 public static class AccessScopeParser
 {
+    public const string SubUnits = "sub";
+
     public static IReadOnlyList<AccessScope> Parse(IEnumerable<string> entries)
     {
         ArgumentNullException.ThrowIfNull(entries);
         var scopes = new List<AccessScope>();
-        foreach (var parts in entries.Select(e => e.Split(':', 2, StringSplitOptions.TrimEntries)).Where(p => p[0].Length > 0))
+        foreach (var parts in entries.Select(e => e.Split(':', 3, StringSplitOptions.TrimEntries)).Where(p => p[0].Length > 0))
         {
             if (parts.Length == 1)
             {
@@ -43,7 +45,7 @@ public static class AccessScopeParser
             }
             else if (Guid.TryParse(parts[1], out var id))
             {
-                scopes.Add(new AccessScope(parts[0], id));
+                scopes.Add(new AccessScope(parts[0], id, parts.Length == 3 && parts[2] == SubUnits));
             }
         }
 
@@ -60,7 +62,7 @@ public static class TestScopeHttpClientExtensions
         client.DefaultRequestHeaders.Remove(TestAccessScopeProvider.ScopesHeader);
         client.DefaultRequestHeaders.Add(
             TestAccessScopeProvider.ScopesHeader,
-            string.Join(',', scopes.Select(s => s.ScopeId is null ? s.Type : $"{s.Type}:{s.ScopeId}")));
+            string.Join(',', scopes.Select(s => s.ScopeId is null ? s.Type : s.IncludeSubUnits ? $"{s.Type}:{s.ScopeId}:{AccessScopeParser.SubUnits}" : $"{s.Type}:{s.ScopeId}")));
         return client;
     }
 }

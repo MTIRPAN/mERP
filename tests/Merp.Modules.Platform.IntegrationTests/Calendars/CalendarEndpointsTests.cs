@@ -2,13 +2,13 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Merp.Application.Abstractions.Security;
-using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application.Calendars;
 using Merp.Modules.Platform.Application.Notifications;
 using Merp.Modules.Platform.Contracts.Calendars;
 using Merp.Modules.Platform.Contracts.Notifications;
 using Merp.Modules.Platform.IntegrationTests.Organization;
 using Merp.Testing.Web;
+using Merp.Web.Endpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Merp.Modules.Platform.IntegrationTests.Calendars;

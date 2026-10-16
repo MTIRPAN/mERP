@@ -1,0 +1,17 @@
+{
+  "hr.org.errors.unknown_company": "Şirket bulunamadı.",
+  "hr.org.errors.company_inactive": "Pasif bir şirkete birim veya pozisyon eklenemez.",
+  "hr.org.errors.unknown_branch": "Şube bulunamadı, pasif ya da bu şirkete ait değil.",
+  "hr.org.errors.reporting_cycle": "Bu değişiklikle bir pozisyon, yönetici zincirinde kendisine bağlanmış olur.",
+  "hr.org_units.errors.unknown_parent": "Üst birim bulunamadı ya da bu şirkete ait değil.",
+  "hr.org_units.errors.parent_in_other_company": "Birim başka bir şirketin biriminin altına taşınamaz.",
+  "hr.org_units.errors.move_into_own_subtree": "Birim kendisinin ya da alt birimlerinden birinin altına taşınamaz.",
+  "hr.org_units.errors.invalid_manager_position": "Yönetici pozisyonu bu birimin kapatılmamış pozisyonlarından biri olmalıdır.",
+  "hr.positions.errors.unknown_org_unit": "Birim bulunamadı.",
+  "hr.positions.errors.org_unit_in_other_company": "Pozisyon başka bir şirketin birimine taşınamaz.",
+  "hr.positions.errors.unknown_job": "Unvan bulunamadı.",
+  "hr.positions.errors.job_inactive": "Pasif bir unvan seçilemez.",
+  "hr.positions.errors.invalid_reports_to": "Bağlı olunan pozisyon aynı şirketin kapatılmamış başka bir pozisyonu olmalıdır.",
+  "hr.positions.errors.manages_unit": "Bu pozisyon bir birimin yöneticisi. Önce birime başka bir yönetici pozisyonu seçin.",
+  "hr.jobs.errors.tenant_scope_required": "Unvan kataloğu tüm şirketlerde ortaktır; yalnızca tüm şirketler kapsamıyla yönetilebilir."
+}

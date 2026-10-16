@@ -10,6 +10,7 @@ using Merp.Modules.Platform.Domain.Approvals;
 using RoleEntity = Merp.Modules.Platform.Domain.Roles.Role;
 using Merp.Modules.Platform.IntegrationTests.Organization;
 using Merp.SharedKernel.ValueObjects;
+using Merp.Web.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using static Merp.Modules.Platform.IntegrationTests.Approvals.ApprovalFactory;
 
@@ -107,7 +108,9 @@ public sealed class ApprovalEndpointsTests(ApprovalFactory factory) : IClassFixt
         resolvers.Single(r => r.Key == "role").ShouldSatisfyAllConditions(
             r => r.Name.ShouldBe("Rol"),
             r => r.Parameters.Single().Name.ShouldBe("roleId"));
-        resolvers.Select(r => r.Key).ShouldBe(["fact-user", "role", "user"], ignoreOrder: true);
+        // HR registers line-manager, org-unit-manager and position (D37)
+        resolvers.Select(r => r.Key).ShouldBe(["fact-user", "role", "user", "line-manager", "org-unit-manager", "position"], ignoreOrder: true);
+        resolvers.Single(r => r.Key == "line-manager").Name.ShouldBe("Hiyerarşik yönetici");
     }
 
     [Fact]

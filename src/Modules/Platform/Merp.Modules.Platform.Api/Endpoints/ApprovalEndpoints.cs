@@ -5,6 +5,7 @@ using Merp.Modules.Platform.Application.Approvals;
 using Merp.Modules.Platform.Contracts.Approvals;
 using Merp.Modules.Platform.Domain.Approvals;
 using Merp.SharedKernel.Results;
+using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;

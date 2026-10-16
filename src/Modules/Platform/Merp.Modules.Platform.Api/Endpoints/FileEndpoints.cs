@@ -1,5 +1,6 @@
 using Merp.Application.Abstractions.Messaging;
 using Merp.Modules.Platform.Application.Files;
+using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Files;
 using Merp.Web.Security;

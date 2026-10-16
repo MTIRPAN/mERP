@@ -8,6 +8,7 @@ using Merp.Modules.Platform.Application.Companies;
 using Merp.Modules.Platform.Contracts.Organization;
 using Merp.Modules.Platform.Domain.Branches;
 using Merp.Testing.Web;
+using Merp.Web.Endpoints;
 
 namespace Merp.Modules.Platform.IntegrationTests.Organization;
 
@@ -26,7 +27,7 @@ public sealed class BranchEndpointsTests(OrganizationFactory factory) : IClassFi
         var response = await admin.PostAsJsonAsync(Url, OrganizationFactory.BranchBody(company, "gbz-01", BranchType.HeadOffice), Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var id = (await response.Content.ReadFromJsonAsync<Api.Endpoints.EntityCreatedResponse>(Ct))!.Id;
+        var id = (await response.Content.ReadFromJsonAsync<EntityCreatedResponse>(Ct))!.Id;
         var branch = (await admin.GetFromJsonAsync<BranchDetails>($"{Url}/{id}", Ct))!;
         branch.CompanyId.ShouldBe(company);
         branch.CompanyName.ShouldBe("Acme");

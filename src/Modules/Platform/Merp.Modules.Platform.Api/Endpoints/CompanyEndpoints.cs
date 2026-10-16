@@ -6,6 +6,7 @@ using Merp.Modules.Platform.Application.Companies;
 using Merp.Modules.Platform.Application.CustomFields;
 using Merp.Modules.Platform.Application.Exports;
 using Merp.Modules.Platform.Domain.Companies;
+using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Files;
 using Merp.Web.Security;
@@ -179,6 +180,3 @@ internal static class CompanyEndpoints
         return result.IsSuccess ? TypedResults.NoContent() : (ProblemHttpResult)result.Error.ToProblem();
     }
 }
-
-/// <summary>Id of a created record; its URL is in the Location header.</summary>
-public sealed record EntityCreatedResponse(Guid Id);
