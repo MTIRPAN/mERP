@@ -1,6 +1,7 @@
 using Merp.Application.Abstractions.Messaging;
 using Merp.Modules.Platform.Application.Imports;
 using Merp.SharedKernel.Results;
+using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Files;
 using Merp.Web.Security;

@@ -793,3 +793,64 @@ Seçilen kültür `Content-Language` başlığında döner.
   - Yalnızca editör sayfası açılınca yüklenir.
 
 **Docker olmayan geliştirme ortamı:** Gotenberg istemcisi sahte HTTP yanıtlarıyla birim testinden geçer. Gerçek PDF üretimi entegrasyon testinde Gotenberg container'ıyla (Testcontainers) doğrulanır ve yalnızca CI'da koşar. PDF'in metni PdfPig ile okunur: Türkçe harfler ve logo kontrol edilir.
+
+## D37 — İK modülü ve organizasyon yapısı
+
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-16). PLAN H1 ile uygulanır.
+
+**Bölünme:** H1 iki PR'a ayrılır: H1a backend (İK modülünün kurulumu ve organizasyon modeli), H1b web.
+
+**Modül:** `Merp.Modules.HR.{Domain,Application,Infrastructure,Api,Contracts}`, şema `hr`, `HrDbContext`, test projeleri `Merp.Modules.HR.UnitTests` ve `Merp.Modules.HR.IntegrationTests`. Modül API host'una ve migrator'a İşe alım modülündeki gibi eklenir.
+
+**Model:**
+- `OrgUnit` (aggregate): şirket, üst birim, kod (şirkette tekil), ad, tür (Direktörlük, Departman, Birim, Takım), yönetici pozisyonu, masraf merkezi kodu, şube, geçerlilik tarihleri ve `path`.
+  - `path` PostgreSQL `ltree`'dir. Her etiket birimin kimliğidir (32 hane). Npgsql bunu ek paket olmadan destekler.
+  - Alt ağaç sorgusu `path <@ birim.path` ile yapılır ve GiST indeksi kullanır.
+  - Taşıma: komut yalnızca taşınan birimi değiştirir ve `OrgUnitMoved` olayını yayınlar. Alt birimlerin `path`'ini aynı işlemde bir domain event işleyicisi tek SQL ile günceller. D21'e göre bu kural 7'yi ihlal etmez. Bir birim kendi alt birimine taşınamaz.
+- `Job` (aggregate, unvan kataloğu): kod (kiracıda tekil), ad, aile, seviye (M1, U2…).
+- `Position` (aggregate, kadro): birim, unvan, kod (şirkette tekil), bağlı olduğu pozisyon, norm kadro (varsayılan 1), durum (Aktif, Dondurulmuş, Kapalı), yönetici pozisyonu mu.
+  - Bağlı olduğu pozisyon boşsa yöneticisi birimin yönetici pozisyonudur. Pozisyon birimin yöneticisiyse bir üst birimin yönetici pozisyonuna bağlanır.
+
+**Doluluk ve kişiler (plandaki sıralamanın çözümü):**
+- Pozisyonlara kişi atanması (`JobAssignment`) H2'de, personel–kullanıcı bağı H3'te gelir. H1'de pozisyonların sahibi yoktur.
+- İK içinde `IPositionHolders` arayüzü tanımlanır: bugün hangi personelin (ve kullanıcının) hangi pozisyonda olduğunu söyler. H1'deki uygulaması boş döner. H2 bunu görev atamalarından, H3 kullanıcı bağından doldurur.
+- Doluluk ve boş kadro bu arayüzden hesaplanır: H1'de bütün kadrolar boş görünür.
+- Çözücüler, `ManagedTeam` kapsamı ve `IOrgQuery`'nin kişiyle ilgili yöntemleri H1'de bu arayüzle yazılır.
+- Kabul kriteri "`line-manager(2)` doğru kişiyi döner" H1'de birim testiyle, sahte bir `IPositionHolders` ile doğrulanır. Uçtan uca entegrasyon testi H3'e taşınır (kullanıcı bağı gelince).
+
+**Raporlama hattı:**
+- `reporting_lines` (yönetici pozisyon, ast pozisyon, derinlik) kapanış tablosudur, pozisyon hiyerarşisinden üretilir.
+- Pozisyon veya birim değişince olay işleyicisi ilgili şirketin tablosunu aynı işlemde yeniden kurar. Her gece tüm kiracılarda tam yeniden kurulur (Hangfire, `hr.reporting-lines`).
+- H2'de görev atamasındaki yönetici ezmesi bu tabloya eklenir.
+
+**Sözleşmeler ve Platform kayıtları:**
+- `IOrgQuery` (HR.Contracts, salt okunur):
+  - birimin alt ağacı
+  - birimin yönetici pozisyonu ve sahibi
+  - personelin yönetici zinciri
+  - kullanıcının organizasyon bilgisi
+- Çözücüler (`IApproverResolver`):
+  - `line-manager` (seviye 1..n)
+  - `org-unit-manager` (olgudaki birim, yoksa talep edenin birimi)
+  - `position` (pozisyonun sahibi)
+- `IApproverManagerLookup`: süre aşımında yöneticiye yükseltme için.
+- Kapsam türleri:
+  - `OrgUnit`: kimlik ister, alt birimleri kapsayabilir.
+  - `ManagedTeam`: kullanıcının doğrudan ve dolaylı astları.
+  - İK listeleri bu kapsamları kendi sorgularında predikata çevirir: `OrgUnit` için `ltree`, `ManagedTeam` için kapanış tablosu ve pozisyon sahipleri.
+
+**Yetkiler:** `hr.org.read/manage`. İK Yöneticisi (`hr.*`) ikisine de, İK Uzmanı okumaya sahiptir. Birim ve pozisyon yönetimi şirket kapsamına uyar: kapsam dışındaki şirketin kaydı 404 döner, kapsam dışındaki şirkete kayıt açmak 403'tür. Unvan kataloğu kiracıda ortak olduğu için yalnızca Tenant kapsamıyla yönetilir; her kapsam okuyabilir.
+
+**Web (H1b):**
+- İK → Organizasyon: birim ağacı ve birim detayı, pozisyonlar (norm, dolu, boş), unvanlar.
+- Organizasyon şeması `d3-org-chart` (MIT) ile çizilir. Fotoğraflar personel kartıyla (H2) gelir; o zamana kadar baş harfler gösterilir.
+
+**Uygulama notları (H1a):**
+- Şirket ve şube bilgisi Platform.Contracts'taki salt okunur `IOrganizationLookup` ile alınır (kural 3, `IWorkingCalendar` gibi): kayıt kontrolü, adlar ve şirketin saat dilimi. Birimin bugün geçerli olup olmadığı şirketin saat dilimine göre hesaplanır.
+- Okuma kapsamı: Tenant her şey, Company şirketin kayıtları, Branch o şubeye bağlı birimler, OrgUnit birim (alt birimleriyle birlikte seçildiyse `ltree` alt ağacı), ManagedTeam kullanıcının pozisyonlarının astları (kapanış tablosu), Self kullanıcının kendi pozisyonları. Pozisyonlar birimlerini izler.
+- Uygulama katmanı `OrgPaths.IsWithin` kullanır. Infrastructure'daki sorgu kesicisi bunu Npgsql'in `<@` operatörüne çevirir (D30'daki özel alan filtresi gibi), böylece Application Npgsql'e bağlanmaz.
+- `reporting_lines` tablosunda yabancı anahtar yoktur. Tabloyu, yeni pozisyon kaydedilmeden önce çalışan domain event işleyicisi kurar. Pozisyonlar silinmez.
+- Kapatılan pozisyonlar zincirde atlanır: astları kapatılan pozisyonun yöneticisine bağlanır. Bir birimin yöneticisi olan pozisyon kapatılamaz ve biriminden çıkarılamaz. Bir pozisyonu kendisine bağlayacak değişiklik (bağlı olunan pozisyon, birim yöneticisi, taşıma) 400 ile reddedilir.
+- `line-manager(n)`: seviyeler kişiye göre sayılır, boş pozisyonlar atlanır. n. seviyedeki yöneticinin kullanıcısı yoksa sonuç boştur ve uyarı loglanır (yetki-ve-onay.md §2.4).
+- `org-unit-manager`: yöneticisi olmayan birimde en yakın üst birimin yöneticisi alınır. Talep eden kendi biriminin yöneticisiyse bir üstteki yöneticiye gider.
+- Oluşturma uç noktalarının ortak yanıtı `EntityCreatedResponse` Merp.Web'e taşındı; OpenAPI'de tek şema kalır.

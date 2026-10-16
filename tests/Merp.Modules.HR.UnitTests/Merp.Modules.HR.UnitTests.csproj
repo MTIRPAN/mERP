@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Modules/HR/Merp.Modules.HR.Domain/Merp.Modules.HR.Domain.csproj" />
+    <ProjectReference Include="../../src/Modules/HR/Merp.Modules.HR.Application/Merp.Modules.HR.Application.csproj" />
+    <ProjectReference Include="../../src/Modules/HR/Merp.Modules.HR.Infrastructure/Merp.Modules.HR.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

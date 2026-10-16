@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../Merp.Modules.HR.Application/Merp.Modules.HR.Application.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Merp.Modules.HR.UnitTests" />
+    <InternalsVisibleTo Include="Merp.Modules.HR.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Infrastructure.MultiTenancy;
-using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Platform.Application.Numbering;
@@ -11,6 +10,7 @@ using Merp.Modules.Platform.IntegrationTests.Organization;
 using Merp.Modules.Recruitment.Application;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.SharedKernel.Numbering;
+using Merp.Web.Endpoints;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Merp.Modules.Platform.IntegrationTests.Numbering;

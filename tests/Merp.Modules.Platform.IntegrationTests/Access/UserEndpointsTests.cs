@@ -1,13 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
 using Merp.Application.Abstractions.Paging;
-using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Platform.Application.Users;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Modules.Platform.IntegrationTests.Organization;
+using Merp.Web.Endpoints;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Merp.Modules.Platform.IntegrationTests.Access;
@@ -248,7 +248,9 @@ public sealed class UserEndpointsTests(AccessFactory factory) : IClassFixture<Ac
     {
         var types = (await factory.AsRoot().GetFromJsonAsync<List<Application.Roles.ScopeTypeItem>>("/api/platform/scope-types", Ct))!;
 
-        types.Select(t => t.Code).ShouldBe(["Tenant", "Company", "Branch", "Self"]);
+        // HR adds OrgUnit and ManagedTeam (D37)
+        types.Select(t => t.Code).ShouldBe(["Tenant", "Company", "Branch", "OrgUnit", "ManagedTeam", "Self"]);
+        types.Single(t => t.Code == "OrgUnit").ShouldBe(new Application.Roles.ScopeTypeItem("OrgUnit", "Birim", true, true));
         types.Single(t => t.Code == "Company").ShouldBe(new Application.Roles.ScopeTypeItem("Company", "Şirket", true, false));
     }
 }

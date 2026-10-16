@@ -4,6 +4,7 @@ using Merp.Application.Abstractions.Paging;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Roles;
 using Merp.Modules.Platform.IntegrationTests.Organization;
+using Merp.Web.Endpoints;
 
 namespace Merp.Modules.Platform.IntegrationTests.Access;
 
@@ -41,7 +42,7 @@ public sealed class RoleEndpointsTests(AccessFactory factory) : IClassFixture<Ac
             Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var id = (await response.Content.ReadFromJsonAsync<Api.Endpoints.EntityCreatedResponse>(Ct))!.Id;
+        var id = (await response.Content.ReadFromJsonAsync<EntityCreatedResponse>(Ct))!.Id;
         var role = (await factory.AsRoot().GetFromJsonAsync<RoleDetails>($"{Url}/{id}", Ct))!;
         role.Code.ShouldBe(code.ToUpperInvariant());
         role.Name["tr-TR"].ShouldBe("Bordro Uzmanı");
@@ -158,15 +159,16 @@ public sealed class RoleEndpointsTests(AccessFactory factory) : IClassFixture<Ac
     {
         var tree = (await factory.AsRoot().GetFromJsonAsync<List<PermissionModuleNode>>("/api/platform/permissions", Ct))!;
 
-        tree.Select(m => m.Code).ShouldBe(["platform", "recruitment"]);
-        var companies = tree[0].Resources.Single(r => r.Code == "platform.companies");
+        tree.Select(m => m.Code).ShouldBe(["hr", "platform", "recruitment"]);
+        var companies = tree[1].Resources.Single(r => r.Code == "platform.companies");
         companies.Label.ShouldBe("Şirketler");
         companies.Permissions.ShouldBe(
         [
             new PermissionNode("platform.companies.manage", "Oluşturma ve düzenleme"),
             new PermissionNode("platform.companies.read", "Görüntüleme"),
         ]);
-        tree[1].Label.ShouldBe("İşe alım");
+        tree[0].Label.ShouldBe("İnsan kaynakları");
+        tree[2].Label.ShouldBe("İşe alım");
         tree.SelectMany(m => m.Resources).SelectMany(r => r.Permissions).ShouldAllBe(p => !p.Label.StartsWith("permissions.", StringComparison.Ordinal));
     }
 }

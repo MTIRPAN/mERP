@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="../../BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
     <ProjectReference Include="../../BuildingBlocks/Merp.Web/Merp.Web.csproj" />
+    <ProjectReference Include="../../Modules/HR/Merp.Modules.HR.Api/Merp.Modules.HR.Api.csproj" />
     <ProjectReference Include="../../Modules/Platform/Merp.Modules.Platform.Api/Merp.Modules.Platform.Api.csproj" />
     <ProjectReference Include="../../Modules/Recruitment/Merp.Modules.Recruitment.Api/Merp.Modules.Recruitment.Api.csproj" />
   </ItemGroup>

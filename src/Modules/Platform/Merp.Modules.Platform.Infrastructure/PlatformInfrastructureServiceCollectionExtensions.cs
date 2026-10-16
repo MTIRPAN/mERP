@@ -16,6 +16,7 @@ using Merp.Infrastructure.Persistence;
 using Merp.Modules.Platform.Contracts.Approvals;
 using Merp.Modules.Platform.Contracts.Calendars;
 using Merp.Modules.Platform.Contracts.Documents;
+using Merp.Modules.Platform.Contracts.Organization;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Platform.Application.Approvals;
@@ -59,6 +60,9 @@ public static class PlatformInfrastructureServiceCollectionExtensions
         services.AddScoped<IPlatformDbContext>(provider => provider.GetRequiredService<PlatformDbContext>());
         services.AddRequestHandlersFromAssembly(Application.AssemblyReference.Assembly);
         services.AddScoped<AddressResolver>();
+
+        // Companies and branches for other modules (D37)
+        services.AddScoped<IOrganizationLookup, OrganizationLookup>();
         services.AddLocalizationResources(Application.AssemblyReference.Assembly);
 
         // Users, roles and permissions (docs/domain/yetki-ve-onay.md §1)

@@ -5,6 +5,9 @@
  * OpenAPI spec version: v1
  */
 
+/**
+ * Id of a created record; its URL is in the Location header. Shared by the modules' create endpoints.
+ */
 export interface EntityCreatedResponse {
   id: string;
 }

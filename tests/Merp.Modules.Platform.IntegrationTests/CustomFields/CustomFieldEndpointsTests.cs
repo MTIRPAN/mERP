@@ -2,13 +2,13 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Merp.Application.Abstractions.Paging;
-using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Companies;
 using Merp.Modules.Platform.Application.CustomFields;
 using Merp.Modules.Platform.IntegrationTests.Access;
 using Merp.Modules.Platform.IntegrationTests.Organization;
 using Merp.SharedKernel.CustomFields;
+using Merp.Web.Endpoints;
 
 namespace Merp.Modules.Platform.IntegrationTests.CustomFields;
 

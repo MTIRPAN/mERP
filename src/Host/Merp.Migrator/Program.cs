@@ -6,6 +6,7 @@ using Merp.Infrastructure.Email;
 using Merp.Infrastructure.Files;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
+using Merp.Modules.HR.Infrastructure;
 using Merp.Modules.Platform.Application.Users;
 using Merp.Modules.Platform.Infrastructure;
 using Merp.Modules.Recruitment.Infrastructure;
@@ -43,6 +44,7 @@ builder.Services.AddMerpDocuments();
 builder.Services.AddMerpFiles(builder.Configuration);
 builder.Services.AddMerpEmail(builder.Configuration);
 builder.Services.AddPlatformInfrastructure(builder.Configuration);
+builder.Services.AddHrInfrastructure();
 builder.Services.AddRecruitmentInfrastructure();
 
 using var host = builder.Build();

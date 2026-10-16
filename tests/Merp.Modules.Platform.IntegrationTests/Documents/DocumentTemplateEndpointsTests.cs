@@ -2,12 +2,12 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Merp.Application.Abstractions.Security;
-using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application.Documents;
 using Merp.Modules.Platform.Contracts.Documents;
 using Merp.Modules.Platform.IntegrationTests.Organization;
 using Merp.Testing.Data;
 using Merp.Testing.Web;
+using Merp.Web.Endpoints;
 using UglyToad.PdfPig;
 
 namespace Merp.Modules.Platform.IntegrationTests.Documents;
