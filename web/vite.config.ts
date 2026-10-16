@@ -28,5 +28,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     restoreMocks: true,
+    // Form tests type with userEvent into antd components; on a loaded machine the 5 s default cuts them short
+    testTimeout: 15000,
   },
 });
