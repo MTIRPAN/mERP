@@ -98,6 +98,7 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         builder.UseSetting("ConnectionStrings:Catalog", _catalogConnectionString);
         // Only PostgreSQL runs in integration tests; other dependencies are opt-in per test class.
         builder.UseSetting("HealthChecks:Keycloak:Enabled", "false");
+        builder.UseSetting("HealthChecks:Gotenberg:Enabled", "false");
         builder.UseSetting("Jobs:EnableServer", "false");
         builder.UseSetting("Messaging:EnableBackgroundProcessing", "false");
         builder.UseSetting("ApiDocs:Enabled", "true");

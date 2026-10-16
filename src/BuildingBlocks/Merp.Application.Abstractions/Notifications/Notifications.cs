@@ -1,3 +1,4 @@
+using System.Globalization;
 using Merp.SharedKernel.Notifications;
 using Merp.SharedKernel.Results;
 
@@ -62,10 +63,24 @@ public interface ITemplateRenderer
     /// <param name="model">Values by name; nested dictionaries and lists are allowed.</param>
     /// <param name="html">Encode output for HTML (bodies) or not (subjects, plain text).</param>
     Result<string> Render(string template, IReadOnlyDictionary<string, object?> model, bool html);
+
+    /// <summary>
+    /// Renders with a culture (dates and numbers), read-only partials for <c>{% render 'name' %}</c> and a step limit
+    /// (D36). Errors while rendering, such as an unknown partial, are returned like parse errors.
+    /// </summary>
+    Result<string> Render(string template, IReadOnlyDictionary<string, object?> model, TemplateRenderOptions options);
 }
+
+/// <param name="Html">Encode output for HTML.</param>
+/// <param name="Culture">Culture of filters such as <c>date</c>; invariant when null.</param>
+/// <param name="Partials">Liquid sources by name; a template can render nothing else.</param>
+public sealed record TemplateRenderOptions(bool Html, CultureInfo? Culture = null, IReadOnlyDictionary<string, string>? Partials = null);
 
 public static class TemplateErrors
 {
     /// <summary>Args: <c>line</c>, <c>message</c>.</summary>
     public const string InvalidCode = "common.templates.errors.invalid";
+
+    /// <summary>The template ran too many statements, e.g. a loop that never ends.</summary>
+    public const string TooComplexCode = "common.templates.errors.too_complex";
 }

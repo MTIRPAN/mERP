@@ -19,7 +19,8 @@ public static class HealthCheckExtensions
 
     /// <summary>
     /// Readiness checks for the infrastructure the API depends on: PostgreSQL (catalog), Valkey, RabbitMQ (when it is
-    /// the transport) and Keycloak. Each can be turned off with <c>HealthChecks:{Name}:Enabled = false</c>.
+    /// the transport), Keycloak and Gotenberg (degraded only). Each can be turned off with
+    /// <c>HealthChecks:{Name}:Enabled = false</c>.
     /// </summary>
     public static IServiceCollection AddMerpHealthChecks(this IServiceCollection services, IConfiguration configuration)
     {
@@ -53,6 +54,18 @@ public static class HealthCheckExtensions
         if (Enabled("Keycloak") && !string.IsNullOrWhiteSpace(authority))
         {
             checks.AddUrlGroup(new Uri(authority.TrimEnd('/') + "/.well-known/openid-configuration"), name: "keycloak", tags: [ReadyTag], timeout: TimeSpan.FromSeconds(5));
+        }
+
+        // Only documents need Gotenberg: without it the API still works, so it reports Degraded (D36)
+        var gotenberg = configuration["Pdf:GotenbergUrl"];
+        if (Enabled("Gotenberg") && !string.IsNullOrWhiteSpace(gotenberg))
+        {
+            checks.AddUrlGroup(
+                new Uri(gotenberg.TrimEnd('/') + "/health"),
+                name: "gotenberg",
+                failureStatus: HealthStatus.Degraded,
+                tags: [ReadyTag],
+                timeout: TimeSpan.FromSeconds(5));
         }
 
         return services;

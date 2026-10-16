@@ -5,6 +5,7 @@ using Merp.Modules.Platform.Domain.Branches;
 using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.CustomFields;
+using Merp.Modules.Platform.Domain.Documents;
 using Merp.Modules.Platform.Domain.Localization;
 using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Numbering;
@@ -52,6 +53,8 @@ public interface IPlatformDbContext
     DbSet<EmailMessage> EmailMessages { get; }
 
     DbSet<NotificationTemplate> NotificationTemplates { get; }
+
+    DbSet<DocumentTemplate> DocumentTemplates { get; }
 
     /// <summary>Files of Platform records: company logos and attachments (D31).</summary>
     DbSet<StoredFile> StoredFiles { get; }

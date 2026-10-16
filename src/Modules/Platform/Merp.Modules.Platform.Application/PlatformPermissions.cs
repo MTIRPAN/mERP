@@ -91,6 +91,12 @@ public static class PlatformPermissions
         public const string Admin = "platform.approvals.admin";
     }
 
+    public static class DocumentTemplates
+    {
+        public const string Read = "platform.document_templates.read";
+        public const string Manage = "platform.document_templates.manage";
+    }
+
     public static class Settings
     {
         public const string Read = "platform.settings.read";

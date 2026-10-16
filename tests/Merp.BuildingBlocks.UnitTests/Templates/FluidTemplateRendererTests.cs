@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.Notifications;
 using Merp.Infrastructure.Templates;
 
 namespace Merp.BuildingBlocks.UnitTests.Templates;
@@ -62,6 +63,49 @@ public sealed class FluidTemplateRendererTests
     public void Render_OfABrokenTemplate_Fails()
     {
         _renderer.Render("{{ title ", Model, html: true).IsFailure.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Partials_SeeTheModel_AndAreEncoded()
+    {
+        var partials = new Dictionary<string, string> { ["letterhead"] = "<header>{{ company.name }} – {{ body }}</header>" };
+
+        var result = _renderer.Render("{% render 'letterhead' %}<p>{{ title }}</p>", Model, new TemplateRenderOptions(Html: true, Partials: partials));
+
+        result.Value.ShouldBe("<header>Acme – &lt;b&gt;Ayşe&lt;/b&gt; &amp; Çağrı</header><p>İzin onaylandı</p>");
+    }
+
+    [Fact]
+    public void UnknownPartial_Fails_AndFilesAreNotReachable()
+    {
+        var options = new TemplateRenderOptions(Html: true, Partials: new Dictionary<string, string> { ["logo"] = "L" });
+
+        var unknown = _renderer.Render("{% render 'letterhead' %}", Model, options);
+        var file = _renderer.Render("{% render '../../appsettings.json' %}", Model, options);
+
+        unknown.Error.Code.ShouldBe("common.templates.errors.invalid");
+        file.Error.Code.ShouldBe("common.templates.errors.invalid");
+    }
+
+    [Fact]
+    public void Dates_FollowTheCulture()
+    {
+        var model = new Dictionary<string, object?> { ["day"] = new DateTime(2026, 8, 30, 0, 0, 0, DateTimeKind.Unspecified) };
+
+        var result = _renderer.Render("{{ day | date: '%d %B %Y' }}", model, new TemplateRenderOptions(Html: true, Culture: new System.Globalization.CultureInfo("tr-TR")));
+
+        result.Value.ShouldBe("30 Ağustos 2026");
+    }
+
+    [Fact]
+    public void EndlessLoop_IsStopped()
+    {
+        var result = _renderer.Render(
+            "{% for i in (1..1000000) %}{% for j in (1..1000000) %}x{% endfor %}{% endfor %}",
+            Model,
+            new TemplateRenderOptions(Html: true, Partials: new Dictionary<string, string>()));
+
+        result.Error.Code.ShouldBe("common.templates.errors.too_complex");
     }
 
     private sealed record Secret(string Password);

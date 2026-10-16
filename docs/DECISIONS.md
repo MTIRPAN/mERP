@@ -731,3 +731,65 @@ Seçilen kültür `Content-Language` başlığında döner.
 - **Boyut:** Dosya istek içinde üretilir. `Exports:MaxRows` (varsayılan 10.000) satırı aşan liste reddedilir (400, `filter` alanı), kullanıcı filtreyi daraltır.
 - **Denetim (KVKK):** Her dışa aktarma, satırların varlığının modülündeki audit tablosuna `Export` işlemi olarak yazılır: kim, ne zaman, kaç satır, hangi sütunlar, sıralama ve filtreler. Kayıt isteğin işleminden bağımsız, hemen yazılır.
 - **İlk listeler:** şirketler (özel alanlar dahil), şubeler, kullanıcılar.
+
+## D36 — Belge şablonlarının ve PDF'in uygulanması
+
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-15). PLAN P12 ile uygulanır. D14'ü ayrıntılandırır.
+
+**Bölünme:** P12 iki PR'a ayrılır: P12a backend, P12b web.
+
+**Belge türleri:**
+- Modüller belgelerini `IDocumentTypeProvider` ile kodda tanımlar (`Merp.Application.Abstractions.Documents`), bildirim türleri gibi. Bir tanım şunları içerir:
+  - anahtar (`{modül}.{belge}`) ve ad anahtarı
+  - yerleşik şablon (HTML ve CSS): kiracı hiç şablon tanımlamasa da belge üretilir
+  - örnek model: editördeki önizleme ve doğrulama bununla yapılır
+  - alan listesi: şablonda kullanılabilecek değişkenler ve açıklama anahtarları (editörde yardım olarak gösterilir)
+- Platform ilk tür olarak antetli genel yazıyı (`platform.letter`) tanımlar. Kabul testi ve demo bununla yapılır. İzin formu, teklif mektubu gibi türler kendi görevleriyle (L6, R6) gelir.
+
+**Şablonlar:**
+- `DocumentTemplate` (Platform, `document_templates`) bir aggregate'tir ve audit'e girer. Alanları:
+  - tür, şirket (null: tüm şirketler), kültür
+  - gövde (Liquid HTML, en fazla 200.000 karakter) ve CSS (en fazla 50.000 karakter)
+  - revizyon (içerik her değiştiğinde 1 artar, belgede gösterilebilir) ve aktiflik
+- Tür × şirket × kültür tekildir (null değerler dahil), bildirim şablonlarındaki gibi (D32).
+- Seçim sırası: önce istenen kültür, sonra şirketin şablonu, sonra tüm şirketlerinki. Pasif şablonlar atlanır. Hiçbiri yoksa türün yerleşik şablonu kullanılır.
+
+**Render:**
+- Fluid, D32'deki sandbox kurallarıyla: modelde yalnızca değerler, sözlükler ve listeler. Ek olarak sonsuz döngüye karşı adım sınırı konur.
+- Şablon belgenin kültürüyle çalışır, böylece `date` filtresi ay adlarını o dilde yazar.
+- Platform her modele `company` nesnesini ekler: unvan, kısa ad, vergi dairesi ve numarası, MERSİS, adres, telefon, e-posta, logo. Bunun yanında `document` (tür, revizyon, üretim tarihi) eklenir.
+- Hazır parçalar: `{% render 'logo' %}` ve `{% render 'letterhead' %}` (logo, unvan, adres ve vergi bilgileri). Parçalar bellekte tutulur. Şablon dosya sistemine ya da başka bir kaynağa erişemez.
+- Logo HTML'e `data:` URI olarak gömülür. Böylece PDF dışarıdan hiçbir kaynak indirmez.
+- Kaydedilen şablon önce ayrıştırılır, sonra türün örnek modeliyle render edilir. Hata satır numarasıyla `body` alanında döner. CSS Liquid değildir, olduğu gibi sayfaya eklenir.
+- Belge metinleri ("Sayı", "Konu" gibi etiketler) koda yazılmaz: şablon bunları belgenin dilinde `texts.*` olarak okur. Kaynakları türün `{modül}.documents.{ad}.texts.*` anahtarları ve Platform'un ortak `platform.documents.texts.*` anahtarlarıdır.
+
+**PDF:**
+- `IPdfConverter` (Abstractions) HTML'i PDF'e çevirir. Altyapıdaki uygulaması Gotenberg 8'in Chromium HTML dönüşümünü HTTP ile çağırır.
+  - Ayarlar `Pdf:GotenbergUrl` (geliştirmede `http://localhost:3000`) ve `Pdf:TimeoutSeconds` (varsayılan 30).
+  - Sayfa A4'tür ve arka planlar basılır.
+- Gotenberg'e ulaşılamazsa iş hatası döner (`common.errors.pdf_unavailable`, 503). Sağlık kontrolüne Gotenberg eklenir; durumu "degraded" olur, uygulamayı durdurmaz.
+- Dış ağ erişimi kapalı tutulur: Gotenberg `--chromium-allow-list=^(file:///tmp/|data:)` ile çalışır, sayfa kendi dosyaları ve `data:` URI'ları dışında hiçbir adrese istek atamaz. Üretim kurulumunda da aynı ayar kullanılmalıdır.
+
+**Modüllerin kullanımı:**
+- Modüller belgeyi `IDocumentGenerator.GetPdfAsync(tür, şirket, kültür, model)` (Platform.Contracts) ile ister.
+- Bu çağrı salt okunurdur, bir şey yazmaz. Bu yüzden kural 3'teki senkron sorgu arayüzlerine uyar.
+- Üretilen PDF'i saklamak gerekiyorsa modül bunu kendi `IFileStore` kaydıyla yapar (D31).
+
+**Yetki ve uç noktalar:**
+- `platform.document_templates.read/manage`, yalnızca Tenant kapsamıyla (bildirim şablonlarındaki gibi).
+- `/api/platform/document-templates`:
+  - türler: örnek model, alanlar ve yerleşik şablonla
+  - şablon listesi, ayrıntısı, oluşturma, güncelleme ve silme. Silmek güvenlidir, çünkü yerleşik şablona düşülür.
+  - `preview` (HTML) ve `preview/pdf`: kaydetmeden, gönderilen gövde ve CSS ile örnek modelden üretir.
+
+**Web (P12b):**
+- Sistem → Belge şablonları: liste ve editör sayfası.
+  - Editör: gövde ve CSS sekmeleri, alan listesi, örnek veri.
+  - Canlı önizleme: yazmayı bıraktıktan kısa süre sonra `preview` çağrılır, sonuç sandbox'lı bir `iframe`'de gösterilir. "PDF önizle" düğmesi PDF'i yeni sekmede açar.
+  - Hata satırı editörde işaretlenir.
+- Aynı editör bileşeniyle Sistem → Bildirim şablonları ekranı da gelir (D32'de P12'ye bırakılmıştı).
+- Editör `@monaco-editor/react` (MIT) ve `monaco-editor` (MIT) ile kurulur.
+  - Monaco CDN'den değil uygulamanın kendi paketinden yüklenir: kurum ağlarında dış CDN kapalı olabilir.
+  - Yalnızca editör sayfası açılınca yüklenir.
+
+**Docker olmayan geliştirme ortamı:** Gotenberg istemcisi sahte HTTP yanıtlarıyla birim testinden geçer. Gerçek PDF üretimi entegrasyon testinde Gotenberg container'ıyla (Testcontainers) doğrulanır ve yalnızca CI'da koşar. PDF'in metni PdfPig ile okunur: Türkçe harfler ve logo kontrol edilir.

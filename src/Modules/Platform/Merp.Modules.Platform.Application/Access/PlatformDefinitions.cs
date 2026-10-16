@@ -34,6 +34,8 @@ public sealed class PlatformPermissionDefinitions : IPermissionDefinitionProvide
         new(PlatformPermissions.Approvals.Admin),
         new(PlatformPermissions.Settings.Read),
         new(PlatformPermissions.Settings.Manage),
+        new(PlatformPermissions.DocumentTemplates.Read),
+        new(PlatformPermissions.DocumentTemplates.Manage),
     ];
 }
 
