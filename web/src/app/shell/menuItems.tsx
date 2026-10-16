@@ -5,6 +5,8 @@ import {
   BankOutlined,
   AuditOutlined,
   CheckSquareOutlined,
+  FileTextOutlined,
+  MailOutlined,
   InboxOutlined,
   NodeIndexOutlined,
   UserSwitchOutlined,
@@ -53,6 +55,8 @@ const icons: Record<string, ReactNode> = {
   delegations: <UserSwitchOutlined />,
   'approval-flows': <NodeIndexOutlined />,
   'approval-requests': <AuditOutlined />,
+  'document-templates': <FileTextOutlined />,
+  'notification-templates': <MailOutlined />,
 };
 
 export const menuIcon = (name: string | null): ReactNode => (name ? icons[name] : undefined) ?? <AppstoreOutlined />;

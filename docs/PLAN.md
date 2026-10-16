@@ -604,12 +604,16 @@ Kurallar: `docs/domain/yetki-ve-onay.md` §2. Bu belgeyi birebir uygula.
   - her dışa aktarma audit'e yazılır, 10.000 satır sınırı
   - ilk listeler: şirketler, şubeler, kullanıcılar
 
-### [ ] P12 Belge şablonları ve PDF — M (2 PR: P12a backend, P12b web)
+### [x] P12 Belge şablonları ve PDF — M (2 PR: P12a backend, P12b web)
 
 Kurallar: D14, D36.
 
 - [x] **P12a backend:** `DocumentTemplate`, belge türleri (`IDocumentTypeProvider`, ilk tür `platform.letter`), Fluid render, logo ve antet parçaları, Gotenberg istemcisi, `IDocumentGenerator`, yönetim ve önizleme uç noktaları.
-- [ ] **P12b web:** belge şablonu editörü (Monaco) ve canlı önizleme; aynı editörle bildirim şablonları ekranı.
+- [x] **P12b web:**
+  - Sistem → Belge şablonları: liste; yeni şablon için tür, şirket ve dil seçimi.
+  - Şablon editörü (tam sayfa): Monaco ile gövde (HTML) ve stil (CSS), yazmayı bırakınca örnek veriyle canlı önizleme (sandbox'lı iframe), PDF önizleme, hatalı satırın işaretlenmesi, alan ve parça yardımı, örnek veri, yerleşik şablona dönme, aktiflik, silme.
+  - Sistem → Bildirim şablonları: liste ve aynı kod editörüyle düzenleme çekmecesi (D32).
+  - Monaco uygulamanın kendi paketinden ve yalnızca bu sayfalarla yüklenir; HTML ve CSS işçileri yereldir.
 
 **Yapılacaklar:**
 - `DocumentTemplate`: modülün kaydettiği anahtar, şirket, kültür, Liquid HTML + CSS, sürüm, aktiflik.
