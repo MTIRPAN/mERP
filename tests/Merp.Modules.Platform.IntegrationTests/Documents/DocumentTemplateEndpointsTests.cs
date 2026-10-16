@@ -70,7 +70,11 @@ public sealed class DocumentTemplateEndpointsTests(DocumentFactory factory) : IC
     [Fact]
     public async Task Create_WithABrokenTemplate_Returns400WithTheLine()
     {
-        var response = await factory.Administrator().PostAsJsonAsync(Url, Body(body: "<p>\n{% if letter %}\n"), Ct);
+        // Each test uses its own company: another test creates the template for all companies
+        var admin = factory.Administrator();
+        var companyId = await OrganizationFactory.CreateCompanyAsync(admin);
+
+        var response = await admin.PostAsJsonAsync(Url, Body(companyId: companyId, body: "<p>\n{% if letter %}\n"), Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await Problem.ReadAsync(response)).Errors!["body"].ShouldHaveSingleItem().ShouldStartWith("Şablon ");
@@ -79,7 +83,10 @@ public sealed class DocumentTemplateEndpointsTests(DocumentFactory factory) : IC
     [Fact]
     public async Task Create_WithAnUnknownPartial_Returns400()
     {
-        var response = await factory.Administrator().PostAsJsonAsync(Url, Body(body: "{% render 'footer' %}"), Ct);
+        var admin = factory.Administrator();
+        var companyId = await OrganizationFactory.CreateCompanyAsync(admin);
+
+        var response = await admin.PostAsJsonAsync(Url, Body(companyId: companyId, body: "{% render 'footer' %}"), Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await Problem.ReadAsync(response)).Errors!["body"].ShouldHaveSingleItem().ShouldStartWith("Şablon ");

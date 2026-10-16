@@ -771,7 +771,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Dış ağ erişimi kapalı tutulur: Gotenberg `--chromium-allow-list=^(file:///tmp/|data:)` ile çalışır, sayfa kendi dosyaları ve `data:` URI'ları dışında hiçbir adrese istek atamaz. Üretim kurulumunda da aynı ayar kullanılmalıdır.
 
 **Modüllerin kullanımı:**
-- Modüller belgeyi `IDocumentGenerator.RenderPdfAsync(tür, şirket, kültür, model)` (Platform.Contracts) ile ister.
+- Modüller belgeyi `IDocumentGenerator.GetPdfAsync(tür, şirket, kültür, model)` (Platform.Contracts) ile ister.
 - Bu çağrı salt okunurdur, bir şey yazmaz. Bu yüzden kural 3'teki senkron sorgu arayüzlerine uyar.
 - Üretilen PDF'i saklamak gerekiyorsa modül bunu kendi `IFileStore` kaydıyla yapar (D31).
 

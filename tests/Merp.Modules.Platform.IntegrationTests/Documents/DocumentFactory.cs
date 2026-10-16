@@ -51,7 +51,7 @@ public sealed class DocumentFactory(PostgresFixture postgres) : MerpWebApplicati
     {
         var tenant = (await Services.GetRequiredService<ITenantStore>().FindByCodeAsync("acme", TestContext.Current.CancellationToken))!;
         await using var scope = Services.GetRequiredService<TenantScopeFactory>().CreateScope(tenant);
-        var result = await scope.ServiceProvider.GetRequiredService<IDocumentGenerator>().RenderPdfAsync(request, TestContext.Current.CancellationToken);
+        var result = await scope.ServiceProvider.GetRequiredService<IDocumentGenerator>().GetPdfAsync(request, TestContext.Current.CancellationToken);
         return result.IsSuccess ? result.Value : throw new InvalidOperationException(result.Error.Code);
     }
 

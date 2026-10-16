@@ -14,7 +14,7 @@ public static class DocumentErrors
 /// <summary>Documents for other modules (D36): the composed page converted to PDF; nothing is stored.</summary>
 public sealed class DocumentGenerator(DocumentTypeRegistry types, DocumentComposer composer, IPdfConverter pdf) : IDocumentGenerator
 {
-    public async Task<Result<GeneratedDocument>> RenderPdfAsync(DocumentRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<GeneratedDocument>> GetPdfAsync(DocumentRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 

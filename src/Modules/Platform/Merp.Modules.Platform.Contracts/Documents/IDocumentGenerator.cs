@@ -20,5 +20,5 @@ public sealed record GeneratedDocument(byte[] Content, Guid? TemplateId, int Rev
 public interface IDocumentGenerator
 {
     /// <summary>Fails with a validation error when the template cannot render the model, or when PDF conversion is unavailable.</summary>
-    Task<Result<GeneratedDocument>> RenderPdfAsync(DocumentRequest request, CancellationToken cancellationToken = default);
+    Task<Result<GeneratedDocument>> GetPdfAsync(DocumentRequest request, CancellationToken cancellationToken = default);
 }
