@@ -16,7 +16,7 @@ import {
   ThemeSwitcher,
   UserMenu,
 } from './HeaderControls';
-import { flattenMenu, selectedMenuKey, toAntdMenuItems } from './menuItems';
+import { flattenMenu, openMenuKeys, selectedMenuKey, toAntdMenuItems } from './menuItems';
 
 const SIDER_STORAGE_KEY = 'merp.sider.collapsed';
 
@@ -69,7 +69,8 @@ export const AppLayout = () => {
           mode="inline"
           items={menuItems}
           selectedKeys={selected ? [selected] : []}
-          defaultOpenKeys={me.menu.filter((item) => item.children?.length).map((item) => item.key)}
+          // Only the group of the current page starts open; the administration groups stay folded (PLAN P13)
+          defaultOpenKeys={openMenuKeys(me.menu, selected)}
           onClick={({ key }) => void navigate(key)}
           style={{ borderInlineEnd: 'none', paddingTop: 8 }}
         />
