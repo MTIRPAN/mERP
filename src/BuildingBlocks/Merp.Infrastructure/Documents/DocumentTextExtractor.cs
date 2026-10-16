@@ -58,7 +58,8 @@ internal sealed partial class DocumentTextExtractor(ILogger<DocumentTextExtracto
         for (var number = 1; number <= pages; number++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            builder.AppendLine(ContentOrderTextExtractor.GetText(document.GetPage(number)));
+            // \n on every server, so the text is the same on Windows and Linux
+            builder.Append(ContentOrderTextExtractor.GetText(document.GetPage(number))).Append('\n');
             if (builder.Length > MaxCharacters)
             {
                 truncated = true;
@@ -84,7 +85,7 @@ internal sealed partial class DocumentTextExtractor(ILogger<DocumentTextExtracto
         var truncated = false;
         foreach (var paragraph in body.Descendants<Paragraph>())
         {
-            builder.AppendLine(paragraph.InnerText);
+            builder.Append(paragraph.InnerText).Append('\n');
             if (builder.Length > MaxCharacters)
             {
                 truncated = true;

@@ -45,26 +45,34 @@ internal static class CvAnalysisPrompt
 
     public static string BuildInput(string cvText, string? jobTitle, string? jobRequirements, string culture)
     {
+        // Lines end with \n on every server, so Windows and Linux send the model the same prompt
         var language = CultureInfo.GetCultureInfo(culture);
-        var input = new StringBuilder()
-            .Append("Output language: ").Append(language.EnglishName).Append(", ").AppendLine(language.Name)
-            .AppendLine();
+        var input = new StringBuilder();
+        void Line(string text = "") => input.Append(text).Append('\n');
 
+        Line($"Output language: {language.EnglishName}, {language.Name}");
+        Line();
         if (string.IsNullOrWhiteSpace(jobRequirements))
         {
-            input.AppendLine("<job>No job requirements were given. Set match to null.</job>");
+            Line("<job>No job requirements were given. Set match to null.</job>");
         }
         else
         {
-            input.AppendLine("<job>");
+            Line("<job>");
             if (!string.IsNullOrWhiteSpace(jobTitle))
             {
-                input.Append("<title>").Append(jobTitle.Trim()).AppendLine("</title>");
+                Line($"<title>{jobTitle.Trim()}</title>");
             }
 
-            input.AppendLine("<requirements>").AppendLine(jobRequirements.Trim()).AppendLine("</requirements>").AppendLine("</job>");
+            Line("<requirements>");
+            Line(jobRequirements.Trim());
+            Line("</requirements>");
+            Line("</job>");
         }
 
-        return input.AppendLine().AppendLine("<cv>").AppendLine(cvText).Append("</cv>").ToString();
+        Line();
+        Line("<cv>");
+        Line(cvText);
+        return input.Append("</cv>").ToString();
     }
 }
