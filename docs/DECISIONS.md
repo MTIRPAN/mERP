@@ -206,7 +206,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
 | Kanban | @dnd-kit |
 | Takvim | FullCalendar (sadece MIT core paketleri) |
 | Zengin metin | TipTap (sadece MIT paketleri) |
-| Organizasyon şeması | d3-org-chart |
+| Organizasyon şeması | Kendi bileşenimiz: yerleşim d3-hierarchy (ISC), kartlar React ile. d3-org-chart, WTFPL lisanslı d3-flextree bağımlılığı yüzünden kullanılmaz (kullanıcı kararı, H1b) |
 | Grafikler | Apache ECharts (echarts-for-react) |
 | Kod editörü (şablonlar) | @monaco-editor/react + monaco-editor (MIT), uygulamanın kendi paketinden yüklenir (D36); dolaylı bağımlılıklar `marked` (MIT) ve `dompurify` (MPL-2.0 / Apache-2.0) |
 | Routing ve veri | React Router, TanStack Query |
@@ -843,7 +843,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 
 **Web (H1b):**
 - İK → Organizasyon: birim ağacı ve birim detayı, pozisyonlar (norm, dolu, boş), unvanlar.
-- Organizasyon şeması `d3-org-chart` (MIT) ile çizilir. Fotoğraflar personel kartıyla (H2) gelir; o zamana kadar baş harfler gösterilir.
+- Organizasyon şeması kendi bileşenimizle çizilir (yerleşim `d3-hierarchy`, ISC; D18). `d3-org-chart` bağımlılığı `d3-flextree` WTFPL lisanslı olduğu için kullanılmadı. Fotoğraflar personel kartıyla (H2) gelir; o zamana kadar baş harfler gösterilir.
 
 **Uygulama notları (H1a):**
 - Şirket ve şube bilgisi Platform.Contracts'taki salt okunur `IOrganizationLookup` ile alınır (kural 3, `IWorkingCalendar` gibi): kayıt kontrolü, adlar ve şirketin saat dilimi. Birimin bugün geçerli olup olmadığı şirketin saat dilimine göre hesaplanır.

@@ -2,6 +2,7 @@ import { lazy, type ComponentType } from 'react';
 import { Route, Routes } from 'react-router';
 import { platformPermissions } from '@/modules/platform/permissions';
 import { DashboardPage } from '@/modules/platform/DashboardPage';
+import { hrPermissions } from '@/modules/hr/permissions';
 import { recruitmentPermissions } from '@/modules/recruitment/permissions';
 import { ForbiddenPage } from '@/shared/pages/ForbiddenPage';
 import { NotFoundPage } from '@/shared/pages/NotFoundPage';
@@ -56,6 +57,9 @@ const NotificationTemplatesPage = page(
   () => import('@/modules/platform/documents/NotificationTemplatesPage'),
   'NotificationTemplatesPage',
 );
+const OrgStructurePage = page(() => import('@/modules/hr/organization/OrgStructurePage'), 'OrgStructurePage');
+const PositionsPage = page(() => import('@/modules/hr/positions/PositionsPage'), 'PositionsPage');
+const JobTitlesPage = page(() => import('@/modules/hr/jobTitles/JobTitlesPage'), 'JobTitlesPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -248,6 +252,30 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={platformPermissions.notificationTemplatesRead}>
               <NotificationTemplatesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/organization"
+          element={
+            <RequirePermission permission={hrPermissions.orgRead}>
+              <OrgStructurePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/positions"
+          element={
+            <RequirePermission permission={hrPermissions.orgRead}>
+              <PositionsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/job-titles"
+          element={
+            <RequirePermission permission={hrPermissions.orgRead}>
+              <JobTitlesPage />
             </RequirePermission>
           }
         />

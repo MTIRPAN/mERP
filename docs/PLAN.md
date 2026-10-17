@@ -651,12 +651,12 @@ Kurallar: D14, D36.
 
 `HR` modülü burada kurulur: 5 proje, şema `hr`, test projeleri.
 
-### [ ] H1 Organizasyon yapısı — L (2 PR: H1a backend, H1b web)
+### [x] H1 Organizasyon yapısı — L (2 PR: H1a backend, H1b web)
 
 Kurallar: D37.
 
 - [x] **H1a backend:** İK modülünün kurulumu (5 proje, şema `hr`, test projeleri), `OrgUnit` (ltree), `Job`, `Position`, `reporting_lines`, `IOrgQuery`, çözücüler, `OrgUnit` ve `ManagedTeam` kapsamları, yetkiler ve uç noktalar.
-- [ ] **H1b web:** organizasyon ağacı ve detay, pozisyonlar (norm / dolu / boş), unvanlar, organizasyon şeması.
+- [x] **H1b web:** organizasyon ağacı ve detay, pozisyonlar (norm / dolu / boş), unvanlar, organizasyon şeması.
 
 **Yapılacaklar:**
 - `OrgUnit`:
@@ -677,7 +677,7 @@ Kurallar: D37.
   - Çözücüler: `line-manager`, `org-unit-manager`, `position`
   - Kapsam türleri: `OrgUnit`, `ManagedTeam` (predikat üreticileriyle)
 - Yetkiler: `hr.org.read/manage`.
-- Web: organizasyon ağacı ve detay, pozisyonlar (norm / dolu / boş), unvanlar, organizasyon şeması (d3-org-chart, fotoğraflı).
+- Web: organizasyon ağacı ve detay, pozisyonlar (norm / dolu / boş), unvanlar, organizasyon şeması (kendi bileşenimiz, d3-hierarchy; fotoğraflar H2 ile, D37).
 
 **Kabul kriterleri:**
 - 3 seviyeli yapı kurulur ve boş kadrolar raporlanır.
