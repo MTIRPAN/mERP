@@ -28,9 +28,13 @@ public class HrMigrationTests(PostgresFixture postgres)
 
         var tables = await ListAsync(connectionString, "SELECT table_name FROM information_schema.tables WHERE table_schema = @schema", "hr");
         tables.ShouldBe(
-            ["__ef_migrations_history", "audit_entries", "inbox_messages", "outbox_messages", "number_counters", "stored_files", "org_units", "jobs", "positions", "reporting_lines"],
+            ["__ef_migrations_history", "audit_entries", "inbox_messages", "outbox_messages", "number_counters", "stored_files", "org_units", "jobs", "positions", "reporting_lines",
+                "employees", "employments", "job_assignments", "employee_sensitive_data", "sgk_exit_codes"],
             ignoreOrder: true);
         (await ListAsync(connectionString, "SELECT table_name FROM information_schema.tables WHERE table_schema = @schema", "public")).ShouldBeEmpty();
+
+        // The SGK leaving codes are seeded once (D38)
+        (await ListAsync(connectionString, "SELECT code FROM hr.sgk_exit_codes WHERE code = @schema", "03")).ShouldBe(["03"]);
 
         // Unit paths are ltree with a GiST index (D37)
         (await ListAsync(connectionString, "SELECT extname FROM pg_extension WHERE extname = @schema", "ltree")).ShouldBe(["ltree"]);

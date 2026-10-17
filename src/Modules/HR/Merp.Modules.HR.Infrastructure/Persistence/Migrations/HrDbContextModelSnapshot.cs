@@ -343,6 +343,452 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "hr");
                 });
 
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.Employee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Addresses")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("addresses");
+
+                    b.Property<DateOnly?>("BirthDate")
+                        .HasColumnType("date")
+                        .HasColumnName("birth_date");
+
+                    b.Property<string>("BirthPlace")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("birth_place");
+
+                    b.Property<string>("Certificates")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("certificates");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("CustomFields")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("custom_fields");
+
+                    b.Property<string>("Educations")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("educations");
+
+                    b.Property<string>("Emails")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("emails");
+
+                    b.Property<string>("EmergencyContacts")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("emergency_contacts");
+
+                    b.Property<string>("FamilyMembers")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("family_members");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("first_name");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("gender");
+
+                    b.Property<string>("Iban")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)")
+                        .HasColumnName("iban");
+
+                    b.Property<string>("Languages")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("languages");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_name");
+
+                    b.Property<string>("MaritalStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("marital_status");
+
+                    b.Property<string>("MilitaryStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("military_status");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Nationality")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("nationality");
+
+                    b.Property<string>("Phones")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("phones");
+
+                    b.Property<string>("Tckn")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)")
+                        .HasColumnName("tckn");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_employees");
+
+                    b.HasIndex("CustomFields")
+                        .HasDatabaseName("ix_employees_custom_fields");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("CustomFields"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("CustomFields"), new[] { "jsonb_path_ops" });
+
+                    b.HasIndex("Tckn")
+                        .IsUnique()
+                        .HasDatabaseName("ix_employees_tckn");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_employees_user_id")
+                        .HasFilter("user_id IS NOT NULL");
+
+                    b.HasIndex("LastName", "FirstName")
+                        .HasDatabaseName("ix_employees_last_name_first_name");
+
+                    b.ToTable("employees", "hr");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.EmployeeSensitiveData", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<string>("BloodType")
+                        .HasColumnType("text")
+                        .HasColumnName("blood_type");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("CriminalRecordDate")
+                        .HasColumnType("text")
+                        .HasColumnName("criminal_record_date");
+
+                    b.Property<string>("DisabilityDegree")
+                        .HasColumnType("text")
+                        .HasColumnName("disability_degree");
+
+                    b.Property<string>("HealthNotes")
+                        .HasColumnType("text")
+                        .HasColumnName("health_notes");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_employee_sensitive_data");
+
+                    b.ToTable("employee_sensitive_data", "hr");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.Employment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateOnly?>("ContractEndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("contract_end_date");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<DateOnly>("HireDate")
+                        .HasColumnType("date")
+                        .HasColumnName("hire_date");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary");
+
+                    b.Property<Guid?>("LeavePolicyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("leave_policy_id");
+
+                    b.Property<DateOnly?>("ProbationEndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("probation_end_date");
+
+                    b.Property<string>("RegistryNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("registry_number");
+
+                    b.Property<bool?>("Rehireable")
+                        .HasColumnType("boolean")
+                        .HasColumnName("rehireable");
+
+                    b.Property<DateOnly>("SeniorityDate")
+                        .HasColumnType("date")
+                        .HasColumnName("seniority_date");
+
+                    b.Property<string>("SeniorityReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("seniority_reason");
+
+                    b.Property<string>("SgkExitCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("sgk_exit_code");
+
+                    b.Property<DateOnly?>("TerminationDate")
+                        .HasColumnType("date")
+                        .HasColumnName("termination_date");
+
+                    b.Property<string>("TerminationNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("termination_note");
+
+                    b.Property<string>("TerminationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("termination_reason");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("type");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<decimal?>("WeeklyHours")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("weekly_hours");
+
+                    b.Property<Guid?>("WorkScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("work_schedule_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_employments");
+
+                    b.HasIndex("CompanyId", "RegistryNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_employments_company_id_registry_number");
+
+                    b.HasIndex("EmployeeId", "CompanyId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_employments_employee_id_company_id_open")
+                        .HasFilter("termination_date IS NULL");
+
+                    b.ToTable("employments", "hr");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.JobAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Announced")
+                        .HasColumnType("boolean")
+                        .HasColumnName("announced");
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<string>("CostCenterCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("cost_center_code");
+
+                    b.Property<Guid>("EmploymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employment_id");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<string>("Level")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("level");
+
+                    b.Property<Guid?>("ManagerPositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("manager_position_id");
+
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("position_id");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("valid_from");
+
+                    b.Property<DateOnly?>("ValidTo")
+                        .HasColumnType("date")
+                        .HasColumnName("valid_to");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_assignments");
+
+                    b.HasIndex("EmploymentId")
+                        .HasDatabaseName("ix_job_assignments_employment_id");
+
+                    b.HasIndex("JobId")
+                        .HasDatabaseName("ix_job_assignments_job_id");
+
+                    b.HasIndex("ManagerPositionId")
+                        .HasDatabaseName("ix_job_assignments_manager_position_id");
+
+                    b.HasIndex("ValidFrom")
+                        .HasDatabaseName("ix_job_assignments_unannounced")
+                        .HasFilter("NOT announced");
+
+                    b.HasIndex("PositionId", "ValidFrom")
+                        .HasDatabaseName("ix_job_assignments_position_id_valid_from");
+
+                    b.ToTable("job_assignments", "hr");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.SgkExitCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("name");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_sgk_exit_codes");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_sgk_exit_codes_code");
+
+                    b.ToTable("sgk_exit_codes", "hr");
+                });
+
             modelBuilder.Entity("Merp.Modules.HR.Domain.Organization.Job", b =>
                 {
                     b.Property<Guid>("Id")
@@ -627,6 +1073,56 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                     b.ToTable("reporting_lines", "hr");
                 });
 
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.EmployeeSensitiveData", b =>
+                {
+                    b.HasOne("Merp.Modules.HR.Domain.Employees.Employee", null)
+                        .WithOne()
+                        .HasForeignKey("Merp.Modules.HR.Domain.Employees.EmployeeSensitiveData", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_employee_sensitive_data_employees_employee_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.Employment", b =>
+                {
+                    b.HasOne("Merp.Modules.HR.Domain.Employees.Employee", null)
+                        .WithMany("Employments")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_employments_employees_employee_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.JobAssignment", b =>
+                {
+                    b.HasOne("Merp.Modules.HR.Domain.Employees.Employment", null)
+                        .WithMany("Assignments")
+                        .HasForeignKey("EmploymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_job_assignments_employments_employment_id");
+
+                    b.HasOne("Merp.Modules.HR.Domain.Organization.Job", null)
+                        .WithMany()
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_job_assignments_jobs_job_id");
+
+                    b.HasOne("Merp.Modules.HR.Domain.Organization.Position", null)
+                        .WithMany()
+                        .HasForeignKey("ManagerPositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_job_assignments_positions_manager_position_id");
+
+                    b.HasOne("Merp.Modules.HR.Domain.Organization.Position", null)
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_job_assignments_positions_position_id");
+                });
+
             modelBuilder.Entity("Merp.Modules.HR.Domain.Organization.OrgUnit", b =>
                 {
                     b.HasOne("Merp.Modules.HR.Domain.Organization.Position", null)
@@ -663,6 +1159,16 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ReportsToPositionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_positions_positions_reports_to_position_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.Employee", b =>
+                {
+                    b.Navigation("Employments");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.Employment", b =>
+                {
+                    b.Navigation("Assignments");
                 });
 #pragma warning restore 612, 618
         }

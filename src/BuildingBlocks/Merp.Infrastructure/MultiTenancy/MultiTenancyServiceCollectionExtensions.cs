@@ -1,6 +1,8 @@
 using System.Security.Cryptography.X509Certificates;
 using Merp.Application.Abstractions.Jobs;
+using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.MultiTenancy.Catalog;
+using Merp.Infrastructure.Security;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +42,8 @@ public static class MultiTenancyServiceCollectionExtensions
 
         services.AddHybridCache();
         services.TryAddSingleton<TenantConnectionStringProtector>();
+        // Special category personal data of the tenant, encrypted field by field (D13, D38)
+        services.TryAddScoped<ISensitiveDataProtector, SensitiveDataProtector>();
         services.TryAddSingleton<ITenantStore, CatalogTenantStore>();
         services.TryAddSingleton<TenantCatalog>();
         services.TryAddSingleton<TenantScopeFactory>();

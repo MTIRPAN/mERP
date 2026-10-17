@@ -1,3 +1,4 @@
+using Merp.Infrastructure.Persistence.Conventions;
 using Merp.Modules.Platform.Domain.Calendars;
 using Merp.Modules.Platform.Domain.Companies;
 using Microsoft.EntityFrameworkCore;

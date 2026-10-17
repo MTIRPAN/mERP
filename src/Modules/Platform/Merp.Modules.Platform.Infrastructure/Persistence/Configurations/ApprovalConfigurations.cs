@@ -1,3 +1,4 @@
+using Merp.Infrastructure.Persistence.Conventions;
 using Merp.Modules.Platform.Domain.Approvals;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

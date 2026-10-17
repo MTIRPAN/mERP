@@ -1,12 +1,16 @@
+using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Jobs;
+using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.HR.Application;
 using Merp.Modules.HR.Application.Approvals;
+using Merp.Modules.HR.Application.Employees;
 using Merp.Modules.HR.Application.Organization;
 using Merp.Modules.HR.Contracts.Organization;
+using Merp.Modules.HR.Infrastructure.Employees;
 using Merp.Modules.HR.Infrastructure.Organization;
 using Merp.Modules.HR.Infrastructure.Persistence;
 using Merp.Modules.Platform.Contracts.Approvals;
@@ -30,13 +34,20 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddSingleton<IScopeTypeProvider, HrScopeTypes>();
 
         // Organization: units, positions and reporting lines (D37)
-        services.AddScoped<IPositionHolders, NoPositionHolders>();
+        services.AddScoped<IPositionHolders, AssignmentPositionHolders>();
         services.AddScoped<IOrgStructureStore, OrgStructureStore>();
         services.AddScoped<IReportingLines, ReportingLineReader>();
         services.AddScoped<ReportingLinesBuilder>();
         services.AddScoped<IOrgQuery, OrgQuery>();
         services.AddScoped<ReportingLinesJob>();
         services.AddSingleton(RecurringJobDefinition.For<ReportingLinesJob>(ReportingLinesJob.JobId, ReportingLinesJob.Cron));
+
+        // Employees: numbering, custom fields, SGK codes and the hourly announcement of started assignments (D38)
+        services.AddSingleton<INumberSequenceDefinitionProvider, HrNumberSequences>();
+        services.AddSingleton<ICustomFieldEntityProvider, HrCustomFieldEntities>();
+        services.AddSingleton<ITenantDataSeeder, HrReferenceDataSeeder>();
+        services.AddScoped<AssignmentsEffectiveJob>();
+        services.AddSingleton(RecurringJobDefinition.For<AssignmentsEffectiveJob>(AssignmentsEffectiveJob.JobId, AssignmentsEffectiveJob.Cron));
 
         // Approver resolvers and the escalation lookup of the approval engine (docs/domain/yetki-ve-onay.md §2.4)
         services.AddScoped<IApproverResolver, LineManagerApproverResolver>();

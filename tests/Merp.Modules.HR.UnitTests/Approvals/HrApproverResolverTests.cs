@@ -57,6 +57,17 @@ public class HrApproverResolverTests
     }
 
     [Fact]
+    public async Task LineManager_FollowsTheManagerOverride_OfTheRequester()
+    {
+        // Deniz reports straight to the sales director instead of the Istanbul team lead (D38)
+        _holders.Vacate(_istanbulRep);
+        _holders.Hold(_istanbulRep, _deniz, manager: _salesDirector);
+
+        (await LineManager(1, _deniz)).ShouldBe([_burak.UserId!.Value]);
+        (await LineManager(2, _deniz)).ShouldBe([_ayse.UserId!.Value]);
+    }
+
+    [Fact]
     public async Task LineManager_SkipsVacantPositions()
     {
         _holders.Vacate(_istanbulLead);
@@ -150,7 +161,8 @@ public class HrApproverResolverTests
     {
         private readonly List<PositionHolder> _holders = [];
 
-        public void Hold(PositionId position, Person person) => _holders.Add(new PositionHolder(position, person.EmployeeId, person.UserId, IsPrimary: true));
+        public void Hold(PositionId position, Person person, PositionId? manager = null) =>
+            _holders.Add(new PositionHolder(position, person.EmployeeId, person.UserId, IsPrimary: true, manager));
 
         public void Vacate(PositionId position) => _holders.RemoveAll(h => h.PositionId == position);
 
