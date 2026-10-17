@@ -8,6 +8,8 @@ const PREFERRED = [
   'delegations',
   'companies',
   'branches',
+  'hr-organization',
+  'hr-positions',
   'users',
   'roles',
   'cv-analysis',

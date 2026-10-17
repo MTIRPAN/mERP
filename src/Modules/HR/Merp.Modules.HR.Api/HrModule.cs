@@ -1,6 +1,7 @@
 using Merp.Modules.HR.Api.Endpoints;
 using Merp.Modules.HR.Infrastructure;
 using Merp.Web.Modules;
+using Merp.Web.Navigation;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,11 @@ public sealed class HrModule : IModule
 {
     public string Name => "hr";
 
-    public void AddServices(IServiceCollection services, IConfiguration configuration) => services.AddHrInfrastructure();
+    public void AddServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHrInfrastructure();
+        services.AddSingleton<IMenuContributor, HrMenu>();
+    }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
