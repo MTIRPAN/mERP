@@ -275,7 +275,7 @@
           "MailKit": "[4.18.0, )",
           "Merp.Application.Persistence": "[1.0.0, )",
           "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "[10.0.13, )",
-          "Microsoft.Extensions.Caching.Hybrid": "[10.10.0, )",
+          "Microsoft.Extensions.Caching.Hybrid": "[10.11.0, )",
           "Microsoft.Extensions.Caching.StackExchangeRedis": "[10.0.13, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
           "PdfPig": "[0.1.16, )",
@@ -440,14 +440,14 @@
       },
       "Microsoft.Extensions.Caching.Hybrid": {
         "type": "CentralTransitive",
-        "requested": "[10.10.0, )",
-        "resolved": "10.10.0",
-        "contentHash": "+16+e4EjjvBg8OedpucUqSFeI9liu0S5AQG2FHY7OnBOV1jGYduYBN8KNPh6noNRM1npF4RBWKONQoAR9nFDSA==",
+        "requested": "[10.11.0, )",
+        "resolved": "10.11.0",
+        "contentHash": "F4P+uZgDFnKfmHm0ReWJNSVXAlZmknQgkkrmEDtAdxWvVPCSZL7UPAY7Ewf8zs5qwPCGaYopZiRiPg2YGCfuhA==",
         "dependencies": {
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.12",
-          "Microsoft.Extensions.Caching.Memory": "10.0.12",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.12",
-          "Microsoft.Extensions.Options": "10.0.12"
+          "Microsoft.Extensions.Caching.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Caching.Memory": "10.0.13",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.13",
+          "Microsoft.Extensions.Options": "10.0.13"
         }
       },
       "Microsoft.Extensions.Caching.StackExchangeRedis": {
