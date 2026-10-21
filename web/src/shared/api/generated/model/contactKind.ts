@@ -5,7 +5,7 @@
  * OpenAPI spec version: v1
  */
 
-export type ContactKind = (typeof ContactKind)[keyof typeof ContactKind] | null;
+export type ContactKind = (typeof ContactKind)[keyof typeof ContactKind];
 
 export const ContactKind = {
   Work: 'Work',

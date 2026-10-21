@@ -110,5 +110,21 @@
   "hr.employees.errors.transfer_same_company": "Nakil başka bir şirkete yapılır.",
   "hr.employees.errors.transfer_before_hire": "Nakil tarihi, kaynak şirketteki işe giriş tarihinden sonra olmalıdır.",
   "hr.employees.errors.open_employment_exists": "Personelin bu şirkette devam eden bir istihdamı var.",
-  "hr.employees.errors.starts_before_previous_end": "Yeni istihdam, bu şirketteki önceki istihdamın çıkış tarihinden sonra başlamalıdır."
+  "hr.employees.errors.starts_before_previous_end": "Yeni istihdam, bu şirketteki önceki istihdamın çıkış tarihinden sonra başlamalıdır.",
+  "web.hr.employees.title": "Personel",
+  "web.hr.employees.fields.registry_number": "Sicil no",
+  "web.hr.employees.fields.first_name": "Ad",
+  "web.hr.employees.fields.last_name": "Soyad",
+  "web.hr.employees.fields.tckn": "T.C. kimlik no",
+  "web.hr.employees.fields.company": "Şirket",
+  "web.hr.employees.fields.branch": "Şube",
+  "web.hr.employees.fields.org_unit": "Birim",
+  "web.hr.employees.fields.position": "Pozisyon",
+  "web.hr.employees.fields.job": "Unvan",
+  "web.hr.employees.fields.hire_date": "İşe giriş tarihi",
+  "web.hr.employees.fields.termination_date": "Çıkış tarihi",
+  "web.hr.employees.fields.status": "Durum",
+  "web.hr.employment_status.Upcoming": "Başlayacak",
+  "web.hr.employment_status.Active": "Aktif",
+  "web.hr.employment_status.Terminated": "Ayrıldı"
 }

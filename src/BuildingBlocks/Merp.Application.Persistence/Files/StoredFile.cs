@@ -103,6 +103,9 @@ public static class StoredFilePurposes
     /// <summary>A record's single picture, e.g. a company logo.</summary>
     public const string Logo = "logo";
 
+    /// <summary>A person's picture, e.g. an employee photo (D38).</summary>
+    public const string Photo = "photo";
+
     /// <summary>A file uploaded to import records (D35).</summary>
     public const string Import = "import";
 }

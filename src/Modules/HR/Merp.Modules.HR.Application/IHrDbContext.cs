@@ -1,3 +1,4 @@
+using Merp.Application.Persistence.Files;
 using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Organization;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,9 @@ public interface IHrDbContext
     DbSet<EmployeeSensitiveData> EmployeeSensitiveData { get; }
 
     DbSet<SgkExitCode> SgkExitCodes { get; }
+
+    /// <summary>Files of HR records, e.g. employee photos (D31).</summary>
+    DbSet<StoredFile> StoredFiles { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

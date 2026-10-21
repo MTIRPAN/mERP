@@ -913,3 +913,13 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Kişi kartı komutları (kişisel bilgiler, iletişim, aile, nitelikler, IBAN) kartın sürümünü ister; aynı anda yapılan değişiklik 409 döner. Hassas veri kendi satırındadır, sürüm istemez.
 - jsonb sütun yardımcısı (`HasJson`) Platform'dan Merp.Infrastructure'a taşındı; modüller ortak kullanır.
 
+**Uygulama notları (H2b1):**
+- Personel listesinde her satır bir istihdamdır (kişi + şirket): sicil no şirket bazındadır ve şirket kapsamı istihdama uygulanır. Aynı anda iki şirkette çalışan kişi iki satırda görünür; tekrar işe girmiş kişinin eski istihdamı "Ayrılanlar" filtresinde kalır.
+- "Bugün" her satırda istihdamın şirketinin saat dilimine göre hesaplanır. Bir anda şirketlerin günü UTC gününe eşit ya da bir gün geride veya ileride olduğundan, SQL günü bu üç değerden seçer (şirket listeleri parametredir).
+- Satırın görevi bugünü kapsayan atamadır. Başlamamış istihdamda ilk atama, bitmiş istihdamda son atama kullanılır; böylece şube, birim ve yönetici kapsamı ayrılan ve başlayacak personeli de yerleştirir.
+- ManagedTeam kapsamı: kişinin pozisyonlarının altındaki pozisyonların sahipleri ve yönetici ezmesi kişinin pozisyonlarından birini gösterenler. Self kapsamı kullanıcının kendi personel kaydıdır. İkisi de kullanıcı–personel bağına dayanır; uçtan uca test H3'te.
+- TCKN listede ve Excel'de her zaman maskelidir. Açık TCKN ve IBAN yalnızca kartta, `hr.employees.sensitive.read` kapsamı kişinin görülen istihdamlarından birini kapsıyorsa gelir. Her açık okuma audit'e yazılır (alan bazında `Read` kaydı; özel nitelikli verilerde yalnızca dolu alanlar).
+- Kart yalnızca çağıranın kapsamındaki istihdamları gösterir. Grup içi nakilde hedef şirketin İK'sı kaynak şirketteki istihdamı görmez; kıdem tarihi yeni istihdama kopyalandığı için korunur.
+- Fotoğraf genel bir dosya uç noktası yerine kendi uç noktalarıyla sunulur (`GET/PUT/DELETE /api/hr/employees/{id}/photo`, okuma `hr.employees.read`, değiştirme `hr.employees.update`). Böylece D22 listesine yeni bir "yalnızca oturum" uç noktası eklenmez. PNG, JPEG veya WebP, en fazla 2 MB.
+- Excel'e aktarma şimdilik özel alan kolonlarını içermez: özel alan tanımları Platform'dadır ve modüller arası okuma arayüzü henüz yoktur. Personel listesi ekranıyla (H2c) birlikte ele alınacak.
+

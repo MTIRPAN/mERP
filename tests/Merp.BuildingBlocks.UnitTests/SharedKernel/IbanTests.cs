@@ -27,6 +27,10 @@ public class IbanTests
         iban.Formatted().ShouldBe("TR33 0006 1005 1978 6457 8413 26");
     }
 
+    [Fact]
+    public void Masked_ShowsTheCountryAndTheLastFourCharacters() =>
+        Iban.Create("TR330006100519786457841326").Value.Masked().ShouldBe("TR** **** … 1326");
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

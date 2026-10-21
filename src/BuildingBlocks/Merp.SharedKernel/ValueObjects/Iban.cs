@@ -73,6 +73,9 @@ public sealed record Iban
         return builder.ToString();
     }
 
+    /// <summary>Masked form for users without the sensitive data permission: <c>TR** **** … 1234</c> (D38).</summary>
+    public string Masked() => string.Concat(Value.AsSpan(0, 2), "** **** … ", Value.AsSpan(Value.Length - 4));
+
     public override string ToString() => Value;
 }
 
