@@ -59,6 +59,8 @@ const NotificationTemplatesPage = page(
 );
 const OrgStructurePage = page(() => import('@/modules/hr/organization/OrgStructurePage'), 'OrgStructurePage');
 const PositionsPage = page(() => import('@/modules/hr/positions/PositionsPage'), 'PositionsPage');
+const EmployeesPage = page(() => import('@/modules/hr/employees/EmployeesPage'), 'EmployeesPage');
+const EmployeeCardPage = page(() => import('@/modules/hr/employees/EmployeeCardPage'), 'EmployeeCardPage');
 const JobTitlesPage = page(() => import('@/modules/hr/jobTitles/JobTitlesPage'), 'JobTitlesPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
@@ -260,6 +262,22 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={hrPermissions.orgRead}>
               <OrgStructurePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/employees"
+          element={
+            <RequirePermission permission={hrPermissions.employeesRead}>
+              <EmployeesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/employees/:id"
+          element={
+            <RequirePermission permission={hrPermissions.employeesRead}>
+              <EmployeeCardPage />
             </RequirePermission>
           }
         />

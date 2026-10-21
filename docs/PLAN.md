@@ -684,14 +684,15 @@ Kurallar: D37.
 - `line-manager(2)` doğru kişiyi döner. H1'de pozisyon sahipleri olmadığı için birim testiyle (sahte `IPositionHolders`) doğrulanır; uçtan uca test H3'te (D37).
 - Birim başka üst birime taşınınca alt birimlerin `path`'i ve kapsam sonuçları güncellenir.
 
-### [ ] H2 Personel kartı ve yaşam döngüsü 🔍 — XL (4 PR: H2a domain + komutlar, H2b1 sorgular, H2b2 belgeler, H2c web)
+### [ ] H2 Personel kartı ve yaşam döngüsü 🔍 — XL (5 PR: H2a domain + komutlar, H2b1 sorgular, H2b2 belgeler, H2c1 ve H2c2 web)
 
 Kurallar: D6, D13, D38.
 
 - [x] **H2a domain ve komutlar:** `Employee` (kişi, iletişim, aile, nitelikler), `Employment`, `JobAssignment`, yaşam döngüsü komutları (`Hire`, `Rehire`, `ChangeAssignment`, `Terminate`, `GroupTransfer`) ve kişi bilgisi komutları ile uç noktaları, hassas veri (şifreli), `IPositionHolders`'ın gerçek uygulaması, yönetici ezmesi, olaylar, numaralandırma, başlayan atamaları duyuran saatlik iş, yetkiler, migration.
 - [x] **H2b1 sorgular:** liste ve kart sorguları ile uç noktaları, maskeleme ve okuma audit'i, veri kapsamı, fotoğraf, Excel'e aktarma, SGK çıkış kodları listesi, OpenAPI.
 - [x] **H2b2 belgeler:** `EmployeeDocument`, belge türleri (seed), dosya yükleme ve indirme, bitişe 30 ve 7 gün kala hatırlatma (`hr.document-reminders`, `IPermissionHolders`).
-- [ ] **H2c web:** personel listesi, personel kartı, sihirbazlar.
+- [x] **H2c1 web:** personel listesi (durum ve özel alan filtreleri, kolon seçici, Excel, avatar), personel kartı (Genel, İletişim, İstihdam ve görev geçmişi, Aile, Eğitim ve sertifikalar; görüntüleme), fotoğraf, işe giriş sihirbazı.
+- [ ] **H2c2 web:** kart düzenleme formları (kişi, iletişim, aile, nitelikler, IBAN, hassas veri), görev değişikliği, işten çıkış, grup içi nakil ve tekrar işe giriş sihirbazları, Belgeler sekmesi ve belge türleri.
 
 **Yapılacaklar:**
 - Numaralandırma: `hr.employee` (sicil no, `{seq:6}`, sıfırlanmaz) tanımı HR modülünden bildirilir (P5, D29).
