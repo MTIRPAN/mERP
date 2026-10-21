@@ -5,7 +5,7 @@
  * OpenAPI spec version: v1
  */
 
-export type CertificateKind = (typeof CertificateKind)[keyof typeof CertificateKind] | null;
+export type CertificateKind = (typeof CertificateKind)[keyof typeof CertificateKind];
 
 export const CertificateKind = {
   Certificate: 'Certificate',

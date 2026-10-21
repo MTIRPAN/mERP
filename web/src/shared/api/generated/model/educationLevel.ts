@@ -5,7 +5,7 @@
  * OpenAPI spec version: v1
  */
 
-export type EducationLevel = (typeof EducationLevel)[keyof typeof EducationLevel] | null;
+export type EducationLevel = (typeof EducationLevel)[keyof typeof EducationLevel];
 
 export const EducationLevel = {
   Primary: 'Primary',

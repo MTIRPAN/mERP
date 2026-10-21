@@ -5,7 +5,7 @@
  * OpenAPI spec version: v1
  */
 
-export type LanguageLevel = (typeof LanguageLevel)[keyof typeof LanguageLevel] | null;
+export type LanguageLevel = (typeof LanguageLevel)[keyof typeof LanguageLevel];
 
 export const LanguageLevel = {
   A1: 'A1',

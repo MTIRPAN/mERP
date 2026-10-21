@@ -25,18 +25,23 @@ import type {
   CreateJobCommand,
   CreateOrgUnitCommand,
   CreatePositionCommand,
+  EmployeeDetails,
   EntityCreatedResponse,
+  ExportEmployeesParams,
   GetOrgUnitTreeParams,
   GroupTransferCommand,
   HireEmployeeCommand,
   HttpValidationProblemDetails,
   JobDetails,
+  ListEmployeesParams,
   ListJobsParams,
   ListOrgUnitsParams,
   ListPositionsParams,
+  ListSgkExitCodesParams,
   MoveOrgUnitCommand,
   OrgUnitDetails,
   OrgUnitTree,
+  PagedResultOfEmployeeListItem,
   PagedResultOfJobListItem,
   PagedResultOfOrgUnitListItem,
   PagedResultOfPositionListItem,
@@ -44,6 +49,8 @@ import type {
   ProblemDetails,
   RehireEmployeeCommand,
   SetEmployeeIbanCommand,
+  SetEmployeePhotoBody,
+  SgkExitCodeItem,
   TerminateEmploymentCommand,
   UpdateEmployeeContactsCommand,
   UpdateEmployeeFamilyCommand,
@@ -1520,6 +1527,147 @@ export const useUpdatePosition = <
 ): UseMutationResult<Awaited<ReturnType<typeof updatePosition>>, TError, UpdatePositionMutationVariables, TContext> => {
   return useMutation(getUpdatePositionMutationOptions(options), queryClient);
 };
+export const getListEmployeesUrl = (params?: ListEmployeesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/employees?${stringifiedParams}` : `/api/hr/employees`;
+};
+
+/**
+ * Requires permission: hr.employees.read.
+ * @summary Employments in the caller's scope, one row per person and company; who works today unless a status is given
+ */
+export const listEmployees = async (
+  params?: ListEmployeesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfEmployeeListItem> => {
+  return customFetch<PagedResultOfEmployeeListItem>(getListEmployeesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListEmployeesQueryKey = (params?: ListEmployeesParams) => {
+  return [`/api/hr/employees`, ...(params ? [params] : [])] as const;
+};
+
+export const getListEmployeesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListEmployeesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployees>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListEmployeesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listEmployees>>> = ({ signal }) =>
+    listEmployees(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listEmployees>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListEmployeesQueryResult = NonNullable<Awaited<ReturnType<typeof listEmployees>>>;
+export type ListEmployeesQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListEmployees<
+  TData = Awaited<ReturnType<typeof listEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListEmployeesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployees>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEmployees>>,
+          TError,
+          Awaited<ReturnType<typeof listEmployees>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListEmployees<
+  TData = Awaited<ReturnType<typeof listEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListEmployeesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployees>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEmployees>>,
+          TError,
+          Awaited<ReturnType<typeof listEmployees>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListEmployees<
+  TData = Awaited<ReturnType<typeof listEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListEmployeesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployees>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Employments in the caller's scope, one row per person and company; who works today unless a status is given
+ */
+
+export function useListEmployees<
+  TData = Awaited<ReturnType<typeof listEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListEmployeesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployees>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListEmployeesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getHireEmployeeUrl = () => {
   return `/api/hr/employees`;
 };
@@ -1607,6 +1755,549 @@ export const useHireEmployee = <TError = ErrorType<HttpValidationProblemDetails 
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof hireEmployee>>, TError, HireEmployeeMutationVariables, TContext> => {
   return useMutation(getHireEmployeeMutationOptions(options), queryClient);
+};
+export const getExportEmployeesUrl = (params?: ExportEmployeesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/employees/export?${stringifiedParams}` : `/api/hr/employees/export`;
+};
+
+/**
+ * Requires permission: hr.employees.export.
+ * @summary The employee list as Excel, with the list's filters and sort and the chosen columns (D35)
+ */
+export const exportEmployees = async (
+  params?: ExportEmployeesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportEmployeesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportEmployeesQueryKey = (params?: ExportEmployeesParams) => {
+  return [`/api/hr/employees/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportEmployeesQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportEmployeesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportEmployees>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportEmployeesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportEmployees>>> = ({ signal }) =>
+    exportEmployees(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportEmployees>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportEmployeesQueryResult = NonNullable<Awaited<ReturnType<typeof exportEmployees>>>;
+export type ExportEmployeesQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportEmployees<
+  TData = Awaited<ReturnType<typeof exportEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ExportEmployeesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportEmployees>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportEmployees>>,
+          TError,
+          Awaited<ReturnType<typeof exportEmployees>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportEmployees<
+  TData = Awaited<ReturnType<typeof exportEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportEmployeesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportEmployees>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportEmployees>>,
+          TError,
+          Awaited<ReturnType<typeof exportEmployees>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportEmployees<
+  TData = Awaited<ReturnType<typeof exportEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportEmployeesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportEmployees>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The employee list as Excel, with the list's filters and sort and the chosen columns (D35)
+ */
+
+export function useExportEmployees<
+  TData = Awaited<ReturnType<typeof exportEmployees>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportEmployeesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportEmployees>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportEmployeesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetEmployeeUrl = (id: string) => {
+  return `/api/hr/employees/${id}`;
+};
+
+/**
+ * Requires permission: hr.employees.read.
+ * @summary The employee card; sensitive values are masked without hr.employees.sensitive.read and audited when shown
+ */
+export const getEmployee = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EmployeeDetails> => {
+  return customFetch<EmployeeDetails>(getGetEmployeeUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetEmployeeQueryKey = (id: string) => {
+  return [`/api/hr/employees/${id}`] as const;
+};
+
+export const getGetEmployeeQueryOptions = <
+  TData = Awaited<ReturnType<typeof getEmployee>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployee>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetEmployeeQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEmployee>>> = ({ signal }) =>
+    getEmployee(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEmployee>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetEmployeeQueryResult = NonNullable<Awaited<ReturnType<typeof getEmployee>>>;
+export type GetEmployeeQueryError = ErrorType<ProblemDetails>;
+
+export function useGetEmployee<TData = Awaited<ReturnType<typeof getEmployee>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployee>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmployee>>,
+          TError,
+          Awaited<ReturnType<typeof getEmployee>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetEmployee<TData = Awaited<ReturnType<typeof getEmployee>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployee>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmployee>>,
+          TError,
+          Awaited<ReturnType<typeof getEmployee>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetEmployee<TData = Awaited<ReturnType<typeof getEmployee>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployee>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The employee card; sensitive values are masked without hr.employees.sensitive.read and audited when shown
+ */
+
+export function useGetEmployee<TData = Awaited<ReturnType<typeof getEmployee>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployee>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetEmployeeQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetEmployeePhotoUrl = (id: string) => {
+  return `/api/hr/employees/${id}/photo`;
+};
+
+/**
+ * Requires permission: hr.employees.read.
+ * @summary The person's photo; 404 when there is none
+ */
+export const getEmployeePhoto = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getGetEmployeePhotoUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetEmployeePhotoQueryKey = (id: string) => {
+  return [`/api/hr/employees/${id}/photo`] as const;
+};
+
+export const getGetEmployeePhotoQueryOptions = <
+  TData = Awaited<ReturnType<typeof getEmployeePhoto>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployeePhoto>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetEmployeePhotoQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEmployeePhoto>>> = ({ signal }) =>
+    getEmployeePhoto(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEmployeePhoto>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetEmployeePhotoQueryResult = NonNullable<Awaited<ReturnType<typeof getEmployeePhoto>>>;
+export type GetEmployeePhotoQueryError = ErrorType<ProblemDetails>;
+
+export function useGetEmployeePhoto<
+  TData = Awaited<ReturnType<typeof getEmployeePhoto>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployeePhoto>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmployeePhoto>>,
+          TError,
+          Awaited<ReturnType<typeof getEmployeePhoto>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetEmployeePhoto<
+  TData = Awaited<ReturnType<typeof getEmployeePhoto>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployeePhoto>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEmployeePhoto>>,
+          TError,
+          Awaited<ReturnType<typeof getEmployeePhoto>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetEmployeePhoto<
+  TData = Awaited<ReturnType<typeof getEmployeePhoto>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployeePhoto>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The person's photo; 404 when there is none
+ */
+
+export function useGetEmployeePhoto<
+  TData = Awaited<ReturnType<typeof getEmployeePhoto>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getEmployeePhoto>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetEmployeePhotoQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSetEmployeePhotoUrl = (id: string) => {
+  return `/api/hr/employees/${id}/photo`;
+};
+
+/**
+ * Requires permission: hr.employees.update.
+ * @summary Set or replace the person's photo: PNG, JPEG or WebP, at most 2 MB
+ */
+export const setEmployeePhoto = async (
+  id: string,
+  setEmployeePhotoBody: SetEmployeePhotoBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const formData = new FormData();
+  if (setEmployeePhotoBody.file !== undefined) {
+    formData.append(`file`, setEmployeePhotoBody.file);
+  }
+
+  return customFetch<EntityCreatedResponse>(getSetEmployeePhotoUrl(id), {
+    ...options,
+    method: 'PUT',
+    body: formData,
+  });
+};
+
+export const getSetEmployeePhotoMutationKey = () => ['setEmployeePhoto'] as const;
+
+export const getSetEmployeePhotoMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setEmployeePhoto>>,
+    TError,
+    SetEmployeePhotoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setEmployeePhoto>>,
+  TError,
+  SetEmployeePhotoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSetEmployeePhotoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setEmployeePhoto>>,
+    SetEmployeePhotoMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return setEmployeePhoto(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetEmployeePhotoMutationResult = NonNullable<Awaited<ReturnType<typeof setEmployeePhoto>>>;
+export type SetEmployeePhotoMutationBody = SetEmployeePhotoBody;
+export type SetEmployeePhotoMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SetEmployeePhotoMutationVariables = { id: string; data: SetEmployeePhotoBody };
+
+/**
+ * @summary Set or replace the person's photo: PNG, JPEG or WebP, at most 2 MB
+ */
+export const useSetEmployeePhoto = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setEmployeePhoto>>,
+      TError,
+      SetEmployeePhotoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setEmployeePhoto>>,
+  TError,
+  SetEmployeePhotoMutationVariables,
+  TContext
+> => {
+  return useMutation(getSetEmployeePhotoMutationOptions(options), queryClient);
+};
+export const getRemoveEmployeePhotoUrl = (id: string) => {
+  return `/api/hr/employees/${id}/photo`;
+};
+
+/**
+ * Requires permission: hr.employees.update.
+ * @summary Remove the person's photo
+ */
+export const removeEmployeePhoto = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getRemoveEmployeePhotoUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveEmployeePhotoMutationKey = () => ['removeEmployeePhoto'] as const;
+
+export const getRemoveEmployeePhotoMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeEmployeePhoto>>,
+    TError,
+    RemoveEmployeePhotoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeEmployeePhoto>>,
+  TError,
+  RemoveEmployeePhotoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoveEmployeePhotoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeEmployeePhoto>>,
+    RemoveEmployeePhotoMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return removeEmployeePhoto(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveEmployeePhotoMutationResult = NonNullable<Awaited<ReturnType<typeof removeEmployeePhoto>>>;
+
+export type RemoveEmployeePhotoMutationError = ErrorType<ProblemDetails>;
+export type RemoveEmployeePhotoMutationVariables = { id: string };
+
+/**
+ * @summary Remove the person's photo
+ */
+export const useRemoveEmployeePhoto = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeEmployeePhoto>>,
+      TError,
+      RemoveEmployeePhotoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeEmployeePhoto>>,
+  TError,
+  RemoveEmployeePhotoMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoveEmployeePhotoMutationOptions(options), queryClient);
 };
 export const getUpdateEmployeePersonUrl = (id: string) => {
   return `/api/hr/employees/${id}/person`;
@@ -2635,3 +3326,122 @@ export const useGroupTransferEmployee = <
 > => {
   return useMutation(getGroupTransferEmployeeMutationOptions(options), queryClient);
 };
+export const getListSgkExitCodesUrl = (params?: ListSgkExitCodesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/sgk-exit-codes?${stringifiedParams}` : `/api/hr/sgk-exit-codes`;
+};
+
+/**
+ * Requires permission: hr.employees.read.
+ * @summary The SGK leaving codes of the tenant, active ones unless asked
+ */
+export const listSgkExitCodes = async (
+  params?: ListSgkExitCodesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<SgkExitCodeItem[]> => {
+  return customFetch<SgkExitCodeItem[]>(getListSgkExitCodesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListSgkExitCodesQueryKey = (params?: ListSgkExitCodesParams) => {
+  return [`/api/hr/sgk-exit-codes`, ...(params ? [params] : [])] as const;
+};
+
+export const getListSgkExitCodesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSgkExitCodes>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListSgkExitCodesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSgkExitCodes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListSgkExitCodesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listSgkExitCodes>>> = ({ signal }) =>
+    listSgkExitCodes(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSgkExitCodes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListSgkExitCodesQueryResult = NonNullable<Awaited<ReturnType<typeof listSgkExitCodes>>>;
+export type ListSgkExitCodesQueryError = ErrorType<unknown>;
+
+export function useListSgkExitCodes<TData = Awaited<ReturnType<typeof listSgkExitCodes>>, TError = ErrorType<unknown>>(
+  params: undefined | ListSgkExitCodesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSgkExitCodes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSgkExitCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listSgkExitCodes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListSgkExitCodes<TData = Awaited<ReturnType<typeof listSgkExitCodes>>, TError = ErrorType<unknown>>(
+  params?: ListSgkExitCodesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSgkExitCodes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSgkExitCodes>>,
+          TError,
+          Awaited<ReturnType<typeof listSgkExitCodes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListSgkExitCodes<TData = Awaited<ReturnType<typeof listSgkExitCodes>>, TError = ErrorType<unknown>>(
+  params?: ListSgkExitCodesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSgkExitCodes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The SGK leaving codes of the tenant, active ones unless asked
+ */
+
+export function useListSgkExitCodes<TData = Awaited<ReturnType<typeof listSgkExitCodes>>, TError = ErrorType<unknown>>(
+  params?: ListSgkExitCodesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listSgkExitCodes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListSgkExitCodesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

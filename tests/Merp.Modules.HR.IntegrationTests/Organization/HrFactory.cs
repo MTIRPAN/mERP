@@ -27,6 +27,7 @@ public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(pos
         HrPermissions.Employees.Create,
         HrPermissions.Employees.Update,
         HrPermissions.Employees.Terminate,
+        HrPermissions.Employees.Export,
         HrPermissions.Employees.Sensitive.Read,
         HrPermissions.Employees.Sensitive.Update,
         "platform.companies.read",

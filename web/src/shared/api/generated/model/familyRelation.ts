@@ -5,7 +5,7 @@
  * OpenAPI spec version: v1
  */
 
-export type FamilyRelation = (typeof FamilyRelation)[keyof typeof FamilyRelation] | null;
+export type FamilyRelation = (typeof FamilyRelation)[keyof typeof FamilyRelation];
 
 export const FamilyRelation = {
   Spouse: 'Spouse',
