@@ -935,3 +935,8 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Personel listesinde arama 11 haneli geçerli bir TCKN ise yalnızca o TCKN'li kişiyi bulur. İşe giriş, TCKN kayıtlıysa reddederken bu bilgiyi zaten verdiği için arama yeni bir şey açığa çıkarmaz; sonuç yine veri kapsamından geçer. İşe giriş sihirbazı "TCKN kayıtlı" hatasında listeyi bu aramayla açan bağlantıyı gösterir: D38'deki "mevcut personel gösterilir" böyle karşılanır.
 - Şube seçimi Platform'un şube listesini kullanır (`platform.branches.read`). Bu yetkisi olmayan kullanıcıya sihirbazda şube alanı gösterilmez; şube sonradan görev değişikliğiyle girilebilir.
 
+**Uygulama notları (H2c2):**
+- Modüllerin API'ye açılan public tiplerinin adları modüller arasında benzersizdir. OpenAPI şemaları tipin kısa adıyla adlandırılır; HR'ın `ChangeAssignmentCommand` ve `AddressInput` tipleri Platform'dakilerle aynı adı taşıdığı için şemalar birleşmişti. HR tipleri `ChangeEmployeeAssignmentCommand` ve `EmployeeAddressInput` oldu; mimari test (`ApiTypes_HaveUniqueNamesAcrossModules`) bunu denetler.
+- IBAN ve özel nitelikli verilerin düzenlenmesi yalnızca değerleri açık görebilen kullanıcıya sunulur: hassas veri komutu tüm alanları birlikte değiştirir, maskeli değerlerle açılan form mevcut veriyi silerdi.
+- Belge türleri ekranı menüde `hr.employees.documents.manage` ile görünür; ekleme ve değiştirme yine Tenant kapsamı ister.
+

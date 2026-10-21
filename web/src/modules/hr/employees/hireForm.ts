@@ -7,6 +7,7 @@ import type {
   MaritalStatus,
   MilitaryStatus,
 } from '@/shared/api/generated/model';
+import { day, text } from './forms/formValues';
 
 /** Values of the hire wizard; the unit only narrows the position list. */
 export interface HireFormValues {
@@ -76,10 +77,6 @@ export const stepOfField = (field: string): number => {
   const index = hireSteps.findIndex((step) => (step.fields as readonly string[]).includes(root));
   return index < 0 ? 0 : index;
 };
-
-const day = (value: Dayjs | null | undefined) => (value ? value.format('YYYY-MM-DD') : null);
-
-const text = (value: string | undefined) => (value?.trim() ? value.trim() : null);
 
 /** The hire command of the wizard's values; the server checks every rule again. */
 export const toHireCommand = (
