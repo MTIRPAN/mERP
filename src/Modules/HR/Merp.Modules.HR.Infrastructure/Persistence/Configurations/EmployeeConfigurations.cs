@@ -23,6 +23,8 @@ internal sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.MaritalStatus).HasConversion<string>().HasMaxLength(20);
         builder.Property(e => e.MilitaryStatus).HasConversion<string>().HasMaxLength(20);
         builder.Property(e => e.Iban).HasMaxLength(34);
+        builder.Property(e => e.UserLinkState).HasConversion<string>().HasMaxLength(20);
+        builder.Property(e => e.UserLinkError).HasMaxLength(100);
         builder.Property(e => e.Emails).HasJson();
         builder.Property(e => e.Phones).HasJson();
         builder.Property(e => e.Addresses).HasJson();

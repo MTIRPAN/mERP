@@ -940,3 +940,95 @@ Seçilen kültür `Content-Language` başlığında döner.
 - IBAN ve özel nitelikli verilerin düzenlenmesi yalnızca değerleri açık görebilen kullanıcıya sunulur: hassas veri komutu tüm alanları birlikte değiştirir, maskeli değerlerle açılan form mevcut veriyi silerdi.
 - Belge türleri ekranı menüde `hr.employees.documents.manage` ile görünür; ekleme ve değiştirme yine Tenant kapsamı ister.
 
+## D39 — Personel–kullanıcı bağı ve self servis
+
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-21). PLAN H3 ile uygulanır. D6'yı ayrıntılandırır.
+
+**Bölünme:**
+- **H3a — bağ ve yaşam döngüsü:** kullanıcı oluşturma, mevcut kullanıcıya bağlama, bağı kaldırma, çıkışta pasifleştirme, `ICurrentUser.EmployeeId`, `line-manager(2)` uçtan uca testi.
+- **H3b — self servis:** "Kartım", değişiklik talepleri, onay motoru bağlantısı, audit kaynağı.
+- **H3c — web:** karttaki kullanıcı bölümü, "Kartım" ekranı, talep formları, İK kartında talepler sekmesi.
+
+**Bağımlılık yönü:** Platform, HR'a bağımlı olmaz. HR'ın Platform'dan istekleri Platform.Contracts'taki olaylarla gider (`NotificationRequested` ve `ApprovalRequested` gibi); Platform HR.Contracts'a referans vermez.
+
+**Bağın tek yazarı Platform'dur:**
+- Bağ iki tarafta tutulur (D6):
+  - `User.EmployeeId` (Platform): `ICurrentUser.EmployeeId` buradan gelir.
+  - `Employee.UserId` (HR): pozisyon sahipliği, ManagedTeam ve Self kapsamı buradan okunur.
+- Bağı yalnızca Platform yazar ve olay yayınlar; HR kendi alanını bu olaylarla günceller. Tekillik Platform'daki benzersiz indeksle (`employee_id`) güvence altındadır.
+- Bağ değişince Platform kullanıcının erişim önbelleğini temizler; `ICurrentUser.EmployeeId` bir sonraki istekte dolar.
+
+**Olaylar (Platform.Contracts):**
+- HR → Platform:
+  - `UserProvisioningRequested(EmployeeId, UserName, Email, FirstName, LastName, Culture, RequestedByUserId)`: Platform Keycloak kimliğini ve kullanıcıyı açar, davet e-postasını gönderir (P2'deki kullanıcı oluşturmayla aynı yol), Çalışan rolünü Self kapsamıyla atar, bağı yazar.
+  - `UserLinkRequested(EmployeeId, UserId, RequestedByUserId)`: mevcut kullanıcı bağlanır; Çalışan rolü yoksa Self kapsamıyla eklenir.
+  - `UserUnlinkRequested(EmployeeId, UserId)`: bağ kaldırılır; rollere dokunulmaz, Self kapsamı artık boş sonuç verir.
+  - `UserDeactivationRequested(UserId, EmployeeId)`: kullanıcı ve Keycloak kimliği pasifleşir (mevcut etkin/pasif mantığı).
+- Platform → HR:
+  - `UserLinkedToEmployee(EmployeeId, UserId)`
+  - `UserUnlinkedFromEmployee(EmployeeId, UserId)`
+  - `UserProvisioningFailed(EmployeeId, ErrorCode)`: kullanıcı adı veya e-posta kullanımda, kullanıcı başka personele bağlı, kimlik sağlayıcı hatası.
+
+**HR tarafı:**
+- Yeni yetki `hr.employees.user` (sistem kullanıcısı oluşturma ve bağlama). İK Yöneticisi (`hr.*`) ve İK Uzmanı (`hr.employees.*`) desenleriyle gelir. `platform.users.manage` gerekmez: bu yol yalnızca Çalışan rolünü Self kapsamıyla verir.
+- Komutlar: `CreateEmployeeUser`, `LinkEmployeeUser`, `UnlinkEmployeeUser`. E-postanın varsayılanı kişinin birincil e-postası, kullanıcı adının varsayılanı e-postadır.
+- Kişinin bağ durumu kartta görünür: yok, bekliyor, bağlı, hata (hata koduyla). Bekleyen bir istek varken yenisi kabul edilmez.
+- Bağlanacak kullanıcıyı seçmek için Platform.Contracts'a salt okunur `IUserDirectory` eklenir (kural 3):
+  - ada veya e-postaya göre etkin kullanıcı arama,
+  - kimliklerle kullanıcı özetleri: ad, e-posta, etkin mi, bağlı olduğu personel.
+- Kart, bağlı kullanıcının etkin olup olmadığını `IUserDirectory`'den gösterir.
+
+**Çıkışta pasifleştirme:**
+- Ayar `hr.users.deactivation` (HR, şirket bazında ezilebilir, D35):
+  - `on_termination_date` (varsayılan, D6): kullanıcı çıkış gününün sonunda pasifleşir;
+  - `immediately`: çıkış kaydedilince pasifleşir.
+- Karar HR'dadır: kişinin başka bir devam eden ya da başlayacak istihdamı varsa (grup içi nakil, eşzamanlı istihdam) kullanıcı pasifleşmez.
+- `immediately`: istek çıkış komutuyla aynı işlemde outbox'a yazılır.
+- `on_termination_date`: saatlik iş `hr.user-deactivations`, çıkış günü kendi şirketinin saat diliminde bitmiş kişiler için isteği yayınlar. İstihdam işaretlenir, istek bir kez gider.
+- Tekrar işe girişte kullanıcı kendiliğinden etkinleşmez. Pasifliğin başka bir nedeni olabilir; otomatik etkinleştirme onu geri alırdı. Kart "kullanıcı pasif" uyarısını gösterir, etkinleştirme Kullanıcılar ekranından yapılır.
+
+**Self servis:**
+- Yetkiler `hr.self.*` altındadır (Çalışan rolünün mevcut deseni, yetki-ve-onay.md §1.4): `hr.self.profile.read` ve `hr.self.profile.request`.
+- Uç noktalar:
+  - `/api/hr/me`: kendi kartı;
+  - `/api/hr/me/profile-changes`: kendi talepleri.
+  - Kişi `ICurrentUser.EmployeeId` ile bulunur, yolda kimlik yoktur. Bağı olmayan kullanıcı 404 alır.
+- Kendi kartında TCKN ve IBAN açık gösterilir, okunmaları audit'e yazılır (KVKK m.11: ilgili kişinin kendi verisine erişimi). Özel nitelikli veriler self serviste gösterilmez (D13); onları İK görür.
+- `hr.employees.read`'i Self kapsamıyla veren roller mevcut kart uç noktasını kullanır: kendi kartı 200, başkasınınki 404 (H2b1'deki Self kapsamı). "Başkasının kartını göremez" kabul kriteri bununla test edilir.
+
+**Değişiklik talebi (`hr.profile-change`):**
+- Ayrı aggregate `ProfileChangeRequest` (kural 7):
+  - numara: P5 `hr.profile-change`, `PDT-{yyyy}-{seq:5}`, yıllık sıfırlanır;
+  - personel ve talep eden kullanıcı;
+  - tür: İletişim (e-posta, telefon, adres, acil durum birlikte), Aile veya IBAN;
+  - önerilen değerler: jsonb, güncelleme komutlarıyla aynı biçim. IBAN ayrı bir `[Sensitive]` alanda tutulur;
+  - talep anındaki değerler (`Before`);
+  - durum: Bekliyor, İade edildi, Onaylandı ve uygulandı, Uygulanamadı, Reddedildi, Geri çekildi.
+- Bir kişinin aynı türde tek açık talebi olur.
+- Gönderim `ApprovalRequested` ile yapılır:
+  - olgular: `kind` (metin) ve şirket (kişinin birincil şirketi);
+  - varsayılan akış (D34): tek adım, rol `hr-specialist`;
+  - akış yoksa talep otomatik onaylanmaz, "ilgilenilmeli" olur.
+- İade edilen talep düzeltilip yeniden gönderilir ya da geri çekilir.
+- Onaylanınca HR, inbox'tan gelen `ApprovalRequestCompleted` ile talebi karta uygular. Kartın ilgili bölümü talep anından beri değiştiyse uygulamaz: talep "Uygulanamadı (kart değişti)" olur, İK'nın son düzenlemesi ezilmez.
+- Talep eden uygulandı, reddedildi ve uygulanamadı durumlarında bildirim alır (`hr.profile_change_completed`).
+- Kimler görür:
+  - talep eden kendi taleplerini;
+  - İK, kartta "Değişiklik talepleri" sekmesinde (`hr.employees.read` ve kapsamıyla);
+  - onaylayıcılar, `IApprovalDocumentAccessPolicy` ile.
+
+**Audit kaynağı (yapı taşı değişikliği):**
+- Kabul kriteri: onaylanan değişiklik audit'te talep numarasıyla görünür.
+- `audit_entries` tablosuna `source` sütunu eklenir (en fazla 100 karakter); her modülün audit tablosuna migration gider.
+- Toplu ya da dolaylı değişiklik yapan komut kaynağını `IAuditSource` ile belirler (ör. `hr.profile-change:PDT-2026-00012`); kaynak aynı işlemdeki tüm audit kayıtlarına yazılır. Kullanıcının doğrudan düzenlemesinde boş kalır.
+- Audit ekranı "Kaynak: Değişiklik talebi PDT-2026-00012" gösterir. İçe aktarma (H4) gibi işler de aynı alanı kullanabilir.
+- Uygulamayı sistem yapar, kayıttaki kullanıcı boştur. Kimin istediği ve kimin onayladığı talepte ve onay geçmişindedir.
+
+**`line-manager(2)` uçtan uca (D37'den taşınan kabul kriteri):** H3a'da bağlı kullanıcılarla iki seviyeli pozisyon zinciri kurulur; onay talebi ikinci seviye yöneticinin kullanıcısına düşer.
+
+**Uygulama notları (H3a):**
+- Kullanıcı istekleri (`POST /api/hr/employees/{id}/user`, `.../user/link`, `DELETE .../user`) 202 döner: istek Platform'a yola çıkmıştır, kart Platform'un cevabına kadar "bekliyor" gösterir. Reddedilen isteğin nedeni kartta kullanıcının dilinde döner.
+- Bağlanacak kullanıcı adayları `GET /api/hr/employees/user-candidates` ile aranır; başka personele bağlı kullanıcılar listede yer almaz.
+- `/api/platform/me` kullanıcının bağlı olduğu personeli de döner (`employeeId`); web "Kartım"ı (H3c) buna göre gösterir.
+- Pasifleştirme işi `hr.user-deactivations` her saatin 15. dakikasında çalışır. Platform son sistem yöneticisini hiçbir durumda pasifleştirmez.
+

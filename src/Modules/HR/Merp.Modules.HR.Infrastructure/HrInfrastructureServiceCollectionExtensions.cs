@@ -1,6 +1,7 @@
 using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Jobs;
 using Merp.Application.Abstractions.Notifications;
+using Merp.Application.Abstractions.Settings;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.Localization;
@@ -51,6 +52,11 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddSingleton<ITenantDataSeeder, HrReferenceDataSeeder>();
         services.AddScoped<AssignmentsEffectiveJob>();
         services.AddSingleton(RecurringJobDefinition.For<AssignmentsEffectiveJob>(AssignmentsEffectiveJob.JobId, AssignmentsEffectiveJob.Cron));
+
+        // Users of employees: deactivation when nobody works any more (D39)
+        services.AddSingleton<ISettingDefinitionProvider, HrSettingDefinitions>();
+        services.AddScoped<UserDeactivationsJob>();
+        services.AddSingleton(RecurringJobDefinition.For<UserDeactivationsJob>(UserDeactivationsJob.JobId, UserDeactivationsJob.Cron));
 
         // Employee documents: reminders before they expire (D38)
         services.AddSingleton<INotificationTypeProvider, HrNotificationTypes>();

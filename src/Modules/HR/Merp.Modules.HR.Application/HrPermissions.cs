@@ -34,6 +34,9 @@ public static class HrPermissions
 
         public const string Export = "hr.employees.export";
 
+        /// <summary>Create a system user for a person, link or unlink one (D39); gives only the Employee role.</summary>
+        public const string User = "hr.employees.user";
+
         public static class Sensitive
         {
             /// <summary>See TCKN and IBAN unmasked and the special category data (D13).</summary>
@@ -64,6 +67,7 @@ public sealed class HrPermissionDefinitions : IPermissionDefinitionProvider
         new(HrPermissions.Employees.Update),
         new(HrPermissions.Employees.Terminate),
         new(HrPermissions.Employees.Export),
+        new(HrPermissions.Employees.User),
         new(HrPermissions.Employees.Sensitive.Read),
         new(HrPermissions.Employees.Sensitive.Update),
         new(HrPermissions.Employees.Documents.Read),

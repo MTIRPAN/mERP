@@ -75,6 +75,21 @@ public enum EmploymentStatus
     Terminated,
 }
 
+/// <summary>Where the link of the person to a system user stands (D39); Platform writes the link and reports back.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<UserLinkState>))]
+public enum UserLinkState
+{
+    None,
+
+    /// <summary>A request to create, link or unlink a user waits for Platform.</summary>
+    Pending,
+
+    Linked,
+
+    /// <summary>Platform refused the last request; the error code says why.</summary>
+    Failed,
+}
+
 /// <summary>Why an assignment started (değişiklik nedeni).</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<AssignmentReason>))]
 public enum AssignmentReason

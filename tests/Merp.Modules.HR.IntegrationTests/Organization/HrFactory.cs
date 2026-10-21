@@ -1,16 +1,21 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Merp.Infrastructure.Messaging.Integration;
 using Merp.Infrastructure.MultiTenancy;
+using Merp.Infrastructure.Persistence;
 using Merp.Modules.HR.Application;
 using Merp.Modules.HR.Domain.Organization;
 using Merp.Modules.HR.Infrastructure.Persistence;
+using Merp.Modules.HR.IntegrationTests.Employees;
+using Merp.Modules.Platform.Application.Access;
 using Merp.Testing.Containers;
 using Merp.Testing.Data;
 using Merp.Testing.Web;
 using Merp.Web.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Merp.Modules.HR.IntegrationTests.Organization;
 
@@ -28,6 +33,7 @@ public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(pos
         HrPermissions.Employees.Update,
         HrPermissions.Employees.Terminate,
         HrPermissions.Employees.Export,
+        HrPermissions.Employees.User,
         HrPermissions.Employees.Sensitive.Read,
         HrPermissions.Employees.Sensitive.Update,
         HrPermissions.Employees.Documents.Read,
@@ -44,6 +50,43 @@ public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(pos
     {
         await base.InitializeAsync();
         await CreateTenantAsync(Tenant);
+    }
+
+    /// <summary>Keycloak of the employee–user link (D39).</summary>
+    public FakeIdentityAdmin Identity { get; } = new();
+
+    protected override void ConfigureServices(IServiceCollection services) =>
+        services.Replace(ServiceDescriptor.Singleton<IIdentityAdmin>(Identity));
+
+    /// <summary>
+    /// Moves integration events between the modules until none is left: the outboxes of HR and Platform are sent and
+    /// their inboxes processed, as the background services do outside tests.
+    /// </summary>
+    public async Task DeliverMessagesAsync()
+    {
+        var tenant = (await Services.GetRequiredService<ITenantStore>().FindByCodeAsync(Tenant, Ct))!;
+        var modules = Services.GetServices<ModuleDatabase>().ToList();
+        var dispatcher = Services.GetRequiredService<OutboxDispatcher>();
+        var inbox = Services.GetRequiredService<InboxProcessor>();
+        for (var round = 0; round < 5; round++)
+        {
+            var moved = 0;
+            foreach (var module in modules)
+            {
+                await using var scope = Services.GetRequiredService<TenantScopeFactory>().CreateScope(tenant);
+                moved += await dispatcher.DispatchAsync(scope.ServiceProvider, module, Ct);
+            }
+
+            foreach (var module in modules)
+            {
+                moved += await inbox.ProcessAsync(tenant, module, Ct);
+            }
+
+            if (moved == 0)
+            {
+                return;
+            }
+        }
     }
 
     /// <summary>A user holding every organization permission with the Tenant scope.</summary>

@@ -18,8 +18,10 @@ using Merp.Modules.Platform.Contracts.Approvals;
 using Merp.Modules.Platform.Contracts.Calendars;
 using Merp.Modules.Platform.Contracts.Documents;
 using Merp.Modules.Platform.Contracts.Organization;
+using Merp.Modules.Platform.Contracts.Users;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Access;
+using Merp.Modules.Platform.Application.Users;
 using Merp.Modules.Platform.Application.Approvals;
 using Merp.Modules.Platform.Application.Calendars;
 using Merp.Modules.Platform.Application.CustomFields;
@@ -67,6 +69,9 @@ public static class PlatformInfrastructureServiceCollectionExtensions
 
         // Who holds a permission in a company, for other modules that notify the people responsible (D38)
         services.AddScoped<IPermissionHolders, PermissionHolderLookup>();
+
+        // Users for other modules: HR links employees to users (D39)
+        services.AddScoped<IUserDirectory, UserDirectory>();
         services.AddLocalizationResources(Application.AssemblyReference.Assembly);
 
         // Users, roles and permissions (docs/domain/yetki-ve-onay.md §1)

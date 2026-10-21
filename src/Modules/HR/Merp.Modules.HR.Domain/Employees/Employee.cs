@@ -49,8 +49,16 @@ public sealed class Employee : AuditableAggregateRoot<EmployeeId>, IHasCustomFie
     [Sensitive]
     public string? Iban { get; private set; }
 
-    /// <summary>The person's platform user (D6); linked in H3.</summary>
+    /// <summary>The person's platform user (D6); Platform writes the link and HR keeps it from its events (D39).</summary>
     public Guid? UserId { get; private set; }
+
+    public UserLinkState UserLinkState { get; private set; }
+
+    /// <summary>Why Platform refused the last link request, a localization key.</summary>
+    public string? UserLinkError { get; private set; }
+
+    /// <summary>When HR asked Platform to deactivate the user because no employment remains (D39).</summary>
+    public DateTimeOffset? UserDeactivationRequestedAt { get; private set; }
 
     public IReadOnlyList<EmployeeEmail> Emails { get; private set; } = [];
 
@@ -139,6 +147,9 @@ public sealed class Employee : AuditableAggregateRoot<EmployeeId>, IHasCustomFie
         var employment = new Employment(Id, terms, registryNumber, isPrimary: !_employments.Any(e => e.IsOpen));
         employment.AddAssignment(assignment, terms.HireDate, AssignmentReason.Hire);
         _employments.Add(employment);
+
+        // A later leave asks for the deactivation again
+        UserDeactivationRequestedAt = null;
         return employment;
     }
 
@@ -278,6 +289,74 @@ public sealed class Employee : AuditableAggregateRoot<EmployeeId>, IHasCustomFie
         return employment;
     }
 
+    /// <summary>A request to create or link a user is on its way to Platform; one at a time.</summary>
+    public Result RequestUserLink()
+    {
+        if (UserLinkState == UserLinkState.Pending)
+        {
+            return EmployeeErrors.UserLinkPending;
+        }
+
+        if (UserId is not null)
+        {
+            return EmployeeErrors.UserAlreadyLinked;
+        }
+
+        UserLinkState = UserLinkState.Pending;
+        UserLinkError = null;
+        return Result.Success();
+    }
+
+    /// <summary>A request to remove the link is on its way to Platform.</summary>
+    public Result RequestUserUnlink()
+    {
+        if (UserLinkState == UserLinkState.Pending)
+        {
+            return EmployeeErrors.UserLinkPending;
+        }
+
+        if (UserId is null)
+        {
+            return EmployeeErrors.NoUser;
+        }
+
+        UserLinkState = UserLinkState.Pending;
+        return Result.Success();
+    }
+
+    /// <summary>Platform linked the user (<c>UserLinkedToEmployee</c>).</summary>
+    public void UserLinked(Guid userId)
+    {
+        UserId = userId;
+        UserLinkState = UserLinkState.Linked;
+        UserLinkError = null;
+        UserDeactivationRequestedAt = null;
+    }
+
+    /// <summary>Platform removed the link (<c>UserUnlinkedFromEmployee</c>); a link to another user stays.</summary>
+    public void UserUnlinked(Guid userId)
+    {
+        if (UserId is { } current && current != userId)
+        {
+            UserLinkState = UserLinkState.Linked;
+            return;
+        }
+
+        UserId = null;
+        UserLinkState = UserLinkState.None;
+        UserLinkError = null;
+    }
+
+    /// <summary>Platform refused the request (<c>UserProvisioningFailed</c>).</summary>
+    public void UserLinkFailed(string errorCode)
+    {
+        UserLinkState = UserId is null ? UserLinkState.Failed : UserLinkState.Linked;
+        UserLinkError = Text.Required(errorCode, 100, nameof(errorCode));
+    }
+
+    /// <summary>Records that the user's deactivation was asked for, so it is asked once.</summary>
+    public void MarkUserDeactivationRequested(DateTimeOffset at) => UserDeactivationRequestedAt = at;
+
     /// <summary>Records that the assignment's change was announced to other modules (<c>EmployeeAssignmentChanged</c>).</summary>
     public void MarkAnnounced(JobAssignmentId assignmentId) =>
         _employments.SelectMany(e => e.Assignments).Single(a => a.Id == assignmentId).MarkAnnounced();
@@ -392,6 +471,10 @@ public static class EmployeeErrors
     public static readonly Error TransferBeforeHire = Error.Validation([new FieldError("transferDate", "hr.employees.errors.transfer_before_hire")]);
 
     public static Error OpenEmploymentExists(string field) => Error.Validation([new FieldError(field, "hr.employees.errors.open_employment_exists")]);
+
+    public static readonly Error UserLinkPending = Error.Conflict("hr.employees.errors.user_link_pending");
+    public static readonly Error UserAlreadyLinked = Error.Conflict("hr.employees.errors.user_already_linked");
+    public static readonly Error NoUser = Error.Conflict("hr.employees.errors.no_user");
 
     public static Error StartsBeforePreviousEnd(string field) => Error.Validation([new FieldError(field, "hr.employees.errors.starts_before_previous_end")]);
 }

@@ -24,6 +24,7 @@ import type {
   AddEmployeeDocumentBody,
   ChangeEmployeeAssignmentCommand,
   CreateDocumentTypeCommand,
+  CreateEmployeeUserCommand,
   CreateJobCommand,
   CreateOrgUnitCommand,
   CreatePositionCommand,
@@ -37,6 +38,7 @@ import type {
   HireEmployeeCommand,
   HttpValidationProblemDetails,
   JobDetails,
+  LinkEmployeeUserCommand,
   ListEmployeeDocumentTypesParams,
   ListEmployeesParams,
   ListJobsParams,
@@ -54,6 +56,7 @@ import type {
   ProblemDetails,
   RehireEmployeeCommand,
   ReplaceEmployeeDocumentFileBody,
+  SearchEmployeeUserCandidatesParams,
   SetEmployeeIbanCommand,
   SetEmployeePhotoBody,
   SgkExitCodeItem,
@@ -68,6 +71,7 @@ import type {
   UpdateJobCommand,
   UpdateOrgUnitCommand,
   UpdatePositionCommand,
+  UserSummary,
 } from '../../model';
 
 import { customFetch } from '../../../http';
@@ -1905,6 +1909,425 @@ export function useExportEmployees<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getSearchEmployeeUserCandidatesUrl = (params?: SearchEmployeeUserCandidatesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/employees/user-candidates?${stringifiedParams}`
+    : `/api/hr/employees/user-candidates`;
+};
+
+/**
+ * Requires permission: hr.employees.user.
+ * @summary Active users not linked to a person yet, by name, user name or e-mail, to link to an employee
+ */
+export const searchEmployeeUserCandidates = async (
+  params?: SearchEmployeeUserCandidatesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<UserSummary[]> => {
+  return customFetch<UserSummary[]>(getSearchEmployeeUserCandidatesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchEmployeeUserCandidatesQueryKey = (params?: SearchEmployeeUserCandidatesParams) => {
+  return [`/api/hr/employees/user-candidates`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchEmployeeUserCandidatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchEmployeeUserCandidates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchEmployeeUserCandidatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchEmployeeUserCandidates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchEmployeeUserCandidatesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchEmployeeUserCandidates>>> = ({ signal }) =>
+    searchEmployeeUserCandidates(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchEmployeeUserCandidates>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchEmployeeUserCandidatesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof searchEmployeeUserCandidates>>
+>;
+export type SearchEmployeeUserCandidatesQueryError = ErrorType<unknown>;
+
+export function useSearchEmployeeUserCandidates<
+  TData = Awaited<ReturnType<typeof searchEmployeeUserCandidates>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | SearchEmployeeUserCandidatesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchEmployeeUserCandidates>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchEmployeeUserCandidates>>,
+          TError,
+          Awaited<ReturnType<typeof searchEmployeeUserCandidates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchEmployeeUserCandidates<
+  TData = Awaited<ReturnType<typeof searchEmployeeUserCandidates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchEmployeeUserCandidatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchEmployeeUserCandidates>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchEmployeeUserCandidates>>,
+          TError,
+          Awaited<ReturnType<typeof searchEmployeeUserCandidates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchEmployeeUserCandidates<
+  TData = Awaited<ReturnType<typeof searchEmployeeUserCandidates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchEmployeeUserCandidatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchEmployeeUserCandidates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active users not linked to a person yet, by name, user name or e-mail, to link to an employee
+ */
+
+export function useSearchEmployeeUserCandidates<
+  TData = Awaited<ReturnType<typeof searchEmployeeUserCandidates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchEmployeeUserCandidatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchEmployeeUserCandidates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchEmployeeUserCandidatesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateEmployeeUserUrl = (id: string) => {
+  return `/api/hr/employees/${id}/user`;
+};
+
+/**
+ * Requires permission: hr.employees.user.
+ * @summary Ask for a system user of the person with the Employee role; Platform answers later (D39)
+ */
+export const createEmployeeUser = async (
+  id: string,
+  createEmployeeUserCommand: CreateEmployeeUserCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getCreateEmployeeUserUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createEmployeeUserCommand),
+  });
+};
+
+export const getCreateEmployeeUserMutationKey = () => ['createEmployeeUser'] as const;
+
+export const getCreateEmployeeUserMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEmployeeUser>>,
+    TError,
+    CreateEmployeeUserMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createEmployeeUser>>,
+  TError,
+  CreateEmployeeUserMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateEmployeeUserMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createEmployeeUser>>,
+    CreateEmployeeUserMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createEmployeeUser(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateEmployeeUserMutationResult = NonNullable<Awaited<ReturnType<typeof createEmployeeUser>>>;
+export type CreateEmployeeUserMutationBody = CreateEmployeeUserCommand;
+export type CreateEmployeeUserMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateEmployeeUserMutationVariables = { id: string; data: CreateEmployeeUserCommand };
+
+/**
+ * @summary Ask for a system user of the person with the Employee role; Platform answers later (D39)
+ */
+export const useCreateEmployeeUser = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createEmployeeUser>>,
+      TError,
+      CreateEmployeeUserMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createEmployeeUser>>,
+  TError,
+  CreateEmployeeUserMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateEmployeeUserMutationOptions(options), queryClient);
+};
+export const getUnlinkEmployeeUserUrl = (id: string) => {
+  return `/api/hr/employees/${id}/user`;
+};
+
+/**
+ * Requires permission: hr.employees.user.
+ * @summary Ask to remove the link of the person and their user; the user keeps their roles
+ */
+export const unlinkEmployeeUser = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getUnlinkEmployeeUserUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getUnlinkEmployeeUserMutationKey = () => ['unlinkEmployeeUser'] as const;
+
+export const getUnlinkEmployeeUserMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlinkEmployeeUser>>,
+    TError,
+    UnlinkEmployeeUserMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unlinkEmployeeUser>>,
+  TError,
+  UnlinkEmployeeUserMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUnlinkEmployeeUserMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unlinkEmployeeUser>>,
+    UnlinkEmployeeUserMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return unlinkEmployeeUser(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnlinkEmployeeUserMutationResult = NonNullable<Awaited<ReturnType<typeof unlinkEmployeeUser>>>;
+
+export type UnlinkEmployeeUserMutationError = ErrorType<ProblemDetails>;
+export type UnlinkEmployeeUserMutationVariables = { id: string };
+
+/**
+ * @summary Ask to remove the link of the person and their user; the user keeps their roles
+ */
+export const useUnlinkEmployeeUser = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof unlinkEmployeeUser>>,
+      TError,
+      UnlinkEmployeeUserMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof unlinkEmployeeUser>>,
+  TError,
+  UnlinkEmployeeUserMutationVariables,
+  TContext
+> => {
+  return useMutation(getUnlinkEmployeeUserMutationOptions(options), queryClient);
+};
+export const getLinkEmployeeUserUrl = (id: string) => {
+  return `/api/hr/employees/${id}/user/link`;
+};
+
+/**
+ * Requires permission: hr.employees.user.
+ * @summary Ask to link the person to an existing user; Platform answers later (D39)
+ */
+export const linkEmployeeUser = async (
+  id: string,
+  linkEmployeeUserCommand: LinkEmployeeUserCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getLinkEmployeeUserUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(linkEmployeeUserCommand),
+  });
+};
+
+export const getLinkEmployeeUserMutationKey = () => ['linkEmployeeUser'] as const;
+
+export const getLinkEmployeeUserMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkEmployeeUser>>,
+    TError,
+    LinkEmployeeUserMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof linkEmployeeUser>>,
+  TError,
+  LinkEmployeeUserMutationVariables,
+  TContext
+> => {
+  const mutationKey = getLinkEmployeeUserMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof linkEmployeeUser>>,
+    LinkEmployeeUserMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return linkEmployeeUser(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LinkEmployeeUserMutationResult = NonNullable<Awaited<ReturnType<typeof linkEmployeeUser>>>;
+export type LinkEmployeeUserMutationBody = LinkEmployeeUserCommand;
+export type LinkEmployeeUserMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type LinkEmployeeUserMutationVariables = { id: string; data: LinkEmployeeUserCommand };
+
+/**
+ * @summary Ask to link the person to an existing user; Platform answers later (D39)
+ */
+export const useLinkEmployeeUser = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof linkEmployeeUser>>,
+      TError,
+      LinkEmployeeUserMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof linkEmployeeUser>>,
+  TError,
+  LinkEmployeeUserMutationVariables,
+  TContext
+> => {
+  return useMutation(getLinkEmployeeUserMutationOptions(options), queryClient);
+};
 export const getGetEmployeeUrl = (id: string) => {
   return `/api/hr/employees/${id}`;
 };

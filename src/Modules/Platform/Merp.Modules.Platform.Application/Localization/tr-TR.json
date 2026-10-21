@@ -360,5 +360,11 @@
   "platform.entities.SettingsProfile.CompanyId": "Şirket",
   "platform.entities.SettingsProfile.Values": "Değerler",
   "platform.users.errors.invalid_person_name": "Ad ve soyad özel karakter içeremez; örneğin parantez, köşeli parantez, < > & $ % ! # ; * / | = kullanılamaz.",
-  "platform.users.errors.identity_rejected": "Kimlik sunucusu bu değeri kabul etmedi. Lütfen değeri kontrol edin."
+  "platform.users.errors.identity_rejected": "Kimlik sunucusu bu değeri kabul etmedi. Lütfen değeri kontrol edin.",
+  "platform.users.errors.user_name_taken": "Bu kullanıcı adı kullanımda.",
+  "platform.users.errors.email_taken": "Bu e-posta adresiyle kayıtlı bir kullanıcı var.",
+  "platform.users.errors.user_not_found": "Kullanıcı bulunamadı.",
+  "platform.users.errors.user_already_linked": "Kullanıcı başka bir personele bağlı.",
+  "platform.users.errors.employee_already_linked": "Personel başka bir kullanıcıya bağlı.",
+  "platform.users.errors.identity_failed": "Kimlik sağlayıcı kullanıcıyı oluşturamadı."
 }

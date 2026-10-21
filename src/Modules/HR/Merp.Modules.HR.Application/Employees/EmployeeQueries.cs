@@ -3,6 +3,7 @@ using System.Text.Json;
 using FluentValidation;
 using Merp.Application.Abstractions.Auditing;
 using Merp.Application.Abstractions.Context;
+using Merp.Application.Abstractions.Localization;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Paging;
 using Merp.Application.Abstractions.Security;
@@ -12,6 +13,7 @@ using Merp.Modules.HR.Application.Organization;
 using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Organization;
 using Merp.Modules.Platform.Contracts.Organization;
+using Merp.Modules.Platform.Contracts.Users;
 using Merp.SharedKernel.Results;
 using Microsoft.EntityFrameworkCore;
 
@@ -98,8 +100,9 @@ public sealed record GetEmployeeQuery(Guid Id) : IQuery<EmployeeDetails>, IRequi
 }
 
 /// <remarks>
-/// SensitiveVisible tells whether Tckn, Iban and Sensitive are the plain values. Employments are newest first, their
-/// assignments too. Send Version back when updating the card (optimistic concurrency).
+/// SensitiveVisible tells whether Tckn, Iban and Sensitive are the plain values. UserLinkState and User describe the
+/// person's system user (D39); UserLinkError is the reason of a refused request in the caller's language. Employments
+/// are newest first, their assignments too. Send Version back when updating the card (optimistic concurrency).
 /// </remarks>
 public sealed record EmployeeDetails(
     Guid Id,
@@ -116,6 +119,9 @@ public sealed record EmployeeDetails(
     string? Iban,
     bool SensitiveVisible,
     Guid? UserId,
+    UserLinkState UserLinkState,
+    string? UserLinkError,
+    EmployeeUserItem? User,
     Guid? PhotoFileId,
     IReadOnlyList<EmployeeEmail> Emails,
     IReadOnlyList<EmployeePhone> Phones,
@@ -131,6 +137,9 @@ public sealed record EmployeeDetails(
     uint Version,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ModifiedAt);
+
+/// <summary>The person's system user as Platform knows it; IsActive false means they cannot sign in.</summary>
+public sealed record EmployeeUserItem(Guid Id, string UserName, string? Email, bool IsActive);
 
 /// <summary>Special category data; Hidden and every value empty without the permission.</summary>
 public sealed record EmployeeSensitiveItem(bool Hidden, int? DisabilityDegree, string? BloodType, string? HealthNotes, DateOnly? CriminalRecordDate);
@@ -398,6 +407,8 @@ internal sealed class GetEmployeeQueryHandler(
     IOrganizationLookup organization,
     ISensitiveDataProtector protector,
     ISensitiveReadLog readLog,
+    IUserDirectory users,
+    ITextLocalizer localizer,
     TimeProvider timeProvider) : IQueryHandler<GetEmployeeQuery, EmployeeDetails>
 {
     public async Task<Result<EmployeeDetails>> Handle(GetEmployeeQuery request, CancellationToken cancellationToken)
@@ -437,6 +448,11 @@ internal sealed class GetEmployeeQueryHandler(
         var exitCodes = await ExitCodeNamesAsync(employments, cancellationToken);
         var photos = await EmployeePhotos.IdsAsync(db, [request.Id], cancellationToken);
         var sensitive = sensitiveVisible ? await ReadSensitiveAsync(employee, cancellationToken) : new EmployeeSensitiveItem(true, null, null, null, null);
+        var user = employee.UserId is { } userId
+            ? (await users.GetAsync([userId], cancellationToken)).SingleOrDefault() is { } found
+                ? new EmployeeUserItem(found.Id, found.UserName, found.Email, found.IsActive)
+                : null
+            : null;
 
         return new EmployeeDetails(
             request.Id,
@@ -453,6 +469,9 @@ internal sealed class GetEmployeeQueryHandler(
             sensitiveVisible ? employee.Iban : EmployeeMasks.Iban(employee.Iban),
             sensitiveVisible,
             employee.UserId,
+            employee.UserLinkState,
+            employee.UserLinkError is { } error ? localizer.Get(error, culture: currentUser.Culture) : null,
+            user,
             photos.TryGetValue(request.Id, out var photo) ? photo : null,
             employee.Emails,
             employee.Phones,

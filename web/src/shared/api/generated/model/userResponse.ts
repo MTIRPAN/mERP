@@ -15,4 +15,6 @@ export interface UserResponse {
   displayName: string | null;
   /** @nullable */
   email: string | null;
+  /** @nullable */
+  employeeId: string | null;
 }
