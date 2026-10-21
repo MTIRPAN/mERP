@@ -175,7 +175,7 @@ internal static class DocumentEndpoints
         ISender sender,
         CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new GetDocumentTypesQuery(includeInactive ?? false), cancellationToken);
+        var result = await sender.Send(new GetEmployeeDocumentTypesQuery(includeInactive ?? false), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : (ProblemHttpResult)result.Error.ToProblem();
     }
 

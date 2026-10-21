@@ -22,7 +22,7 @@ import type {
 
 import type {
   AddEmployeeDocumentBody,
-  ChangeAssignmentCommand,
+  ChangeEmployeeAssignmentCommand,
   CreateDocumentTypeCommand,
   CreateJobCommand,
   CreateOrgUnitCommand,
@@ -3035,7 +3035,7 @@ export const getChangeEmployeeAssignmentUrl = (id: string) => {
  */
 export const changeEmployeeAssignment = async (
   id: string,
-  changeAssignmentCommand: ChangeAssignmentCommand,
+  changeEmployeeAssignmentCommand: ChangeEmployeeAssignmentCommand,
   options?: Parameters<typeof customFetch>[1],
 ): Promise<EntityCreatedResponse> => {
   const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
@@ -3056,7 +3056,7 @@ export const changeEmployeeAssignment = async (
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(changeAssignmentCommand),
+    body: JSON.stringify(changeEmployeeAssignmentCommand),
   });
 };
 
@@ -3099,9 +3099,9 @@ export const getChangeEmployeeAssignmentMutationOptions = <
 };
 
 export type ChangeEmployeeAssignmentMutationResult = NonNullable<Awaited<ReturnType<typeof changeEmployeeAssignment>>>;
-export type ChangeEmployeeAssignmentMutationBody = ChangeAssignmentCommand;
+export type ChangeEmployeeAssignmentMutationBody = ChangeEmployeeAssignmentCommand;
 export type ChangeEmployeeAssignmentMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
-export type ChangeEmployeeAssignmentMutationVariables = { id: string; data: ChangeAssignmentCommand };
+export type ChangeEmployeeAssignmentMutationVariables = { id: string; data: ChangeEmployeeAssignmentCommand };
 
 /**
  * @summary Start a new assignment of an open employment, possibly in the future; returns the assignment

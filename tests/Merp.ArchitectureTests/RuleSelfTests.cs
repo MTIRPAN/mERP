@@ -41,6 +41,16 @@ public class RuleSelfTests
     }
 
     [Fact]
+    public void NamingRule_FlagsTypesOfTwoModulesWithTheSameName() =>
+        NamingRules.SharedNames(
+        [
+            ("HR", typeof(Samples.BadNames.Hr.AddressInput)),
+            ("Platform", typeof(Samples.BadNames.Platform.AddressInput)),
+            ("Platform", typeof(Samples.BadNames.Platform.IAddressFields)),
+            ("HR", typeof(Samples.BadNames.Hr.IAddressFields)),
+        ]).ShouldBe(["AddressInput: Merp.ArchitectureTests.Samples.BadNames.Hr.AddressInput, Merp.ArchitectureTests.Samples.BadNames.Platform.AddressInput"]);
+
+    [Fact]
     public void ClockRule_FlagsSystemClockReads() =>
         ClockRules.SystemClockUsages(Samples, "Merp.ArchitectureTests.Samples.BadClock").Count.ShouldBe(2);
 

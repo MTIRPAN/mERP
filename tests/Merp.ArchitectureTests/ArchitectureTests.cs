@@ -47,6 +47,16 @@ public class ArchitectureTests
     }
 
     [Fact]
+    public void ApiTypes_HaveUniqueNamesAcrossModules() =>
+        NamingRules.SharedNames(MerpAssemblies.All
+                .Where(a => MerpAssemblies.ModuleName(a) is not null)
+                .Where(a => a.GetName().Name!.EndsWith(".Application", StringComparison.Ordinal)
+                    || a.GetName().Name!.EndsWith(".Contracts", StringComparison.Ordinal)
+                    || a.GetName().Name!.EndsWith(".Api", StringComparison.Ordinal))
+                .SelectMany(a => a.GetExportedTypes().Select(t => (MerpAssemblies.ModuleName(a)!, t))))
+            .ShouldBeEmpty();
+
+    [Fact]
     public void ModuleLayers_ReferenceOnlyLowerLayers() =>
         DependencyRules.LayerReferences(DependencyRules.ReferenceGraph(MerpAssemblies.All)).ShouldBeEmpty();
 

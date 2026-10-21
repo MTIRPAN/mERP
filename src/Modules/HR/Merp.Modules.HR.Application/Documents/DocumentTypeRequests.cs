@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Merp.Modules.HR.Application.Documents;
 
 /// <summary>The document types of the tenant by code; only the active ones unless asked (D38).</summary>
-public sealed record GetDocumentTypesQuery(bool IncludeInactive = false) : IQuery<IReadOnlyList<EmployeeDocumentTypeItem>>, IRequirePermission
+public sealed record GetEmployeeDocumentTypesQuery(bool IncludeInactive = false) : IQuery<IReadOnlyList<EmployeeDocumentTypeItem>>, IRequirePermission
 {
     public string Permission => HrPermissions.Employees.Documents.Read;
 }
@@ -100,9 +100,9 @@ internal sealed class UpdateDocumentTypeCommandValidator : AbstractValidator<Upd
     public UpdateDocumentTypeCommandValidator(ILocalizationSource localization) => DocumentTypeRules.AddFieldRules(this, localization);
 }
 
-internal sealed class GetDocumentTypesQueryHandler(IHrDbContext db, ICurrentUser currentUser) : IQueryHandler<GetDocumentTypesQuery, IReadOnlyList<EmployeeDocumentTypeItem>>
+internal sealed class GetEmployeeDocumentTypesQueryHandler(IHrDbContext db, ICurrentUser currentUser) : IQueryHandler<GetEmployeeDocumentTypesQuery, IReadOnlyList<EmployeeDocumentTypeItem>>
 {
-    public async Task<Result<IReadOnlyList<EmployeeDocumentTypeItem>>> Handle(GetDocumentTypesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IReadOnlyList<EmployeeDocumentTypeItem>>> Handle(GetEmployeeDocumentTypesQuery request, CancellationToken cancellationToken)
     {
         var types = await db.DocumentTypes.AsNoTracking()
             .Where(t => request.IncludeInactive || t.IsActive)

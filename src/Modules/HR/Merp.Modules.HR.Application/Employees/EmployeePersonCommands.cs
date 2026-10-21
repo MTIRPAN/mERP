@@ -74,7 +74,7 @@ public sealed record PhoneInput(ContactKind? Kind, string? Number, bool IsPrimar
 /// <param name="City">İl.</param>
 /// <param name="PostalCode">Posta kodu.</param>
 /// <param name="CountryCode">ISO 3166-1 alpha-2; TR when not given.</param>
-public sealed record AddressInput(ContactKind? Kind, string? Line, string? District, string? City, string? PostalCode, string? CountryCode);
+public sealed record EmployeeAddressInput(ContactKind? Kind, string? Line, string? District, string? City, string? PostalCode, string? CountryCode);
 
 public sealed record EmergencyContactInput(string? FullName, FamilyRelation? Relation, string? Phone);
 
@@ -83,7 +83,7 @@ public sealed record UpdateEmployeeContactsCommand(
     uint Version,
     IReadOnlyList<EmailInput>? Emails,
     IReadOnlyList<PhoneInput>? Phones,
-    IReadOnlyList<AddressInput>? Addresses,
+    IReadOnlyList<EmployeeAddressInput>? Addresses,
     IReadOnlyList<EmergencyContactInput>? EmergencyContacts) : ICommand, IRequirePermission
 {
     /// <summary>From the route.</summary>
