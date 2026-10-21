@@ -29,7 +29,7 @@ public class EmployeeValidatorTests
             1,
             [new EmailInput(ContactKind.Work, "ayse@", true), new EmailInput(ContactKind.Personal, "ayse@example.com", true)],
             [new PhoneInput(ContactKind.Mobile, "12", false)],
-            [new AddressInput(ContactKind.Home, "", null, null, null, "Türkiye")],
+            [new EmployeeAddressInput(ContactKind.Home, "", null, null, null, "Türkiye")],
             [new EmergencyContactInput("Mehmet Yılmaz", null, "0532 123 45 67")]));
 
         result.Errors.Select(e => e.PropertyName).ShouldBe(
@@ -39,8 +39,8 @@ public class EmployeeValidatorTests
 
     [Fact]
     public void ChangeAssignment_CannotBeAHire() =>
-        new ChangeAssignmentCommandValidator()
-            .Validate(new ChangeAssignmentCommand(Guid.CreateVersion7(), new DateOnly(2026, 3, 1), AssignmentReason.Hire, Guid.CreateVersion7()))
+        new ChangeEmployeeAssignmentCommandValidator()
+            .Validate(new ChangeEmployeeAssignmentCommand(Guid.CreateVersion7(), new DateOnly(2026, 3, 1), AssignmentReason.Hire, Guid.CreateVersion7()))
             .Errors.ShouldHaveSingleItem().PropertyName.ShouldBe("Reason");
 
     [Theory]

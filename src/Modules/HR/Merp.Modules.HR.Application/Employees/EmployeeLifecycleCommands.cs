@@ -82,7 +82,7 @@ public sealed record RehireEmployeeCommand(
 /// A new assignment of an open employment (görev değişikliği), possibly in the future: it takes effect on its first
 /// day. A change on the latest assignment's first day corrects it. Returns the assignment.
 /// </summary>
-public sealed record ChangeAssignmentCommand(
+public sealed record ChangeEmployeeAssignmentCommand(
     Guid EmploymentId,
     DateOnly ValidFrom,
     AssignmentReason? Reason,
@@ -173,9 +173,9 @@ internal sealed class RehireEmployeeCommandValidator : AbstractValidator<RehireE
     }
 }
 
-internal sealed class ChangeAssignmentCommandValidator : AbstractValidator<ChangeAssignmentCommand>
+internal sealed class ChangeEmployeeAssignmentCommandValidator : AbstractValidator<ChangeEmployeeAssignmentCommand>
 {
-    public ChangeAssignmentCommandValidator()
+    public ChangeEmployeeAssignmentCommandValidator()
     {
         RuleFor(c => c.EmploymentId).NotEmpty();
         RuleFor(c => c.Reason).Cascade(CascadeMode.Stop).NotNull().IsInEnum().NotEqual(AssignmentReason.Hire);
@@ -322,14 +322,14 @@ internal sealed class RehireEmployeeCommandHandler(
     }
 }
 
-internal sealed class ChangeAssignmentCommandHandler(
+internal sealed class ChangeEmployeeAssignmentCommandHandler(
     IHrDbContext db,
     IAccessScopeProvider scopes,
     IOrganizationLookup organization,
     TimeProvider timeProvider,
-    IIntegrationEventPublisher publisher) : ICommandHandler<ChangeAssignmentCommand, Guid>
+    IIntegrationEventPublisher publisher) : ICommandHandler<ChangeEmployeeAssignmentCommand, Guid>
 {
-    public async Task<Result<Guid>> Handle(ChangeAssignmentCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> Handle(ChangeEmployeeAssignmentCommand request, CancellationToken cancellationToken)
     {
         var scope = await OrgScope.ForCompaniesAsync(scopes, request.Permission, cancellationToken);
         var employee = await EmployeeRules.FindAsync(db, scope, request.EmployeeId, cancellationToken);

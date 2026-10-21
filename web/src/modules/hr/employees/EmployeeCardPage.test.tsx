@@ -25,6 +25,7 @@ vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
 }));
 
 vi.mock('@/modules/platform/audit/AuditHistoryButton', () => ({ AuditHistoryButton: () => null }));
+vi.mock('./documents/DocumentsTab', () => ({ DocumentsTab: () => <div>belge listesi</div> }));
 
 const texts: Record<string, string> = {
   'web.hr.employees.title': 'Personel',
@@ -36,6 +37,12 @@ const texts: Record<string, string> = {
   'web.hr.assignment_reason.Hire': 'Giriş',
   'web.hr.assignment_reason.Promotion': 'Terfi',
   'web.hr.employment_status.Active': 'Aktif',
+  'web.common.edit': 'Düzenle',
+  'web.hr.employees.tabs.documents': 'Belgeler',
+  'web.hr.employees.lifecycle.rehire': 'Tekrar işe giriş',
+  'web.hr.employees.lifecycle.change_assignment': 'Görev değişikliği',
+  'web.hr.employees.lifecycle.group_transfer': 'Grup içi nakil',
+  'web.hr.employees.lifecycle.terminate': 'İşten çıkış',
 };
 
 const details = (overrides: Partial<EmployeeDetails> = {}): EmployeeDetails => ({
@@ -195,5 +202,36 @@ describe('EmployeeCardPage', () => {
     expect(await screen.findByText('Satış Müdürü · SAT-02')).toBeInTheDocument();
     expect(screen.getByText('Terfi')).toBeInTheDocument();
     expect(screen.getByText('Bugünkü görev')).toBeInTheDocument();
+  });
+
+  it('offers the edits and the life cycle actions the user may use', async () => {
+    render([
+      'hr.employees.read',
+      'hr.employees.update',
+      'hr.employees.create',
+      'hr.employees.terminate',
+      'hr.employees.documents.read',
+    ]);
+
+    expect(screen.getByRole('button', { name: /Düzenle/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Tekrar işe giriş/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: 'İstihdam ve görev geçmişi' }));
+    expect(await screen.findByRole('button', { name: /Görev değişikliği/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Grup içi nakil/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /İşten çıkış/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Belgeler' }));
+    expect(await screen.findByText('belge listesi')).toBeInTheDocument();
+  });
+
+  it('offers nothing to change to a reader', async () => {
+    render();
+
+    expect(screen.queryByRole('button', { name: /Düzenle/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Tekrar işe giriş/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Belgeler' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'İstihdam ve görev geçmişi' }));
+    expect(screen.queryByRole('button', { name: /İşten çıkış/ })).not.toBeInTheDocument();
   });
 });

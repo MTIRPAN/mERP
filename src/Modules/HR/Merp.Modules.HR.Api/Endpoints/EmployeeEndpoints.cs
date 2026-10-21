@@ -326,7 +326,7 @@ internal static class EmployeeEndpoints
 
     private static async Task<Results<Created<EntityCreatedResponse>, ProblemHttpResult>> ChangeAssignmentAsync(
         Guid id,
-        ChangeAssignmentCommand command,
+        ChangeEmployeeAssignmentCommand command,
         ISender sender,
         CancellationToken cancellationToken)
     {

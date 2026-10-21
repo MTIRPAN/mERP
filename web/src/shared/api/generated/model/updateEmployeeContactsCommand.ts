@@ -4,9 +4,9 @@
  * mERP API
  * OpenAPI spec version: v1
  */
-import type { AddressInput } from './addressInput';
 import type { EmailInput } from './emailInput';
 import type { EmergencyContactInput } from './emergencyContactInput';
+import type { EmployeeAddressInput } from './employeeAddressInput';
 import type { PhoneInput } from './phoneInput';
 
 export interface UpdateEmployeeContactsCommand {
@@ -16,7 +16,7 @@ export interface UpdateEmployeeContactsCommand {
   /** @nullable */
   phones: PhoneInput[] | null;
   /** @nullable */
-  addresses: AddressInput[] | null;
+  addresses: EmployeeAddressInput[] | null;
   /** @nullable */
   emergencyContacts: EmergencyContactInput[] | null;
 }

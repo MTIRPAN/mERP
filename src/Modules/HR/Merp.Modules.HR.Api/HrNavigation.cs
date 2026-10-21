@@ -3,7 +3,7 @@ using Merp.Web.Navigation;
 
 namespace Merp.Modules.HR.Api;
 
-/// <summary>Menu of HR (PLAN H1b, H2c): employees, the organization, its positions and the job catalog.</summary>
+/// <summary>Menu of HR (PLAN H1b, H2c): employees, the organization, its positions, the job catalog and document types.</summary>
 internal sealed class HrMenu : IMenuContributor
 {
     public IEnumerable<MenuItem> GetMenuItems() =>
@@ -14,6 +14,7 @@ internal sealed class HrMenu : IMenuContributor
             new("hr-organization", "web.shell.menu.hr_organization", Path: "/hr/organization", Icon: "organization", Permission: HrPermissions.Org.Read),
             new("hr-positions", "web.shell.menu.hr_positions", Path: "/hr/positions", Icon: "positions", Permission: HrPermissions.Org.Read, Order: 10),
             new("hr-job-titles", "web.shell.menu.hr_job_titles", Path: "/hr/job-titles", Icon: "job-titles", Permission: HrPermissions.Org.Read, Order: 20),
+            new("hr-document-types", "web.shell.menu.hr_document_types", Path: "/hr/document-types", Icon: "document-types", Permission: HrPermissions.Employees.Documents.Manage, Order: 30),
         ]),
     ];
 }

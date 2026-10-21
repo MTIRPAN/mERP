@@ -1,6 +1,7 @@
-import { LockOutlined } from '@ant-design/icons';
+import { EditOutlined, LockOutlined } from '@ant-design/icons';
 import {
   Alert,
+  Button,
   Card,
   Col,
   Descriptions,
@@ -17,6 +18,7 @@ import {
   Typography,
   type DescriptionsProps,
 } from 'antd';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
@@ -34,19 +36,54 @@ import { EMPLOYEE_ENTITY } from './employeeFilters';
 import { countryName, languageName, mainEmployment } from './employeeFormat';
 import { EmployeePhoto } from './EmployeePhoto';
 import { EmployeeStatusTag } from './EmployeeStatusTag';
+import { DocumentsTab } from './documents/DocumentsTab';
+import { ChangeAssignmentDrawer } from './forms/ChangeAssignmentDrawer';
+import { ContactsFormDrawer } from './forms/ContactsFormDrawer';
+import { FamilyFormDrawer } from './forms/FamilyFormDrawer';
+import { GroupTransferDrawer } from './forms/GroupTransferDrawer';
+import { PersonFormDrawer } from './forms/PersonFormDrawer';
+import { QualificationsFormDrawer } from './forms/QualificationsFormDrawer';
+import { RehireDrawer } from './forms/RehireDrawer';
+import { SensitiveFormDrawer } from './forms/SensitiveFormDrawer';
+import { TerminateDrawer } from './forms/TerminateDrawer';
 
 const dash = '—';
 
+type Drawer =
+  | { kind: 'none' }
+  | { kind: 'person' | 'contacts' | 'family' | 'qualifications' | 'sensitive' | 'rehire' }
+  | { kind: 'assignment' | 'terminate' | 'transfer'; employment: EmploymentItem };
+
+/** The edit button of a tab or a card, for those who may change it. */
+const EditButton = ({ label, onClick }: { label: string; onClick: () => void }) => (
+  <Button size="small" icon={<EditOutlined />} onClick={onClick}>
+    {label}
+  </Button>
+);
+
+/** A tab's content under a right-aligned toolbar. */
+const TabBody = ({ toolbar, children }: { toolbar?: ReactNode; children: ReactNode }) => (
+  <Flex vertical gap={12}>
+    {toolbar && <Flex justify="flex-end">{toolbar}</Flex>}
+    {children}
+  </Flex>
+);
+
 /**
- * The employee card (PLAN H2c, D38): the person, contacts, employments with their job history, family and
- * qualifications. Sensitive values arrive masked unless the user may see them; every value shown is audited by the
- * server.
+ * The employee card (PLAN H2c, D38): the person, contacts, employments with their job history, family, qualifications
+ * and documents, with the edit forms and the life cycle actions the user may use. Sensitive values arrive masked
+ * unless the user may see them; every value shown is audited by the server.
  */
 export const EmployeeCardPage = () => {
   const { t } = useTranslation();
   const { id = '' } = useParams();
   const employee = useGetEmployee(id);
   const canUpdate = useHasPermission(hrPermissions.employeesUpdate);
+  const canCreate = useHasPermission(hrPermissions.employeesCreate);
+  const canTerminate = useHasPermission(hrPermissions.employeesTerminate);
+  const canUpdateSensitive = useHasPermission(hrPermissions.sensitiveUpdate);
+  const canReadDocuments = useHasPermission(hrPermissions.documentsRead);
+  const [drawer, setDrawer] = useState<Drawer>({ kind: 'none' });
 
   if (employee.isError && isApiError(employee.error) && employee.error.status === 404) {
     return <NotFoundPage />;
@@ -58,6 +95,29 @@ export const EmployeeCardPage = () => {
 
   const data = employee.data;
   const main = mainEmployment(data.employments);
+  const close = () => setDrawer({ kind: 'none' });
+  const edit = (kind: 'person' | 'contacts' | 'family' | 'qualifications') =>
+    canUpdate ? <EditButton label={t('web.common.edit')} onClick={() => setDrawer({ kind })} /> : undefined;
+  const employmentActions = (employment: EmploymentItem) =>
+    employment.status === 'Terminated' ? undefined : (
+      <Space wrap size={4}>
+        {canUpdate && (
+          <Button size="small" onClick={() => setDrawer({ kind: 'assignment', employment })}>
+            {t('web.hr.employees.lifecycle.change_assignment')}
+          </Button>
+        )}
+        {canUpdate && (
+          <Button size="small" onClick={() => setDrawer({ kind: 'transfer', employment })}>
+            {t('web.hr.employees.lifecycle.group_transfer')}
+          </Button>
+        )}
+        {canTerminate && (
+          <Button size="small" danger onClick={() => setDrawer({ kind: 'terminate', employment })}>
+            {t('web.hr.employees.lifecycle.terminate')}
+          </Button>
+        )}
+      </Space>
+    );
 
   return (
     <>
@@ -68,7 +128,14 @@ export const EmployeeCardPage = () => {
           { title: <Link to="/hr/employees">{t('web.hr.employees.title')}</Link> },
           { title: data.fullName },
         ]}
-        extra={<AuditHistoryButton module="hr" entityType="Employee" entityId={data.id} title={data.fullName} />}
+        extra={
+          <>
+            <AuditHistoryButton module="hr" entityType="Employee" entityId={data.id} title={data.fullName} />
+            {canCreate && (
+              <Button onClick={() => setDrawer({ kind: 'rehire' })}>{t('web.hr.employees.lifecycle.rehire')}</Button>
+            )}
+          </>
+        }
       />
       <Flex vertical gap={16}>
         <Summary data={data} main={main} canUpdate={canUpdate} />
@@ -78,24 +145,89 @@ export const EmployeeCardPage = () => {
               {
                 key: 'general',
                 label: t('web.hr.employees.tabs.general'),
-                children: <General data={data} main={main} />,
+                children: (
+                  <TabBody toolbar={edit('person')}>
+                    <General
+                      data={data}
+                      main={main}
+                      sensitiveAction={
+                        canUpdateSensitive && data.sensitiveVisible ? (
+                          <EditButton label={t('web.common.edit')} onClick={() => setDrawer({ kind: 'sensitive' })} />
+                        ) : undefined
+                      }
+                    />
+                  </TabBody>
+                ),
               },
-              { key: 'contacts', label: t('web.hr.employees.tabs.contacts'), children: <Contacts data={data} /> },
+              {
+                key: 'contacts',
+                label: t('web.hr.employees.tabs.contacts'),
+                children: (
+                  <TabBody toolbar={edit('contacts')}>
+                    <Contacts data={data} />
+                  </TabBody>
+                ),
+              },
               {
                 key: 'employment',
                 label: t('web.hr.employees.tabs.employment'),
-                children: <Employments employments={data.employments} />,
+                children: <Employments employments={data.employments} actions={employmentActions} />,
               },
-              { key: 'family', label: t('web.hr.employees.tabs.family'), children: <Family data={data} /> },
+              {
+                key: 'family',
+                label: t('web.hr.employees.tabs.family'),
+                children: (
+                  <TabBody toolbar={edit('family')}>
+                    <Family data={data} />
+                  </TabBody>
+                ),
+              },
               {
                 key: 'qualifications',
                 label: t('web.hr.employees.tabs.qualifications'),
-                children: <Qualifications data={data} />,
+                children: (
+                  <TabBody toolbar={edit('qualifications')}>
+                    <Qualifications data={data} />
+                  </TabBody>
+                ),
               },
+              ...(canReadDocuments
+                ? [
+                    {
+                      key: 'documents',
+                      label: t('web.hr.employees.tabs.documents'),
+                      children: <DocumentsTab employeeId={data.id} />,
+                    },
+                  ]
+                : []),
             ]}
           />
         </Card>
       </Flex>
+      {drawer.kind === 'person' && (
+        <PersonFormDrawer open employee={data} companyId={main?.companyId} onClose={close} />
+      )}
+      {drawer.kind === 'contacts' && <ContactsFormDrawer open employee={data} onClose={close} />}
+      {drawer.kind === 'family' && <FamilyFormDrawer open employee={data} onClose={close} />}
+      {drawer.kind === 'qualifications' && <QualificationsFormDrawer open employee={data} onClose={close} />}
+      {drawer.kind === 'sensitive' && <SensitiveFormDrawer open employee={data} onClose={close} />}
+      {drawer.kind === 'rehire' && (
+        <RehireDrawer
+          open
+          employeeId={data.id}
+          openCompanyIds={data.employments.filter((e) => e.status !== 'Terminated').map((e) => e.companyId)}
+          onClose={close}
+        />
+      )}
+      {drawer.kind === 'assignment' && (
+        <ChangeAssignmentDrawer open employeeId={data.id} employment={drawer.employment} onClose={close} />
+      )}
+      {drawer.kind === 'terminate' && (
+        <TerminateDrawer open employeeId={data.id} employment={drawer.employment} onClose={close} />
+      )}
+      {drawer.kind === 'transfer' && (
+        <GroupTransferDrawer open employeeId={data.id} employment={drawer.employment} onClose={close} />
+      )}
     </>
   );
 };
@@ -153,7 +285,15 @@ const Masked = ({ value, visible }: { value: string | null | undefined; visible:
   );
 };
 
-const General = ({ data, main }: { data: EmployeeDetails; main?: EmploymentItem }) => {
+const General = ({
+  data,
+  main,
+  sensitiveAction,
+}: {
+  data: EmployeeDetails;
+  main?: EmploymentItem;
+  sensitiveAction?: ReactNode;
+}) => {
   const { t, i18n } = useTranslation();
   const fields = useGetCustomFieldForm({ entityType: EMPLOYEE_ENTITY, companyId: main?.companyId });
   const customFields = fields.data ?? [];
@@ -200,7 +340,7 @@ const General = ({ data, main }: { data: EmployeeDetails; main?: EmploymentItem 
   return (
     <Flex vertical gap={16}>
       <Descriptions column={{ xs: 1, md: 2 }} items={person} />
-      <Card size="small" title={t('web.hr.employees.sensitive.title')}>
+      <Card size="small" title={t('web.hr.employees.sensitive.title')} extra={sensitiveAction}>
         {sensitive.hidden ? (
           <Alert type="info" showIcon icon={<LockOutlined />} message={t('web.hr.employees.sensitive.hidden')} />
         ) : (
@@ -360,7 +500,13 @@ const AssignmentText = ({ assignment }: { assignment: JobAssignmentItem }) => {
   );
 };
 
-const Employments = ({ employments }: { employments: EmploymentItem[] }) => {
+const Employments = ({
+  employments,
+  actions,
+}: {
+  employments: EmploymentItem[];
+  actions: (employment: EmploymentItem) => ReactNode;
+}) => {
   const { t, i18n } = useTranslation();
   const date = (value: string | null | undefined) => (value ? formatDate(value, i18n.language) : dash);
   if (employments.length === 0) {
@@ -373,6 +519,7 @@ const Employments = ({ employments }: { employments: EmploymentItem[] }) => {
         <Card
           key={employment.id}
           size="small"
+          extra={actions(employment)}
           title={
             <Space wrap>
               {employment.companyName}
