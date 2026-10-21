@@ -126,5 +126,8 @@
   "web.hr.employees.fields.status": "Durum",
   "web.hr.employment_status.Upcoming": "Başlayacak",
   "web.hr.employment_status.Active": "Aktif",
-  "web.hr.employment_status.Terminated": "Ayrıldı"
+  "web.hr.employment_status.Terminated": "Ayrıldı",
+  "hr.documents.errors.valid_until_before_issue": "Geçerlilik bitişi, veriliş tarihinden önce olamaz.",
+  "hr.documents.errors.unknown_type": "Belge türü bulunamadı ya da pasif.",
+  "hr.document_types.errors.tenant_scope_required": "Belge türleri tüm şirketlerde ortaktır; yalnızca tüm şirketler kapsamıyla yönetilebilir."
 }

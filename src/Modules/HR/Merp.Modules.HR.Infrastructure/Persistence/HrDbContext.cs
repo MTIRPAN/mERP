@@ -1,5 +1,6 @@
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.HR.Application;
+using Merp.Modules.HR.Domain.Documents;
 using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Organization;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,10 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
     public DbSet<EmployeeSensitiveData> EmployeeSensitiveData => Set<EmployeeSensitiveData>();
 
     public DbSet<SgkExitCode> SgkExitCodes => Set<SgkExitCode>();
+
+    public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
+
+    public DbSet<EmployeeDocument> EmployeeDocuments => Set<EmployeeDocument>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

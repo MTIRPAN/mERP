@@ -923,3 +923,11 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Fotoğraf genel bir dosya uç noktası yerine kendi uç noktalarıyla sunulur (`GET/PUT/DELETE /api/hr/employees/{id}/photo`, okuma `hr.employees.read`, değiştirme `hr.employees.update`). Böylece D22 listesine yeni bir "yalnızca oturum" uç noktası eklenmez. PNG, JPEG veya WebP, en fazla 2 MB.
 - Excel'e aktarma şimdilik özel alan kolonlarını içermez: özel alan tanımları Platform'dadır ve modüller arası okuma arayüzü henüz yoktur. Personel listesi ekranıyla (H2c) birlikte ele alınacak.
 
+**Uygulama notları (H2b2):**
+- Belgenin dosyası belgenin kendisine aittir (sahip türü `hr.employee_document`, amaç `attachment`). Fotoğrafta olduğu gibi kendi uç noktalarıyla sunulur (`/api/hr/employees/{id}/documents`, okuma `hr.employees.documents.read`, değiştirme `hr.employees.documents.manage`); D22 listesine ekleme yapılmaz. Dosya kuralları eklerinkiyle aynıdır (`Files:AllowedExtensions`, `Files:MaxBytes`).
+- Belge silme yumuşak silmedir: kayıt audit için kalır, dosyanın içeriği commit'ten sonra silinir.
+- Belge türleri tüm şirketlerde ortaktır; unvan kataloğu gibi yalnızca Tenant kapsamıyla eklenir ve değiştirilir. Kod değişmez, kullanılmayan tür pasifleştirilir; pasif tür yeni belgede seçilemez, mevcut belgede kalır.
+- Hatırlatma işi `hr.document-reminders` her gün 05:00 UTC'de (İstanbul'da 08:00) çalışır. Kalan gün, belgenin sahibinin birincil şirketinin gününe göre sayılır. Belge 30 güne girince ilk, 7 güne girince ikinci hatırlatma gider; her biri geçerlilik tarihi başına bir kez. Geç girilen belge doğrudan 7 gün hatırlatmasını alır. Geçerlilik tarihi değişince hatırlatmalar baştan başlar.
+- Alıcılar, kişinin çalıştığı ya da işe başlayacağı şirketlerde `hr.employees.documents.manage` yetkisine Tenant veya o şirketin Company kapsamıyla sahip etkin kullanıcılardır (`IPermissionHolders`). Şube ve birim kapsamlı yetki sahipleri şimdilik bildirim almaz. Ayrılmış personelin belgeleri için hatırlatma gitmez.
+- Bildirimdeki belge türü adı kiracının varsayılan dilindedir (`tr-TR`): bildirim argümanları alıcıdan bağımsız metinlerdir.
+

@@ -1,5 +1,6 @@
 using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Jobs;
+using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
 using Merp.Infrastructure.Localization;
@@ -7,9 +8,11 @@ using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.HR.Application;
 using Merp.Modules.HR.Application.Approvals;
+using Merp.Modules.HR.Application.Documents;
 using Merp.Modules.HR.Application.Employees;
 using Merp.Modules.HR.Application.Organization;
 using Merp.Modules.HR.Contracts.Organization;
+using Merp.Modules.HR.Infrastructure.Documents;
 using Merp.Modules.HR.Infrastructure.Employees;
 using Merp.Modules.HR.Infrastructure.Organization;
 using Merp.Modules.HR.Infrastructure.Persistence;
@@ -48,6 +51,11 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddSingleton<ITenantDataSeeder, HrReferenceDataSeeder>();
         services.AddScoped<AssignmentsEffectiveJob>();
         services.AddSingleton(RecurringJobDefinition.For<AssignmentsEffectiveJob>(AssignmentsEffectiveJob.JobId, AssignmentsEffectiveJob.Cron));
+
+        // Employee documents: reminders before they expire (D38)
+        services.AddSingleton<INotificationTypeProvider, HrNotificationTypes>();
+        services.AddScoped<DocumentRemindersJob>();
+        services.AddSingleton(RecurringJobDefinition.For<DocumentRemindersJob>(DocumentRemindersJob.JobId, DocumentRemindersJob.Cron));
 
         // Approver resolvers and the escalation lookup of the approval engine (docs/domain/yetki-ve-onay.md §2.4)
         services.AddScoped<IApproverResolver, LineManagerApproverResolver>();
