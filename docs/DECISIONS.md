@@ -821,7 +821,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Raporlama hattı:**
 - `reporting_lines` (yönetici pozisyon, ast pozisyon, derinlik) kapanış tablosudur, pozisyon hiyerarşisinden üretilir.
 - Pozisyon veya birim değişince olay işleyicisi ilgili şirketin tablosunu aynı işlemde yeniden kurar. Her gece tüm kiracılarda tam yeniden kurulur (Hangfire, `hr.reporting-lines`).
-- H2'de görev atamasındaki yönetici ezmesi bu tabloya eklenir.
+- H2'de görev atamasındaki yönetici ezmesi bu tabloya eklenmez; kişinin atamasında tutulur (D38).
 
 **Sözleşmeler ve Platform kayıtları:**
 - `IOrgQuery` (HR.Contracts, salt okunur):
@@ -854,3 +854,62 @@ Seçilen kültür `Content-Language` başlığında döner.
 - `line-manager(n)`: seviyeler kişiye göre sayılır, boş pozisyonlar atlanır. n. seviyedeki yöneticinin kullanıcısı yoksa sonuç boştur ve uyarı loglanır (yetki-ve-onay.md §2.4).
 - `org-unit-manager`: yöneticisi olmayan birimde en yakın üst birimin yöneticisi alınır. Talep eden kendi biriminin yöneticisiyse bir üstteki yöneticiye gider.
 - Oluşturma uç noktalarının ortak yanıtı `EntityCreatedResponse` Merp.Web'e taşındı; OpenAPI'de tek şema kalır.
+
+## D38 — Personel kartı ve yaşam döngüsü
+
+**Durum:** Kabul edildi (kullanıcı onayı, 2026-10-17). PLAN H2 ile uygulanır.
+
+**Bölünme:** H2a domain, yaşam döngüsü ve kişi bilgisi komutları ile uç noktaları, hassas veri, migration; H2b sorgular (liste, kart), maskeleme ve okuma audit'i, veri kapsamı, belgeler ve hatırlatmalar, fotoğraf; H2c web.
+
+**Aggregate'ler (D6):**
+- `Employee`: kişi. TCKN kiracıda tekildir. Kimlik, iletişim (e-posta, telefon, adres, acil durum kişisi), aile, eğitim, sertifika ve ehliyet (geçerlilik tarihli), yabancı dil, askerlik durumu, IBAN, fotoğraf (D31, amaç `photo`), özel alanlar (D30, `hr.employee`) ve `UserId` (H3'te dolar).
+  - `Employment` ve `JobAssignment` bu aggregate'in alt varlıklarıdır. İşe giriş, görev değişikliği, çıkış, tekrar işe giriş ve grup içi nakil tek aggregate'i değiştirir. Nakilde eski istihdamın kapanması ile yenisinin açılması tek işlemde olur (kural 7).
+  - Eşzamanlılık her satırın kendi `xmin`'iyle kalır: kişi kartı ile görev geçmişini farklı kullanıcıların aynı anda düzenlemesi çakışmaz.
+- `EmployeeSensitiveData` (ayrı aggregate ve tablo, personelle 1:1): engellilik derecesi, kan grubu, sağlık notları, adli sicil belgesi tarihi (D13).
+- `EmployeeDocument` (ayrı aggregate): tür, dosya (D31), geçerlilik tarihleri.
+
+**Hassas veri (D13):**
+- Şifreleme `ISensitiveDataProtector` arayüzüyle yapılır (Merp.Application.Abstractions). Infrastructure'daki uygulaması ASP.NET Data Protection kullanır. Amaç `Merp.SensitiveData` ile kiracı kimliğidir; anahtarlar katalog veritabanındadır, üretimde sertifikayla şifrelenir (mevcut ayar). Uygulama katmanı ASP.NET'e bağlanmaz.
+- Domain şifreli metni tutar. Handler yazarken şifreler. Okurken `hr.employees.sensitive.read` yetkisi varsa çözer ve okumayı `ISensitiveReadLog` ile audit'e yazar; yoksa alanlar boş ve "gizli" işaretli döner. Audit kayıtlarında bu alanların değeri yerine `***` yazılır.
+- TCKN ve IBAN `[Sensitive]` işaretlidir: aynı yetki yoksa maskelenir (`123******01`, `TR** **** … 1234`), açık okunduğunda audit'e yazılır. TCKN tekillik kontrolü için düz tutulur.
+
+**İstihdam:**
+- `Employment`: şirket, sicil no (P5 `hr.employee`, şirket bazında `{seq:6}`, sıfırlanmaz), işe giriş tarihi, kıdem başlangıç tarihi ve değişiklik gerekçesi, istihdam tipi (Belirsiz, Belirli süreli + bitiş, Kısmi + haftalık saat, Stajyer, Mevsimlik), deneme süresi bitişi, çalışma takvimi ve izin politikası ezmeleri, çıkış bilgisi (tarih, SGK çıkış kodu, gerekçe, tekrar işe alınabilir mi, not).
+- Durum tarihlerden hesaplanır: Başlayacak (giriş ileri tarihli), Aktif, Ayrıldı. Bir şirkette aynı anda tek açık istihdam olur. Farklı şirketlerde eşzamanlı istihdam olabilir; biri birincil işaretlenir ve "birincil pozisyon" ondan alınır.
+
+**Görev ataması:**
+- `JobAssignment`: pozisyon (birim pozisyondan gelir), şube, yönetici ezmesi (bir pozisyon), unvan, seviye, masraf merkezi, değişiklik nedeni (Giriş, Nakil, Terfi, Reorganizasyon, Düzeltme), başlangıç ve bitiş günü (ikisi dahil). Unvan, seviye ve masraf merkezi atama anındaki pozisyon ve birimden kopyalanır, değiştirilebilir; tarihçe böylece sabit kalır.
+- Yeni atama öncekini bir gün önce kapatır. İleri tarihli atama kaydedilir; bugünkü görev her sorguda tarihlerden hesaplanır (kadro doluluğu, kapsam, listeler). Gece işi `hr.assignments-effective`, o gün başlayan atamalar için `EmployeeAssignmentChanged` yayınlar.
+- `IPositionHolders` (D37) bugün geçerli atamalardan doldurulur: kadro doluluğu ve boş kadro gerçek değer gösterir.
+- Yönetici ezmesi `reporting_lines`'a yazılmaz; o tablo pozisyonlar arasında kalır (norm kadrosu birden çok olan pozisyonda kişiye özel ezme pozisyon tablosuna sığmaz). `line-manager`, yönetici araması ve `ManagedTeam` önce kişinin ezmesine bakar, sonra pozisyon zincirine. D37'deki "ezme bu tabloya eklenir" ifadesi bununla değişir.
+
+**Komutlar:**
+- `Hire`: yeni kişi, ilk istihdam ve ilk atama. TCKN kayıtlıysa anlamlı hata döner ve mevcut personel gösterilir; tekrar işe giriş `Rehire` ile yapılır.
+- `Rehire`: ayrılmış personele aynı ya da başka şirkette yeni istihdam.
+- `ChangeAssignment`: ileri tarihli olabilir. Aynı günü değiştiren kayıt "Düzeltme" nedeniyle mevcut atamanın yerine geçer.
+- `Terminate`: çıkış günü açık atamayı kapatır, sonraki ileri tarihli atamaları siler. SGK çıkış kodu zorunludur.
+- `GroupTransfer`: kaynak istihdam nakil gününden bir gün önce kapanır, hedef şirkette yeni istihdam açılır. Kıdem başlangıcı varsayılan olarak korunur; izin bakiyesinin taşınması olayda bir seçenek olarak taşınır, izin modülü (L) uygular.
+- Kişi bilgileri, iletişim, aile ve nitelikler için ayrı güncelleme komutları.
+
+**Olaylar (HR.Contracts):** `EmployeeHired`, `EmployeeAssignmentChanged`, `EmployeeTerminated`, `EmployeeRehired`, `EmployeeGroupTransferred`. Personel, istihdam, şirket ve tarihleri taşır.
+
+**Referans veriler:**
+- Belge türleri kiracı tablosudur: seed'lenir (kimlik, diploma, sağlık raporu, sözleşme, SRC, pasaport…), sonradan eklenebilir.
+- SGK çıkış kodları, eğitim seviyeleri, yakınlık dereceleri ve askerlik durumları kodda sabit listelerdir (yasal ya da değişmeyen değerler); adları `tr-TR.json`'dadır.
+
+**Belge hatırlatma:** Gece işi `hr.document-reminders`, bitişine 30 ve 7 gün kalan belgeler için bildirim yollar. Alıcılar, belgenin şirketinde `hr.employees.documents.manage` yetkisine sahip kullanıcılardır. Bunun için Platform.Contracts'a salt okunur `IPermissionHolders` eklenir: bir yetkiye belirli şirket kapsamında sahip etkin kullanıcıları döner.
+
+**Veri kapsamı (personel listeleri):** Tenant hepsi; Company istihdam şirketi; Branch bugünkü atamanın şubesi; OrgUnit bugünkü atamanın birimi (alt birimlerle, `ltree`); ManagedTeam raporlama hattında altımdaki pozisyonların sahipleri ve yönetici ezmesi benim pozisyonuma olanlar; Self kendi personel kaydı (H3).
+
+**Yetkiler:** `hr.employees.read/create/update/terminate/export`, `hr.employees.sensitive.read/update`, `hr.employees.documents.read/manage`. Sistem rollerinin desenleri değişmez (İK Uzmanı hassas veri hariç tüm personel yetkilerine sahiptir).
+
+**Listeler:** Varsayılan liste bugün aktif personeli gösterir. Durum filtresiyle Başlayacak ve Ayrılanlar görünür.
+
+**Uygulama notları (H2a):**
+- SGK çıkış kodları kodda sabit liste yerine kiracı tablosudur (`sgk_exit_codes`): yaygın kodlar seed'lenir, liste düzenlenebilir kalır. SGK listeyi zaman zaman değiştirdiği için yanlış ya da eksik bir kod müşteri tarafında düzeltilebilir. Eğitim seviyeleri, yakınlık dereceleri ve askerlik durumları kodda sabittir.
+- Başlamış atamaların duyurusu gece yerine saatte bir çalışır (`hr.assignments-effective`, her saatin 5. dakikası): her saat dilimindeki şirket, günü başladıktan en geç bir saat sonra duyuru alır. Duyurulan atama işaretlenir; olay bir kez yayınlanır.
+- Tekrar işe girişte yalnızca yeni şirketin kapsamda olması yeterlidir: kişi, çağıranın göremediği bir şirketten gelebilir.
+- Görev değişikliğinin nedeni "Giriş" olamaz; giriş yalnızca işe giriş ve tekrar işe girişte kullanılır.
+- Kişi kartı komutları (kişisel bilgiler, iletişim, aile, nitelikler, IBAN) kartın sürümünü ister; aynı anda yapılan değişiklik 409 döner. Hassas veri kendi satırındadır, sürüm istemez.
+- jsonb sütun yardımcısı (`HasJson`) Platform'dan Merp.Infrastructure'a taşındı; modüller ortak kullanır.
+

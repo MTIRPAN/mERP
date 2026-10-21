@@ -1,3 +1,4 @@
+using Merp.Infrastructure.Persistence.Conventions;
 using Merp.Modules.Platform.Domain.Roles;
 using Merp.Modules.Platform.Domain.Users;
 using Microsoft.EntityFrameworkCore;

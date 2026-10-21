@@ -1,5 +1,6 @@
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.HR.Application;
+using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Organization;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +20,12 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
 
     public DbSet<ReportingLine> ReportingLines => Set<ReportingLine>();
 
+    public DbSet<Employee> Employees => Set<Employee>();
+
+    public DbSet<EmployeeSensitiveData> EmployeeSensitiveData => Set<EmployeeSensitiveData>();
+
+    public DbSet<SgkExitCode> SgkExitCodes => Set<SgkExitCode>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
@@ -31,6 +38,16 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.HasPostgresExtension("ltree");
+
+        // Lists of the employee card are jsonb columns of their row, not entities
+        modelBuilder.Ignore<EmployeeEmail>();
+        modelBuilder.Ignore<EmployeePhone>();
+        modelBuilder.Ignore<EmployeeAddress>();
+        modelBuilder.Ignore<EmergencyContact>();
+        modelBuilder.Ignore<FamilyMember>();
+        modelBuilder.Ignore<Education>();
+        modelBuilder.Ignore<Certificate>();
+        modelBuilder.Ignore<LanguageSkill>();
         base.OnModelCreating(modelBuilder);
     }
 }

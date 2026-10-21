@@ -47,7 +47,7 @@ public sealed partial class LineManagerApproverResolver(
             return [];
         }
 
-        var chain = await reportingLines.GetManagerChainAsync(requester.PositionId, cancellationToken);
+        var chain = await ManagerChains.OfAsync(requester, reportingLines, cancellationToken);
         if (chain.Count == 0)
         {
             return [];
@@ -207,7 +207,7 @@ public sealed class HrApproverManagerLookup(IPositionHolders holders, IReporting
             return null;
         }
 
-        var chain = await reportingLines.GetManagerChainAsync(own.PositionId, cancellationToken);
+        var chain = await ManagerChains.OfAsync(own, reportingLines, cancellationToken);
         if (chain.Count == 0)
         {
             return null;

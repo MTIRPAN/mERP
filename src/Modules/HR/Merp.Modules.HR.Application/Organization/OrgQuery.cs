@@ -35,7 +35,7 @@ public sealed class OrgQuery(IHrDbContext db, IPositionHolders holders, IReporti
             return [];
         }
 
-        var chain = await reportingLines.GetManagerChainAsync(own.PositionId, cancellationToken);
+        var chain = await ManagerChains.OfAsync(own, reportingLines, cancellationToken);
         if (chain.Count == 0)
         {
             return [];

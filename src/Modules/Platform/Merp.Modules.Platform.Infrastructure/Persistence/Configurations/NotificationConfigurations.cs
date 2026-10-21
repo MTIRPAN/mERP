@@ -1,8 +1,7 @@
-using System.Text.Json;
+using Merp.Infrastructure.Persistence.Conventions;
 using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Users;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Merp.Modules.Platform.Infrastructure.Persistence.Configurations;
@@ -55,29 +54,5 @@ internal sealed class NotificationTemplateConfiguration : IEntityTypeConfigurati
 
         // One template per type (or all types), company (or all) and culture; null counts as a value
         builder.HasIndex(t => new { t.NotificationType, t.CompanyId, t.Culture }).IsUnique().AreNullsDistinct(false);
-    }
-}
-
-internal static class JsonColumns
-{
-    private static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
-    {
-        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() },
-    };
-
-    /// <summary>Stores a value as jsonb; changes are detected by comparing the JSON.</summary>
-    public static PropertyBuilder<T> HasJson<T>(this PropertyBuilder<T> builder)
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-        return builder
-            .HasConversion(
-                value => JsonSerializer.Serialize(value, Options),
-                json => JsonSerializer.Deserialize<T>(json, Options)!,
-                new ValueComparer<T>(
-                    (left, right) => JsonSerializer.Serialize(left, Options) == JsonSerializer.Serialize(right, Options),
-                    value => JsonSerializer.Serialize(value, Options).GetHashCode(StringComparison.Ordinal),
-                    value => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, Options), Options)!))
-            .HasColumnType("jsonb");
     }
 }

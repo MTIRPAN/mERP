@@ -93,5 +93,22 @@
   "web.hr.job_titles.fields.family": "Unvan ailesi",
   "web.hr.job_titles.fields.level": "Seviye",
   "web.hr.job_titles.fields.level_hint": "Örneğin M1 veya U2.",
-  "web.hr.job_titles.fields.positions": "Pozisyon"
+  "web.hr.job_titles.fields.positions": "Pozisyon",
+  "hr.employees.errors.tckn_exists": "Bu T.C. kimlik numarasıyla kayıtlı bir personel var. Tekrar işe girişi personelin kartından yapın.",
+  "hr.employees.errors.invalid_position": "Pozisyon bu şirketin aktif pozisyonlarından biri olmalıdır.",
+  "hr.employees.errors.invalid_manager_position": "Bağlı olunan yönetici pozisyonu bu şirketin kapatılmamış başka bir pozisyonu olmalıdır.",
+  "hr.employees.errors.unknown_work_schedule": "Çalışma takvimi bulunamadı.",
+  "hr.employees.errors.unknown_sgk_exit_code": "SGK çıkış kodu bulunamadı ya da pasif.",
+  "hr.employees.errors.one_primary": "Yalnızca bir kayıt birincil olabilir.",
+  "hr.employees.errors.too_many_items": "En fazla 50 kayıt girilebilir.",
+  "hr.employees.errors.seniority_after_hire": "Kıdem başlangıcı işe giriş tarihinden sonra olamaz.",
+  "hr.employees.errors.seniority_reason_required": "Kıdem başlangıcı işe giriş tarihinden farklıysa gerekçe zorunludur.",
+  "hr.employees.errors.before_hire": "Tarih işe giriş tarihinden önce olamaz.",
+  "hr.employees.errors.weekly_hours": "Kısmi süreli çalışmada haftalık saat 0'dan büyük ve en fazla {max} olmalıdır.",
+  "hr.employees.errors.employment_closed": "Bu istihdam sona ermiş.",
+  "hr.employees.errors.assignment_before_latest": "Yeni görev, son görevin başlangıcından önce başlayamaz.",
+  "hr.employees.errors.transfer_same_company": "Nakil başka bir şirkete yapılır.",
+  "hr.employees.errors.transfer_before_hire": "Nakil tarihi, kaynak şirketteki işe giriş tarihinden sonra olmalıdır.",
+  "hr.employees.errors.open_employment_exists": "Personelin bu şirkette devam eden bir istihdamı var.",
+  "hr.employees.errors.starts_before_previous_end": "Yeni istihdam, bu şirketteki önceki istihdamın çıkış tarihinden sonra başlamalıdır."
 }

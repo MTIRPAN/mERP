@@ -1,3 +1,4 @@
+using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Organization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -18,6 +19,14 @@ public interface IHrDbContext
 
     /// <summary>Closure table of the position hierarchy, rebuilt per company (D37).</summary>
     DbSet<ReportingLine> ReportingLines { get; }
+
+    /// <summary>People with their employments and job history (D38).</summary>
+    DbSet<Employee> Employees { get; }
+
+    /// <summary>Encrypted special category data, one row per employee (D13).</summary>
+    DbSet<EmployeeSensitiveData> EmployeeSensitiveData { get; }
+
+    DbSet<SgkExitCode> SgkExitCodes { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

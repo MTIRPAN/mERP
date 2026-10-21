@@ -21,11 +21,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ChangeAssignmentCommand,
   CreateJobCommand,
   CreateOrgUnitCommand,
   CreatePositionCommand,
   EntityCreatedResponse,
   GetOrgUnitTreeParams,
+  GroupTransferCommand,
+  HireEmployeeCommand,
   HttpValidationProblemDetails,
   JobDetails,
   ListJobsParams,
@@ -39,6 +42,14 @@ import type {
   PagedResultOfPositionListItem,
   PositionDetails,
   ProblemDetails,
+  RehireEmployeeCommand,
+  SetEmployeeIbanCommand,
+  TerminateEmploymentCommand,
+  UpdateEmployeeContactsCommand,
+  UpdateEmployeeFamilyCommand,
+  UpdateEmployeePersonCommand,
+  UpdateEmployeeQualificationsCommand,
+  UpdateEmployeeSensitiveDataCommand,
   UpdateJobCommand,
   UpdateOrgUnitCommand,
   UpdatePositionCommand,
@@ -1508,4 +1519,1119 @@ export const useUpdatePosition = <
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof updatePosition>>, TError, UpdatePositionMutationVariables, TContext> => {
   return useMutation(getUpdatePositionMutationOptions(options), queryClient);
+};
+export const getHireEmployeeUrl = () => {
+  return `/api/hr/employees`;
+};
+
+/**
+ * Requires permission: hr.employees.create.
+ * @summary Hire a new person in a company of the caller's scope: the employee, the employment and the first assignment
+ */
+export const hireEmployee = async (
+  hireEmployeeCommand: HireEmployeeCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getHireEmployeeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(hireEmployeeCommand),
+  });
+};
+
+export const getHireEmployeeMutationKey = () => ['hireEmployee'] as const;
+
+export const getHireEmployeeMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof hireEmployee>>,
+    TError,
+    HireEmployeeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof hireEmployee>>, TError, HireEmployeeMutationVariables, TContext> => {
+  const mutationKey = getHireEmployeeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof hireEmployee>>, HireEmployeeMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return hireEmployee(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type HireEmployeeMutationResult = NonNullable<Awaited<ReturnType<typeof hireEmployee>>>;
+export type HireEmployeeMutationBody = HireEmployeeCommand;
+export type HireEmployeeMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type HireEmployeeMutationVariables = { data: HireEmployeeCommand };
+
+/**
+ * @summary Hire a new person in a company of the caller's scope: the employee, the employment and the first assignment
+ */
+export const useHireEmployee = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof hireEmployee>>,
+      TError,
+      HireEmployeeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof hireEmployee>>, TError, HireEmployeeMutationVariables, TContext> => {
+  return useMutation(getHireEmployeeMutationOptions(options), queryClient);
+};
+export const getUpdateEmployeePersonUrl = (id: string) => {
+  return `/api/hr/employees/${id}/person`;
+};
+
+/**
+ * Requires permission: hr.employees.update.
+ * @summary Update a person's identity details and custom fields; the TCKN never changes
+ */
+export const updateEmployeePerson = async (
+  id: string,
+  updateEmployeePersonCommand: UpdateEmployeePersonCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateEmployeePersonUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateEmployeePersonCommand),
+  });
+};
+
+export const getUpdateEmployeePersonMutationKey = () => ['updateEmployeePerson'] as const;
+
+export const getUpdateEmployeePersonMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateEmployeePerson>>,
+    TError,
+    UpdateEmployeePersonMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateEmployeePerson>>,
+  TError,
+  UpdateEmployeePersonMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateEmployeePersonMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateEmployeePerson>>,
+    UpdateEmployeePersonMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateEmployeePerson(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateEmployeePersonMutationResult = NonNullable<Awaited<ReturnType<typeof updateEmployeePerson>>>;
+export type UpdateEmployeePersonMutationBody = UpdateEmployeePersonCommand;
+export type UpdateEmployeePersonMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateEmployeePersonMutationVariables = { id: string; data: UpdateEmployeePersonCommand };
+
+/**
+ * @summary Update a person's identity details and custom fields; the TCKN never changes
+ */
+export const useUpdateEmployeePerson = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateEmployeePerson>>,
+      TError,
+      UpdateEmployeePersonMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateEmployeePerson>>,
+  TError,
+  UpdateEmployeePersonMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateEmployeePersonMutationOptions(options), queryClient);
+};
+export const getUpdateEmployeeContactsUrl = (id: string) => {
+  return `/api/hr/employees/${id}/contacts`;
+};
+
+/**
+ * Requires permission: hr.employees.update.
+ * @summary Replace a person's e-mail addresses, phone numbers, addresses and emergency contacts
+ */
+export const updateEmployeeContacts = async (
+  id: string,
+  updateEmployeeContactsCommand: UpdateEmployeeContactsCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateEmployeeContactsUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateEmployeeContactsCommand),
+  });
+};
+
+export const getUpdateEmployeeContactsMutationKey = () => ['updateEmployeeContacts'] as const;
+
+export const getUpdateEmployeeContactsMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateEmployeeContacts>>,
+    TError,
+    UpdateEmployeeContactsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateEmployeeContacts>>,
+  TError,
+  UpdateEmployeeContactsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateEmployeeContactsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateEmployeeContacts>>,
+    UpdateEmployeeContactsMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateEmployeeContacts(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateEmployeeContactsMutationResult = NonNullable<Awaited<ReturnType<typeof updateEmployeeContacts>>>;
+export type UpdateEmployeeContactsMutationBody = UpdateEmployeeContactsCommand;
+export type UpdateEmployeeContactsMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateEmployeeContactsMutationVariables = { id: string; data: UpdateEmployeeContactsCommand };
+
+/**
+ * @summary Replace a person's e-mail addresses, phone numbers, addresses and emergency contacts
+ */
+export const useUpdateEmployeeContacts = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateEmployeeContacts>>,
+      TError,
+      UpdateEmployeeContactsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateEmployeeContacts>>,
+  TError,
+  UpdateEmployeeContactsMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateEmployeeContactsMutationOptions(options), queryClient);
+};
+export const getUpdateEmployeeFamilyUrl = (id: string) => {
+  return `/api/hr/employees/${id}/family`;
+};
+
+/**
+ * Requires permission: hr.employees.update.
+ * @summary Replace a person's family members
+ */
+export const updateEmployeeFamily = async (
+  id: string,
+  updateEmployeeFamilyCommand: UpdateEmployeeFamilyCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateEmployeeFamilyUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateEmployeeFamilyCommand),
+  });
+};
+
+export const getUpdateEmployeeFamilyMutationKey = () => ['updateEmployeeFamily'] as const;
+
+export const getUpdateEmployeeFamilyMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateEmployeeFamily>>,
+    TError,
+    UpdateEmployeeFamilyMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateEmployeeFamily>>,
+  TError,
+  UpdateEmployeeFamilyMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateEmployeeFamilyMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateEmployeeFamily>>,
+    UpdateEmployeeFamilyMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateEmployeeFamily(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateEmployeeFamilyMutationResult = NonNullable<Awaited<ReturnType<typeof updateEmployeeFamily>>>;
+export type UpdateEmployeeFamilyMutationBody = UpdateEmployeeFamilyCommand;
+export type UpdateEmployeeFamilyMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateEmployeeFamilyMutationVariables = { id: string; data: UpdateEmployeeFamilyCommand };
+
+/**
+ * @summary Replace a person's family members
+ */
+export const useUpdateEmployeeFamily = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateEmployeeFamily>>,
+      TError,
+      UpdateEmployeeFamilyMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateEmployeeFamily>>,
+  TError,
+  UpdateEmployeeFamilyMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateEmployeeFamilyMutationOptions(options), queryClient);
+};
+export const getUpdateEmployeeQualificationsUrl = (id: string) => {
+  return `/api/hr/employees/${id}/qualifications`;
+};
+
+/**
+ * Requires permission: hr.employees.update.
+ * @summary Replace a person's education, certificates and driving licences, and languages
+ */
+export const updateEmployeeQualifications = async (
+  id: string,
+  updateEmployeeQualificationsCommand: UpdateEmployeeQualificationsCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateEmployeeQualificationsUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateEmployeeQualificationsCommand),
+  });
+};
+
+export const getUpdateEmployeeQualificationsMutationKey = () => ['updateEmployeeQualifications'] as const;
+
+export const getUpdateEmployeeQualificationsMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateEmployeeQualifications>>,
+    TError,
+    UpdateEmployeeQualificationsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateEmployeeQualifications>>,
+  TError,
+  UpdateEmployeeQualificationsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateEmployeeQualificationsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateEmployeeQualifications>>,
+    UpdateEmployeeQualificationsMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateEmployeeQualifications(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateEmployeeQualificationsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateEmployeeQualifications>>
+>;
+export type UpdateEmployeeQualificationsMutationBody = UpdateEmployeeQualificationsCommand;
+export type UpdateEmployeeQualificationsMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateEmployeeQualificationsMutationVariables = { id: string; data: UpdateEmployeeQualificationsCommand };
+
+/**
+ * @summary Replace a person's education, certificates and driving licences, and languages
+ */
+export const useUpdateEmployeeQualifications = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateEmployeeQualifications>>,
+      TError,
+      UpdateEmployeeQualificationsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateEmployeeQualifications>>,
+  TError,
+  UpdateEmployeeQualificationsMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateEmployeeQualificationsMutationOptions(options), queryClient);
+};
+export const getSetEmployeeIbanUrl = (id: string) => {
+  return `/api/hr/employees/${id}/iban`;
+};
+
+/**
+ * Requires permission: hr.employees.sensitive.update.
+ * @summary Set or clear a person's IBAN (sensitive data)
+ */
+export const setEmployeeIban = async (
+  id: string,
+  setEmployeeIbanCommand: SetEmployeeIbanCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getSetEmployeeIbanUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setEmployeeIbanCommand),
+  });
+};
+
+export const getSetEmployeeIbanMutationKey = () => ['setEmployeeIban'] as const;
+
+export const getSetEmployeeIbanMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setEmployeeIban>>,
+    TError,
+    SetEmployeeIbanMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setEmployeeIban>>,
+  TError,
+  SetEmployeeIbanMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSetEmployeeIbanMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof setEmployeeIban>>, SetEmployeeIbanMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return setEmployeeIban(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetEmployeeIbanMutationResult = NonNullable<Awaited<ReturnType<typeof setEmployeeIban>>>;
+export type SetEmployeeIbanMutationBody = SetEmployeeIbanCommand;
+export type SetEmployeeIbanMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SetEmployeeIbanMutationVariables = { id: string; data: SetEmployeeIbanCommand };
+
+/**
+ * @summary Set or clear a person's IBAN (sensitive data)
+ */
+export const useSetEmployeeIban = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setEmployeeIban>>,
+      TError,
+      SetEmployeeIbanMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setEmployeeIban>>,
+  TError,
+  SetEmployeeIbanMutationVariables,
+  TContext
+> => {
+  return useMutation(getSetEmployeeIbanMutationOptions(options), queryClient);
+};
+export const getUpdateEmployeeSensitiveDataUrl = (id: string) => {
+  return `/api/hr/employees/${id}/sensitive-data`;
+};
+
+/**
+ * Requires permission: hr.employees.sensitive.update.
+ * @summary Replace a person's special category data; stored encrypted (D13)
+ */
+export const updateEmployeeSensitiveData = async (
+  id: string,
+  updateEmployeeSensitiveDataCommand: UpdateEmployeeSensitiveDataCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateEmployeeSensitiveDataUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateEmployeeSensitiveDataCommand),
+  });
+};
+
+export const getUpdateEmployeeSensitiveDataMutationKey = () => ['updateEmployeeSensitiveData'] as const;
+
+export const getUpdateEmployeeSensitiveDataMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateEmployeeSensitiveData>>,
+    TError,
+    UpdateEmployeeSensitiveDataMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateEmployeeSensitiveData>>,
+  TError,
+  UpdateEmployeeSensitiveDataMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateEmployeeSensitiveDataMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateEmployeeSensitiveData>>,
+    UpdateEmployeeSensitiveDataMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateEmployeeSensitiveData(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateEmployeeSensitiveDataMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateEmployeeSensitiveData>>
+>;
+export type UpdateEmployeeSensitiveDataMutationBody = UpdateEmployeeSensitiveDataCommand;
+export type UpdateEmployeeSensitiveDataMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateEmployeeSensitiveDataMutationVariables = { id: string; data: UpdateEmployeeSensitiveDataCommand };
+
+/**
+ * @summary Replace a person's special category data; stored encrypted (D13)
+ */
+export const useUpdateEmployeeSensitiveData = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateEmployeeSensitiveData>>,
+      TError,
+      UpdateEmployeeSensitiveDataMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateEmployeeSensitiveData>>,
+  TError,
+  UpdateEmployeeSensitiveDataMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateEmployeeSensitiveDataMutationOptions(options), queryClient);
+};
+export const getRehireEmployeeUrl = (id: string) => {
+  return `/api/hr/employees/${id}/employments`;
+};
+
+/**
+ * Requires permission: hr.employees.create.
+ * @summary Rehire a person who left, in a company of the caller's scope; returns the new employment
+ */
+export const rehireEmployee = async (
+  id: string,
+  rehireEmployeeCommand: RehireEmployeeCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getRehireEmployeeUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(rehireEmployeeCommand),
+  });
+};
+
+export const getRehireEmployeeMutationKey = () => ['rehireEmployee'] as const;
+
+export const getRehireEmployeeMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof rehireEmployee>>,
+    TError,
+    RehireEmployeeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof rehireEmployee>>,
+  TError,
+  RehireEmployeeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRehireEmployeeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof rehireEmployee>>, RehireEmployeeMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return rehireEmployee(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RehireEmployeeMutationResult = NonNullable<Awaited<ReturnType<typeof rehireEmployee>>>;
+export type RehireEmployeeMutationBody = RehireEmployeeCommand;
+export type RehireEmployeeMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type RehireEmployeeMutationVariables = { id: string; data: RehireEmployeeCommand };
+
+/**
+ * @summary Rehire a person who left, in a company of the caller's scope; returns the new employment
+ */
+export const useRehireEmployee = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof rehireEmployee>>,
+      TError,
+      RehireEmployeeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof rehireEmployee>>, TError, RehireEmployeeMutationVariables, TContext> => {
+  return useMutation(getRehireEmployeeMutationOptions(options), queryClient);
+};
+export const getChangeEmployeeAssignmentUrl = (id: string) => {
+  return `/api/hr/employees/${id}/assignments`;
+};
+
+/**
+ * Requires permission: hr.employees.update.
+ * @summary Start a new assignment of an open employment, possibly in the future; returns the assignment
+ */
+export const changeEmployeeAssignment = async (
+  id: string,
+  changeAssignmentCommand: ChangeAssignmentCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getChangeEmployeeAssignmentUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(changeAssignmentCommand),
+  });
+};
+
+export const getChangeEmployeeAssignmentMutationKey = () => ['changeEmployeeAssignment'] as const;
+
+export const getChangeEmployeeAssignmentMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof changeEmployeeAssignment>>,
+    TError,
+    ChangeEmployeeAssignmentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof changeEmployeeAssignment>>,
+  TError,
+  ChangeEmployeeAssignmentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getChangeEmployeeAssignmentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof changeEmployeeAssignment>>,
+    ChangeEmployeeAssignmentMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return changeEmployeeAssignment(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ChangeEmployeeAssignmentMutationResult = NonNullable<Awaited<ReturnType<typeof changeEmployeeAssignment>>>;
+export type ChangeEmployeeAssignmentMutationBody = ChangeAssignmentCommand;
+export type ChangeEmployeeAssignmentMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type ChangeEmployeeAssignmentMutationVariables = { id: string; data: ChangeAssignmentCommand };
+
+/**
+ * @summary Start a new assignment of an open employment, possibly in the future; returns the assignment
+ */
+export const useChangeEmployeeAssignment = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof changeEmployeeAssignment>>,
+      TError,
+      ChangeEmployeeAssignmentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof changeEmployeeAssignment>>,
+  TError,
+  ChangeEmployeeAssignmentMutationVariables,
+  TContext
+> => {
+  return useMutation(getChangeEmployeeAssignmentMutationOptions(options), queryClient);
+};
+export const getTerminateEmploymentUrl = (id: string) => {
+  return `/api/hr/employees/${id}/terminate`;
+};
+
+/**
+ * Requires permission: hr.employees.terminate.
+ * @summary End an employment on its last working day with an SGK leaving code
+ */
+export const terminateEmployment = async (
+  id: string,
+  terminateEmploymentCommand: TerminateEmploymentCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getTerminateEmploymentUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(terminateEmploymentCommand),
+  });
+};
+
+export const getTerminateEmploymentMutationKey = () => ['terminateEmployment'] as const;
+
+export const getTerminateEmploymentMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof terminateEmployment>>,
+    TError,
+    TerminateEmploymentMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof terminateEmployment>>,
+  TError,
+  TerminateEmploymentMutationVariables,
+  TContext
+> => {
+  const mutationKey = getTerminateEmploymentMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof terminateEmployment>>,
+    TerminateEmploymentMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return terminateEmployment(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TerminateEmploymentMutationResult = NonNullable<Awaited<ReturnType<typeof terminateEmployment>>>;
+export type TerminateEmploymentMutationBody = TerminateEmploymentCommand;
+export type TerminateEmploymentMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type TerminateEmploymentMutationVariables = { id: string; data: TerminateEmploymentCommand };
+
+/**
+ * @summary End an employment on its last working day with an SGK leaving code
+ */
+export const useTerminateEmployment = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof terminateEmployment>>,
+      TError,
+      TerminateEmploymentMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof terminateEmployment>>,
+  TError,
+  TerminateEmploymentMutationVariables,
+  TContext
+> => {
+  return useMutation(getTerminateEmploymentMutationOptions(options), queryClient);
+};
+export const getGroupTransferEmployeeUrl = (id: string) => {
+  return `/api/hr/employees/${id}/group-transfer`;
+};
+
+/**
+ * Requires permission: hr.employees.update.
+ * @summary Move a person to another company of the group; returns the new employment
+ */
+export const groupTransferEmployee = async (
+  id: string,
+  groupTransferCommand: GroupTransferCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getGroupTransferEmployeeUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(groupTransferCommand),
+  });
+};
+
+export const getGroupTransferEmployeeMutationKey = () => ['groupTransferEmployee'] as const;
+
+export const getGroupTransferEmployeeMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof groupTransferEmployee>>,
+    TError,
+    GroupTransferEmployeeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof groupTransferEmployee>>,
+  TError,
+  GroupTransferEmployeeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getGroupTransferEmployeeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof groupTransferEmployee>>,
+    GroupTransferEmployeeMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return groupTransferEmployee(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GroupTransferEmployeeMutationResult = NonNullable<Awaited<ReturnType<typeof groupTransferEmployee>>>;
+export type GroupTransferEmployeeMutationBody = GroupTransferCommand;
+export type GroupTransferEmployeeMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type GroupTransferEmployeeMutationVariables = { id: string; data: GroupTransferCommand };
+
+/**
+ * @summary Move a person to another company of the group; returns the new employment
+ */
+export const useGroupTransferEmployee = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof groupTransferEmployee>>,
+      TError,
+      GroupTransferEmployeeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof groupTransferEmployee>>,
+  TError,
+  GroupTransferEmployeeMutationVariables,
+  TContext
+> => {
+  return useMutation(getGroupTransferEmployeeMutationOptions(options), queryClient);
 };

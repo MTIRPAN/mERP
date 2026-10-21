@@ -15,7 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Merp.Modules.HR.IntegrationTests.Organization;
 
 /// <summary>Tenant <c>acme</c> with helpers to create companies (Platform), units, jobs and positions over HTTP.</summary>
-public sealed class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(postgres)
+public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(postgres)
 {
     public const string Tenant = "acme";
 
@@ -23,6 +23,12 @@ public sealed class HrFactory(PostgresFixture postgres) : MerpWebApplicationFact
     [
         HrPermissions.Org.Read,
         HrPermissions.Org.Manage,
+        HrPermissions.Employees.Read,
+        HrPermissions.Employees.Create,
+        HrPermissions.Employees.Update,
+        HrPermissions.Employees.Terminate,
+        HrPermissions.Employees.Sensitive.Read,
+        HrPermissions.Employees.Sensitive.Update,
         "platform.companies.read",
         "platform.companies.manage",
         "platform.branches.read",
@@ -112,6 +118,17 @@ public sealed class HrFactory(PostgresFixture postgres) : MerpWebApplicationFact
             .Select(r => (r.ManagerPositionId.Value, r.SubordinatePositionId.Value, r.Depth))
             .ToList());
 
+    /// <summary>The integration events of type <typeparamref name="T"/> in the outbox, oldest first.</summary>
+    public async Task<IReadOnlyList<T>> OutboxAsync<T>()
+    {
+        var payloads = await QueryAsync(db => db.OutboxMessages.AsNoTracking()
+            .Where(m => m.Type == typeof(T).FullName)
+            .OrderBy(m => m.OccurredAt)
+            .Select(m => m.Payload)
+            .ToListAsync(Ct));
+        return [.. payloads.Select(p => JsonSerializer.Deserialize<T>(p, JsonSerializerOptions.Web)!)];
+    }
+
     public Task<string> PathAsync(Guid unitId) =>
         QueryAsync(db => db.OrgUnits.AsNoTracking().Where(u => u.Id == OrgUnitId.From(unitId)).Select(u => u.Path).SingleAsync(Ct));
 
@@ -120,6 +137,12 @@ public sealed class HrFactory(PostgresFixture postgres) : MerpWebApplicationFact
             .Where(e => e.EntityType == entityType && e.EntityId == id.ToString())
             .Select(e => e.Field)
             .ToListAsync(Ct));
+}
+
+/// <summary>The same host on the fake clock (<see cref="MerpWebApplicationFactory.Time"/>, 5 January 2026 09:00 UTC).</summary>
+public sealed class HrClockFactory(PostgresFixture postgres) : HrFactory(postgres)
+{
+    protected override bool UseFakeTime => true;
 }
 
 /// <summary>ProblemDetails as the web client sees it.</summary>

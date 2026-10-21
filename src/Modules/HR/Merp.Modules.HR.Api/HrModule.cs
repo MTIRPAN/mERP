@@ -28,5 +28,6 @@ public sealed class HrModule : IModule
         group.MapOrgUnitEndpoints();
         group.MapJobEndpoints();
         group.MapPositionEndpoints();
+        group.MapEmployeeEndpoints();
     }
 }
