@@ -35,6 +35,24 @@ public class UserTests
     }
 
     [Fact]
+    public void LinkEmployee_KeepsTheEmployee_UntilUnlinked_AndHoldsSeesARoleWithItsScope()
+    {
+        var user = NewUser();
+        var employeeId = Guid.NewGuid();
+        var self = new AssignmentScope("Self");
+
+        user.LinkEmployee(employeeId);
+        user.Assign(Reader, self, null, null);
+
+        user.EmployeeId.ShouldBe(employeeId);
+        user.Holds(Reader, self).ShouldBeTrue();
+        user.Holds(Reader, new AssignmentScope("Tenant")).ShouldBeFalse();
+        Should.Throw<ArgumentException>(() => user.LinkEmployee(Guid.Empty));
+        user.UnlinkEmployee();
+        user.EmployeeId.ShouldBeNull();
+    }
+
+    [Fact]
     public void DisplayName_FallsBackToTheUserName() =>
         User.Create("sub", new UserProfile("servis", null, null, null)).DisplayName.ShouldBe("servis");
 

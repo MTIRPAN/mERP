@@ -604,9 +604,24 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(11)")
                         .HasColumnName("tckn");
 
+                    b.Property<DateTimeOffset?>("UserDeactivationRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("user_deactivation_requested_at");
+
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
+
+                    b.Property<string>("UserLinkError")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("user_link_error");
+
+                    b.Property<string>("UserLinkState")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("user_link_state");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()

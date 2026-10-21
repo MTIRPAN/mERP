@@ -12,12 +12,14 @@ import type { EmployeeDetailsCustomFields } from './employeeDetailsCustomFields'
 import type { EmployeeEmail } from './employeeEmail';
 import type { EmployeePhone } from './employeePhone';
 import type { EmployeeSensitiveItem } from './employeeSensitiveItem';
+import type { EmployeeUserItem } from './employeeUserItem';
 import type { EmploymentItem } from './employmentItem';
 import type { FamilyMember } from './familyMember';
 import type { Gender } from './gender';
 import type { LanguageSkill } from './languageSkill';
 import type { MaritalStatus } from './maritalStatus';
 import type { MilitaryStatus } from './militaryStatus';
+import type { UserLinkState } from './userLinkState';
 
 export interface EmployeeDetails {
   id: string;
@@ -39,6 +41,10 @@ export interface EmployeeDetails {
   sensitiveVisible: boolean;
   /** @nullable */
   userId: string | null;
+  userLinkState: UserLinkState;
+  /** @nullable */
+  userLinkError: string | null;
+  user: null | EmployeeUserItem;
   /** @nullable */
   photoFileId: string | null;
   emails: EmployeeEmail[];

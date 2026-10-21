@@ -4,6 +4,7 @@ using Merp.Application.Abstractions.Paging;
 using Merp.Modules.HR.Application;
 using Merp.Modules.HR.Application.Employees;
 using Merp.Modules.HR.Domain.Employees;
+using Merp.Modules.Platform.Contracts.Users;
 using Merp.SharedKernel.Results;
 using Merp.Web.Endpoints;
 using Merp.Web.Errors;
@@ -35,6 +36,37 @@ internal static class EmployeeEndpoints
             .WithName("ExportEmployees")
             .WithSummary("The employee list as Excel, with the list's filters and sort and the chosen columns (D35)")
             .ProducesValidationProblem();
+
+        employees.MapGet("/user-candidates", SearchUserCandidatesAsync)
+            .RequirePermission(HrPermissions.Employees.User)
+            .WithName("SearchEmployeeUserCandidates")
+            .WithSummary("Active users not linked to a person yet, by name, user name or e-mail, to link to an employee");
+
+        employees.MapPost("/{id:guid}/user", (Guid id, CreateEmployeeUserCommand command, ISender sender, CancellationToken ct) =>
+                AcceptedAsync(sender.Send(command with { EmployeeId = id }, ct)))
+            .RequirePermission(HrPermissions.Employees.User)
+            .WithName("CreateEmployeeUser")
+            .WithSummary("Ask for a system user of the person with the Employee role; Platform answers later (D39)")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        employees.MapPost("/{id:guid}/user/link", (Guid id, LinkEmployeeUserCommand command, ISender sender, CancellationToken ct) =>
+                AcceptedAsync(sender.Send(command with { EmployeeId = id }, ct)))
+            .RequirePermission(HrPermissions.Employees.User)
+            .WithName("LinkEmployeeUser")
+            .WithSummary("Ask to link the person to an existing user; Platform answers later (D39)")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        employees.MapDelete("/{id:guid}/user", (Guid id, ISender sender, CancellationToken ct) =>
+                AcceptedAsync(sender.Send(new UnlinkEmployeeUserCommand(id), ct)))
+            .RequirePermission(HrPermissions.Employees.User)
+            .WithName("UnlinkEmployeeUser")
+            .WithSummary("Ask to remove the link of the person and their user; the user keeps their roles")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         employees.MapGet("/{id:guid}", GetAsync)
             .RequirePermission(HrPermissions.Employees.Read)
@@ -294,6 +326,25 @@ internal static class EmployeeEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+    /// <summary>202: the request is on its way to Platform; the card shows it as pending until the answer.</summary>
+    private static async Task<Results<Accepted, ProblemHttpResult>> AcceptedAsync(Task<Result> sending)
+    {
+        var result = await sending;
+        return result.IsSuccess ? TypedResults.Accepted((string?)null) : (ProblemHttpResult)result.Error.ToProblem();
+    }
+
+    /// <param name="search">Part of the name, user name or e-mail.</param>
+    /// <param name="sender">Mediator.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    private static async Task<Results<Ok<IReadOnlyList<UserSummary>>, ProblemHttpResult>> SearchUserCandidatesAsync(
+        string? search,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new SearchUserCandidatesQuery(search), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : (ProblemHttpResult)result.Error.ToProblem();
+    }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> NoContentAsync(Task<Result> sending)
     {

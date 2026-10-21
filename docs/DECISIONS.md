@@ -1026,3 +1026,9 @@ Seçilen kültür `Content-Language` başlığında döner.
 
 **`line-manager(2)` uçtan uca (D37'den taşınan kabul kriteri):** H3a'da bağlı kullanıcılarla iki seviyeli pozisyon zinciri kurulur; onay talebi ikinci seviye yöneticinin kullanıcısına düşer.
 
+**Uygulama notları (H3a):**
+- Kullanıcı istekleri (`POST /api/hr/employees/{id}/user`, `.../user/link`, `DELETE .../user`) 202 döner: istek Platform'a yola çıkmıştır, kart Platform'un cevabına kadar "bekliyor" gösterir. Reddedilen isteğin nedeni kartta kullanıcının dilinde döner.
+- Bağlanacak kullanıcı adayları `GET /api/hr/employees/user-candidates` ile aranır; başka personele bağlı kullanıcılar listede yer almaz.
+- `/api/platform/me` kullanıcının bağlı olduğu personeli de döner (`employeeId`); web "Kartım"ı (H3c) buna göre gösterir.
+- Pasifleştirme işi `hr.user-deactivations` her saatin 15. dakikasında çalışır. Platform son sistem yöneticisini hiçbir durumda pasifleştirmez.
+

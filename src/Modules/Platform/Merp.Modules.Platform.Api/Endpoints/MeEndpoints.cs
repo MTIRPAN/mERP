@@ -97,7 +97,8 @@ internal static class MeEndpoints
                 user.FindFirstValue("sub") ?? string.Empty,
                 user.FindFirstValue("preferred_username"),
                 user.FindFirstValue("name"),
-                user.FindFirstValue("email")),
+                user.FindFirstValue("email"),
+                currentUser.EmployeeId),
             new TenantResponse(tenant.RequiredTenant.Code, tenant.RequiredTenant.Name),
             [.. granted.Order(StringComparer.Ordinal)],
             [.. companies.Value.Select(c => new CompanyResponse(c.Id, c.Code, c.Name))],
@@ -131,7 +132,8 @@ public sealed record MeResponse(
 /// <param name="UserName">User name.</param>
 /// <param name="DisplayName">Name to show.</param>
 /// <param name="Email">E-mail address.</param>
-public sealed record UserResponse(Guid? Id, string Subject, string? UserName, string? DisplayName, string? Email);
+/// <param name="EmployeeId">The HR employee linked to the user (D6, D39); the web offers "Kartım" with it.</param>
+public sealed record UserResponse(Guid? Id, string Subject, string? UserName, string? DisplayName, string? Email, Guid? EmployeeId);
 
 public sealed record TenantResponse(string Code, string Name);
 

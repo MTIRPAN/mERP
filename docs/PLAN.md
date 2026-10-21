@@ -734,7 +734,7 @@ Kurallar: D6, D13, D38.
 
 Kurallar: D6, D39.
 
-- [ ] **H3a bağ ve yaşam döngüsü:** kullanıcı oluşturma, mevcut kullanıcıya bağlama ve bağı kaldırma (Platform olayları, `IUserDirectory`), çıkışta pasifleştirme (`hr.users.deactivation`, `hr.user-deactivations`), `ICurrentUser.EmployeeId`, `line-manager(2)` uçtan uca.
+- [x] **H3a bağ ve yaşam döngüsü:** kullanıcı oluşturma, mevcut kullanıcıya bağlama ve bağı kaldırma (Platform olayları, `IUserDirectory`), çıkışta pasifleştirme (`hr.users.deactivation`, `hr.user-deactivations`), `ICurrentUser.EmployeeId`, `line-manager(2)` uçtan uca.
 - [ ] **H3b self servis:** `/api/hr/me`, `ProfileChangeRequest` ve `hr.profile-change` onayı, karta uygulama, audit kaynağı (`source`).
 - [ ] **H3c web:** karttaki kullanıcı bölümü, "Kartım", talep formları, İK kartında talepler sekmesi.
 

@@ -97,6 +97,15 @@ public sealed class User : AuditableAggregateRoot<UserId>
 
     public void Deactivate() => IsActive = false;
 
+    /// <summary>Links the user to an HR employee (D6, D39); the link is unique in the tenant both ways.</summary>
+    public void LinkEmployee(Guid employeeId) =>
+        EmployeeId = employeeId == Guid.Empty ? throw new ArgumentException("An employee id is required.", nameof(employeeId)) : employeeId;
+
+    public void UnlinkEmployee() => EmployeeId = null;
+
+    /// <summary>Whether the user holds the role with the scope at all, whatever the validity.</summary>
+    public bool Holds(RoleId roleId, AssignmentScope scope) => _assignments.Any(a => a.RoleId == roleId && a.Scope == scope);
+
     public void SetCulture(string? culture) => Culture = string.IsNullOrWhiteSpace(culture) ? null : culture.Trim();
 
     /// <summary>Whether the user gets a notification type on a channel: their choice, otherwise the type's default.</summary>

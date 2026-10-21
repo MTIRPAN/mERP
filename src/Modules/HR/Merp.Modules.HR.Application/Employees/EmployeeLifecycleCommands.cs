@@ -5,6 +5,7 @@ using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
+using Merp.Application.Abstractions.Settings;
 using Merp.Application.Abstractions.Validation;
 using Merp.Modules.HR.Application.Organization;
 using Merp.Modules.HR.Contracts.Employees;
@@ -360,7 +361,9 @@ internal sealed class ChangeEmployeeAssignmentCommandHandler(
 internal sealed class TerminateEmploymentCommandHandler(
     IHrDbContext db,
     IAccessScopeProvider scopes,
-    IIntegrationEventPublisher publisher) : ICommandHandler<TerminateEmploymentCommand>
+    IIntegrationEventPublisher publisher,
+    ISettings settings,
+    TimeProvider timeProvider) : ICommandHandler<TerminateEmploymentCommand>
 {
     public async Task<Result> Handle(TerminateEmploymentCommand request, CancellationToken cancellationToken)
     {
@@ -396,6 +399,7 @@ internal sealed class TerminateEmploymentCommandHandler(
                 CompanyId = employment.CompanyId,
             },
             cancellationToken);
+        await EmployeeUserRules.RequestImmediateDeactivationAsync(employee, employment.CompanyId, settings, publisher, timeProvider, cancellationToken);
         return Result.Success();
     }
 }

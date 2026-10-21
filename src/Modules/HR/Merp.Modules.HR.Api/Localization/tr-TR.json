@@ -334,5 +334,9 @@
   "web.hr.employees.lifecycle.terminate_hint": "{company} şirketindeki {registry} sicil numaralı istihdam, seçilen son çalışma gününde sona erer.",
   "web.hr.employees.lifecycle.group_transfer": "Grup içi nakil",
   "web.hr.employees.lifecycle.group_transfer_hint": "{company} istihdamı nakil tarihinden bir gün önce kapanır; hedef şirkette yeni istihdam açılır.",
-  "web.hr.employees.lifecycle.rehire": "Tekrar işe giriş"
+  "web.hr.employees.lifecycle.rehire": "Tekrar işe giriş",
+  "hr.employees.errors.user_link_pending": "Bu personel için bekleyen bir kullanıcı isteği var.",
+  "hr.employees.errors.user_already_linked": "Personel zaten bir kullanıcıya bağlı.",
+  "hr.employees.errors.no_user": "Personelin bağlı bir kullanıcısı yok.",
+  "hr.employees.errors.user_email_required": "Kullanıcı için bir e-posta adresi girin ya da personelin iletişim bilgilerine ekleyin."
 }

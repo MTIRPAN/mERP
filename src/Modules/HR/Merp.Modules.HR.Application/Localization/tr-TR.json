@@ -125,5 +125,13 @@
   "hr.entities.EmployeeDocument.RemindedDaysBefore": "Gönderilen hatırlatma (gün)",
   "hr.notifications.document_expiring.label": "Süresi dolan personel belgeleri",
   "hr.notifications.document_expiring.title": "{employee}: {document} {days} gün sonra sona eriyor",
-  "hr.notifications.document_expiring.body": "{employee} adlı personelin {document} belgesinin geçerliliği {date} tarihinde sona eriyor. Yenilenen belgeyi personel kartındaki Belgeler sekmesine yükleyin."
+  "hr.notifications.document_expiring.body": "{employee} adlı personelin {document} belgesinin geçerliliği {date} tarihinde sona eriyor. Yenilenen belgeyi personel kartındaki Belgeler sekmesine yükleyin.",
+  "permissions.hr.employees.user": "Sistem kullanıcısı oluşturma ve bağlama",
+  "hr.settings.users.deactivation": "Ayrılan personelin kullanıcısı",
+  "hr.settings.users.deactivation_hint": "Personelin devam eden ya da başlayacak başka istihdamı kalmadığında kullanıcısı ne zaman pasifleşsin. Grup içi nakilde kullanıcı pasifleşmez.",
+  "hr.settings.users.deactivation.on_termination_date": "Çıkış tarihinin sonunda",
+  "hr.settings.users.deactivation.immediately": "Çıkış kaydedilince",
+  "hr.entities.Employee.UserLinkState": "Kullanıcı bağı",
+  "hr.entities.Employee.UserLinkError": "Kullanıcı bağı hatası",
+  "hr.entities.Employee.UserDeactivationRequestedAt": "Kullanıcının pasifleştirilmesi istendi"
 }
