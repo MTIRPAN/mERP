@@ -30,7 +30,7 @@ namespace Merp.Modules.HR.Application.Employees;
 /// <param name="PositionId">Only the holders of this position.</param>
 /// <param name="JobId">Only people with this job.</param>
 /// <param name="Statuses">Employment states on the company's day; Active when empty.</param>
-/// <param name="Search">Part of the name or of the registry number.</param>
+/// <param name="Search">Part of the name or of the registry number, or a whole TCKN.</param>
 /// <param name="CustomFields">JSON object of custom field codes and values the people must have.</param>
 public sealed record GetEmployeesQuery(
     PageRequest Paging,

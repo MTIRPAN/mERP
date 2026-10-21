@@ -1,7 +1,6 @@
 import { DeleteOutlined, PictureOutlined, UploadOutlined } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { App, Avatar, Button, Flex, Typography, Upload } from 'antd';
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   getGetCompanyQueryKey,
@@ -10,22 +9,7 @@ import {
   useSetCompanyLogo,
 } from '@/shared/api/generated/endpoints/platform/platform';
 import { isApiError } from '@/shared/api/problem';
-
-/** Object URL of a downloaded picture, released when it changes or the component goes away. */
-const useObjectUrl = (blob: unknown) => {
-  const [url, setUrl] = useState<string>();
-  useEffect(() => {
-    if (!(blob instanceof Blob)) {
-      setUrl(undefined);
-      return undefined;
-    }
-
-    const created = URL.createObjectURL(blob);
-    setUrl(created);
-    return () => URL.revokeObjectURL(created);
-  }, [blob]);
-  return url;
-};
+import { useObjectUrl } from '@/shared/files/useObjectUrl';
 
 interface CompanyLogoProps {
   companyId: string;

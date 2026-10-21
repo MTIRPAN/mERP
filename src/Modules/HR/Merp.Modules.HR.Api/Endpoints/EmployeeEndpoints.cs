@@ -167,7 +167,7 @@ internal static class EmployeeEndpoints
     /// <param name="positionId">Only the holders of this position.</param>
     /// <param name="jobId">Only people with this job.</param>
     /// <param name="status">Employment states on the company's day (repeatable); Active when absent.</param>
-    /// <param name="search">Part of the name or of the registry number.</param>
+    /// <param name="search">Part of the name or of the registry number, or a whole TCKN.</param>
     /// <param name="customFields">JSON object of custom field codes and values the people must have.</param>
     /// <param name="sender">Mediator.</param>
     /// <param name="cancellationToken">Request aborted.</param>

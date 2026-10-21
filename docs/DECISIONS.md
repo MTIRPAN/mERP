@@ -931,3 +931,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Alıcılar, kişinin çalıştığı ya da işe başlayacağı şirketlerde `hr.employees.documents.manage` yetkisine Tenant veya o şirketin Company kapsamıyla sahip etkin kullanıcılardır (`IPermissionHolders`). Şube ve birim kapsamlı yetki sahipleri şimdilik bildirim almaz. Ayrılmış personelin belgeleri için hatırlatma gitmez.
 - Bildirimdeki belge türü adı kiracının varsayılan dilindedir (`tr-TR`): bildirim argümanları alıcıdan bağımsız metinlerdir.
 
+**Uygulama notları (H2c1):**
+- Personel listesinde arama 11 haneli geçerli bir TCKN ise yalnızca o TCKN'li kişiyi bulur. İşe giriş, TCKN kayıtlıysa reddederken bu bilgiyi zaten verdiği için arama yeni bir şey açığa çıkarmaz; sonuç yine veri kapsamından geçer. İşe giriş sihirbazı "TCKN kayıtlı" hatasında listeyi bu aramayla açan bağlantıyı gösterir: D38'deki "mevcut personel gösterilir" böyle karşılanır.
+- Şube seçimi Platform'un şube listesini kullanır (`platform.branches.read`). Bu yetkisi olmayan kullanıcıya sihirbazda şube alanı gösterilmez; şube sonradan görev değişikliğiyle girilebilir.
+

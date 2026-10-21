@@ -174,12 +174,22 @@ internal static class EmploymentRows
             && units.Any(u => u.Id == p.OrgUnitId && units.Any(root => root.Id == unitId && OrgPaths.IsWithin(u.Path, root.Path)))));
     }
 
-    /// <summary>Part of the first name, last name, full name or registry number.</summary>
+    /// <summary>
+    /// Part of the first name, last name, full name or registry number, or a whole TCKN. A whole TCKN finds the person a
+    /// hire was refused for (D38); hiring already tells whether it is registered, so this reveals nothing more.
+    /// </summary>
     public static IQueryable<EmploymentRow> Search(IQueryable<EmploymentRow> rows, string? search)
     {
         if (string.IsNullOrWhiteSpace(search))
         {
             return rows;
+        }
+
+        var term = search.Trim();
+        if (SharedKernel.ValueObjects.Tckn.Create(term) is { IsSuccess: true } tckn)
+        {
+            var value = tckn.Value.Value;
+            return rows.Where(r => r.Tckn == value);
         }
 
         var pattern = TextSearch.ContainsPattern(search);

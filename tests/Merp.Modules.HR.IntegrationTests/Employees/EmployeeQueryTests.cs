@@ -64,6 +64,10 @@ public sealed class EmployeeQueryTests(HrClockFactory factory) : IClassFixture<H
             .Select(i => i.Id).ShouldBe([upcoming, active]);
         (await ListAsync(admin, $"companyId={setup.CompanyId}&status=Upcoming&status=Active&status=Terminated&search=yıl&pageSize=2")).TotalCount.ShouldBe(3);
         (await ListAsync(admin, $"companyId={setup.CompanyId}&search=gelecek&status=Upcoming")).Items.ShouldHaveSingleItem().Id.ShouldBe(upcoming);
+
+        // A whole TCKN finds the person whatever the status, e.g. after a refused hire (D38)
+        var tckn = (await EmployeeSetup.LoadAsync(factory, leaver)).Tckn;
+        (await ListAsync(admin, $"search={tckn}&status=Upcoming&status=Active&status=Terminated")).Items.ShouldHaveSingleItem().Id.ShouldBe(leaver);
     }
 
     [Fact]
