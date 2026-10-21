@@ -13,6 +13,7 @@ using Merp.Infrastructure.AI;
 using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
+using Merp.Modules.Platform.Contracts.Access;
 using Merp.Modules.Platform.Contracts.Approvals;
 using Merp.Modules.Platform.Contracts.Calendars;
 using Merp.Modules.Platform.Contracts.Documents;
@@ -63,6 +64,9 @@ public static class PlatformInfrastructureServiceCollectionExtensions
 
         // Companies and branches for other modules (D37)
         services.AddScoped<IOrganizationLookup, OrganizationLookup>();
+
+        // Who holds a permission in a company, for other modules that notify the people responsible (D38)
+        services.AddScoped<IPermissionHolders, PermissionHolderLookup>();
         services.AddLocalizationResources(Application.AssemblyReference.Assembly);
 
         // Users, roles and permissions (docs/domain/yetki-ve-onay.md §1)

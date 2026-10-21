@@ -690,7 +690,7 @@ Kurallar: D6, D13, D38.
 
 - [x] **H2a domain ve komutlar:** `Employee` (kişi, iletişim, aile, nitelikler), `Employment`, `JobAssignment`, yaşam döngüsü komutları (`Hire`, `Rehire`, `ChangeAssignment`, `Terminate`, `GroupTransfer`) ve kişi bilgisi komutları ile uç noktaları, hassas veri (şifreli), `IPositionHolders`'ın gerçek uygulaması, yönetici ezmesi, olaylar, numaralandırma, başlayan atamaları duyuran saatlik iş, yetkiler, migration.
 - [x] **H2b1 sorgular:** liste ve kart sorguları ile uç noktaları, maskeleme ve okuma audit'i, veri kapsamı, fotoğraf, Excel'e aktarma, SGK çıkış kodları listesi, OpenAPI.
-- [ ] **H2b2 belgeler:** `EmployeeDocument`, belge türleri (seed), dosya yükleme ve indirme, bitişe 30 ve 7 gün kala hatırlatma (`hr.document-reminders`, `IPermissionHolders`).
+- [x] **H2b2 belgeler:** `EmployeeDocument`, belge türleri (seed), dosya yükleme ve indirme, bitişe 30 ve 7 gün kala hatırlatma (`hr.document-reminders`, `IPermissionHolders`).
 - [ ] **H2c web:** personel listesi, personel kartı, sihirbazlar.
 
 **Yapılacaklar:**

@@ -110,5 +110,20 @@
   "hr.entities.SgkExitCode": "SGK çıkış kodu",
   "hr.entities.SgkExitCode.Code": "Kod",
   "hr.entities.SgkExitCode.Name": "Ad",
-  "hr.entities.SgkExitCode.IsActive": "Aktif"
+  "hr.entities.SgkExitCode.IsActive": "Aktif",
+  "hr.entities.DocumentType": "Belge türü",
+  "hr.entities.DocumentType.Code": "Kod",
+  "hr.entities.DocumentType.Name": "Ad",
+  "hr.entities.DocumentType.IsActive": "Aktif",
+  "hr.entities.EmployeeDocument": "Personel belgesi",
+  "hr.entities.EmployeeDocument.EmployeeId": "Personel",
+  "hr.entities.EmployeeDocument.TypeId": "Belge türü",
+  "hr.entities.EmployeeDocument.Number": "Belge no",
+  "hr.entities.EmployeeDocument.IssuedOn": "Veriliş tarihi",
+  "hr.entities.EmployeeDocument.ValidUntil": "Geçerlilik bitişi",
+  "hr.entities.EmployeeDocument.Note": "Not",
+  "hr.entities.EmployeeDocument.RemindedDaysBefore": "Gönderilen hatırlatma (gün)",
+  "hr.notifications.document_expiring.label": "Süresi dolan personel belgeleri",
+  "hr.notifications.document_expiring.title": "{employee}: {document} {days} gün sonra sona eriyor",
+  "hr.notifications.document_expiring.body": "{employee} adlı personelin {document} belgesinin geçerliliği {date} tarihinde sona eriyor. Yenilenen belgeyi personel kartındaki Belgeler sekmesine yükleyin."
 }

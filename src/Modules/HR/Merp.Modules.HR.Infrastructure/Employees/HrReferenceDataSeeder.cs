@@ -1,4 +1,5 @@
 using Merp.Infrastructure.Persistence;
+using Merp.Modules.HR.Domain.Documents;
 using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Infrastructure.Persistence;
 using Merp.SharedKernel.ValueObjects;
@@ -9,8 +10,9 @@ using Microsoft.Extensions.Logging;
 namespace Merp.Modules.HR.Infrastructure.Employees;
 
 /// <summary>
-/// Seeds the SGK leaving codes (işten ayrılış kodları) once (D38). The list stays editable, so codes SGK adds or
-/// renames later are maintained by the tenant; a tenant that already has codes is left alone.
+/// Seeds the SGK leaving codes (işten ayrılış kodları) and the document types once (D38). Both lists stay editable:
+/// codes SGK adds or renames later and the tenant's own document types are maintained by the tenant, so a list that
+/// already has rows is left alone.
 /// </summary>
 internal sealed partial class HrReferenceDataSeeder(ILogger<HrReferenceDataSeeder> logger) : ITenantDataSeeder
 {
@@ -19,19 +21,49 @@ internal sealed partial class HrReferenceDataSeeder(ILogger<HrReferenceDataSeede
     public async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken)
     {
         var db = services.GetRequiredService<HrDbContext>();
-        if (await db.SgkExitCodes.AnyAsync(cancellationToken))
+        if (!await db.SgkExitCodes.AnyAsync(cancellationToken))
         {
-            return;
+            var codes = SgkExitCodes().ToList();
+            foreach (var (code, name) in codes)
+            {
+                db.SgkExitCodes.Add(SgkExitCode.Create(Code.Create(code, SgkExitCode.CodeMaxLength).Value, LocalizedString.Of(Culture, name)));
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+            LogSeeded(logger, "SGK leaving codes", codes.Count);
         }
 
-        var codes = SgkExitCodes().ToList();
-        foreach (var (code, name) in codes)
+        if (!await db.DocumentTypes.AnyAsync(cancellationToken))
         {
-            db.SgkExitCodes.Add(SgkExitCode.Create(Code.Create(code, SgkExitCode.CodeMaxLength).Value, LocalizedString.Of(Culture, name)));
-        }
+            var types = DocumentTypes().ToList();
+            foreach (var (code, name) in types)
+            {
+                db.DocumentTypes.Add(DocumentType.Create(Code.Create(code, DocumentType.CodeMaxLength).Value, LocalizedString.Of(Culture, name)));
+            }
 
-        await db.SaveChangesAsync(cancellationToken);
-        LogSeeded(logger, codes.Count);
+            await db.SaveChangesAsync(cancellationToken);
+            LogSeeded(logger, "Document types", types.Count);
+        }
+    }
+
+    /// <summary>Documents an HR department usually keeps in a personnel file (özlük dosyası).</summary>
+    internal static IEnumerable<(string Code, string Name)> DocumentTypes()
+    {
+        yield return ("IDENTITY", "Kimlik kartı");
+        yield return ("PASSPORT", "Pasaport");
+        yield return ("DIPLOMA", "Diploma");
+        yield return ("CV", "Özgeçmiş");
+        yield return ("CONTRACT", "İş sözleşmesi");
+        yield return ("HEALTH_REPORT", "Sağlık raporu");
+        yield return ("CRIMINAL_RECORD", "Adli sicil kaydı");
+        yield return ("RESIDENCE", "Yerleşim yeri belgesi");
+        yield return ("MILITARY", "Askerlik durum belgesi");
+        yield return ("DRIVER_LICENSE", "Sürücü belgesi");
+        yield return ("SRC", "SRC belgesi");
+        yield return ("CERTIFICATE", "Sertifika");
+        yield return ("WORK_PERMIT", "Çalışma izni");
+        yield return ("PHOTO", "Vesikalık fotoğraf");
+        yield return ("OTHER", "Diğer");
     }
 
     /// <summary>The leaving codes of SGK's employment declaration in common use.</summary>
@@ -69,6 +101,6 @@ internal sealed partial class HrReferenceDataSeeder(ILogger<HrReferenceDataSeede
         yield return ("34", "İşyerinin devri, işin veya işyerinin niteliğinin değişmesi nedeniyle fesih");
     }
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "SGK leaving codes seeded: {Count}")]
-    private static partial void LogSeeded(ILogger logger, int count);
+    [LoggerMessage(Level = LogLevel.Information, Message = "{List} seeded: {Count}")]
+    private static partial void LogSeeded(ILogger logger, string list, int count);
 }
