@@ -111,7 +111,8 @@ public sealed class HrApprovalDocumentTypes : IApprovalDocumentTypeProvider
                 new ApprovalDefaultStep(
                     "hr.approvals.steps.hr_review",
                     "role",
-                    new Dictionary<string, string> { [ApprovalDefaultStep.RoleCodeParameter] = "hr-specialist" }),
+                    new Dictionary<string, string> { [ApprovalDefaultStep.RoleCodeParameter] = "hr-specialist" },
+                    AllowReturn: true),
             ]),
     ];
 }

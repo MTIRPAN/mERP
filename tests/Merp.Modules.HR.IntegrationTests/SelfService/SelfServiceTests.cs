@@ -119,7 +119,7 @@ public sealed class SelfServiceTests(HrClockFactory factory) : IClassFixture<HrC
         card.Addresses.ShouldHaveSingleItem().Line.ShouldBe("Bağdat Cad. No: 12");
         card.Emails.ShouldHaveSingleItem().Address.ShouldBe("ayse.yilmaz@ornek.test");
         var sources = await factory.QueryAsync(db => db.AuditEntries.AsNoTracking()
-            .Where(e => e.EntityType == nameof(Employee) && e.EntityId == person.Employee.ToString() && e.Field == nameof(Employee.Addresses))
+            .Where(e => e.EntityType == nameof(Employee) && e.EntityId == person.Employee.ToString() && e.Field == nameof(Employee.Addresses) && e.Action == AuditAction.Update)
             .Select(e => e.Source)
             .ToListAsync(Ct));
         sources.ShouldBe([$"{HrApprovalDocumentTypes.ProfileChange}:{request.Number}"]);

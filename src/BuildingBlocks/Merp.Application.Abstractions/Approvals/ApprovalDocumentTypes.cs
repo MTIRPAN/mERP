@@ -51,7 +51,13 @@ public sealed record ApprovalDocumentType(
 /// <param name="Resolver">Resolver key, e.g. <c>line-manager</c>.</param>
 /// <param name="Parameters">Resolver parameters, e.g. <c>level = 1</c>.</param>
 /// <param name="Condition">JSON rule tree of §2.3; null always applies.</param>
-public sealed record ApprovalDefaultStep(string NameKey, string Resolver, IReadOnlyDictionary<string, string> Parameters, string? Condition = null)
+/// <param name="AllowReturn">Whether the approvers may return the document for correction.</param>
+public sealed record ApprovalDefaultStep(
+    string NameKey,
+    string Resolver,
+    IReadOnlyDictionary<string, string> Parameters,
+    string? Condition = null,
+    bool AllowReturn = false)
 {
     /// <summary>Parameter of a seeded <c>role</c> step that names a system role.</summary>
     public const string RoleCodeParameter = "roleCode";
