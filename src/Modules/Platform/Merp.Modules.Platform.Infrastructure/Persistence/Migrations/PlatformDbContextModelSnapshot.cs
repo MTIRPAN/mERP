@@ -206,6 +206,11 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("old_value");
 
+                    b.Property<string>("Source")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source");
+
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");

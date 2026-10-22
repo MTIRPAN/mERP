@@ -35,7 +35,8 @@ public sealed record SearchAuditQuery(
 
 /// <remarks>
 /// EntityLabel and FieldLabel are localized names, or the technical names when no text exists. UserName is the
-/// display name of the user; null for system changes.
+/// display name of the user; null for system changes. Source says what made a change that is not a direct edit, e.g.
+/// <c>hr.profile-change:PDT-2026-00012</c> (D39).
 /// </remarks>
 public sealed record AuditItem(
     Guid Id,
@@ -51,7 +52,8 @@ public sealed record AuditItem(
     string? FieldLabel,
     string? OldValue,
     string? NewValue,
-    string? CorrelationId);
+    string? CorrelationId,
+    string? Source);
 
 /// <summary>Audited entity types per module, for the search filter.</summary>
 public sealed record GetAuditEntityTypesQuery : IQuery<IReadOnlyList<AuditEntityType>>, IRequirePermission
@@ -136,7 +138,8 @@ internal sealed class SearchAuditQueryHandler(
                 r.Field is null ? null : labels.Field(r.Module, r.EntityType, r.Field),
                 r.OldValue,
                 r.NewValue,
-                r.CorrelationId))],
+                r.CorrelationId,
+                r.Source))],
             request.Paging.PageNumber,
             request.Paging.Size,
             total);
