@@ -4,7 +4,7 @@ using Merp.Modules.Platform.Api.Endpoints;
 
 namespace Merp.Modules.HR.IntegrationTests.Organization;
 
-/// <summary>The HR screens in the web shell's menu (PLAN H1b, H2c).</summary>
+/// <summary>The HR screens in the web shell's menu (PLAN H1b, H2c, H3c).</summary>
 public sealed class HrMenuTests(HrFactory factory) : IClassFixture<HrFactory>
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -26,6 +26,15 @@ public sealed class HrMenuTests(HrFactory factory) : IClassFixture<HrFactory>
             .GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!;
 
         me.Menu.Single(m => m.Key == "hr").Children!.Select(c => c.Path).ShouldBe(["/hr/employees", "/hr/organization", "/hr/positions", "/hr/job-titles"]);
+    }
+
+    [Fact]
+    public async Task Me_WithTheSelfServicePermission_ListsOnlyTheOwnCard()
+    {
+        var me = (await factory.CreateClientFor("calisan", HrFactory.Tenant, HrPermissions.Self.ProfileRead, HrPermissions.Self.ProfileRequest)
+            .GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!;
+
+        me.Menu.Single(m => m.Key == "hr").Children!.Select(c => c.Path).ShouldBe(["/hr/me"]);
     }
 
     [Fact]

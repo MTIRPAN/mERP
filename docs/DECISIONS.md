@@ -1040,3 +1040,9 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Onaylanan talep aynı işlemde karta yazılır (`ProfileChangeApproved` domain olayı, kural 7). Kartın ilgili bölümü talepten sonra değiştiyse talep "Onaylandı ama işlenmedi" (`NotApplied`) olarak kapanır, İK'nın sonraki düzenlemesi korunur. Sonuç talep sahibine `hr.profile_change_completed` bildirimiyle gider.
 - Audit kaydının `source` alanı `IAuditSource` ile komutun geri kalanı için ayarlanır; onaylanan talebin kart değişiklikleri `hr.profile-change:PDT-2026-00012` biçiminde kaynak taşır.
 
+**Uygulama notları (H3c):**
+- Personel kartında "Sistem kullanıcısı" bölümü bağlı kullanıcıyı ve aktif/pasif durumunu gösterir. `hr.employees.user` yetkisi olan kullanıcı oluşturur, mevcut kullanıcıya bağlar ve bağı kaldırır. İstek Platform'dayken kart birkaç saniyede bir kendini yeniler; reddedilen isteğin nedeni bölümde görünür. Yetkisi olmayan okuyucu bölümü yalnız bağlı kullanıcı varsa görür.
+- "Kartım" (`/hr/me`, menüde `hr.self.profile.read` ile) kişinin kendi kartıdır: TCKN ve IBAN açık, özel nitelikli veri kartı yoktur. Fotoğraf İK uç noktasından geldiği için Kartım'da yer tutucu gösterilir. Hesabı personele bağlı olmayan kullanıcı açıklayıcı bir mesaj görür.
+- Talep formları İK'nın iletişim ve aile formlarıyla aynıdır, açıklama alanı eklenir ve "Onaya gönder" ile talep oluşturur; IBAN için ayrı form vardır. Bir bölümde açık talep varken o bölümün "Değişiklik iste" düğmesi pasiftir. İade edilen talep "Düzelt ve gönder" ile önerdiği değerlerden açılır.
+- Talep listesi (Kartım'da "Taleplerim", İK kartında "Değişiklik talepleri") satır açıldığında önerilen değerleri, açıklamayı, iade gerekçesini ve onay sürecini gösterir. Kartın sekmesi adreste tutulur (`?tab=requests`); bildirim ve onay görevi bağlantıları doğrudan talepler sekmesini açar.
+
