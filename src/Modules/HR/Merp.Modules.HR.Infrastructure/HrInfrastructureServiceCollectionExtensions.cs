@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.Approvals;
 using Merp.Application.Abstractions.CustomFields;
 using Merp.Application.Abstractions.Jobs;
 using Merp.Application.Abstractions.Notifications;
@@ -12,6 +13,7 @@ using Merp.Modules.HR.Application.Approvals;
 using Merp.Modules.HR.Application.Documents;
 using Merp.Modules.HR.Application.Employees;
 using Merp.Modules.HR.Application.Organization;
+using Merp.Modules.HR.Application.SelfService;
 using Merp.Modules.HR.Contracts.Organization;
 using Merp.Modules.HR.Infrastructure.Documents;
 using Merp.Modules.HR.Infrastructure.Employees;
@@ -57,6 +59,11 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddSingleton<ISettingDefinitionProvider, HrSettingDefinitions>();
         services.AddScoped<UserDeactivationsJob>();
         services.AddSingleton(RecurringJobDefinition.For<UserDeactivationsJob>(UserDeactivationsJob.JobId, UserDeactivationsJob.Cron));
+
+        // Self service: change requests approved by the approval engine (D39)
+        services.AddScoped<ProfileChangeSubmitter>();
+        services.AddSingleton<IApprovalDocumentTypeProvider, HrApprovalDocumentTypes>();
+        services.AddScoped<IApprovalDocumentAccessPolicy, ProfileChangeAccessPolicy>();
 
         // Employee documents: reminders before they expire (D38)
         services.AddSingleton<INotificationTypeProvider, HrNotificationTypes>();

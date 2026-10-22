@@ -7,21 +7,13 @@ internal sealed class AuditSource : IAuditSource
 {
     public string? Current { get; private set; }
 
-    public IDisposable Use(string source)
+    public void Set(string? source)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(source);
-        if (source.Length > IAuditSource.MaxLength)
+        if (source is { Length: > IAuditSource.MaxLength })
         {
             throw new ArgumentException($"An audit source has at most {IAuditSource.MaxLength} characters.", nameof(source));
         }
 
-        var previous = Current;
-        Current = source;
-        return new Restore(this, previous);
-    }
-
-    private sealed class Restore(AuditSource owner, string? previous) : IDisposable
-    {
-        public void Dispose() => owner.Current = previous;
+        Current = string.IsNullOrWhiteSpace(source) ? null : source;
     }
 }

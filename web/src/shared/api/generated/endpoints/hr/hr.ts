@@ -54,12 +54,16 @@ import type {
   PagedResultOfPositionListItem,
   PositionDetails,
   ProblemDetails,
+  ProfileChangeItem,
   RehireEmployeeCommand,
   ReplaceEmployeeDocumentFileBody,
   SearchEmployeeUserCandidatesParams,
   SetEmployeeIbanCommand,
   SetEmployeePhotoBody,
   SgkExitCodeItem,
+  SubmitContactsChangeCommand,
+  SubmitFamilyChangeCommand,
+  SubmitIbanChangeCommand,
   TerminateEmploymentCommand,
   UpdateDocumentTypeCommand,
   UpdateEmployeeContactsCommand,
@@ -3877,6 +3881,128 @@ export function useListSgkExitCodes<TData = Awaited<ReturnType<typeof listSgkExi
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getListEmployeeProfileChangesUrl = (id: string) => {
+  return `/api/hr/employees/${id}/profile-changes`;
+};
+
+/**
+ * Requires permission: hr.employees.read.
+ * @summary The change requests of a person in the caller's scope, newest first
+ */
+export const listEmployeeProfileChanges = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ProfileChangeItem[]> => {
+  return customFetch<ProfileChangeItem[]>(getListEmployeeProfileChangesUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListEmployeeProfileChangesQueryKey = (id: string) => {
+  return [`/api/hr/employees/${id}/profile-changes`] as const;
+};
+
+export const getListEmployeeProfileChangesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listEmployeeProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployeeProfileChanges>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListEmployeeProfileChangesQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listEmployeeProfileChanges>>> = ({ signal }) =>
+    listEmployeeProfileChanges(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listEmployeeProfileChanges>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListEmployeeProfileChangesQueryResult = NonNullable<Awaited<ReturnType<typeof listEmployeeProfileChanges>>>;
+export type ListEmployeeProfileChangesQueryError = ErrorType<ProblemDetails>;
+
+export function useListEmployeeProfileChanges<
+  TData = Awaited<ReturnType<typeof listEmployeeProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployeeProfileChanges>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEmployeeProfileChanges>>,
+          TError,
+          Awaited<ReturnType<typeof listEmployeeProfileChanges>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListEmployeeProfileChanges<
+  TData = Awaited<ReturnType<typeof listEmployeeProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployeeProfileChanges>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEmployeeProfileChanges>>,
+          TError,
+          Awaited<ReturnType<typeof listEmployeeProfileChanges>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListEmployeeProfileChanges<
+  TData = Awaited<ReturnType<typeof listEmployeeProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployeeProfileChanges>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The change requests of a person in the caller's scope, newest first
+ */
+
+export function useListEmployeeProfileChanges<
+  TData = Awaited<ReturnType<typeof listEmployeeProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEmployeeProfileChanges>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListEmployeeProfileChangesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getListEmployeeDocumentsUrl = (employeeId: string) => {
   return `/api/hr/employees/${employeeId}/documents`;
 };
@@ -4878,4 +5004,604 @@ export const useUpdateEmployeeDocumentType = <
   TContext
 > => {
   return useMutation(getUpdateEmployeeDocumentTypeMutationOptions(options), queryClient);
+};
+export const getGetMyEmployeeUrl = () => {
+  return `/api/hr/me`;
+};
+
+/**
+ * Requires permission: hr.self.profile.read.
+ * @summary Kartım: the card of the person linked to the user; 404 without one
+ */
+export const getMyEmployee = async (options?: Parameters<typeof customFetch>[1]): Promise<EmployeeDetails> => {
+  return customFetch<EmployeeDetails>(getGetMyEmployeeUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetMyEmployeeQueryKey = () => {
+  return [`/api/hr/me`] as const;
+};
+
+export const getGetMyEmployeeQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyEmployee>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyEmployee>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyEmployeeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyEmployee>>> = ({ signal }) =>
+    getMyEmployee({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyEmployee>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMyEmployeeQueryResult = NonNullable<Awaited<ReturnType<typeof getMyEmployee>>>;
+export type GetMyEmployeeQueryError = ErrorType<ProblemDetails>;
+
+export function useGetMyEmployee<TData = Awaited<ReturnType<typeof getMyEmployee>>, TError = ErrorType<ProblemDetails>>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyEmployee>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyEmployee>>,
+          TError,
+          Awaited<ReturnType<typeof getMyEmployee>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyEmployee<TData = Awaited<ReturnType<typeof getMyEmployee>>, TError = ErrorType<ProblemDetails>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyEmployee>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyEmployee>>,
+          TError,
+          Awaited<ReturnType<typeof getMyEmployee>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyEmployee<TData = Awaited<ReturnType<typeof getMyEmployee>>, TError = ErrorType<ProblemDetails>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyEmployee>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Kartım: the card of the person linked to the user; 404 without one
+ */
+
+export function useGetMyEmployee<TData = Awaited<ReturnType<typeof getMyEmployee>>, TError = ErrorType<ProblemDetails>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyEmployee>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMyEmployeeQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListMyProfileChangesUrl = () => {
+  return `/api/hr/me/profile-changes`;
+};
+
+/**
+ * Requires permission: hr.self.profile.request.
+ * @summary The user's change requests, newest first
+ */
+export const listMyProfileChanges = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ProfileChangeItem[]> => {
+  return customFetch<ProfileChangeItem[]>(getListMyProfileChangesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListMyProfileChangesQueryKey = () => {
+  return [`/api/hr/me/profile-changes`] as const;
+};
+
+export const getListMyProfileChangesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyProfileChanges>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyProfileChangesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyProfileChanges>>> = ({ signal }) =>
+    listMyProfileChanges({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyProfileChanges>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMyProfileChangesQueryResult = NonNullable<Awaited<ReturnType<typeof listMyProfileChanges>>>;
+export type ListMyProfileChangesQueryError = ErrorType<ProblemDetails>;
+
+export function useListMyProfileChanges<
+  TData = Awaited<ReturnType<typeof listMyProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyProfileChanges>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyProfileChanges>>,
+          TError,
+          Awaited<ReturnType<typeof listMyProfileChanges>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyProfileChanges<
+  TData = Awaited<ReturnType<typeof listMyProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyProfileChanges>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyProfileChanges>>,
+          TError,
+          Awaited<ReturnType<typeof listMyProfileChanges>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyProfileChanges<
+  TData = Awaited<ReturnType<typeof listMyProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyProfileChanges>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The user's change requests, newest first
+ */
+
+export function useListMyProfileChanges<
+  TData = Awaited<ReturnType<typeof listMyProfileChanges>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyProfileChanges>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMyProfileChangesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSubmitContactsChangeUrl = () => {
+  return `/api/hr/me/profile-changes/contacts`;
+};
+
+/**
+ * Requires permission: hr.self.profile.request.
+ * @summary Ask for new e-mails, phones, addresses and emergency contacts; with requestId, resend a returned request
+ */
+export const submitContactsChange = async (
+  submitContactsChangeCommand: SubmitContactsChangeCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getSubmitContactsChangeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(submitContactsChangeCommand),
+  });
+};
+
+export const getSubmitContactsChangeMutationKey = () => ['submitContactsChange'] as const;
+
+export const getSubmitContactsChangeMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitContactsChange>>,
+    TError,
+    SubmitContactsChangeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitContactsChange>>,
+  TError,
+  SubmitContactsChangeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubmitContactsChangeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitContactsChange>>,
+    SubmitContactsChangeMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return submitContactsChange(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitContactsChangeMutationResult = NonNullable<Awaited<ReturnType<typeof submitContactsChange>>>;
+export type SubmitContactsChangeMutationBody = SubmitContactsChangeCommand;
+export type SubmitContactsChangeMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SubmitContactsChangeMutationVariables = { data: SubmitContactsChangeCommand };
+
+/**
+ * @summary Ask for new e-mails, phones, addresses and emergency contacts; with requestId, resend a returned request
+ */
+export const useSubmitContactsChange = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof submitContactsChange>>,
+      TError,
+      SubmitContactsChangeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof submitContactsChange>>,
+  TError,
+  SubmitContactsChangeMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubmitContactsChangeMutationOptions(options), queryClient);
+};
+export const getSubmitFamilyChangeUrl = () => {
+  return `/api/hr/me/profile-changes/family`;
+};
+
+/**
+ * Requires permission: hr.self.profile.request.
+ * @summary Ask for new family members; with requestId, resend a returned request
+ */
+export const submitFamilyChange = async (
+  submitFamilyChangeCommand: SubmitFamilyChangeCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getSubmitFamilyChangeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(submitFamilyChangeCommand),
+  });
+};
+
+export const getSubmitFamilyChangeMutationKey = () => ['submitFamilyChange'] as const;
+
+export const getSubmitFamilyChangeMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitFamilyChange>>,
+    TError,
+    SubmitFamilyChangeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitFamilyChange>>,
+  TError,
+  SubmitFamilyChangeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubmitFamilyChangeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitFamilyChange>>,
+    SubmitFamilyChangeMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return submitFamilyChange(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitFamilyChangeMutationResult = NonNullable<Awaited<ReturnType<typeof submitFamilyChange>>>;
+export type SubmitFamilyChangeMutationBody = SubmitFamilyChangeCommand;
+export type SubmitFamilyChangeMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SubmitFamilyChangeMutationVariables = { data: SubmitFamilyChangeCommand };
+
+/**
+ * @summary Ask for new family members; with requestId, resend a returned request
+ */
+export const useSubmitFamilyChange = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof submitFamilyChange>>,
+      TError,
+      SubmitFamilyChangeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof submitFamilyChange>>,
+  TError,
+  SubmitFamilyChangeMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubmitFamilyChangeMutationOptions(options), queryClient);
+};
+export const getSubmitIbanChangeUrl = () => {
+  return `/api/hr/me/profile-changes/iban`;
+};
+
+/**
+ * Requires permission: hr.self.profile.request.
+ * @summary Ask for a new IBAN; with requestId, resend a returned request
+ */
+export const submitIbanChange = async (
+  submitIbanChangeCommand: SubmitIbanChangeCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getSubmitIbanChangeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(submitIbanChangeCommand),
+  });
+};
+
+export const getSubmitIbanChangeMutationKey = () => ['submitIbanChange'] as const;
+
+export const getSubmitIbanChangeMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitIbanChange>>,
+    TError,
+    SubmitIbanChangeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitIbanChange>>,
+  TError,
+  SubmitIbanChangeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubmitIbanChangeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitIbanChange>>,
+    SubmitIbanChangeMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return submitIbanChange(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitIbanChangeMutationResult = NonNullable<Awaited<ReturnType<typeof submitIbanChange>>>;
+export type SubmitIbanChangeMutationBody = SubmitIbanChangeCommand;
+export type SubmitIbanChangeMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SubmitIbanChangeMutationVariables = { data: SubmitIbanChangeCommand };
+
+/**
+ * @summary Ask for a new IBAN; with requestId, resend a returned request
+ */
+export const useSubmitIbanChange = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof submitIbanChange>>,
+      TError,
+      SubmitIbanChangeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof submitIbanChange>>,
+  TError,
+  SubmitIbanChangeMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubmitIbanChangeMutationOptions(options), queryClient);
+};
+export const getWithdrawProfileChangeUrl = (id: string) => {
+  return `/api/hr/me/profile-changes/${id}/withdraw`;
+};
+
+/**
+ * Requires permission: hr.self.profile.request.
+ * @summary Withdraw an open change request
+ */
+export const withdrawProfileChange = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getWithdrawProfileChangeUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getWithdrawProfileChangeMutationKey = () => ['withdrawProfileChange'] as const;
+
+export const getWithdrawProfileChangeMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof withdrawProfileChange>>,
+    TError,
+    WithdrawProfileChangeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof withdrawProfileChange>>,
+  TError,
+  WithdrawProfileChangeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getWithdrawProfileChangeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof withdrawProfileChange>>,
+    WithdrawProfileChangeMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return withdrawProfileChange(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type WithdrawProfileChangeMutationResult = NonNullable<Awaited<ReturnType<typeof withdrawProfileChange>>>;
+
+export type WithdrawProfileChangeMutationError = ErrorType<ProblemDetails>;
+export type WithdrawProfileChangeMutationVariables = { id: string };
+
+/**
+ * @summary Withdraw an open change request
+ */
+export const useWithdrawProfileChange = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof withdrawProfileChange>>,
+      TError,
+      WithdrawProfileChangeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof withdrawProfileChange>>,
+  TError,
+  WithdrawProfileChangeMutationVariables,
+  TContext
+> => {
+  return useMutation(getWithdrawProfileChangeMutationOptions(options), queryClient);
 };

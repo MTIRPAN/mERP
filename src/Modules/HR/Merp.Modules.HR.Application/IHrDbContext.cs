@@ -2,6 +2,7 @@ using Merp.Application.Persistence.Files;
 using Merp.Modules.HR.Domain.Documents;
 using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Organization;
+using Merp.Modules.HR.Domain.SelfService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -34,6 +35,9 @@ public interface IHrDbContext
     DbSet<DocumentType> DocumentTypes { get; }
 
     DbSet<EmployeeDocument> EmployeeDocuments { get; }
+
+    /// <summary>People's requests to change their card (D39).</summary>
+    DbSet<ProfileChangeRequest> ProfileChangeRequests { get; }
 
     /// <summary>Files of HR records, e.g. employee photos (D31).</summary>
     DbSet<StoredFile> StoredFiles { get; }

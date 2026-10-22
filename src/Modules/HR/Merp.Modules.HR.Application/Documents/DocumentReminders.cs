@@ -17,9 +17,13 @@ public sealed class HrNotificationTypes : INotificationTypeProvider
     /// <summary>An employee document expires in 30 or 7 days (D38).</summary>
     public const string DocumentExpiring = "hr.document_expiring";
 
+    /// <summary>A change request of the user ended: written to the card, kept off it or rejected (D39).</summary>
+    public const string ProfileChangeCompleted = "hr.profile_change_completed";
+
     public IEnumerable<NotificationTypeDefinition> GetNotificationTypes() =>
     [
         new(DocumentExpiring, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(ProfileChangeCompleted, [NotificationChannel.InApp, NotificationChannel.Email]),
     ];
 }
 

@@ -55,6 +55,7 @@ describe('AuditLogPage', () => {
           oldValue: '***',
           newValue: '***',
           correlationId: 't1',
+          source: null,
         },
       ],
       page: 1,

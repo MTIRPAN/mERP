@@ -423,6 +423,41 @@ internal sealed class GetEmployeeQueryHandler(
             return CommonErrors.NotFound;
         }
 
+        var sensitiveScope = await EmployeeScope.ResolveAsync(scopes, HrPermissions.Employees.Sensitive.Read, db, holders, currentUser, cancellationToken);
+        var sensitiveVisible = await sensitiveScope.Filter(rows, db).AnyAsync(cancellationToken);
+        var cards = new EmployeeCardBuilder(db, currentUser, organization, protector, readLog, users, localizer, timeProvider);
+        return await cards.BuildAsync(id, visible, days, sensitiveVisible, sensitiveVisible, cancellationToken);
+    }
+}
+
+/// <summary>
+/// The employee card of a person (D38): the employments given, the names around them, the photo, the user and the
+/// sensitive values when they may be shown; every plain sensitive value shown is audited (D13).
+/// </summary>
+internal sealed class EmployeeCardBuilder(
+    IHrDbContext db,
+    ICurrentUser currentUser,
+    IOrganizationLookup organization,
+    ISensitiveDataProtector protector,
+    ISensitiveReadLog readLog,
+    IUserDirectory users,
+    ITextLocalizer localizer,
+    TimeProvider timeProvider)
+{
+    /// <param name="id">The person.</param>
+    /// <param name="visible">Employments to show.</param>
+    /// <param name="days">Calendar days of the companies.</param>
+    /// <param name="personSensitiveVisible">Show the TCKN and the IBAN in plain.</param>
+    /// <param name="specialCategoryVisible">Show the special category data.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    public async Task<EmployeeDetails> BuildAsync(
+        EmployeeId id,
+        IReadOnlyCollection<EmploymentId> visible,
+        CompanyDays days,
+        bool personSensitiveVisible,
+        bool specialCategoryVisible,
+        CancellationToken cancellationToken)
+    {
         var employee = await db.Employees.AsNoTracking()
             .Include(e => e.Employments)
             .ThenInclude(m => m.Assignments)
@@ -431,9 +466,6 @@ internal sealed class GetEmployeeQueryHandler(
             .Where(e => e.Id == id)
             .Select(e => new { Version = EF.Property<uint>(e, ConcurrencyVersion.PropertyName), e.CreatedAt, e.ModifiedAt })
             .SingleAsync(cancellationToken);
-
-        var sensitiveScope = await EmployeeScope.ResolveAsync(scopes, HrPermissions.Employees.Sensitive.Read, db, holders, currentUser, cancellationToken);
-        var sensitiveVisible = await sensitiveScope.Filter(rows, db).AnyAsync(cancellationToken);
 
         var employments = employee.Employments.Where(m => visible.Contains(m.Id)).OrderByDescending(m => m.HireDate).ToList();
         var assignments = employments.SelectMany(m => m.Assignments).ToList();
@@ -446,8 +478,13 @@ internal sealed class GetEmployeeQueryHandler(
             assignments.Where(a => a.BranchId is not null).Select(a => a.BranchId!.Value),
             cancellationToken);
         var exitCodes = await ExitCodeNamesAsync(employments, cancellationToken);
-        var photos = await EmployeePhotos.IdsAsync(db, [request.Id], cancellationToken);
-        var sensitive = sensitiveVisible ? await ReadSensitiveAsync(employee, cancellationToken) : new EmployeeSensitiveItem(true, null, null, null, null);
+        var photos = await EmployeePhotos.IdsAsync(db, [id.Value], cancellationToken);
+        if (personSensitiveVisible)
+        {
+            await RecordPersonReadAsync(employee, cancellationToken);
+        }
+
+        var sensitive = specialCategoryVisible ? await ReadSensitiveAsync(employee, cancellationToken) : new EmployeeSensitiveItem(true, null, null, null, null);
         var user = employee.UserId is { } userId
             ? (await users.GetAsync([userId], cancellationToken)).SingleOrDefault() is { } found
                 ? new EmployeeUserItem(found.Id, found.UserName, found.Email, found.IsActive)
@@ -455,8 +492,8 @@ internal sealed class GetEmployeeQueryHandler(
             : null;
 
         return new EmployeeDetails(
-            request.Id,
-            sensitiveVisible ? employee.Tckn : EmployeeMasks.Tckn(employee.Tckn),
+            id.Value,
+            personSensitiveVisible ? employee.Tckn : EmployeeMasks.Tckn(employee.Tckn),
             employee.FirstName,
             employee.LastName,
             employee.FullName,
@@ -466,13 +503,13 @@ internal sealed class GetEmployeeQueryHandler(
             employee.Nationality,
             employee.MaritalStatus,
             employee.MilitaryStatus,
-            sensitiveVisible ? employee.Iban : EmployeeMasks.Iban(employee.Iban),
-            sensitiveVisible,
+            personSensitiveVisible ? employee.Iban : EmployeeMasks.Iban(employee.Iban),
+            personSensitiveVisible,
             employee.UserId,
             employee.UserLinkState,
             employee.UserLinkError is { } error ? localizer.Get(error, culture: currentUser.Culture) : null,
             user,
-            photos.TryGetValue(request.Id, out var photo) ? photo : null,
+            photos.TryGetValue(id.Value, out var photo) ? photo : null,
             employee.Emails,
             employee.Phones,
             employee.Addresses,
@@ -547,18 +584,22 @@ internal sealed class GetEmployeeQueryHandler(
         return rows.ToDictionary(c => c.Code, c => c.Name.Get(currentUser.Culture, "tr-TR"), StringComparer.Ordinal);
     }
 
-    /// <summary>The plain values; the read of the TCKN, the IBAN and every special category value is audited.</summary>
+    /// <summary>The TCKN and the IBAN are shown in plain: their read is audited (D13).</summary>
+    private Task RecordPersonReadAsync(Employee employee, CancellationToken cancellationToken)
+    {
+        List<string> fields = [nameof(Employee.Tckn)];
+        if (employee.Iban is not null)
+        {
+            fields.Add(nameof(Employee.Iban));
+        }
+
+        return readLog.RecordAsync(typeof(Employee), employee.Id.Value.ToString(), fields, cancellationToken);
+    }
+
+    /// <summary>The plain special category values; the read of every value shown is audited.</summary>
     private async Task<EmployeeSensitiveItem> ReadSensitiveAsync(Employee employee, CancellationToken cancellationToken)
     {
         var entityId = employee.Id.Value.ToString();
-        List<string> personFields = [nameof(Employee.Tckn)];
-        if (employee.Iban is not null)
-        {
-            personFields.Add(nameof(Employee.Iban));
-        }
-
-        await readLog.RecordAsync(typeof(Employee), entityId, personFields, cancellationToken);
-
         var data = await db.EmployeeSensitiveData.AsNoTracking().SingleOrDefaultAsync(s => s.Id == employee.Id, cancellationToken);
         if (data is null)
         {
