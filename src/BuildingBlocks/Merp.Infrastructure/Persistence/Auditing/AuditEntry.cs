@@ -26,6 +26,9 @@ public sealed class AuditEntry
 
     /// <summary>Trace id of the request, to group the changes of one operation.</summary>
     public string? CorrelationId { get; init; }
+
+    /// <summary>What made the change when it is not a direct edit, e.g. <c>hr.profile-change:PDT-2026-00012</c> (D39).</summary>
+    public string? Source { get; init; }
 }
 
 public enum AuditAction

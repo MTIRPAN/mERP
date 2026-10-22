@@ -1032,3 +1032,11 @@ Seçilen kültür `Content-Language` başlığında döner.
 - `/api/platform/me` kullanıcının bağlı olduğu personeli de döner (`employeeId`); web "Kartım"ı (H3c) buna göre gösterir.
 - Pasifleştirme işi `hr.user-deactivations` her saatin 15. dakikasında çalışır. Platform son sistem yöneticisini hiçbir durumda pasifleştirmez.
 
+**Uygulama notları (H3b):**
+- Self servis uçları `/api/hr/me` altındadır: `GET /api/hr/me` (Kartım), `GET /api/hr/me/profile-changes`, `POST .../contacts`, `.../family`, `.../iban` (201) ve `POST .../{id}/withdraw` (204). İK, kişinin taleplerini `GET /api/hr/employees/{id}/profile-changes` ile görür; önerilen IBAN `hr.employees.sensitive.read` yoksa maskelenir, açık okunması audit'e yazılır.
+- Kartım, kartın kendisini döner: TCKN ve IBAN açık, okunmaları audit'e yazılır; özel nitelikli veriler (sağlık, engellilik, adli sicil) self serviste gösterilmez.
+- Talep türleri: `Contacts` (e-posta, telefon, adres ve acil durum kişileri birlikte), `Family`, `Iban`. Her tür için aynı anda tek açık (bekleyen veya iade edilmiş) talep olabilir; ikincisi 409 döner.
+- İade edilen talep `requestId` ile düzeltilip aynı numarayla yeniden gönderilir; Platform onayı baştan başlatır. Talep sahibi açık talebini geri çekebilir; Platform'a `ApprovalCancellationRequested` gider.
+- Onaylanan talep aynı işlemde karta yazılır (`ProfileChangeApproved` domain olayı, kural 7). Kartın ilgili bölümü talepten sonra değiştiyse talep "Onaylandı ama işlenmedi" (`NotApplied`) olarak kapanır, İK'nın sonraki düzenlemesi korunur. Sonuç talep sahibine `hr.profile_change_completed` bildirimiyle gider.
+- Audit kaydının `source` alanı `IAuditSource` ile komutun geri kalanı için ayarlanır; onaylanan talebin kart değişiklikleri `hr.profile-change:PDT-2026-00012` biçiminde kaynak taşır.
+

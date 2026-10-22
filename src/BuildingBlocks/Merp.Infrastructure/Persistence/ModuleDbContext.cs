@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.Auditing;
 using System.Linq.Expressions;
 using System.Reflection;
 using Merp.Application.Persistence;
@@ -144,6 +145,7 @@ public abstract class ModuleDbContext(DbContextOptions options) : DbContext(opti
             builder.Property(e => e.Action).HasConversion<string>().HasMaxLength(20);
             builder.Property(e => e.Field).HasMaxLength(200);
             builder.Property(e => e.CorrelationId).HasMaxLength(100);
+            builder.Property(e => e.Source).HasMaxLength(IAuditSource.MaxLength);
             builder.HasIndex(e => new { e.EntityType, e.EntityId, e.OccurredAt });
             builder.HasIndex(e => new { e.UserId, e.OccurredAt });
             // The audit search pages through all entries, newest first (PLAN P3)

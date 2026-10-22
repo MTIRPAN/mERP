@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using Merp.Application.Abstractions.Auditing;
 using Merp.Application.Abstractions.Context;
 using Merp.Infrastructure.Persistence.Auditing;
 using Merp.SharedKernel.Markers;
@@ -13,7 +14,7 @@ namespace Merp.Infrastructure.Persistence.Interceptors;
 /// Writes field level changes of <c>[Audited]</c> entities to the module's <c>audit_entries</c> table in the same
 /// transaction (D13). Values of <c>[Sensitive]</c> properties are never written; only the fact that they changed.
 /// </summary>
-public sealed class AuditLogInterceptor(TimeProvider timeProvider, ICurrentUser currentUser) : SaveChangesInterceptor
+public sealed class AuditLogInterceptor(TimeProvider timeProvider, ICurrentUser currentUser, IAuditSource auditSource) : SaveChangesInterceptor
 {
     public const string MaskedValue = "***";
 
@@ -53,6 +54,7 @@ public sealed class AuditLogInterceptor(TimeProvider timeProvider, ICurrentUser 
         context.ChangeTracker.DetectChanges();
         var now = timeProvider.GetUtcNow();
         var correlationId = Activity.Current?.TraceId.ToString();
+        var source = auditSource.Current;
         var entries = new List<AuditEntry>();
         var inserted = new HashSet<(string Type, string Id)>();
 
@@ -67,6 +69,7 @@ public sealed class AuditLogInterceptor(TimeProvider timeProvider, ICurrentUser 
             OldValue = oldValue,
             NewValue = newValue,
             CorrelationId = correlationId,
+            Source = source,
         };
 
         foreach (var entry in context.ChangeTracker.Entries()

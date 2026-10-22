@@ -31,5 +31,6 @@ public sealed class HrModule : IModule
         group.MapEmployeeEndpoints();
         group.MapSgkExitCodeEndpoints();
         group.MapDocumentEndpoints();
+        group.MapSelfServiceEndpoints();
     }
 }

@@ -28,7 +28,7 @@ public sealed record AuditFilter(
 
 /// <remarks>
 /// Action is Insert, Update, Delete or Read. Field is the property name (<c>ShortName</c>, <c>Address.City</c>);
-/// null for a whole-entity action.
+/// null for a whole-entity action. Source says what made a change that is not a direct edit (<see cref="IAuditSource"/>).
 /// </remarks>
 public sealed record AuditRecord(
     Guid Id,
@@ -41,4 +41,5 @@ public sealed record AuditRecord(
     string? Field,
     string? OldValue,
     string? NewValue,
-    string? CorrelationId);
+    string? CorrelationId,
+    string? Source = null);

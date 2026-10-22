@@ -78,13 +78,31 @@ public sealed record EmployeeAddressInput(ContactKind? Kind, string? Line, strin
 
 public sealed record EmergencyContactInput(string? FullName, FamilyRelation? Relation, string? Phone);
 
+/// <summary>The contact lists of a person, as the card edits them and as a change request proposes them (D39).</summary>
+public interface IContactFields
+{
+    IReadOnlyList<EmailInput>? Emails { get; }
+
+    IReadOnlyList<PhoneInput>? Phones { get; }
+
+    IReadOnlyList<EmployeeAddressInput>? Addresses { get; }
+
+    IReadOnlyList<EmergencyContactInput>? EmergencyContacts { get; }
+}
+
+/// <summary>The family members of a person, as the card edits them and as a change request proposes them (D39).</summary>
+public interface IFamilyFields
+{
+    IReadOnlyList<FamilyMemberInput>? Members { get; }
+}
+
 /// <summary>Replaces the e-mail addresses, phone numbers, addresses and emergency contacts of a person.</summary>
 public sealed record UpdateEmployeeContactsCommand(
     uint Version,
     IReadOnlyList<EmailInput>? Emails,
     IReadOnlyList<PhoneInput>? Phones,
     IReadOnlyList<EmployeeAddressInput>? Addresses,
-    IReadOnlyList<EmergencyContactInput>? EmergencyContacts) : ICommand, IRequirePermission
+    IReadOnlyList<EmergencyContactInput>? EmergencyContacts) : ICommand, IRequirePermission, IContactFields
 {
     /// <summary>From the route.</summary>
     [JsonIgnore]
@@ -97,7 +115,7 @@ public sealed record UpdateEmployeeContactsCommand(
 public sealed record FamilyMemberInput(FamilyRelation? Relation, string? FullName, DateOnly? BirthDate, bool IsWorking);
 
 /// <summary>Replaces the family members of a person (aile bilgileri).</summary>
-public sealed record UpdateEmployeeFamilyCommand(uint Version, IReadOnlyList<FamilyMemberInput>? Members) : ICommand, IRequirePermission
+public sealed record UpdateEmployeeFamilyCommand(uint Version, IReadOnlyList<FamilyMemberInput>? Members) : ICommand, IRequirePermission, IFamilyFields
 {
     /// <summary>From the route.</summary>
     [JsonIgnore]
@@ -204,24 +222,36 @@ internal sealed class UpdateEmployeePersonCommandValidator : AbstractValidator<U
 
 internal sealed class UpdateEmployeeContactsCommandValidator : AbstractValidator<UpdateEmployeeContactsCommand>
 {
-    public UpdateEmployeeContactsCommandValidator()
+    public UpdateEmployeeContactsCommandValidator() => ContactRules.AddContactRules(this);
+}
+
+internal sealed class UpdateEmployeeFamilyCommandValidator : AbstractValidator<UpdateEmployeeFamilyCommand>
+{
+    public UpdateEmployeeFamilyCommandValidator() => ContactRules.AddFamilyRules(this);
+}
+
+/// <summary>Rules and conversions of the contact and family lists, shared by the card and change requests (D39).</summary>
+internal static class ContactRules
+{
+    public static void AddContactRules<T>(AbstractValidator<T> validator)
+        where T : IContactFields
     {
-        RuleFor(c => c.Emails).AtMost();
-        RuleFor(c => c.Emails).Must(items => items is null || items.Count(i => i.IsPrimary) <= 1).WithErrorCode(EmployeeCommandErrors.PrimaryCountCode);
-        RuleForEach(c => c.Emails).ChildRules(email =>
+        validator.RuleFor(c => c.Emails).AtMost();
+        validator.RuleFor(c => c.Emails).Must(items => items is null || items.Count(i => i.IsPrimary) <= 1).WithErrorCode(EmployeeCommandErrors.PrimaryCountCode);
+        validator.RuleForEach(c => c.Emails).ChildRules(email =>
         {
             email.RuleFor(e => e.Kind).Cascade(CascadeMode.Stop).NotNull().IsInEnum();
             email.RuleFor(e => e.Address).Cascade(CascadeMode.Stop).NotEmpty().MustBeValid(Email.Create);
         });
-        RuleFor(c => c.Phones).AtMost();
-        RuleFor(c => c.Phones).Must(items => items is null || items.Count(i => i.IsPrimary) <= 1).WithErrorCode(EmployeeCommandErrors.PrimaryCountCode);
-        RuleForEach(c => c.Phones).ChildRules(phone =>
+        validator.RuleFor(c => c.Phones).AtMost();
+        validator.RuleFor(c => c.Phones).Must(items => items is null || items.Count(i => i.IsPrimary) <= 1).WithErrorCode(EmployeeCommandErrors.PrimaryCountCode);
+        validator.RuleForEach(c => c.Phones).ChildRules(phone =>
         {
             phone.RuleFor(p => p.Kind).Cascade(CascadeMode.Stop).NotNull().IsInEnum();
             phone.RuleFor(p => p.Number).Cascade(CascadeMode.Stop).NotEmpty().MustBeValid(PhoneNumber.Create);
         });
-        RuleFor(c => c.Addresses).AtMost();
-        RuleForEach(c => c.Addresses).ChildRules(address =>
+        validator.RuleFor(c => c.Addresses).AtMost();
+        validator.RuleForEach(c => c.Addresses).ChildRules(address =>
         {
             address.RuleFor(a => a.Kind).Cascade(CascadeMode.Stop).NotNull().IsInEnum();
             address.RuleFor(a => a.Line).NotEmpty().MaximumLength(Employee.TextMaxLength);
@@ -233,27 +263,55 @@ internal sealed class UpdateEmployeeContactsCommandValidator : AbstractValidator
                 .WithErrorCode(CommonErrors.InvalidCountryCode.Code)
                 .When(a => !string.IsNullOrWhiteSpace(a.CountryCode));
         });
-        RuleFor(c => c.EmergencyContacts).AtMost();
-        RuleForEach(c => c.EmergencyContacts).ChildRules(contact =>
+        validator.RuleFor(c => c.EmergencyContacts).AtMost();
+        validator.RuleForEach(c => c.EmergencyContacts).ChildRules(contact =>
         {
             contact.RuleFor(e => e.FullName).NotEmpty().MaximumLength(Employee.TextMaxLength);
             contact.RuleFor(e => e.Relation).Cascade(CascadeMode.Stop).NotNull().IsInEnum();
             contact.RuleFor(e => e.Phone).Cascade(CascadeMode.Stop).NotEmpty().MustBeValid(PhoneNumber.Create);
         });
     }
-}
 
-internal sealed class UpdateEmployeeFamilyCommandValidator : AbstractValidator<UpdateEmployeeFamilyCommand>
-{
-    public UpdateEmployeeFamilyCommandValidator()
+    public static void AddFamilyRules<T>(AbstractValidator<T> validator)
+        where T : IFamilyFields
     {
-        RuleFor(c => c.Members).AtMost();
-        RuleForEach(c => c.Members).ChildRules(member =>
+        validator.RuleFor(c => c.Members).AtMost();
+        validator.RuleForEach(c => c.Members).ChildRules(member =>
         {
             member.RuleFor(m => m.Relation).Cascade(CascadeMode.Stop).NotNull().IsInEnum();
             member.RuleFor(m => m.FullName).NotEmpty().MaximumLength(Employee.TextMaxLength);
         });
     }
+
+    public static ContactLists ToContacts(IContactFields fields) =>
+        new(
+            [.. (fields.Emails ?? []).Select(e => new EmployeeEmail(e.Kind!.Value, Email.Create(e.Address).Value.Value, e.IsPrimary))],
+            [.. (fields.Phones ?? []).Select(p => new EmployeePhone(p.Kind!.Value, PhoneNumber.Create(p.Number).Value.Value, p.IsPrimary))],
+            [.. (fields.Addresses ?? []).Select(a => new EmployeeAddress(
+                a.Kind!.Value,
+                a.Line!.Trim(),
+                Blank(a.District),
+                Blank(a.City),
+                Blank(a.PostalCode),
+                string.IsNullOrWhiteSpace(a.CountryCode) ? "TR" : a.CountryCode.Trim().ToUpperInvariant()))],
+            [.. (fields.EmergencyContacts ?? []).Select(c => new EmergencyContact(c.FullName!.Trim(), c.Relation!.Value, PhoneNumber.Create(c.Phone).Value.Value))]);
+
+    public static IReadOnlyList<FamilyMember> ToFamily(IFamilyFields fields) =>
+        [.. (fields.Members ?? []).Select(m => new FamilyMember(m.Relation!.Value, m.FullName!.Trim(), m.BirthDate, m.IsWorking))];
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+}
+
+/// <summary>The contact lists of a person as the card keeps them.</summary>
+internal sealed record ContactLists(
+    IReadOnlyList<EmployeeEmail> Emails,
+    IReadOnlyList<EmployeePhone> Phones,
+    IReadOnlyList<EmployeeAddress> Addresses,
+    IReadOnlyList<EmergencyContact> EmergencyContacts)
+{
+    public static ContactLists Of(Employee employee) => new(employee.Emails, employee.Phones, employee.Addresses, employee.EmergencyContacts);
+
+    public void ApplyTo(Employee employee) => employee.SetContacts(Emails, Phones, Addresses, EmergencyContacts);
 }
 
 internal sealed class UpdateEmployeeQualificationsCommandValidator : AbstractValidator<UpdateEmployeeQualificationsCommand>
@@ -347,21 +405,9 @@ internal sealed class UpdateEmployeeContactsCommandHandler(IHrDbContext db, IAcc
         }
 
         db.Entry(employee).ExpectVersion(request.Version);
-        employee.SetContacts(
-            (request.Emails ?? []).Select(e => new EmployeeEmail(e.Kind!.Value, Email.Create(e.Address).Value.Value, e.IsPrimary)),
-            (request.Phones ?? []).Select(p => new EmployeePhone(p.Kind!.Value, PhoneNumber.Create(p.Number).Value.Value, p.IsPrimary)),
-            (request.Addresses ?? []).Select(a => new EmployeeAddress(
-                a.Kind!.Value,
-                a.Line!.Trim(),
-                Blank(a.District),
-                Blank(a.City),
-                Blank(a.PostalCode),
-                string.IsNullOrWhiteSpace(a.CountryCode) ? "TR" : a.CountryCode.Trim().ToUpperInvariant())),
-            (request.EmergencyContacts ?? []).Select(c => new EmergencyContact(c.FullName!.Trim(), c.Relation!.Value, PhoneNumber.Create(c.Phone).Value.Value)));
+        ContactRules.ToContacts(request).ApplyTo(employee);
         return Result.Success();
     }
-
-    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
 internal sealed class UpdateEmployeeFamilyCommandHandler(IHrDbContext db, IAccessScopeProvider scopes) : ICommandHandler<UpdateEmployeeFamilyCommand>
@@ -376,7 +422,7 @@ internal sealed class UpdateEmployeeFamilyCommandHandler(IHrDbContext db, IAcces
         }
 
         db.Entry(employee).ExpectVersion(request.Version);
-        employee.SetFamily((request.Members ?? []).Select(m => new FamilyMember(m.Relation!.Value, m.FullName!.Trim(), m.BirthDate, m.IsWorking)));
+        employee.SetFamily(ContactRules.ToFamily(request));
         return Result.Success();
     }
 }

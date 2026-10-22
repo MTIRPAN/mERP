@@ -35,7 +35,8 @@ internal sealed class ModuleAuditReader<TContext>(TContext db) : IAuditReader
             e.Field,
             e.OldValue,
             e.NewValue,
-            e.CorrelationId))];
+            e.CorrelationId,
+            e.Source))];
     }
 
     public Task<int> CountAsync(AuditFilter filter, CancellationToken cancellationToken) =>

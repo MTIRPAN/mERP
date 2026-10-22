@@ -3,6 +3,7 @@ using Merp.Modules.HR.Application;
 using Merp.Modules.HR.Domain.Documents;
 using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Organization;
+using Merp.Modules.HR.Domain.SelfService;
 using Microsoft.EntityFrameworkCore;
 
 namespace Merp.Modules.HR.Infrastructure.Persistence;
@@ -30,6 +31,8 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
 
     public DbSet<EmployeeDocument> EmployeeDocuments => Set<EmployeeDocument>();
+
+    public DbSet<ProfileChangeRequest> ProfileChangeRequests => Set<ProfileChangeRequest>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

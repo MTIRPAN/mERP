@@ -29,7 +29,8 @@ public class HrMigrationTests(PostgresFixture postgres)
         var tables = await ListAsync(connectionString, "SELECT table_name FROM information_schema.tables WHERE table_schema = @schema", "hr");
         tables.ShouldBe(
             ["__ef_migrations_history", "audit_entries", "inbox_messages", "outbox_messages", "number_counters", "stored_files", "org_units", "jobs", "positions", "reporting_lines",
-                "employees", "employments", "job_assignments", "employee_sensitive_data", "sgk_exit_codes", "document_types", "employee_documents"],
+                "employees", "employments", "job_assignments", "employee_sensitive_data", "sgk_exit_codes", "document_types", "employee_documents",
+                "profile_change_requests"],
             ignoreOrder: true);
         (await ListAsync(connectionString, "SELECT table_name FROM information_schema.tables WHERE table_schema = @schema", "public")).ShouldBeEmpty();
 

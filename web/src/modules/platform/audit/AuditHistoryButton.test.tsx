@@ -27,6 +27,7 @@ const entry = {
   entityType: 'Company',
   entityLabel: 'Şirket',
   entityId: 'c1',
+  source: null,
 };
 
 const render = (permissions: string[]) =>

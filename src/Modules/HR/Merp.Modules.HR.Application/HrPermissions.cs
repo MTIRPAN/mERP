@@ -53,6 +53,16 @@ public static class HrPermissions
             public const string Manage = "hr.employees.documents.manage";
         }
     }
+
+    /// <summary>Self service of the person linked to the user (D39); the Employee system role holds <c>hr.self.*</c>.</summary>
+    public static class Self
+    {
+        /// <summary>See one's own card ("Kartım").</summary>
+        public const string ProfileRead = "hr.self.profile.read";
+
+        /// <summary>Ask for changes of one's contacts, family and IBAN.</summary>
+        public const string ProfileRequest = "hr.self.profile.request";
+    }
 }
 
 /// <summary>Permission catalog of the HR module (docs/domain/yetki-ve-onay.md §1.5).</summary>
@@ -72,6 +82,8 @@ public sealed class HrPermissionDefinitions : IPermissionDefinitionProvider
         new(HrPermissions.Employees.Sensitive.Update),
         new(HrPermissions.Employees.Documents.Read),
         new(HrPermissions.Employees.Documents.Manage),
+        new(HrPermissions.Self.ProfileRead),
+        new(HrPermissions.Self.ProfileRequest),
     ];
 }
 
@@ -101,8 +113,12 @@ public sealed class HrNumberSequences : INumberSequenceDefinitionProvider
 {
     public const string Employee = "hr.employee";
 
+    /// <summary>A person's change request (D39), numbered per company and year.</summary>
+    public const string ProfileChange = "hr.profile-change";
+
     public IEnumerable<NumberSequenceDefinition> GetSequences() =>
     [
         new(Employee, "{seq:6}", NumberResetPeriod.Never),
+        new(ProfileChange, "PDT-{yyyy}-{seq:5}", NumberResetPeriod.Yearly),
     ];
 }

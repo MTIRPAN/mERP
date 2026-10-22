@@ -49,7 +49,7 @@ internal sealed partial class ApprovalDefinitionSeeder(ILogger<ApprovalDefinitio
                     throw new InvalidOperationException($"The default flow of {type.Key} has a condition that does not fit its facts.");
                 }
 
-                steps.Add(new ApprovalStep(Name(localizer, step.NameKey).Values, rule, Condition: step.Condition));
+                steps.Add(new ApprovalStep(Name(localizer, step.NameKey).Values, rule, Condition: step.Condition, AllowReturn: step.AllowReturn));
             }
 
             if (steps.Count > 0)

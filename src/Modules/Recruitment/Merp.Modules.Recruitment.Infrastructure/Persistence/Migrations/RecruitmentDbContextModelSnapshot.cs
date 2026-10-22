@@ -18,7 +18,7 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("recruitment")
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -205,6 +205,11 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                     b.Property<string>("OldValue")
                         .HasColumnType("text")
                         .HasColumnName("old_value");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source");
 
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")

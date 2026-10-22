@@ -338,5 +338,8 @@
   "hr.employees.errors.user_link_pending": "Bu personel için bekleyen bir kullanıcı isteği var.",
   "hr.employees.errors.user_already_linked": "Personel zaten bir kullanıcıya bağlı.",
   "hr.employees.errors.no_user": "Personelin bağlı bir kullanıcısı yok.",
-  "hr.employees.errors.user_email_required": "Kullanıcı için bir e-posta adresi girin ya da personelin iletişim bilgilerine ekleyin."
+  "hr.employees.errors.user_email_required": "Kullanıcı için bir e-posta adresi girin ya da personelin iletişim bilgilerine ekleyin.",
+  "hr.profile_changes.errors.open_request_exists": "Bu bilgiler için açık bir değişiklik talebiniz var.",
+  "hr.profile_changes.errors.not_returned": "Yalnızca iade edilen talep yeniden gönderilebilir.",
+  "hr.profile_changes.errors.closed": "Talep kapanmış."
 }

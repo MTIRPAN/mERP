@@ -207,6 +207,11 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("old_value");
 
+                    b.Property<string>("Source")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source");
+
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -1230,6 +1235,109 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                     b.ToTable("reporting_lines", "hr");
                 });
 
+            modelBuilder.Entity("Merp.Modules.HR.Domain.SelfService.ProfileChangeRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Before")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("before");
+
+                    b.Property<string>("BeforeIban")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)")
+                        .HasColumnName("before_iban");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("number");
+
+                    b.Property<string>("Proposed")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("proposed");
+
+                    b.Property<string>("ProposedIban")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)")
+                        .HasColumnName("proposed_iban");
+
+                    b.Property<Guid>("RequesterUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requester_user_id");
+
+                    b.Property<string>("ReturnComment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("return_comment");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_profile_change_requests");
+
+                    b.HasIndex("CompanyId", "Number")
+                        .IsUnique()
+                        .HasDatabaseName("ix_profile_change_requests_company_id_number");
+
+                    b.HasIndex("EmployeeId", "Kind", "Status")
+                        .HasDatabaseName("ix_profile_change_requests_employee_id_kind_status");
+
+                    b.ToTable("profile_change_requests", "hr");
+                });
+
             modelBuilder.Entity("Merp.Modules.HR.Domain.Documents.EmployeeDocument", b =>
                 {
                     b.HasOne("Merp.Modules.HR.Domain.Employees.Employee", null)
@@ -1333,6 +1441,16 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ReportsToPositionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_positions_positions_reports_to_position_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.SelfService.ProfileChangeRequest", b =>
+                {
+                    b.HasOne("Merp.Modules.HR.Domain.Employees.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_profile_change_requests_employees_employee_id");
                 });
 
             modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.Employee", b =>

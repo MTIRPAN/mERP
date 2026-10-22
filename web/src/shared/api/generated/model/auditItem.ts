@@ -27,4 +27,6 @@ export interface AuditItem {
   newValue: string | null;
   /** @nullable */
   correlationId: string | null;
+  /** @nullable */
+  source: string | null;
 }
