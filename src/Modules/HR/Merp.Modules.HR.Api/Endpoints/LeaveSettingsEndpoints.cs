@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Merp.Modules.HR.Api.Endpoints;
 
-/// <summary>Leave types, leave policies, their assignment rules and per employee overrides (PLAN L1, D41).</summary>
+/// <summary>Leave types, leave policies, their assignment rules, per employee overrides (PLAN L1, D41) and leave durations (PLAN L2, D42).</summary>
 internal static class LeaveSettingsEndpoints
 {
     public static void MapLeaveSettingsEndpoints(this IEndpointRouteBuilder group)
@@ -97,6 +97,14 @@ internal static class LeaveSettingsEndpoints
             .RequirePermission(HrPermissions.Leave.Settings.Read)
             .WithName("ResolveLeavePolicy")
             .WithSummary("Which policy applies to an employment on a day, why, and the annual leave it gives")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        // HR's preview of an employment in scope; the person's own comes with self service (PLAN L5, D42)
+        leave.MapPost("/duration-preview", (PreviewLeaveDurationQuery query, ISender sender, CancellationToken ct) => OkAsync(sender.Send(query, ct)))
+            .RequirePermission(HrPermissions.Employees.Read)
+            .WithName("PreviewLeaveDuration")
+            .WithSummary("The length of a leave on the employee's work schedule, with each day's share, before it is asked for")
+            .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPut(
