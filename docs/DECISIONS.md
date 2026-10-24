@@ -1126,3 +1126,10 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Yıllık izin günü `AnnualLeaveRules.Entitlement` ile hesaplanır: kıdem kademesinin günü, yaş alt sınırına yükseltilir, sonra eşleşen ek gün kuralları eklenir (§8.2 E2–E7 birim testleri). Hak ediş hareketleri L3'tedir.
 
 **Yapı taşı ve sonrası:** Domain olaylarının bir turda bir kez işlenmesi (D40) varsayılan politika değişimini de tek seferde yapar. Grup kıdemi, ücretsiz iznin hak edişi kaydırması ve birikim yöntemleri politikada tutulur, L3 hak ediş işinde uygulanır.
+
+**Uygulama notları (L1b):**
+- İK → "İzin ayarları" (`/hr/leave-settings`, `hr.leave.settings.read`) dört sekmedir: izin türleri, politikalar, atama kuralları ve "Hangi politika?". Sekme adreste tutulur (`?tab=`). Değiştirme düğmeleri `hr.leave.settings.manage` ile görünür.
+- Tür ve politika formlarında sürümler ayrı kartlar ya da sekmelerdir. Başlamış sürümler kilit simgesiyle salt okunur gösterilir; yeni sürüm en erken yarından başlar. Yeni politika, tüm şirketlerin varsayılan politikasının son kurallarıyla açılır.
+- Politika formu, açık sürümün kurallarını yazmayı bıraktıktan kısa süre sonra kanuni alt sınıra karşı denetler ve uyarıları formun üstünde gösterir.
+- Atama kuralları şirket seçilerek düzenlenir; sıra yukarı/aşağı düğmeleriyle değişir, liste tek seferde kaydedilir. Kriter kurucu şube, birim ve istihdam tipini listeden seçtirir; kademe ve özel alan değerleri yazılır.
+- "Hangi politika?" sekmesi personeli ve tarihi alır; politikayı, nedenini, sürümünü, kıdemi, yaşı ve yıllık izin gününü gösterir. Ayarları yönetebilen kişi burada istihdama elle politika verir ya da kurallara bırakır.

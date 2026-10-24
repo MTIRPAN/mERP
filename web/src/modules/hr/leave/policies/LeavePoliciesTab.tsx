@@ -6,7 +6,7 @@ import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton'
 import { useListLeavePolicies } from '@/shared/api/generated/endpoints/hr/hr';
 import type { LeavePolicyItem } from '@/shared/api/generated/model';
 import { StatusTag } from '@/shared/components/StatusTag';
-import { useCompanyName } from '../CompanyField';
+import { useCompanyName } from '../leaveForms';
 import { versionLabel } from '../leaveVersions';
 import { LeavePolicyDrawer } from './LeavePolicyDrawer';
 

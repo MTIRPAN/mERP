@@ -24,14 +24,3 @@ export const NameFields = ({ maxLength = 100 }: { maxLength?: number }) => {
     </Form.Item>
   ));
 };
-
-/** The names as the API takes them: blank languages left out. */
-export const toNames = (name: Record<string, string | undefined> | undefined) =>
-  Object.fromEntries(
-    Object.entries(name ?? {})
-      .map(([culture, value]) => [culture, value?.trim() ?? ''] as const)
-      .filter(([, value]) => value.length > 0),
-  );
-
-/** API errors of the name land on the default language. */
-export const nameAliases = { name: ['name', DEFAULT_CULTURE] };

@@ -17,10 +17,11 @@ import type {
   LeavePolicyVersion,
 } from '@/shared/api/generated/model';
 import { FormDrawer } from '@/shared/components/FormDrawer';
-import { ALL_COMPANIES, CompanyField } from '../CompanyField';
-import { isBeginning, isStarted, numberOrNull, toValidFrom, tomorrow, versionLabel } from '../leaveVersions';
+import { CompanyField } from '../CompanyField';
+import { isBeginning, isStarted, toValidFrom, tomorrow, versionLabel } from '../leaveVersions';
 import { LegalWarnings } from '../LegalWarnings';
-import { NameFields, nameAliases, toNames } from '../NameFields';
+import { ALL_COMPANIES, nameAliases, toNames, toRules } from '../leaveForms';
+import { NameFields } from '../NameFields';
 import { AnnualRulesFields } from './AnnualRulesFields';
 
 interface VersionValues {
@@ -38,29 +39,6 @@ interface LeavePolicyFormValues {
 }
 
 const CHECK_DELAY_MS = 600;
-
-/** The rules as the API takes them: empty numbers become null, missing switches false. */
-export const toRules = (rules: AnnualLeaveRules): AnnualLeaveRules => ({
-  ...rules,
-  carryOverLimitDays: numberOrNull(rules.carryOverLimitDays),
-  minNoticeDays: numberOrNull(rules.minNoticeDays),
-  maxDaysPerRequest: numberOrNull(rules.maxDaysPerRequest),
-  tiers: rules.tiers ?? [],
-  ageMinimums: (rules.ageMinimums ?? []).map((a) => ({
-    ...a,
-    maxAge: numberOrNull(a.maxAge),
-    minAge: numberOrNull(a.minAge),
-  })),
-  extraDayRules: rules.extraDayRules ?? [],
-  allowTravelDays: !!rules.allowTravelDays,
-  useGroupSeniority: !!rules.useGroupSeniority,
-  unpaidLeaveShiftsAccrualDate: !!rules.unpaidLeaveShiftsAccrualDate,
-  allowBeforeFirstEntitlement: !!rules.allowBeforeFirstEntitlement,
-  allowHalfDay: !!rules.allowHalfDay,
-  allowHourly: !!rules.allowHourly,
-  transferBalanceOnGroupTransfer: !!rules.transferBalanceOnGroupTransfer,
-  allowPastDatesForHr: !!rules.allowPastDatesForHr,
-});
 
 interface LeavePolicyDrawerProps {
   policy?: LeavePolicyItem;
@@ -81,7 +59,8 @@ export const LeavePolicyDrawer = ({ policy, template, onClose }: LeavePolicyDraw
   const create = useCreateLeavePolicy();
   const update = useUpdateLeavePolicy();
   const required = [{ required: true, message: t('web.platform.fields.required') }];
-  const versions = Form.useWatch('versions', form) ?? [];
+  // The lists have no Form.Item of their own, so they are watched with preserve
+  const versions = Form.useWatch<VersionValues[] | undefined>('versions', { form, preserve: true }) ?? [];
   const companyId = Form.useWatch('companyId', form);
   const [active, setActive] = useState(0);
   const [warnings, setWarnings] = useState<LeaveLegalWarning[]>([]);
@@ -89,7 +68,8 @@ export const LeavePolicyDrawer = ({ policy, template, onClose }: LeavePolicyDraw
   const isLocked = (version?: VersionValues) => typeof version?.validFrom === 'string' && saved.has(version.validFrom);
 
   // The open version against the law, a moment after the last change; incomplete rules are skipped
-  const watched = Form.useWatch(['versions', active, 'rules'], form);
+  const watched = Form.useWatch(['versions', active, 'rules'], { form, preserve: true }) as
+    AnnualLeaveRules | undefined;
   useEffect(() => {
     if (!watched) {
       return;

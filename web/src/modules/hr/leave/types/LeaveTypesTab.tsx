@@ -6,7 +6,7 @@ import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton'
 import { useListLeaveTypes } from '@/shared/api/generated/endpoints/hr/hr';
 import type { LeaveTypeItem } from '@/shared/api/generated/model';
 import { StatusTag } from '@/shared/components/StatusTag';
-import { useCompanyName } from '../CompanyField';
+import { useCompanyName } from '../leaveForms';
 import { versionLabel } from '../leaveVersions';
 import { LeaveTypeDrawer } from './LeaveTypeDrawer';
 

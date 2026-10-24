@@ -33,10 +33,11 @@ import {
 } from '@/shared/api/generated/model';
 import { FormDrawer } from '@/shared/components/FormDrawer';
 import { enumOptions } from '../../employees/forms/formValues';
-import { ALL_COMPANIES, CompanyField } from '../CompanyField';
+import { CompanyField } from '../CompanyField';
 import { isBeginning, isStarted, numberOrNull, toValidFrom, tomorrow, versionLabel } from '../leaveVersions';
 import { LegalWarnings } from '../LegalWarnings';
-import { NameFields, nameAliases, toNames } from '../NameFields';
+import { ALL_COMPANIES, nameAliases, toNames } from '../leaveForms';
+import { NameFields } from '../NameFields';
 
 const LIMITS = [
   'fixedDays',

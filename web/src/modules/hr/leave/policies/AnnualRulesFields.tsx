@@ -14,6 +14,18 @@ interface AnnualRulesFieldsProps {
   companyId?: string;
 }
 
+/** The on/off rules with their label keys. */
+const SWITCHES = [
+  ['allowTravelDays', 'web.hr.leave.rules.allow_travel_days'],
+  ['allowHalfDay', 'web.hr.leave.rules.allow_half_day'],
+  ['allowHourly', 'web.hr.leave.rules.allow_hourly'],
+  ['allowBeforeFirstEntitlement', 'web.hr.leave.rules.allow_before_first'],
+  ['useGroupSeniority', 'web.hr.leave.rules.group_seniority'],
+  ['unpaidLeaveShiftsAccrualDate', 'web.hr.leave.rules.unpaid_shifts'],
+  ['transferBalanceOnGroupTransfer', 'web.hr.leave.rules.transfer_balance'],
+  ['allowPastDatesForHr', 'web.hr.leave.rules.past_dates'],
+] as const;
+
 const Days = ({ disabled, min = 0, max = 366 }: { disabled: boolean; min?: number; max?: number }) => (
   <InputNumber min={min} max={max} step={0.5} disabled={disabled} style={{ width: '100%' }} />
 );
@@ -267,30 +279,11 @@ export const AnnualRulesFields = ({ name, locked, companyId }: AnnualRulesFields
         </Col>
       </Row>
       <Row gutter={12}>
-        <Col xs={12} md={6}>
-          {flag('allowTravelDays', t('web.hr.leave.rules.allow_travel_days'))}
-        </Col>
-        <Col xs={12} md={6}>
-          {flag('allowHalfDay', t('web.hr.leave.rules.allow_half_day'))}
-        </Col>
-        <Col xs={12} md={6}>
-          {flag('allowHourly', t('web.hr.leave.rules.allow_hourly'))}
-        </Col>
-        <Col xs={12} md={6}>
-          {flag('allowBeforeFirstEntitlement', t('web.hr.leave.rules.allow_before_first'))}
-        </Col>
-        <Col xs={12} md={6}>
-          {flag('useGroupSeniority', t('web.hr.leave.rules.group_seniority'))}
-        </Col>
-        <Col xs={12} md={6}>
-          {flag('unpaidLeaveShiftsAccrualDate', t('web.hr.leave.rules.unpaid_shifts'))}
-        </Col>
-        <Col xs={12} md={6}>
-          {flag('transferBalanceOnGroupTransfer', t('web.hr.leave.rules.transfer_balance'))}
-        </Col>
-        <Col xs={12} md={6}>
-          {flag('allowPastDatesForHr', t('web.hr.leave.rules.past_dates'))}
-        </Col>
+        {SWITCHES.map(([key, label]) => (
+          <Col key={key} xs={12} md={6}>
+            {flag(key, t(label))}
+          </Col>
+        ))}
       </Row>
     </Flex>
   );
