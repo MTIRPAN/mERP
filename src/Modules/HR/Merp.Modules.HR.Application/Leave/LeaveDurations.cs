@@ -1,22 +1,8 @@
-using System.Text.Json.Serialization;
 using Merp.Modules.HR.Domain.Leave;
 using Merp.Modules.Platform.Contracts.Calendars;
 using Merp.SharedKernel.Results;
 
 namespace Merp.Modules.HR.Application.Leave;
-
-/// <summary>Which part of a day a request covers on its first or last day (docs/domain/izin-kurallari.md §4).</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<LeaveDayPart>))]
-public enum LeaveDayPart
-{
-    Full,
-
-    /// <summary>Only the morning: the last day of a request ending at noon.</summary>
-    Morning,
-
-    /// <summary>Only the afternoon: the first day of a request starting at noon.</summary>
-    Afternoon,
-}
 
 /// <param name="Date">The day.</param>
 /// <param name="Value">What it counts: days, or hours for an hourly leave.</param>

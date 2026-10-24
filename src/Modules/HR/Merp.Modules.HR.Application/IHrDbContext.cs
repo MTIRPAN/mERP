@@ -48,6 +48,9 @@ public interface IHrDbContext
 
     DbSet<LeaveAccount> LeaveAccounts { get; }
 
+    /// <summary>Leave asked for, approved or recorded (D44).</summary>
+    DbSet<LeaveRequest> LeaveRequests { get; }
+
     /// <summary>Files of HR records, e.g. employee photos (D31).</summary>
     DbSet<StoredFile> StoredFiles { get; }
 

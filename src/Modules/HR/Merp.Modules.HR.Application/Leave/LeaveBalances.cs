@@ -45,7 +45,7 @@ public sealed record NextAccrual(DateOnly Date, decimal Days);
 
 /// <remarks>
 /// Balance is the sum of the movements; Earned the days in, Used the approved requests less the cancelled ones,
-/// Pending the requests waiting for approval; Available = Balance − Pending. NextAccrual is null when no policy gives
+/// Pending the requests waiting for approval or correction; Available = Balance − Pending. NextAccrual is null when no policy gives
 /// one within a year or the balance is closed.
 /// </remarks>
 public sealed record LeaveBalanceItem(
@@ -212,13 +212,8 @@ internal sealed class AccrueEmploymentLeaveCommandHandler(
             .SingleOrDefaultAsync(cancellationToken);
 }
 
-internal sealed class GetLeaveBalancesQueryHandler(
-    IHrDbContext db,
-    IAccessScopeProvider scopes,
-    LeavePolicyResolver resolver,
-    IOrganizationLookup organization,
-    ICurrentUser currentUser,
-    TimeProvider timeProvider) : IQueryHandler<GetLeaveBalancesQuery, IReadOnlyList<LeaveBalanceItem>>
+internal sealed class GetLeaveBalancesQueryHandler(IHrDbContext db, IAccessScopeProvider scopes, LeaveBalanceReader reader)
+    : IQueryHandler<GetLeaveBalancesQuery, IReadOnlyList<LeaveBalanceItem>>
 {
     public async Task<Result<IReadOnlyList<LeaveBalanceItem>>> Handle(GetLeaveBalancesQuery request, CancellationToken cancellationToken)
     {
@@ -233,10 +228,33 @@ internal sealed class GetLeaveBalancesQueryHandler(
             return CommonErrors.NotFound;
         }
 
+        return Result.Success(await reader.ReadAsync(employee, employment, cancellationToken));
+    }
+}
+
+/// <summary>
+/// The balances of an employment (D43): every type with a balance, its movements, the requests waiting for approval
+/// on it (D44) and the next entitlement of the annual leave.
+/// </summary>
+public sealed class LeaveBalanceReader(
+    IHrDbContext db,
+    LeavePolicyResolver resolver,
+    IOrganizationLookup organization,
+    ICurrentUser currentUser,
+    TimeProvider timeProvider)
+{
+    public async Task<IReadOnlyList<LeaveBalanceItem>> ReadAsync(Employee employee, Employment employment, CancellationToken cancellationToken)
+    {
         var types = await LeaveBalanceTypes.ForCompanyAsync(db, employment.CompanyId, cancellationToken);
         var accounts = await db.LeaveAccounts.AsNoTracking().Include(a => a.Entries)
             .Where(a => a.EmploymentId == employment.Id)
             .ToListAsync(cancellationToken);
+        var pending = (await db.LeaveRequests.AsNoTracking()
+                .Where(r => r.EmploymentId == employment.Id && r.DeductsFrom != null && LeaveRequestStatuses.Reserving.Contains(r.Status))
+                .Select(r => new { r.DeductsFrom, r.Days })
+                .ToListAsync(cancellationToken))
+            .GroupBy(r => r.DeductsFrom!, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.Sum(r => r.Days), StringComparer.Ordinal);
         var today = await LeaveTypeRules.TodayAsync(organization, timeProvider, employment.CompanyId, cancellationToken);
         var annual = types.Where(t => t.Category == LeaveCategory.Annual).OrderBy(t => t.CompanyId is null).FirstOrDefault();
         NextAccrual? next = null;
@@ -253,9 +271,7 @@ internal sealed class GetLeaveBalancesQueryHandler(
             .Select(code =>
             {
                 var account = accounts.SingleOrDefault(a => a.LeaveTypeCode == code);
-
-                // Requests waiting for approval come with leave requests (PLAN L4)
-                const decimal pending = 0;
+                var waiting = pending.GetValueOrDefault(code);
                 var balance = account?.Balance ?? 0;
                 return new LeaveBalanceItem(
                     code,
@@ -263,8 +279,8 @@ internal sealed class GetLeaveBalancesQueryHandler(
                     balance,
                     account?.Earned ?? 0,
                     account?.Used ?? 0,
-                    pending,
-                    balance - pending,
+                    waiting,
+                    balance - waiting,
                     account?.ClosedOn,
                     code == annual?.Code && account?.ClosedOn is null ? next : null,
                     [.. (account?.Entries ?? []).OrderByDescending(e => e.Date).ThenByDescending(e => e.RecordedAt)
@@ -344,5 +360,53 @@ internal sealed class PublishLeaveBalanceClosed(IIntegrationEventPublisher publi
                 CompanyId = domainEvent.CompanyId,
             },
             cancellationToken);
+    }
+}
+
+/// <summary>An approved leave takes its days from the balance, in the same transaction (D44, rule 7).</summary>
+internal sealed class RecordApprovedLeave(IHrDbContext db, ICurrentUser currentUser, TimeProvider timeProvider) : IDomainEventHandler<LeaveRequestApproved>
+{
+    public async Task Handle(LeaveRequestApproved domainEvent, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(domainEvent);
+        if (domainEvent.Days <= 0)
+        {
+            return;
+        }
+
+        var account = await db.LeaveAccounts.Include(a => a.Entries)
+            .SingleOrDefaultAsync(a => a.EmploymentId == domainEvent.EmploymentId && a.LeaveTypeCode == domainEvent.LeaveTypeCode, cancellationToken);
+        if (account is null)
+        {
+            account = LeaveAccount.Open(domainEvent.EmployeeId, domainEvent.EmploymentId, domainEvent.CompanyId, domainEvent.LeaveTypeCode);
+            db.LeaveAccounts.Add(account);
+        }
+
+        // A closed balance (the employment ended meanwhile) takes nothing more
+        account.RecordRequest(domainEvent.Date, domainEvent.Days, domainEvent.RequestId.Value, LeaveBalanceTypes.Stamp(timeProvider, currentUser));
+    }
+}
+
+/// <summary>A cancelled leave gives its days back (E12).</summary>
+internal sealed class GiveBackCancelledLeave(IHrDbContext db, ICurrentUser currentUser, TimeProvider timeProvider) : IDomainEventHandler<LeaveRequestCancelled>
+{
+    public async Task Handle(LeaveRequestCancelled domainEvent, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(domainEvent);
+        var account = await db.LeaveAccounts.Include(a => a.Entries)
+            .SingleOrDefaultAsync(a => a.EmploymentId == domainEvent.EmploymentId && a.LeaveTypeCode == domainEvent.LeaveTypeCode, cancellationToken);
+        account?.CancelRequest(domainEvent.Date, domainEvent.RequestId.Value, LeaveBalanceTypes.Stamp(timeProvider, currentUser));
+    }
+}
+
+/// <summary>A leave ended early gives back the days no longer taken (D44).</summary>
+internal sealed class GiveBackLeaveDays(IHrDbContext db, ICurrentUser currentUser, TimeProvider timeProvider) : IDomainEventHandler<LeaveRequestDaysReturned>
+{
+    public async Task Handle(LeaveRequestDaysReturned domainEvent, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(domainEvent);
+        var account = await db.LeaveAccounts.Include(a => a.Entries)
+            .SingleOrDefaultAsync(a => a.EmploymentId == domainEvent.EmploymentId && a.LeaveTypeCode == domainEvent.LeaveTypeCode, cancellationToken);
+        account?.GiveBack(domainEvent.Date, domainEvent.RequestId.Value, domainEvent.Days, LeaveBalanceTypes.Stamp(timeProvider, currentUser));
     }
 }

@@ -1193,3 +1193,62 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Personel kartında "İzinler" sekmesi `hr.leave.balances.read` ile görünür. Her bakiye bir karttır: kullanılabilir, kazanılan, kullanılan, onay bekleyen gün, sonraki hak ediş ve hareketler (tarih, hareket türü, ±gün, açıklama veya dönem, kayıt anı). Birden çok istihdamı olan kişide istihdam seçilir; kapanmış bakiye kapanış tarihiyle gösterilir.
 - "Bakiye düzelt" (`hr.leave.balances.manage`) tür, tarih, ±gün ve zorunlu açıklama alır.
 - Personel listesinde "İzin açılış bakiyeleri" içe aktarma düğmesi `hr.leave.balances.manage` ile görünür.
+
+## D44 — İzin talebi ve onay
+
+**Bağlam:** L4, `docs/domain/izin-kurallari.md` §6'daki talep doğrulamasını ve `docs/domain/yetki-ve-onay.md` §2.7–2.8'deki onay entegrasyonunu kurar. Kullanıcı kararları (2026-10-24): iki PR (L4a backend, L4b web); belge isteyen türlerde ek gönderirken zorunludur; yol izni yıllık izin talebinin bir alanıdır.
+
+**Talep (`LeaveRequest`, aggregate):**
+- Numara `hr.leave-request` (`IZN-{yyyy}-{seq:6}`, şirket başına, yıllık sıfırlanır) taslak oluşturulurken alınır.
+- Alanlar: istihdam, tür, başlangıç ve bitiş, ilk günün ve son günün yarısı (öğleden sonra / sabah), saatlik türde saatler, olay tarihi (doğum), yol izni günü, süre, açıklama, izindeki adres ve telefon, vekil personel, ekler.
+- Süre her kayıtta hesaplanır ve talepte saklanır: `Quantity` (gün ya da saat) ve `Days` (gün karşılığı). Bakiyeden düşen türde düşülen bakiyenin kodu (`DeductsFrom`) da saklanır.
+- Durumlar: `Draft` → `Pending` → `Approved` / `Rejected` / `Returned` (düzeltilip yeniden `Pending`). `Draft`, `Pending` ve `Returned` iptal edilebilir (`Cancelled`). `Approved` → `CancellationPending` → `Cancelled` ya da yeniden `Approved`.
+- Kaynak: `Self` (çalışan), `OnBehalf` (İK adına), `Record` (geçmiş kayıt), `Bulk` (toplu izin).
+- Onaylanan talep `Days` kadar `Request` hareketi, iptali `RequestCancel` hareketi yazar. Bunlar domain olayıyla aynı işlemde `LeaveAccount`'a yazılır (kural 7). Kapanmış hesaba yazılmaz.
+- **Yol izni (kullanıcı kararı):** yıllık izin talebinde `TravelDays`. Politika izin veriyorsa (`AllowTravelDays`) en fazla `MaxTravelDays` gündür. İzin bitişinden sonraki takvim günleridir; çakışma denetiminde sayılır, bakiyeden düşmez.
+
+**Doğrulama (§6):** Kurallar sırayla denetlenir; ilk hata döner, uyarılar kod ve metin olarak listelenir.
+1. İstihdam iznin tüm aralığında açıktır (işe girişten sonra, çıkıştan önce).
+2. Tür aktiftir, istihdamın şirketinde geçerlidir ve cinsiyet kısıtına uyar. Düzenleme türleri (SUT) ve yol izni türü (YOL) talep edilemez. Yarım gün yalnız birimi yarım gün olan türde ve yıllıkta politika izin veriyorsa (`AllowHalfDay`) seçilebilir.
+3. Geçmiş tarih yalnız İK adına talepte ve türün `AllowPastDates` ayarı açıksa girilebilir; yıllık izinde ayrıca politikanın `AllowPastDatesForHr` ayarı gerekir. Geçmiş kayıt bu kuralı atlar.
+4. Süre 0'dan büyüktür (L2 hesaplayıcısı). Talep başına sınır tür sürümünden, yıllıkta ayrıca politikadan gelir. Yıllık sınır, ilk günün takvim yılındaki aynı istihdam ve türün bekleyen ve onaylı talepleriyle birlikte sayılır.
+5. Aynı personelin (tüm istihdamları) bekleyen, iadeli veya onaylı başka talebiyle çakışmaz (E13). Biri sabah biten, diğeri aynı gün öğleden sonra başlayan talepler ve aynı gündeki ayrık saatler çakışmaz.
+6. Bildirim süresi tür sürümünden, yoksa yıllıkta politikadan gelir. Sağlanmazsa çalışana hata, İK'ya uyarıdır.
+7. Bakiyeden düşen türde: bakiye − bekleyen − gün ≥ −avans. Avans, politikanın iznin ilk günündeki sürümünden gelir (E1, E10, E10b).
+8. Belge isteyen türde (kullanıcı kararı) gönderirken en az bir ek gerekir. Çalışana hata, İK adına talepte ve geçmiş kayıtta uyarıdır; taslakta ve önizlemede uyarıdır.
+9. 10 gün kuralı: Yıllık talep 10 günden kısaysa, aynı takvim yılında 10 gün ve üzeri yıllık talep yoksa ve kullanılabilir bakiye talepten önce 10 gün ve üzeriyken talepten sonra 10 günün altına düşüyorsa (10 günlük parça artık kullanılamaz), `Warn` ayarında uyarı verilir. `Enforce` ayarında bu çalışana hata, İK'ya uyarıdır.
+
+**Onay:**
+- Belge türleri: `hr.leave-request` ve `hr.leave-cancellation`. Olgular: `leaveTypeCode`, `days`, `requesterEmployeeId`, `orgUnitId`, `branchId`, `companyId`, `isPastDate`. Tanım yoksa talep otomatik onaylanmaz.
+- Varsayılan akışlar (§2.8): talepte 1. adım `line-manager(1)`, 2. adım "gün > 5 veya tür UCRETSIZ" koşuluyla `role(hr-specialist)`. İptalde `line-manager(1)`. İade edilebilir.
+- Onay istemeyen tür (`RequiresApproval = false`) gönderilince hemen onaylanır.
+- `ApprovalRequestCompleted` talebi onaylar ya da reddeder; `ApprovalRequestReturned` iade eder. Kapanmış talebe gelen olay yok sayılır.
+- Bekleyen ya da iadeli talebin iptali `ApprovalCancellationRequested` yayınlar.
+- İptal talebi onaylı ve başlamamış talepte açılır, `hr.leave-cancellation` belge türüyle ve aynı belge kimliğiyle gider. Onay motoru tamamlanmış talebi yeniden başlatmadığı için bir talepte bir kez açılabilir. Reddedilirse talep onaylı kalır; İK doğrudan iptal edebilir.
+- Talep edenin kendisi olmadığı (İK adına) taleplerde akışın talep edeni İK kullanıcısı, olgulardaki ve çözücülerdeki personel izinli kişidir.
+
+**İK işlemleri:**
+- Adına talep (`hr.leave.requests.manage`): taslaksız oluşturulup gönderilir.
+- Geçmiş kayıt (`hr.leave.requests.record`): akışsız onaylı kayıttır. Geçmiş tarih serbesttir; bildirim süresi, belge ve 10 gün kuralı uyarıdır.
+- İptal (`hr.leave.requests.manage`): onaylı ve başlamamış talebi akışsız iptal eder, açık iptal talebinin akışı da kapanır.
+- Erken dönüş (`hr.leave.requests.manage`): başlamış onaylı talepte yeni son gün girilir. Süre yeniden hesaplanır, fark `RequestCancel` olarak iade edilir. İlk son gün saklanır.
+- Toplu izin (`hr.leave.bulk`): Personeller ya da bir birim (alt birimleriyle), tür, tarihler ve açıklama seçilir. Önizleme her kişi için süreyi, talep sonrası bakiyeyi, hatayı ve uyarıları döner. Oluşturma, hatasız kişiler için `Bulk` kaynaklı onaylı kayıt açar. Her kişi ayrı komut ve işlemdir (kural 7); biri hata verse diğerleri sürer, sonuç kişi başına döner.
+
+**Yetkiler:**
+- `hr.leave.requests.read`: kapsamdaki talepler ve detayları. Yönetici rolü bunu ekip kapsamıyla (`ManagedTeam`) alır.
+- `hr.leave.requests.manage`, `hr.leave.requests.record`, `hr.leave.bulk`. `hr.leave.*` deseniyle İK Yöneticisi ve İK Uzmanı'na geçer.
+- Self servis: `hr.self.leave.read` (bakiyelerim, taleplerim) ve `hr.self.leave.request` (taslak, düzeltme, gönderme, iptal, iptal talebi, önizleme, ekler). `hr.self.*` deseniyle Çalışan rolüne geçer. D42'de anılan çalışanın kendi süre önizlemesi bu önizlemedir.
+
+**Ekler (D31):** Sahip türü `hr.leave_request`. Talep eden, talep kapanmadıkça ek yükler; taslak ve iadeli talepte siler. `hr.leave.requests.manage` sahibi talep reddedilmedikçe ve iptal edilmedikçe yükler ve siler. Talebi görebilen ekleri görür.
+
+**Bakiye:** Bekleyen gün, aynı bakiyeden düşen `Pending` ve `Returned` taleplerin günüdür. Kullanılabilir = bakiye − bekleyen.
+
+**Bildirimler (D32):** `hr.leave_request_submitted` (talep edene ve personele), `hr.leave_request_completed` (onay ya da ret; talep edene, personele ve vekile), `hr.leave_request_returned` (talep edene), `hr.leave_cancellation_completed` (iptal talebinin sonucu ya da İK iptali; talep edene ve personele), `hr.leave_reminder` (izin başlamadan bir gün önce personele ve 1. seviye yöneticisine).
+
+**Hatırlatma işi (`hr.leave-reminders`, her gün 06:00 UTC):** Şirketin saat dilimine göre yarın başlayan onaylı talepler için bir kez gönderilir.
+
+**Uygulama notları (L4a):**
+- Bildirimde personelin kendi kullanıcısı talebi "İzinlerim"de (`/hr/me/leave?request={id}`), diğerleri İK ekranında (`/hr/leave-requests/{id}`) açar. Onay kutusundaki bağlantı İK ekranıdır; yöneticiler ekip kapsamıyla `hr.leave.requests.read` taşır.
+- Uç noktalar: çalışan `/api/hr/me/leave-requests` (liste, detay, önizleme, oluştur, düzelt, gönder, iptal, iptal talebi, ekler) ve `/api/hr/me/leave-balances`; İK `/api/hr/leave-requests` (liste, detay, önizleme, adına talep, `records` ve önizlemesi, iptal, erken dönüş, `bulk` ve önizlemesi, ekler).
+- Toplu izin uç noktası önce önizlemeyi çalıştırır, sonra sorunsuz her kişi için ayrı komut gönderir; yanıt kişi başına oluşan talebi ya da sorunu döner. En fazla 500 kişi.
+- Bakiye sorgusu ve "Bakiyelerim" aynı okuyucuyu kullanır; bekleyen gün artık taleplerden gelir.

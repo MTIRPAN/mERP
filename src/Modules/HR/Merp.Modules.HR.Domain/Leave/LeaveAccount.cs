@@ -191,6 +191,15 @@ public sealed class LeaveAccount : AuditableAggregateRoot<LeaveAccountId>, IComp
         return taken <= 0 ? LeaveAccountErrors.NothingToCancel : Move(date, taken, LeaveLedgerSource.RequestCancel, requestId, null, stamp);
     }
 
+    /// <summary>A leave ended early gives back part of what it took (+), at most what it still holds.</summary>
+    public Result GiveBack(DateOnly date, Guid requestId, decimal days, LedgerStamp stamp)
+    {
+        var taken = -_entries.Where(e => e.SourceId == requestId && e.Source is LeaveLedgerSource.Request or LeaveLedgerSource.RequestCancel).Sum(e => e.Quantity);
+        return days <= 0 || taken <= 0
+            ? LeaveAccountErrors.NothingToCancel
+            : Move(date, Math.Min(days, taken), LeaveLedgerSource.RequestCancel, requestId, null, stamp);
+    }
+
     /// <summary>
     /// Whether <paramref name="days"/> fit the balance less <paramref name="pending"/> requests, going at most
     /// <paramref name="advanceLimit"/> days below zero (§6 rule 7, E1, E10).

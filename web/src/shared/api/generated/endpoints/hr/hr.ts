@@ -23,13 +23,18 @@ import type {
 import type {
   AddEmployeeDocumentBody,
   AdjustLeaveBalanceCommand,
+  BulkLeaveRow,
+  CancelLeaveRequestCommand,
+  CancelMyLeaveRequestCommand,
   ChangeEmployeeAssignmentCommand,
   CheckLeavePolicyRulesQuery,
   CreateDocumentTypeCommand,
   CreateEmployeeUserCommand,
   CreateJobCommand,
   CreateLeavePolicyCommand,
+  CreateLeaveRequestOnBehalfCommand,
   CreateLeaveTypeCommand,
+  CreateMyLeaveRequestCommand,
   CreateOrgUnitCommand,
   CreatePositionCommand,
   EmployeeDetails,
@@ -48,13 +53,18 @@ import type {
   LeavePolicyItem,
   LeavePolicyResolution,
   LeavePolicyRules,
+  LeaveRequestDetails,
+  LeaveRequestPreview,
   LeaveTypeItem,
   LinkEmployeeUserCommand,
   ListEmployeeDocumentTypesParams,
   ListEmployeesParams,
   ListJobsParams,
   ListLeavePoliciesParams,
+  ListLeaveRequestsParams,
   ListLeaveTypesParams,
+  ListMyLeaveBalancesParams,
+  ListMyLeaveRequestsParams,
   ListOrgUnitsParams,
   ListPositionsParams,
   ListSgkExitCodesParams,
@@ -63,16 +73,24 @@ import type {
   OrgUnitTree,
   PagedResultOfEmployeeListItem,
   PagedResultOfJobListItem,
+  PagedResultOfLeaveRequestListItem,
   PagedResultOfOrgUnitListItem,
   PagedResultOfPositionListItem,
   PositionDetails,
+  PreviewBulkLeaveQuery,
   PreviewLeaveDurationQuery,
+  PreviewLeaveRecordQuery,
+  PreviewLeaveRequestQuery,
+  PreviewMyLeaveRequestQuery,
   ProblemDetails,
   ProfileChangeItem,
+  RecordLeaveCommand,
   RehireEmployeeCommand,
   ReplaceEmployeeDocumentFileBody,
   ReplaceLeavePolicyRulesCommand,
+  RequestMyLeaveCancellationCommand,
   ResolveLeavePolicyParams,
+  ReturnFromLeaveEarlyCommand,
   SearchEmployeeUserCandidatesParams,
   SetEmployeeIbanCommand,
   SetEmployeePhotoBody,
@@ -92,8 +110,11 @@ import type {
   UpdateJobCommand,
   UpdateLeavePolicyCommand,
   UpdateLeaveTypeCommand,
+  UpdateMyLeaveRequestCommand,
   UpdateOrgUnitCommand,
   UpdatePositionCommand,
+  UploadLeaveRequestFileBody,
+  UploadMyLeaveRequestFileBody,
   UserSummary,
 } from '../../model';
 
@@ -7206,3 +7227,2673 @@ export const useAdjustLeaveBalance = <
 > => {
   return useMutation(getAdjustLeaveBalanceMutationOptions(options), queryClient);
 };
+export const getListMyLeaveBalancesUrl = (params?: ListMyLeaveBalancesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/me/leave-balances?${stringifiedParams}` : `/api/hr/me/leave-balances`;
+};
+
+/**
+ * Requires permission: hr.self.leave.read.
+ * @summary The user's leave balances; those of the main employment unless one is named
+ */
+export const listMyLeaveBalances = async (
+  params?: ListMyLeaveBalancesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveBalanceItem[]> => {
+  return customFetch<LeaveBalanceItem[]>(getListMyLeaveBalancesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListMyLeaveBalancesQueryKey = (params?: ListMyLeaveBalancesParams) => {
+  return [`/api/hr/me/leave-balances`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMyLeaveBalancesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyLeaveBalances>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListMyLeaveBalancesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveBalances>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyLeaveBalancesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyLeaveBalances>>> = ({ signal }) =>
+    listMyLeaveBalances(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyLeaveBalances>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMyLeaveBalancesQueryResult = NonNullable<Awaited<ReturnType<typeof listMyLeaveBalances>>>;
+export type ListMyLeaveBalancesQueryError = ErrorType<ProblemDetails>;
+
+export function useListMyLeaveBalances<
+  TData = Awaited<ReturnType<typeof listMyLeaveBalances>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | ListMyLeaveBalancesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveBalances>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyLeaveBalances>>,
+          TError,
+          Awaited<ReturnType<typeof listMyLeaveBalances>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyLeaveBalances<
+  TData = Awaited<ReturnType<typeof listMyLeaveBalances>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListMyLeaveBalancesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveBalances>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyLeaveBalances>>,
+          TError,
+          Awaited<ReturnType<typeof listMyLeaveBalances>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyLeaveBalances<
+  TData = Awaited<ReturnType<typeof listMyLeaveBalances>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListMyLeaveBalancesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveBalances>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The user's leave balances; those of the main employment unless one is named
+ */
+
+export function useListMyLeaveBalances<
+  TData = Awaited<ReturnType<typeof listMyLeaveBalances>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListMyLeaveBalancesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveBalances>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMyLeaveBalancesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListMyLeaveRequestsUrl = (params?: ListMyLeaveRequestsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/me/leave-requests?${stringifiedParams}` : `/api/hr/me/leave-requests`;
+};
+
+/**
+ * Requires permission: hr.self.leave.read.
+ * @summary The user's leave requests, newest first
+ */
+export const listMyLeaveRequests = async (
+  params?: ListMyLeaveRequestsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfLeaveRequestListItem> => {
+  return customFetch<PagedResultOfLeaveRequestListItem>(getListMyLeaveRequestsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListMyLeaveRequestsQueryKey = (params?: ListMyLeaveRequestsParams) => {
+  return [`/api/hr/me/leave-requests`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMyLeaveRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListMyLeaveRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyLeaveRequestsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyLeaveRequests>>> = ({ signal }) =>
+    listMyLeaveRequests(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyLeaveRequests>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMyLeaveRequestsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyLeaveRequests>>>;
+export type ListMyLeaveRequestsQueryError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+
+export function useListMyLeaveRequests<
+  TData = Awaited<ReturnType<typeof listMyLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params: undefined | ListMyLeaveRequestsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveRequests>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyLeaveRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listMyLeaveRequests>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyLeaveRequests<
+  TData = Awaited<ReturnType<typeof listMyLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListMyLeaveRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveRequests>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyLeaveRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listMyLeaveRequests>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyLeaveRequests<
+  TData = Awaited<ReturnType<typeof listMyLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListMyLeaveRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The user's leave requests, newest first
+ */
+
+export function useListMyLeaveRequests<
+  TData = Awaited<ReturnType<typeof listMyLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+>(
+  params?: ListMyLeaveRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMyLeaveRequestsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateMyLeaveRequestUrl = () => {
+  return `/api/hr/me/leave-requests`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Ask for leave: a draft, or sent for approval at once with submit
+ */
+export const createMyLeaveRequest = async (
+  createMyLeaveRequestCommand: CreateMyLeaveRequestCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateMyLeaveRequestUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createMyLeaveRequestCommand),
+  });
+};
+
+export const getCreateMyLeaveRequestMutationKey = () => ['createMyLeaveRequest'] as const;
+
+export const getCreateMyLeaveRequestMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createMyLeaveRequest>>,
+    TError,
+    CreateMyLeaveRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createMyLeaveRequest>>,
+  TError,
+  CreateMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateMyLeaveRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createMyLeaveRequest>>,
+    CreateMyLeaveRequestMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createMyLeaveRequest(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateMyLeaveRequestMutationResult = NonNullable<Awaited<ReturnType<typeof createMyLeaveRequest>>>;
+export type CreateMyLeaveRequestMutationBody = CreateMyLeaveRequestCommand;
+export type CreateMyLeaveRequestMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateMyLeaveRequestMutationVariables = { data: CreateMyLeaveRequestCommand };
+
+/**
+ * @summary Ask for leave: a draft, or sent for approval at once with submit
+ */
+export const useCreateMyLeaveRequest = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createMyLeaveRequest>>,
+      TError,
+      CreateMyLeaveRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createMyLeaveRequest>>,
+  TError,
+  CreateMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateMyLeaveRequestMutationOptions(options), queryClient);
+};
+export const getGetMyLeaveRequestUrl = (id: string) => {
+  return `/api/hr/me/leave-requests/${id}`;
+};
+
+/**
+ * Requires permission: hr.self.leave.read.
+ * @summary One of the user's leave requests with its files and the user's actions
+ */
+export const getMyLeaveRequest = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveRequestDetails> => {
+  return customFetch<LeaveRequestDetails>(getGetMyLeaveRequestUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetMyLeaveRequestQueryKey = (id: string) => {
+  return [`/api/hr/me/leave-requests/${id}`] as const;
+};
+
+export const getGetMyLeaveRequestQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyLeaveRequestQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyLeaveRequest>>> = ({ signal }) =>
+    getMyLeaveRequest(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyLeaveRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMyLeaveRequestQueryResult = NonNullable<Awaited<ReturnType<typeof getMyLeaveRequest>>>;
+export type GetMyLeaveRequestQueryError = ErrorType<ProblemDetails>;
+
+export function useGetMyLeaveRequest<
+  TData = Awaited<ReturnType<typeof getMyLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequest>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyLeaveRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getMyLeaveRequest>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyLeaveRequest<
+  TData = Awaited<ReturnType<typeof getMyLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequest>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyLeaveRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getMyLeaveRequest>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyLeaveRequest<
+  TData = Awaited<ReturnType<typeof getMyLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary One of the user's leave requests with its files and the user's actions
+ */
+
+export function useGetMyLeaveRequest<
+  TData = Awaited<ReturnType<typeof getMyLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMyLeaveRequestQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateMyLeaveRequestUrl = (id: string) => {
+  return `/api/hr/me/leave-requests/${id}`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Correct a draft or a returned request; with submit, send it
+ */
+export const updateMyLeaveRequest = async (
+  id: string,
+  updateMyLeaveRequestCommand: UpdateMyLeaveRequestCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateMyLeaveRequestUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateMyLeaveRequestCommand),
+  });
+};
+
+export const getUpdateMyLeaveRequestMutationKey = () => ['updateMyLeaveRequest'] as const;
+
+export const getUpdateMyLeaveRequestMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyLeaveRequest>>,
+    TError,
+    UpdateMyLeaveRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMyLeaveRequest>>,
+  TError,
+  UpdateMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateMyLeaveRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMyLeaveRequest>>,
+    UpdateMyLeaveRequestMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateMyLeaveRequest(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyLeaveRequestMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyLeaveRequest>>>;
+export type UpdateMyLeaveRequestMutationBody = UpdateMyLeaveRequestCommand;
+export type UpdateMyLeaveRequestMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateMyLeaveRequestMutationVariables = { id: string; data: UpdateMyLeaveRequestCommand };
+
+/**
+ * @summary Correct a draft or a returned request; with submit, send it
+ */
+export const useUpdateMyLeaveRequest = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateMyLeaveRequest>>,
+      TError,
+      UpdateMyLeaveRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateMyLeaveRequest>>,
+  TError,
+  UpdateMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateMyLeaveRequestMutationOptions(options), queryClient);
+};
+export const getPreviewMyLeaveRequestUrl = () => {
+  return `/api/hr/me/leave-requests/preview`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Check a leave request without saving it: length, balance after it, problems, warnings and approvers
+ */
+export const previewMyLeaveRequest = async (
+  previewMyLeaveRequestQuery: PreviewMyLeaveRequestQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveRequestPreview> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<LeaveRequestPreview>(getPreviewMyLeaveRequestUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewMyLeaveRequestQuery),
+  });
+};
+
+export const getPreviewMyLeaveRequestMutationKey = () => ['previewMyLeaveRequest'] as const;
+
+export const getPreviewMyLeaveRequestMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewMyLeaveRequest>>,
+    TError,
+    PreviewMyLeaveRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewMyLeaveRequest>>,
+  TError,
+  PreviewMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewMyLeaveRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof previewMyLeaveRequest>>,
+    PreviewMyLeaveRequestMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return previewMyLeaveRequest(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewMyLeaveRequestMutationResult = NonNullable<Awaited<ReturnType<typeof previewMyLeaveRequest>>>;
+export type PreviewMyLeaveRequestMutationBody = PreviewMyLeaveRequestQuery;
+export type PreviewMyLeaveRequestMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type PreviewMyLeaveRequestMutationVariables = { data: PreviewMyLeaveRequestQuery };
+
+/**
+ * @summary Check a leave request without saving it: length, balance after it, problems, warnings and approvers
+ */
+export const usePreviewMyLeaveRequest = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewMyLeaveRequest>>,
+      TError,
+      PreviewMyLeaveRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewMyLeaveRequest>>,
+  TError,
+  PreviewMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getPreviewMyLeaveRequestMutationOptions(options), queryClient);
+};
+export const getSubmitMyLeaveRequestUrl = (id: string) => {
+  return `/api/hr/me/leave-requests/${id}/submit`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Send a draft or a returned request for approval
+ */
+export const submitMyLeaveRequest = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getSubmitMyLeaveRequestUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getSubmitMyLeaveRequestMutationKey = () => ['submitMyLeaveRequest'] as const;
+
+export const getSubmitMyLeaveRequestMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitMyLeaveRequest>>,
+    TError,
+    SubmitMyLeaveRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitMyLeaveRequest>>,
+  TError,
+  SubmitMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubmitMyLeaveRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitMyLeaveRequest>>,
+    SubmitMyLeaveRequestMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return submitMyLeaveRequest(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitMyLeaveRequestMutationResult = NonNullable<Awaited<ReturnType<typeof submitMyLeaveRequest>>>;
+
+export type SubmitMyLeaveRequestMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SubmitMyLeaveRequestMutationVariables = { id: string };
+
+/**
+ * @summary Send a draft or a returned request for approval
+ */
+export const useSubmitMyLeaveRequest = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof submitMyLeaveRequest>>,
+      TError,
+      SubmitMyLeaveRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof submitMyLeaveRequest>>,
+  TError,
+  SubmitMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubmitMyLeaveRequestMutationOptions(options), queryClient);
+};
+export const getCancelMyLeaveRequestUrl = (id: string) => {
+  return `/api/hr/me/leave-requests/${id}/cancel`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Cancel a draft or a request not decided yet
+ */
+export const cancelMyLeaveRequest = async (
+  id: string,
+  cancelMyLeaveRequestCommand: CancelMyLeaveRequestCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getCancelMyLeaveRequestUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cancelMyLeaveRequestCommand),
+  });
+};
+
+export const getCancelMyLeaveRequestMutationKey = () => ['cancelMyLeaveRequest'] as const;
+
+export const getCancelMyLeaveRequestMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelMyLeaveRequest>>,
+    TError,
+    CancelMyLeaveRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelMyLeaveRequest>>,
+  TError,
+  CancelMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCancelMyLeaveRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelMyLeaveRequest>>,
+    CancelMyLeaveRequestMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return cancelMyLeaveRequest(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelMyLeaveRequestMutationResult = NonNullable<Awaited<ReturnType<typeof cancelMyLeaveRequest>>>;
+export type CancelMyLeaveRequestMutationBody = CancelMyLeaveRequestCommand;
+export type CancelMyLeaveRequestMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CancelMyLeaveRequestMutationVariables = { id: string; data: CancelMyLeaveRequestCommand };
+
+/**
+ * @summary Cancel a draft or a request not decided yet
+ */
+export const useCancelMyLeaveRequest = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cancelMyLeaveRequest>>,
+      TError,
+      CancelMyLeaveRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof cancelMyLeaveRequest>>,
+  TError,
+  CancelMyLeaveRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getCancelMyLeaveRequestMutationOptions(options), queryClient);
+};
+export const getRequestMyLeaveCancellationUrl = (id: string) => {
+  return `/api/hr/me/leave-requests/${id}/cancellation`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Ask to cancel an approved leave before it starts; the cancellation goes through approval
+ */
+export const requestMyLeaveCancellation = async (
+  id: string,
+  requestMyLeaveCancellationCommand: RequestMyLeaveCancellationCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getRequestMyLeaveCancellationUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(requestMyLeaveCancellationCommand),
+  });
+};
+
+export const getRequestMyLeaveCancellationMutationKey = () => ['requestMyLeaveCancellation'] as const;
+
+export const getRequestMyLeaveCancellationMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestMyLeaveCancellation>>,
+    TError,
+    RequestMyLeaveCancellationMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestMyLeaveCancellation>>,
+  TError,
+  RequestMyLeaveCancellationMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRequestMyLeaveCancellationMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestMyLeaveCancellation>>,
+    RequestMyLeaveCancellationMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return requestMyLeaveCancellation(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestMyLeaveCancellationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestMyLeaveCancellation>>
+>;
+export type RequestMyLeaveCancellationMutationBody = RequestMyLeaveCancellationCommand;
+export type RequestMyLeaveCancellationMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type RequestMyLeaveCancellationMutationVariables = { id: string; data: RequestMyLeaveCancellationCommand };
+
+/**
+ * @summary Ask to cancel an approved leave before it starts; the cancellation goes through approval
+ */
+export const useRequestMyLeaveCancellation = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof requestMyLeaveCancellation>>,
+      TError,
+      RequestMyLeaveCancellationMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof requestMyLeaveCancellation>>,
+  TError,
+  RequestMyLeaveCancellationMutationVariables,
+  TContext
+> => {
+  return useMutation(getRequestMyLeaveCancellationMutationOptions(options), queryClient);
+};
+export const getUploadMyLeaveRequestFileUrl = (id: string) => {
+  return `/api/hr/me/leave-requests/${id}/files`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Attach a file to an open request; Files:AllowedExtensions and Files:MaxBytes apply
+ */
+export const uploadMyLeaveRequestFile = async (
+  id: string,
+  uploadMyLeaveRequestFileBody: UploadMyLeaveRequestFileBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const formData = new FormData();
+  if (uploadMyLeaveRequestFileBody.file !== undefined) {
+    formData.append(`file`, uploadMyLeaveRequestFileBody.file);
+  }
+
+  return customFetch<EntityCreatedResponse>(getUploadMyLeaveRequestFileUrl(id), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getUploadMyLeaveRequestFileMutationKey = () => ['uploadMyLeaveRequestFile'] as const;
+
+export const getUploadMyLeaveRequestFileMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadMyLeaveRequestFile>>,
+    TError,
+    UploadMyLeaveRequestFileMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadMyLeaveRequestFile>>,
+  TError,
+  UploadMyLeaveRequestFileMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUploadMyLeaveRequestFileMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadMyLeaveRequestFile>>,
+    UploadMyLeaveRequestFileMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return uploadMyLeaveRequestFile(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadMyLeaveRequestFileMutationResult = NonNullable<Awaited<ReturnType<typeof uploadMyLeaveRequestFile>>>;
+export type UploadMyLeaveRequestFileMutationBody = UploadMyLeaveRequestFileBody;
+export type UploadMyLeaveRequestFileMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UploadMyLeaveRequestFileMutationVariables = { id: string; data: UploadMyLeaveRequestFileBody };
+
+/**
+ * @summary Attach a file to an open request; Files:AllowedExtensions and Files:MaxBytes apply
+ */
+export const useUploadMyLeaveRequestFile = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof uploadMyLeaveRequestFile>>,
+      TError,
+      UploadMyLeaveRequestFileMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof uploadMyLeaveRequestFile>>,
+  TError,
+  UploadMyLeaveRequestFileMutationVariables,
+  TContext
+> => {
+  return useMutation(getUploadMyLeaveRequestFileMutationOptions(options), queryClient);
+};
+export const getDeleteMyLeaveRequestFileUrl = (id: string, fileId: string) => {
+  return `/api/hr/me/leave-requests/${id}/files/${fileId}`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Delete a file of a draft or a returned request
+ */
+export const deleteMyLeaveRequestFile = async (
+  id: string,
+  fileId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getDeleteMyLeaveRequestFileUrl(id, fileId), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getDeleteMyLeaveRequestFileMutationKey = () => ['deleteMyLeaveRequestFile'] as const;
+
+export const getDeleteMyLeaveRequestFileMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMyLeaveRequestFile>>,
+    TError,
+    DeleteMyLeaveRequestFileMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMyLeaveRequestFile>>,
+  TError,
+  DeleteMyLeaveRequestFileMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteMyLeaveRequestFileMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMyLeaveRequestFile>>,
+    DeleteMyLeaveRequestFileMutationVariables
+  > = (props) => {
+    const { id, fileId } = props ?? {};
+
+    return deleteMyLeaveRequestFile(id, fileId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMyLeaveRequestFileMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMyLeaveRequestFile>>>;
+
+export type DeleteMyLeaveRequestFileMutationError = ErrorType<ProblemDetails>;
+export type DeleteMyLeaveRequestFileMutationVariables = { id: string; fileId: string };
+
+/**
+ * @summary Delete a file of a draft or a returned request
+ */
+export const useDeleteMyLeaveRequestFile = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteMyLeaveRequestFile>>,
+      TError,
+      DeleteMyLeaveRequestFileMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMyLeaveRequestFile>>,
+  TError,
+  DeleteMyLeaveRequestFileMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteMyLeaveRequestFileMutationOptions(options), queryClient);
+};
+export const getDownloadMyLeaveRequestFileUrl = (id: string, fileId: string) => {
+  return `/api/hr/me/leave-requests/${id}/files/${fileId}`;
+};
+
+/**
+ * Requires permission: hr.self.leave.read.
+ * @summary A file of one of the user's requests
+ */
+export const downloadMyLeaveRequestFile = async (
+  id: string,
+  fileId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getDownloadMyLeaveRequestFileUrl(id, fileId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getDownloadMyLeaveRequestFileQueryKey = (id: string, fileId: string) => {
+  return [`/api/hr/me/leave-requests/${id}/files/${fileId}`] as const;
+};
+
+export const getDownloadMyLeaveRequestFileQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getDownloadMyLeaveRequestFileQueryKey(id, fileId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>> = ({ signal }) =>
+    downloadMyLeaveRequestFile(id, fileId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined && fileId !== null && fileId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type DownloadMyLeaveRequestFileQueryResult = NonNullable<Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>>;
+export type DownloadMyLeaveRequestFileQueryError = ErrorType<ProblemDetails>;
+
+export function useDownloadMyLeaveRequestFile<
+  TData = Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>,
+          TError,
+          Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadMyLeaveRequestFile<
+  TData = Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>,
+          TError,
+          Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadMyLeaveRequestFile<
+  TData = Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A file of one of the user's requests
+ */
+
+export function useDownloadMyLeaveRequestFile<
+  TData = Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyLeaveRequestFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getDownloadMyLeaveRequestFileQueryOptions(id, fileId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListLeaveRequestsUrl = (params?: ListLeaveRequestsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/leave-requests?${stringifiedParams}` : `/api/hr/leave-requests`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.read.
+ * @summary The leave requests of the employees in the caller's scope; drafts stay with their requesters
+ */
+export const listLeaveRequests = async (
+  params?: ListLeaveRequestsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfLeaveRequestListItem> => {
+  return customFetch<PagedResultOfLeaveRequestListItem>(getListLeaveRequestsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListLeaveRequestsQueryKey = (params?: ListLeaveRequestsParams) => {
+  return [`/api/hr/leave-requests`, ...(params ? [params] : [])] as const;
+};
+
+export const getListLeaveRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListLeaveRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListLeaveRequestsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listLeaveRequests>>> = ({ signal }) =>
+    listLeaveRequests(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listLeaveRequests>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListLeaveRequestsQueryResult = NonNullable<Awaited<ReturnType<typeof listLeaveRequests>>>;
+export type ListLeaveRequestsQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListLeaveRequests<
+  TData = Awaited<ReturnType<typeof listLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListLeaveRequestsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequests>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLeaveRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listLeaveRequests>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListLeaveRequests<
+  TData = Awaited<ReturnType<typeof listLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListLeaveRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequests>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLeaveRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listLeaveRequests>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListLeaveRequests<
+  TData = Awaited<ReturnType<typeof listLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListLeaveRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The leave requests of the employees in the caller's scope; drafts stay with their requesters
+ */
+
+export function useListLeaveRequests<
+  TData = Awaited<ReturnType<typeof listLeaveRequests>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListLeaveRequestsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequests>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListLeaveRequestsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateLeaveRequestOnBehalfUrl = () => {
+  return `/api/hr/leave-requests`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.manage.
+ * @summary Ask for leave on an employee's behalf; it is sent for approval at once
+ */
+export const createLeaveRequestOnBehalf = async (
+  createLeaveRequestOnBehalfCommand: CreateLeaveRequestOnBehalfCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateLeaveRequestOnBehalfUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createLeaveRequestOnBehalfCommand),
+  });
+};
+
+export const getCreateLeaveRequestOnBehalfMutationKey = () => ['createLeaveRequestOnBehalf'] as const;
+
+export const getCreateLeaveRequestOnBehalfMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLeaveRequestOnBehalf>>,
+    TError,
+    CreateLeaveRequestOnBehalfMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLeaveRequestOnBehalf>>,
+  TError,
+  CreateLeaveRequestOnBehalfMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateLeaveRequestOnBehalfMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createLeaveRequestOnBehalf>>,
+    CreateLeaveRequestOnBehalfMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createLeaveRequestOnBehalf(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLeaveRequestOnBehalfMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createLeaveRequestOnBehalf>>
+>;
+export type CreateLeaveRequestOnBehalfMutationBody = CreateLeaveRequestOnBehalfCommand;
+export type CreateLeaveRequestOnBehalfMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateLeaveRequestOnBehalfMutationVariables = { data: CreateLeaveRequestOnBehalfCommand };
+
+/**
+ * @summary Ask for leave on an employee's behalf; it is sent for approval at once
+ */
+export const useCreateLeaveRequestOnBehalf = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createLeaveRequestOnBehalf>>,
+      TError,
+      CreateLeaveRequestOnBehalfMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createLeaveRequestOnBehalf>>,
+  TError,
+  CreateLeaveRequestOnBehalfMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateLeaveRequestOnBehalfMutationOptions(options), queryClient);
+};
+export const getGetLeaveRequestUrl = (id: string) => {
+  return `/api/hr/leave-requests/${id}`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.read.
+ * @summary A leave request in the caller's scope with its files and the caller's actions
+ */
+export const getLeaveRequest = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveRequestDetails> => {
+  return customFetch<LeaveRequestDetails>(getGetLeaveRequestUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLeaveRequestQueryKey = (id: string) => {
+  return [`/api/hr/leave-requests/${id}`] as const;
+};
+
+export const getGetLeaveRequestQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLeaveRequestQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaveRequest>>> = ({ signal }) =>
+    getLeaveRequest(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLeaveRequest>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetLeaveRequestQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaveRequest>>>;
+export type GetLeaveRequestQueryError = ErrorType<ProblemDetails>;
+
+export function useGetLeaveRequest<
+  TData = Awaited<ReturnType<typeof getLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequest>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveRequest>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveRequest<
+  TData = Awaited<ReturnType<typeof getLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequest>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveRequest>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveRequest>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveRequest<
+  TData = Awaited<ReturnType<typeof getLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A leave request in the caller's scope with its files and the caller's actions
+ */
+
+export function useGetLeaveRequest<
+  TData = Awaited<ReturnType<typeof getLeaveRequest>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequest>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetLeaveRequestQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getPreviewLeaveRequestUrl = () => {
+  return `/api/hr/leave-requests/preview`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.manage.
+ * @summary Check a request HR would send on an employee's behalf, without saving it
+ */
+export const previewLeaveRequest = async (
+  previewLeaveRequestQuery: PreviewLeaveRequestQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveRequestPreview> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<LeaveRequestPreview>(getPreviewLeaveRequestUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewLeaveRequestQuery),
+  });
+};
+
+export const getPreviewLeaveRequestMutationKey = () => ['previewLeaveRequest'] as const;
+
+export const getPreviewLeaveRequestMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewLeaveRequest>>,
+    TError,
+    PreviewLeaveRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewLeaveRequest>>,
+  TError,
+  PreviewLeaveRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewLeaveRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof previewLeaveRequest>>,
+    PreviewLeaveRequestMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return previewLeaveRequest(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewLeaveRequestMutationResult = NonNullable<Awaited<ReturnType<typeof previewLeaveRequest>>>;
+export type PreviewLeaveRequestMutationBody = PreviewLeaveRequestQuery;
+export type PreviewLeaveRequestMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type PreviewLeaveRequestMutationVariables = { data: PreviewLeaveRequestQuery };
+
+/**
+ * @summary Check a request HR would send on an employee's behalf, without saving it
+ */
+export const usePreviewLeaveRequest = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewLeaveRequest>>,
+      TError,
+      PreviewLeaveRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewLeaveRequest>>,
+  TError,
+  PreviewLeaveRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getPreviewLeaveRequestMutationOptions(options), queryClient);
+};
+export const getPreviewLeaveRecordUrl = () => {
+  return `/api/hr/leave-requests/records/preview`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.record.
+ * @summary Check a leave HR would record, without saving it
+ */
+export const previewLeaveRecord = async (
+  previewLeaveRecordQuery: PreviewLeaveRecordQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveRequestPreview> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<LeaveRequestPreview>(getPreviewLeaveRecordUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewLeaveRecordQuery),
+  });
+};
+
+export const getPreviewLeaveRecordMutationKey = () => ['previewLeaveRecord'] as const;
+
+export const getPreviewLeaveRecordMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewLeaveRecord>>,
+    TError,
+    PreviewLeaveRecordMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewLeaveRecord>>,
+  TError,
+  PreviewLeaveRecordMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewLeaveRecordMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof previewLeaveRecord>>,
+    PreviewLeaveRecordMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return previewLeaveRecord(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewLeaveRecordMutationResult = NonNullable<Awaited<ReturnType<typeof previewLeaveRecord>>>;
+export type PreviewLeaveRecordMutationBody = PreviewLeaveRecordQuery;
+export type PreviewLeaveRecordMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type PreviewLeaveRecordMutationVariables = { data: PreviewLeaveRecordQuery };
+
+/**
+ * @summary Check a leave HR would record, without saving it
+ */
+export const usePreviewLeaveRecord = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewLeaveRecord>>,
+      TError,
+      PreviewLeaveRecordMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewLeaveRecord>>,
+  TError,
+  PreviewLeaveRecordMutationVariables,
+  TContext
+> => {
+  return useMutation(getPreviewLeaveRecordMutationOptions(options), queryClient);
+};
+export const getRecordLeaveUrl = () => {
+  return `/api/hr/leave-requests/records`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.record.
+ * @summary Record a leave approved without a flow, e.g. one taken in the past
+ */
+export const recordLeave = async (
+  recordLeaveCommand: RecordLeaveCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getRecordLeaveUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(recordLeaveCommand),
+  });
+};
+
+export const getRecordLeaveMutationKey = () => ['recordLeave'] as const;
+
+export const getRecordLeaveMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordLeave>>,
+    TError,
+    RecordLeaveMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof recordLeave>>, TError, RecordLeaveMutationVariables, TContext> => {
+  const mutationKey = getRecordLeaveMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordLeave>>, RecordLeaveMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return recordLeave(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecordLeaveMutationResult = NonNullable<Awaited<ReturnType<typeof recordLeave>>>;
+export type RecordLeaveMutationBody = RecordLeaveCommand;
+export type RecordLeaveMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type RecordLeaveMutationVariables = { data: RecordLeaveCommand };
+
+/**
+ * @summary Record a leave approved without a flow, e.g. one taken in the past
+ */
+export const useRecordLeave = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof recordLeave>>,
+      TError,
+      RecordLeaveMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof recordLeave>>, TError, RecordLeaveMutationVariables, TContext> => {
+  return useMutation(getRecordLeaveMutationOptions(options), queryClient);
+};
+export const getCancelLeaveRequestUrl = (id: string) => {
+  return `/api/hr/leave-requests/${id}/cancel`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.manage.
+ * @summary Cancel a request not decided yet, or an approved one that has not started (its days come back)
+ */
+export const cancelLeaveRequest = async (
+  id: string,
+  cancelLeaveRequestCommand: CancelLeaveRequestCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getCancelLeaveRequestUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cancelLeaveRequestCommand),
+  });
+};
+
+export const getCancelLeaveRequestMutationKey = () => ['cancelLeaveRequest'] as const;
+
+export const getCancelLeaveRequestMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelLeaveRequest>>,
+    TError,
+    CancelLeaveRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelLeaveRequest>>,
+  TError,
+  CancelLeaveRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCancelLeaveRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelLeaveRequest>>,
+    CancelLeaveRequestMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return cancelLeaveRequest(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelLeaveRequestMutationResult = NonNullable<Awaited<ReturnType<typeof cancelLeaveRequest>>>;
+export type CancelLeaveRequestMutationBody = CancelLeaveRequestCommand;
+export type CancelLeaveRequestMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CancelLeaveRequestMutationVariables = { id: string; data: CancelLeaveRequestCommand };
+
+/**
+ * @summary Cancel a request not decided yet, or an approved one that has not started (its days come back)
+ */
+export const useCancelLeaveRequest = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cancelLeaveRequest>>,
+      TError,
+      CancelLeaveRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof cancelLeaveRequest>>,
+  TError,
+  CancelLeaveRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getCancelLeaveRequestMutationOptions(options), queryClient);
+};
+export const getReturnFromLeaveEarlyUrl = (id: string) => {
+  return `/api/hr/leave-requests/${id}/early-return`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.manage.
+ * @summary End a started leave early; the days no longer taken come back
+ */
+export const returnFromLeaveEarly = async (
+  id: string,
+  returnFromLeaveEarlyCommand: ReturnFromLeaveEarlyCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getReturnFromLeaveEarlyUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(returnFromLeaveEarlyCommand),
+  });
+};
+
+export const getReturnFromLeaveEarlyMutationKey = () => ['returnFromLeaveEarly'] as const;
+
+export const getReturnFromLeaveEarlyMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof returnFromLeaveEarly>>,
+    TError,
+    ReturnFromLeaveEarlyMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof returnFromLeaveEarly>>,
+  TError,
+  ReturnFromLeaveEarlyMutationVariables,
+  TContext
+> => {
+  const mutationKey = getReturnFromLeaveEarlyMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof returnFromLeaveEarly>>,
+    ReturnFromLeaveEarlyMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return returnFromLeaveEarly(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReturnFromLeaveEarlyMutationResult = NonNullable<Awaited<ReturnType<typeof returnFromLeaveEarly>>>;
+export type ReturnFromLeaveEarlyMutationBody = ReturnFromLeaveEarlyCommand;
+export type ReturnFromLeaveEarlyMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type ReturnFromLeaveEarlyMutationVariables = { id: string; data: ReturnFromLeaveEarlyCommand };
+
+/**
+ * @summary End a started leave early; the days no longer taken come back
+ */
+export const useReturnFromLeaveEarly = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof returnFromLeaveEarly>>,
+      TError,
+      ReturnFromLeaveEarlyMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof returnFromLeaveEarly>>,
+  TError,
+  ReturnFromLeaveEarlyMutationVariables,
+  TContext
+> => {
+  return useMutation(getReturnFromLeaveEarlyMutationOptions(options), queryClient);
+};
+export const getPreviewBulkLeaveUrl = () => {
+  return `/api/hr/leave-requests/bulk/preview`;
+};
+
+/**
+ * Requires permission: hr.leave.bulk.
+ * @summary Check a bulk leave for each person: the leave counted, the balance after it, problems and warnings
+ */
+export const previewBulkLeave = async (
+  previewBulkLeaveQuery: PreviewBulkLeaveQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<BulkLeaveRow[]> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<BulkLeaveRow[]>(getPreviewBulkLeaveUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewBulkLeaveQuery),
+  });
+};
+
+export const getPreviewBulkLeaveMutationKey = () => ['previewBulkLeave'] as const;
+
+export const getPreviewBulkLeaveMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewBulkLeave>>,
+    TError,
+    PreviewBulkLeaveMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewBulkLeave>>,
+  TError,
+  PreviewBulkLeaveMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewBulkLeaveMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof previewBulkLeave>>,
+    PreviewBulkLeaveMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return previewBulkLeave(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewBulkLeaveMutationResult = NonNullable<Awaited<ReturnType<typeof previewBulkLeave>>>;
+export type PreviewBulkLeaveMutationBody = PreviewBulkLeaveQuery;
+export type PreviewBulkLeaveMutationError = ErrorType<HttpValidationProblemDetails>;
+export type PreviewBulkLeaveMutationVariables = { data: PreviewBulkLeaveQuery };
+
+/**
+ * @summary Check a bulk leave for each person: the leave counted, the balance after it, problems and warnings
+ */
+export const usePreviewBulkLeave = <TError = ErrorType<HttpValidationProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewBulkLeave>>,
+      TError,
+      PreviewBulkLeaveMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewBulkLeave>>,
+  TError,
+  PreviewBulkLeaveMutationVariables,
+  TContext
+> => {
+  return useMutation(getPreviewBulkLeaveMutationOptions(options), queryClient);
+};
+export const getCreateBulkLeaveUrl = () => {
+  return `/api/hr/leave-requests/bulk`;
+};
+
+/**
+ * Requires permission: hr.leave.bulk.
+ * @summary Record a bulk leave approved for each person without a problem; each person is saved on its own
+ */
+export const createBulkLeave = async (
+  previewBulkLeaveQuery: PreviewBulkLeaveQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<BulkLeaveRow[]> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<BulkLeaveRow[]>(getCreateBulkLeaveUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewBulkLeaveQuery),
+  });
+};
+
+export const getCreateBulkLeaveMutationKey = () => ['createBulkLeave'] as const;
+
+export const getCreateBulkLeaveMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createBulkLeave>>,
+    TError,
+    CreateBulkLeaveMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createBulkLeave>>,
+  TError,
+  CreateBulkLeaveMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateBulkLeaveMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBulkLeave>>, CreateBulkLeaveMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return createBulkLeave(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateBulkLeaveMutationResult = NonNullable<Awaited<ReturnType<typeof createBulkLeave>>>;
+export type CreateBulkLeaveMutationBody = PreviewBulkLeaveQuery;
+export type CreateBulkLeaveMutationError = ErrorType<HttpValidationProblemDetails>;
+export type CreateBulkLeaveMutationVariables = { data: PreviewBulkLeaveQuery };
+
+/**
+ * @summary Record a bulk leave approved for each person without a problem; each person is saved on its own
+ */
+export const useCreateBulkLeave = <TError = ErrorType<HttpValidationProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createBulkLeave>>,
+      TError,
+      CreateBulkLeaveMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createBulkLeave>>,
+  TError,
+  CreateBulkLeaveMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateBulkLeaveMutationOptions(options), queryClient);
+};
+export const getUploadLeaveRequestFileUrl = (id: string) => {
+  return `/api/hr/leave-requests/${id}/files`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.manage.
+ * @summary Attach a file to a request that was not refused or cancelled
+ */
+export const uploadLeaveRequestFile = async (
+  id: string,
+  uploadLeaveRequestFileBody: UploadLeaveRequestFileBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const formData = new FormData();
+  if (uploadLeaveRequestFileBody.file !== undefined) {
+    formData.append(`file`, uploadLeaveRequestFileBody.file);
+  }
+
+  return customFetch<EntityCreatedResponse>(getUploadLeaveRequestFileUrl(id), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getUploadLeaveRequestFileMutationKey = () => ['uploadLeaveRequestFile'] as const;
+
+export const getUploadLeaveRequestFileMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadLeaveRequestFile>>,
+    TError,
+    UploadLeaveRequestFileMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadLeaveRequestFile>>,
+  TError,
+  UploadLeaveRequestFileMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUploadLeaveRequestFileMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadLeaveRequestFile>>,
+    UploadLeaveRequestFileMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return uploadLeaveRequestFile(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadLeaveRequestFileMutationResult = NonNullable<Awaited<ReturnType<typeof uploadLeaveRequestFile>>>;
+export type UploadLeaveRequestFileMutationBody = UploadLeaveRequestFileBody;
+export type UploadLeaveRequestFileMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UploadLeaveRequestFileMutationVariables = { id: string; data: UploadLeaveRequestFileBody };
+
+/**
+ * @summary Attach a file to a request that was not refused or cancelled
+ */
+export const useUploadLeaveRequestFile = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof uploadLeaveRequestFile>>,
+      TError,
+      UploadLeaveRequestFileMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof uploadLeaveRequestFile>>,
+  TError,
+  UploadLeaveRequestFileMutationVariables,
+  TContext
+> => {
+  return useMutation(getUploadLeaveRequestFileMutationOptions(options), queryClient);
+};
+export const getDeleteLeaveRequestFileUrl = (id: string, fileId: string) => {
+  return `/api/hr/leave-requests/${id}/files/${fileId}`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.manage.
+ * @summary Delete a file of a request
+ */
+export const deleteLeaveRequestFile = async (
+  id: string,
+  fileId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getDeleteLeaveRequestFileUrl(id, fileId), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getDeleteLeaveRequestFileMutationKey = () => ['deleteLeaveRequestFile'] as const;
+
+export const getDeleteLeaveRequestFileMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteLeaveRequestFile>>,
+    TError,
+    DeleteLeaveRequestFileMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteLeaveRequestFile>>,
+  TError,
+  DeleteLeaveRequestFileMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDeleteLeaveRequestFileMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteLeaveRequestFile>>,
+    DeleteLeaveRequestFileMutationVariables
+  > = (props) => {
+    const { id, fileId } = props ?? {};
+
+    return deleteLeaveRequestFile(id, fileId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteLeaveRequestFileMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLeaveRequestFile>>>;
+
+export type DeleteLeaveRequestFileMutationError = ErrorType<ProblemDetails>;
+export type DeleteLeaveRequestFileMutationVariables = { id: string; fileId: string };
+
+/**
+ * @summary Delete a file of a request
+ */
+export const useDeleteLeaveRequestFile = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deleteLeaveRequestFile>>,
+      TError,
+      DeleteLeaveRequestFileMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deleteLeaveRequestFile>>,
+  TError,
+  DeleteLeaveRequestFileMutationVariables,
+  TContext
+> => {
+  return useMutation(getDeleteLeaveRequestFileMutationOptions(options), queryClient);
+};
+export const getDownloadLeaveRequestFileUrl = (id: string, fileId: string) => {
+  return `/api/hr/leave-requests/${id}/files/${fileId}`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.read.
+ * @summary A file of a request in the caller's scope
+ */
+export const downloadLeaveRequestFile = async (
+  id: string,
+  fileId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getDownloadLeaveRequestFileUrl(id, fileId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getDownloadLeaveRequestFileQueryKey = (id: string, fileId: string) => {
+  return [`/api/hr/leave-requests/${id}/files/${fileId}`] as const;
+};
+
+export const getDownloadLeaveRequestFileQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLeaveRequestFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getDownloadLeaveRequestFileQueryKey(id, fileId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadLeaveRequestFile>>> = ({ signal }) =>
+    downloadLeaveRequestFile(id, fileId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined && fileId !== null && fileId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof downloadLeaveRequestFile>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type DownloadLeaveRequestFileQueryResult = NonNullable<Awaited<ReturnType<typeof downloadLeaveRequestFile>>>;
+export type DownloadLeaveRequestFileQueryError = ErrorType<ProblemDetails>;
+
+export function useDownloadLeaveRequestFile<
+  TData = Awaited<ReturnType<typeof downloadLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLeaveRequestFile>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadLeaveRequestFile>>,
+          TError,
+          Awaited<ReturnType<typeof downloadLeaveRequestFile>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadLeaveRequestFile<
+  TData = Awaited<ReturnType<typeof downloadLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLeaveRequestFile>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadLeaveRequestFile>>,
+          TError,
+          Awaited<ReturnType<typeof downloadLeaveRequestFile>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadLeaveRequestFile<
+  TData = Awaited<ReturnType<typeof downloadLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLeaveRequestFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A file of a request in the caller's scope
+ */
+
+export function useDownloadLeaveRequestFile<
+  TData = Awaited<ReturnType<typeof downloadLeaveRequestFile>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLeaveRequestFile>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getDownloadLeaveRequestFileQueryOptions(id, fileId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

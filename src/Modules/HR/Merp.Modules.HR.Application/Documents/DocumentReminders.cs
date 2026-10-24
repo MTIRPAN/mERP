@@ -20,10 +20,30 @@ public sealed class HrNotificationTypes : INotificationTypeProvider
     /// <summary>A change request of the user ended: written to the card, kept off it or rejected (D39).</summary>
     public const string ProfileChangeCompleted = "hr.profile_change_completed";
 
+    /// <summary>A leave request was sent for approval (D44).</summary>
+    public const string LeaveRequestSubmitted = "hr.leave_request_submitted";
+
+    /// <summary>A leave request was approved or rejected.</summary>
+    public const string LeaveRequestCompleted = "hr.leave_request_completed";
+
+    /// <summary>An approver returned a leave request for correction.</summary>
+    public const string LeaveRequestReturned = "hr.leave_request_returned";
+
+    /// <summary>The cancellation of an approved leave was approved or rejected.</summary>
+    public const string LeaveCancellationCompleted = "hr.leave_cancellation_completed";
+
+    /// <summary>A leave starts tomorrow.</summary>
+    public const string LeaveReminder = "hr.leave_reminder";
+
     public IEnumerable<NotificationTypeDefinition> GetNotificationTypes() =>
     [
         new(DocumentExpiring, [NotificationChannel.InApp, NotificationChannel.Email]),
         new(ProfileChangeCompleted, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(LeaveRequestSubmitted, [NotificationChannel.InApp]),
+        new(LeaveRequestCompleted, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(LeaveRequestReturned, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(LeaveCancellationCompleted, [NotificationChannel.InApp, NotificationChannel.Email]),
+        new(LeaveReminder, [NotificationChannel.InApp, NotificationChannel.Email]),
     ];
 }
 

@@ -43,6 +43,8 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
 
     public DbSet<LeaveAccount> LeaveAccounts => Set<LeaveAccount>();
 
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);

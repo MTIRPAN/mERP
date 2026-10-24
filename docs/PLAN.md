@@ -873,6 +873,10 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Onaylı iznin iptali bakiyeyi geri yükler.
 - E13 (çakışma) testi geçer.
 
+**Alt PR'lar (D44):**
+- [x] **L4a backend:** talep (taslak, gönder, düzelt, iptal, iptal talebi), §6 doğrulaması ve önizleme, onay olayları ve iptal akışı, bakiyeye yazma ve bekleyen gün, İK adına talep, geçmiş kayıt, iptal, erken dönüş, toplu izin, ekler, bildirimler ve hatırlatma işi
+- [ ] **L4b web:** İzinlerim, yeni talep çekmecesi, talep detayı ve zaman çizelgesi, İK izin talepleri, toplu izin
+
 ### [ ] L5 İzin takvimi — S
 
 **Yapılacaklar:**
