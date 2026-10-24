@@ -1,5 +1,19 @@
 import { DownloadOutlined, InboxOutlined, UploadOutlined } from '@ant-design/icons';
-import { Alert, App, Button, Drawer, Flex, Result, Spin, Steps, Table, Typography, Upload } from 'antd';
+import {
+  Alert,
+  App,
+  Button,
+  Drawer,
+  Flex,
+  Popconfirm,
+  Radio,
+  Result,
+  Spin,
+  Steps,
+  Table,
+  Typography,
+  Upload,
+} from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -9,7 +23,7 @@ import {
   useGetImportJob,
   useStartImport,
 } from '@/shared/api/generated/endpoints/platform/platform';
-import { ImportStatus, type ImportJobDetails } from '@/shared/api/generated/model';
+import { ImportMode, ImportStatus, type ImportJobDetails } from '@/shared/api/generated/model';
 import { saveFile } from '@/shared/api/download';
 import { isApiError } from '@/shared/api/problem';
 import { hasImported, isImportRunning, toErrorRows, type ImportErrorRow } from './importStatus';
@@ -28,6 +42,8 @@ interface ImportDrawerProps {
   onClose: () => void;
   /** Records were written: refresh the page's list. */
   onImported: () => void;
+  /** Rows of existing records may update them (D40); the user picks the mode before uploading. */
+  supportsUpdate?: boolean;
 }
 
 const ErrorTable = ({ job }: { job: ImportJobDetails }) => {
@@ -66,13 +82,15 @@ const ErrorTable = ({ job }: { job: ImportJobDetails }) => {
 };
 
 /**
- * Excel import of any module (D35): download the template, upload the filled file, see the errors with their row and
- * column or commit a file without errors. Large files are processed in the background; the drawer polls the job.
+ * Excel import of any module (D35, D40): download the template, upload the filled file, see the errors with their row
+ * and column, then commit a file without errors or only its rows without errors. Imports that support updates ask
+ * whether known records are updated. Large files are processed in the background; the drawer polls the job.
  */
-export const ImportDrawer = ({ importKey, name, open, onClose, onImported }: ImportDrawerProps) => {
+export const ImportDrawer = ({ importKey, name, open, onClose, onImported, supportsUpdate }: ImportDrawerProps) => {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const [jobId, setJobId] = useState<string>();
+  const [mode, setMode] = useState<ImportMode>(ImportMode.Create);
   const start = useStartImport();
   const commit = useCommitImport();
   const { data: job, refetch } = useGetImportJob(jobId ?? '', {
@@ -98,7 +116,10 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported }: Imp
 
   const upload = async (file: File) => {
     try {
-      const created = await start.mutateAsync({ key: importKey, data: { file } });
+      const created = await start.mutateAsync({
+        key: importKey,
+        data: supportsUpdate ? { file, mode } : { file },
+      });
       setJobId(created.id);
     } catch (error) {
       // Field errors (not an xlsx file, too many rows) are not shown by ApiErrorNotifier
@@ -109,13 +130,13 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported }: Imp
     }
   };
 
-  const confirm = async () => {
+  const confirm = async (skipInvalidRows = false) => {
     if (!job) {
       return;
     }
 
     try {
-      await commit.mutateAsync({ id: job.id });
+      await commit.mutateAsync(skipInvalidRows ? { id: job.id, params: { skipInvalidRows } } : { id: job.id });
     } finally {
       await refetch();
     }
@@ -157,7 +178,11 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported }: Imp
             type="success"
             showIcon
             title={t('web.imports.ready', { rows: job.totalRows })}
-            description={t('web.imports.ready_hint')}
+            description={
+              job.mode === ImportMode.CreateOrUpdate
+                ? t('web.imports.ready_counts', { created: job.totalRows - job.updateRows, updated: job.updateRows })
+                : t('web.imports.ready_hint')
+            }
             action={
               <Button type="primary" loading={commit.isPending} onClick={() => void confirm()}>
                 {t('web.imports.commit')}
@@ -172,11 +197,30 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported }: Imp
               type="error"
               showIcon
               title={t('web.imports.invalid', { rows: job.errorRows, total: job.totalRows })}
-              description={t('web.imports.invalid_hint')}
+              description={t(
+                job.canCommitValidRows ? 'web.imports.invalid_valid_rows_hint' : 'web.imports.invalid_hint',
+              )}
               action={
-                <Button icon={<DownloadOutlined />} onClick={downloadReport}>
-                  {t('web.imports.report')}
-                </Button>
+                <Flex vertical align="flex-end" gap={8}>
+                  <Button icon={<DownloadOutlined />} onClick={downloadReport}>
+                    {t('web.imports.report')}
+                  </Button>
+                  {job.canCommitValidRows && (
+                    <Popconfirm
+                      title={t('web.imports.commit_valid_confirm', {
+                        rows: job.totalRows - job.errorRows,
+                        skipped: job.errorRows,
+                      })}
+                      okText={t('web.imports.commit_valid')}
+                      cancelText={t('web.common.cancel')}
+                      onConfirm={() => confirm(true)}
+                    >
+                      <Button loading={commit.isPending}>
+                        {t('web.imports.commit_valid_count', { rows: job.totalRows - job.errorRows })}
+                      </Button>
+                    </Popconfirm>
+                  )}
+                </Flex>
               }
             />
             <ErrorTable job={job} />
@@ -237,6 +281,23 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported }: Imp
         {!job ? (
           <Flex vertical gap={16}>
             <Typography.Paragraph style={{ marginBottom: 0 }}>{t('web.imports.intro')}</Typography.Paragraph>
+            {supportsUpdate && (
+              <Radio.Group
+                value={mode}
+                onChange={(event) => setMode(event.target.value as ImportMode)}
+                aria-label={t('web.imports.mode.label')}
+              >
+                <Flex vertical gap={8}>
+                  <Radio value={ImportMode.Create}>{t('web.imports.mode.create')}</Radio>
+                  <Radio value={ImportMode.CreateOrUpdate}>
+                    {t('web.imports.mode.create_or_update')}
+                    <Typography.Text type="secondary" style={{ display: 'block' }}>
+                      {t('web.imports.mode.create_or_update_hint')}
+                    </Typography.Text>
+                  </Radio>
+                </Flex>
+              </Radio.Group>
+            )}
             <div>
               <Button
                 icon={<DownloadOutlined />}

@@ -25,6 +25,7 @@ vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
 const texts: Record<string, string> = {
   'web.hr.employees.title': 'Personel',
   'web.hr.employees.hire': 'İşe giriş',
+  'web.imports.button': "Excel'den içe aktar",
   'web.hr.employees.filters.active': 'Çalışanlar',
   'web.hr.employees.filters.upcoming': 'Başlayacaklar',
   'web.hr.employees.filters.terminated': 'Ayrılanlar',
@@ -90,6 +91,7 @@ describe('EmployeesPage', () => {
     expect(screen.getByText('000042')).toBeInTheDocument();
     expect(screen.getByText('Aktif')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /İşe giriş/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Excel/ })).not.toBeInTheDocument();
     expect(listEmployees).toHaveBeenCalledWith(expect.objectContaining({ page: 1, status: undefined }));
   });
 
@@ -103,6 +105,7 @@ describe('EmployeesPage', () => {
       expect(listEmployees).toHaveBeenLastCalledWith(expect.objectContaining({ status: ['Terminated'] })),
     );
     expect(screen.getByRole('button', { name: /İşe giriş/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Excel'den içe aktar/ })).toBeInTheDocument();
   });
 
   it('searches every status for the TCKN of a refused hire', async () => {

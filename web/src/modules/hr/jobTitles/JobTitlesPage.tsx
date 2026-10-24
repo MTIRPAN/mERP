@@ -11,8 +11,10 @@ import { Can } from '@/shared/components/Can';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatusTag } from '@/shared/components/StatusTag';
+import { ImportButton } from '@/shared/imports/ImportButton';
 import { AuditHistoryButton } from '@/modules/platform/audit/AuditHistoryButton';
 import { hrPermissions } from '../permissions';
+import { useHrRefresh } from '../useHrRefresh';
 import { JobFormDrawer } from './JobFormDrawer';
 
 type Drawer = { open: false } | { open: true; jobId?: string };
@@ -27,6 +29,7 @@ export const JobTitlesPage = () => {
   const [search, setSearch] = useState<string>();
   const [active, setActive] = useState<ActiveFilter>('active');
   const [drawer, setDrawer] = useState<Drawer>({ open: false });
+  const refresh = useHrRefresh();
 
   const columns = useMemo<DataTableColumn<JobListItem>[]>(
     () => [
@@ -85,9 +88,12 @@ export const JobTitlesPage = () => {
         subtitle={t('web.hr.job_titles.subtitle')}
         extra={
           <Can permission={hrPermissions.orgManage}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setDrawer({ open: true })}>
-              {t('web.hr.job_titles.new')}
-            </Button>
+            <Space>
+              <ImportButton importKey="hr.jobs" name={t('web.hr.job_titles.title')} onImported={refresh} />
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setDrawer({ open: true })}>
+                {t('web.hr.job_titles.new')}
+              </Button>
+            </Space>
           </Can>
         }
       />

@@ -11,7 +11,9 @@ import { useHasPermission } from '@/shared/auth/permissionContext';
 import { Can } from '@/shared/components/Can';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { ImportButton } from '@/shared/imports/ImportButton';
 import { hrPermissions } from '../permissions';
+import { useHrRefresh } from '../useHrRefresh';
 import { PositionFormDrawer } from './PositionFormDrawer';
 import { PositionStatusTag } from './PositionStatusTag';
 
@@ -26,6 +28,7 @@ type Drawer = { open: false } | { open: true; positionId?: string };
 export const PositionsPage = () => {
   const { t } = useTranslation();
   const canManage = useHasPermission(hrPermissions.orgManage);
+  const refresh = useHrRefresh();
   const activeCompanyId = useActiveCompanyId();
   const [search, setSearch] = useState<string>();
   const [status, setStatus] = useState<PositionStatus>();
@@ -98,9 +101,12 @@ export const PositionsPage = () => {
         subtitle={t('web.hr.positions.subtitle')}
         extra={
           <Can permission={hrPermissions.orgManage}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setDrawer({ open: true })}>
-              {t('web.hr.positions.new')}
-            </Button>
+            <Space>
+              <ImportButton importKey="hr.positions" name={t('web.hr.positions.title')} onImported={refresh} />
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setDrawer({ open: true })}>
+                {t('web.hr.positions.new')}
+              </Button>
+            </Space>
           </Can>
         }
       />
