@@ -3,12 +3,13 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EmployeeDetails } from '@/shared/api/generated/model';
+import type { EmployeeDetails, ProfileChangeItem } from '@/shared/api/generated/model';
 import { PermissionProvider } from '@/shared/auth/PermissionProvider';
 import { renderWithProviders } from '@/test/render';
 import { EmployeeCardPage } from './EmployeeCardPage';
 
 const employee = vi.fn<() => { data?: EmployeeDetails; isError: boolean; error: unknown }>();
+const profileChanges = vi.fn<() => { data?: ProfileChangeItem[]; isLoading: boolean }>();
 
 vi.mock('@/shared/api/generated/endpoints/hr/hr', () => ({
   useGetEmployee: () => employee(),
@@ -18,10 +19,13 @@ vi.mock('@/shared/api/generated/endpoints/hr/hr', () => ({
   getListEmployeesQueryKey: () => ['/api/hr/employees'],
   useSetEmployeePhoto: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useRemoveEmployeePhoto: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUnlinkEmployeeUser: () => ({ mutateAsync: vi.fn() }),
+  useListEmployeeProfileChanges: () => profileChanges(),
 }));
 
 vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
   useGetCustomFieldForm: () => ({ data: [] }),
+  useGetApprovalTimeline: () => ({ isLoading: false, data: undefined }),
 }));
 
 vi.mock('@/modules/platform/audit/AuditHistoryButton', () => ({ AuditHistoryButton: () => null }));
@@ -43,6 +47,14 @@ const texts: Record<string, string> = {
   'web.hr.employees.lifecycle.change_assignment': 'Görev değişikliği',
   'web.hr.employees.lifecycle.group_transfer': 'Grup içi nakil',
   'web.hr.employees.lifecycle.terminate': 'İşten çıkış',
+  'web.hr.employees.tabs.requests': 'Değişiklik talepleri',
+  'web.hr.employees.user.title': 'Sistem kullanıcısı',
+  'web.hr.employees.user.active': 'Kullanıcı aktif',
+  'web.hr.employees.user.unlink': 'Bağı kaldır',
+  'web.hr.employees.user.create': 'Kullanıcı oluştur',
+  'web.hr.employees.user.failed': 'İstek tamamlanamadı',
+  'web.hr.profile_changes.kind.Iban': 'IBAN',
+  'web.hr.profile_changes.status.Pending': 'Onay bekliyor',
 };
 
 const details = (overrides: Partial<EmployeeDetails> = {}): EmployeeDetails => ({
@@ -145,7 +157,7 @@ const details = (overrides: Partial<EmployeeDetails> = {}): EmployeeDetails => (
   ...overrides,
 });
 
-const render = (permissions: string[] = ['hr.employees.read']) =>
+const render = (permissions: string[] = ['hr.employees.read'], route = '/hr/employees/e1') =>
   renderWithProviders(
     <QueryClientProvider client={new QueryClient()}>
       <PermissionProvider permissions={permissions}>
@@ -155,12 +167,13 @@ const render = (permissions: string[] = ['hr.employees.read']) =>
       </PermissionProvider>
     </QueryClientProvider>,
     texts,
-    '/hr/employees/e1',
+    route,
   );
 
 describe('EmployeeCardPage', () => {
   beforeEach(() => {
     employee.mockReset().mockReturnValue({ data: details(), isError: false, error: null });
+    profileChanges.mockReset().mockReturnValue({ data: [], isLoading: false });
   });
 
   it('shows masked values with a lock and hides the special category data', () => {
@@ -236,5 +249,66 @@ describe('EmployeeCardPage', () => {
     expect(screen.queryByRole('tab', { name: 'Belgeler' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: 'İstihdam ve görev geçmişi' }));
     expect(screen.queryByRole('button', { name: /İşten çıkış/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the linked system user, and to those who manage users the way to unlink it', () => {
+    employee.mockReturnValue({
+      data: details({
+        userId: 'u1',
+        userLinkState: 'Linked',
+        user: { id: 'u1', userName: 'ayse.yilmaz', email: 'ayse@acme.test', isActive: true },
+      }),
+      isError: false,
+      error: null,
+    });
+
+    render(['hr.employees.read', 'hr.employees.user']);
+
+    expect(screen.getByText('Sistem kullanıcısı')).toBeInTheDocument();
+    expect(screen.getByText('ayse.yilmaz')).toBeInTheDocument();
+    expect(screen.getByText('Kullanıcı aktif')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Bağı kaldır/ })).toBeInTheDocument();
+  });
+
+  it('shows why a user request failed, and hides the section from readers when nobody is linked', () => {
+    employee.mockReturnValue({
+      data: details({ userLinkState: 'Failed', userLinkError: 'Bu e-posta adresiyle kayıtlı bir kullanıcı var.' }),
+      isError: false,
+      error: null,
+    });
+
+    const { unmount } = render(['hr.employees.read', 'hr.employees.user']);
+    expect(screen.getByText('İstek tamamlanamadı')).toBeInTheDocument();
+    expect(screen.getByText('Bu e-posta adresiyle kayıtlı bir kullanıcı var.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Kullanıcı oluştur/ })).toBeInTheDocument();
+    unmount();
+
+    render();
+    expect(screen.queryByText('Sistem kullanıcısı')).not.toBeInTheDocument();
+  });
+
+  it('opens the change requests from a link with the tab', async () => {
+    profileChanges.mockReturnValue({
+      data: [
+        {
+          id: 'r1',
+          number: 'PDT-2026-00012',
+          kind: 'Iban',
+          status: 'Pending',
+          proposed: null,
+          proposedIban: 'TR** **** … 1326',
+          note: null,
+          returnComment: null,
+          createdAt: '2026-10-22T09:00:00Z',
+          closedAt: null,
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(['hr.employees.read'], '/hr/employees/e1?tab=requests');
+
+    expect(await screen.findByText('PDT-2026-00012')).toBeInTheDocument();
+    expect(screen.getByText('Onay bekliyor')).toBeInTheDocument();
   });
 });

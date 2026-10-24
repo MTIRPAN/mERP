@@ -1,6 +1,6 @@
-import { Checkbox, Col, Form, Input, Select } from 'antd';
+import { App, Checkbox, Col, Form, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useUpdateEmployeeContacts } from '@/shared/api/generated/endpoints/hr/hr';
+import { useSubmitContactsChange, useUpdateEmployeeContacts } from '@/shared/api/generated/endpoints/hr/hr';
 import {
   ContactKind,
   FamilyRelation,
@@ -11,6 +11,9 @@ import {
   type EmergencyContact,
 } from '@/shared/api/generated/model';
 import { FormDrawer } from '@/shared/components/FormDrawer';
+import { NoteField } from '../../selfService/NoteField';
+import { useProfileChangesRefresh } from '../../selfService/useProfileChangesRefresh';
+import type { ContactLists } from '../EmployeeSections';
 import { enumOptions, text } from './formValues';
 import { ListSection } from './ListSection';
 import { useEmployeeRefresh } from './useEmployeeRefresh';
@@ -20,68 +23,87 @@ interface ContactsFormValues {
   phones?: Partial<EmployeePhone>[];
   addresses?: Partial<EmployeeAddress>[];
   emergencyContacts?: Partial<EmergencyContact>[];
+  note?: string;
 }
+
+const toInputs = (values: ContactsFormValues) => ({
+  emails: (values.emails ?? []).map((e) => ({
+    kind: e.kind ?? null,
+    address: text(e.address),
+    isPrimary: !!e.isPrimary,
+  })),
+  phones: (values.phones ?? []).map((p) => ({
+    kind: p.kind ?? null,
+    number: text(p.number),
+    isPrimary: !!p.isPrimary,
+  })),
+  addresses: (values.addresses ?? []).map((a) => ({
+    kind: a.kind ?? null,
+    line: text(a.line),
+    district: text(a.district),
+    city: text(a.city),
+    postalCode: text(a.postalCode),
+    countryCode: text(a.countryCode)?.toUpperCase() ?? null,
+  })),
+  emergencyContacts: (values.emergencyContacts ?? []).map((c) => ({
+    fullName: text(c.fullName),
+    relation: c.relation ?? null,
+    phone: text(c.phone),
+  })),
+});
 
 interface ContactsFormDrawerProps {
   employee: EmployeeDetails;
   open: boolean;
   onClose: () => void;
+  /**
+   * Self service (D39): the lists are sent for approval as a change request instead of being saved. With a requestId
+   * it corrects a returned request, starting from the lists that request proposed.
+   */
+  request?: { requestId?: string; initial?: ContactLists; note?: string | null };
 }
 
 /** Replaces the person's e-mail addresses, phones, addresses and emergency contacts; at most one primary of each. */
-export const ContactsFormDrawer = ({ employee, open, onClose }: ContactsFormDrawerProps) => {
+export const ContactsFormDrawer = ({ employee, open, onClose, request }: ContactsFormDrawerProps) => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const update = useUpdateEmployeeContacts();
+  const submitChange = useSubmitContactsChange();
   const refresh = useEmployeeRefresh(employee.id);
+  const refreshRequests = useProfileChangesRefresh();
   const required = [{ required: true, message: t('web.platform.fields.required') }];
   const kinds = enumOptions(ContactKind, 'web.hr.contact_kind.', t);
+  const initial = request?.initial ?? employee;
 
   const submit = async (values: ContactsFormValues) => {
-    await update.mutateAsync({
-      id: employee.id,
-      data: {
-        version: employee.version,
-        emails: (values.emails ?? []).map((e) => ({
-          kind: e.kind ?? null,
-          address: text(e.address),
-          isPrimary: !!e.isPrimary,
-        })),
-        phones: (values.phones ?? []).map((p) => ({
-          kind: p.kind ?? null,
-          number: text(p.number),
-          isPrimary: !!p.isPrimary,
-        })),
-        addresses: (values.addresses ?? []).map((a) => ({
-          kind: a.kind ?? null,
-          line: text(a.line),
-          district: text(a.district),
-          city: text(a.city),
-          postalCode: text(a.postalCode),
-          countryCode: text(a.countryCode)?.toUpperCase() ?? null,
-        })),
-        emergencyContacts: (values.emergencyContacts ?? []).map((c) => ({
-          fullName: text(c.fullName),
-          relation: c.relation ?? null,
-          phone: text(c.phone),
-        })),
-      },
-    });
+    if (request) {
+      await submitChange.mutateAsync({
+        data: { ...toInputs(values), note: text(values.note), requestId: request.requestId ?? null },
+      });
+      await refreshRequests();
+      message.success(t('web.hr.profile_changes.request.sent'));
+      return;
+    }
+
+    await update.mutateAsync({ id: employee.id, data: { version: employee.version, ...toInputs(values) } });
     await refresh();
   };
 
   return (
     <FormDrawer<ContactsFormValues>
       key={`${employee.id}-${employee.version}`}
-      title={t('web.hr.employees.edit.contacts')}
+      title={t(request ? 'web.hr.profile_changes.request.contacts' : 'web.hr.employees.edit.contacts')}
+      submitLabel={request ? t('web.hr.profile_changes.request.send') : undefined}
       open={open}
       onClose={onClose}
       onSubmit={submit}
       width={760}
       initialValues={{
-        emails: employee.emails,
-        phones: employee.phones,
-        addresses: employee.addresses,
-        emergencyContacts: employee.emergencyContacts,
+        emails: initial.emails,
+        phones: initial.phones,
+        addresses: initial.addresses,
+        emergencyContacts: initial.emergencyContacts,
+        note: request?.note ?? undefined,
       }}
     >
       <ListSection
@@ -206,6 +228,7 @@ export const ContactsFormDrawer = ({ employee, open, onClose }: ContactsFormDraw
           </>
         )}
       </ListSection>
+      {request && <NoteField />}
     </FormDrawer>
   );
 };

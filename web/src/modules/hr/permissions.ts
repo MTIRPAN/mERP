@@ -7,8 +7,11 @@ export const hrPermissions = {
   employeesUpdate: 'hr.employees.update',
   employeesTerminate: 'hr.employees.terminate',
   employeesExport: 'hr.employees.export',
+  employeesUser: 'hr.employees.user',
   sensitiveRead: 'hr.employees.sensitive.read',
   sensitiveUpdate: 'hr.employees.sensitive.update',
   documentsRead: 'hr.employees.documents.read',
   documentsManage: 'hr.employees.documents.manage',
+  selfProfileRead: 'hr.self.profile.read',
+  selfProfileRequest: 'hr.self.profile.request',
 } as const;

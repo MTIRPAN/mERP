@@ -1,9 +1,11 @@
-import { Checkbox, Col, DatePicker, Form, Input, Select } from 'antd';
+import { App, Checkbox, Col, DatePicker, Form, Input, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { useUpdateEmployeeFamily } from '@/shared/api/generated/endpoints/hr/hr';
-import { FamilyRelation, type EmployeeDetails } from '@/shared/api/generated/model';
+import { useSubmitFamilyChange, useUpdateEmployeeFamily } from '@/shared/api/generated/endpoints/hr/hr';
+import { FamilyRelation, type EmployeeDetails, type FamilyMember } from '@/shared/api/generated/model';
 import { FormDrawer } from '@/shared/components/FormDrawer';
+import { NoteField } from '../../selfService/NoteField';
+import { useProfileChangesRefresh } from '../../selfService/useProfileChangesRefresh';
 import { day, enumOptions, text } from './formValues';
 import { ListSection } from './ListSection';
 import { useEmployeeRefresh } from './useEmployeeRefresh';
@@ -15,45 +17,63 @@ interface MemberValues {
   isWorking?: boolean;
 }
 
+interface FamilyFormValues {
+  members?: MemberValues[];
+  note?: string;
+}
+
+const toInputs = (values: FamilyFormValues) =>
+  (values.members ?? []).map((m) => ({
+    relation: m.relation ?? null,
+    fullName: text(m.fullName),
+    birthDate: day(m.birthDate),
+    isWorking: !!m.isWorking,
+  }));
+
 interface FamilyFormDrawerProps {
   employee: EmployeeDetails;
   open: boolean;
   onClose: () => void;
+  /** Self service (D39): sent for approval as a change request; see ContactsFormDrawer. */
+  request?: { requestId?: string; initial?: FamilyMember[]; note?: string | null };
 }
 
 /** Replaces the person's family members (aile bilgileri). */
-export const FamilyFormDrawer = ({ employee, open, onClose }: FamilyFormDrawerProps) => {
+export const FamilyFormDrawer = ({ employee, open, onClose, request }: FamilyFormDrawerProps) => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const update = useUpdateEmployeeFamily();
+  const submitChange = useSubmitFamilyChange();
   const refresh = useEmployeeRefresh(employee.id);
+  const refreshRequests = useProfileChangesRefresh();
   const required = [{ required: true, message: t('web.platform.fields.required') }];
 
-  const submit = async (values: { members?: MemberValues[] }) => {
-    await update.mutateAsync({
-      id: employee.id,
-      data: {
-        version: employee.version,
-        members: (values.members ?? []).map((m) => ({
-          relation: m.relation ?? null,
-          fullName: text(m.fullName),
-          birthDate: day(m.birthDate),
-          isWorking: !!m.isWorking,
-        })),
-      },
-    });
+  const submit = async (values: FamilyFormValues) => {
+    if (request) {
+      await submitChange.mutateAsync({
+        data: { members: toInputs(values), note: text(values.note), requestId: request.requestId ?? null },
+      });
+      await refreshRequests();
+      message.success(t('web.hr.profile_changes.request.sent'));
+      return;
+    }
+
+    await update.mutateAsync({ id: employee.id, data: { version: employee.version, members: toInputs(values) } });
     await refresh();
   };
 
   return (
-    <FormDrawer<{ members?: MemberValues[] }>
+    <FormDrawer<FamilyFormValues>
       key={`${employee.id}-${employee.version}`}
-      title={t('web.hr.employees.edit.family')}
+      title={t(request ? 'web.hr.profile_changes.request.family' : 'web.hr.employees.edit.family')}
+      submitLabel={request ? t('web.hr.profile_changes.request.send') : undefined}
       open={open}
       onClose={onClose}
       onSubmit={submit}
       width={720}
       initialValues={{
-        members: employee.familyMembers.map((m) => ({
+        note: request?.note ?? undefined,
+        members: (request?.initial ?? employee.familyMembers).map((m) => ({
           relation: m.relation,
           fullName: m.fullName,
           birthDate: m.birthDate ? dayjs(m.birthDate) : null,
@@ -92,6 +112,7 @@ export const FamilyFormDrawer = ({ employee, open, onClose }: FamilyFormDrawerPr
           </>
         )}
       </ListSection>
+      {request && <NoteField />}
     </FormDrawer>
   );
 };

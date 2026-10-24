@@ -13,6 +13,8 @@ interface FormDrawerProps<TValues> {
   width?: number;
   /** Moves API field errors onto other form fields, e.g. label → ['label', 'tr-TR']. */
   fieldAliases?: Record<string, (string | number)[]>;
+  /** The primary button's text; Save by default. */
+  submitLabel?: ReactNode;
   children: ReactNode;
 }
 
@@ -26,6 +28,7 @@ export const FormDrawer = <TValues extends object>({
   form: externalForm,
   width = 560,
   fieldAliases,
+  submitLabel,
   children,
 }: FormDrawerProps<TValues>) => {
   const { t } = useTranslation();
@@ -58,7 +61,7 @@ export const FormDrawer = <TValues extends object>({
         <Flex justify="flex-end" gap={8}>
           <Button onClick={onClose}>{t('web.common.cancel')}</Button>
           <Button type="primary" loading={saving} onClick={() => form.submit()}>
-            {t('web.common.save')}
+            {submitLabel ?? t('web.common.save')}
           </Button>
         </Flex>
       }

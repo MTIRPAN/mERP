@@ -47,6 +47,7 @@ const icons: Record<string, ReactNode> = {
   recruitment: <TeamOutlined />,
   hr: <IdcardOutlined />,
   employees: <ContactsOutlined />,
+  'my-card': <IdcardOutlined />,
   'document-types': <FileDoneOutlined />,
   positions: <SolutionOutlined />,
   'job-titles': <TagsOutlined />,

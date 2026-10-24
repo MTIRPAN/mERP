@@ -730,13 +730,13 @@ Kurallar: D6, D13, D38.
 - Tekrarlanan TCKN anlamlı bir hata verir.
 - Holding içi nakilde kıdem tarihi korunur.
 
-### [ ] H3 Personel–kullanıcı bağı ve self servis — M (3 PR: H3a bağ, H3b self servis, H3c web)
+### [x] H3 Personel–kullanıcı bağı ve self servis — M (3 PR: H3a bağ, H3b self servis, H3c web)
 
 Kurallar: D6, D39.
 
 - [x] **H3a bağ ve yaşam döngüsü:** kullanıcı oluşturma, mevcut kullanıcıya bağlama ve bağı kaldırma (Platform olayları, `IUserDirectory`), çıkışta pasifleştirme (`hr.users.deactivation`, `hr.user-deactivations`), `ICurrentUser.EmployeeId`, `line-manager(2)` uçtan uca.
 - [x] **H3b self servis:** `/api/hr/me`, `ProfileChangeRequest` ve `hr.profile-change` onayı, karta uygulama, audit kaynağı (`source`).
-- [ ] **H3c web:** karttaki kullanıcı bölümü, "Kartım", talep formları, İK kartında talepler sekmesi.
+- [x] **H3c web:** karttaki kullanıcı bölümü, "Kartım", talep formları, İK kartında talepler sekmesi.
 
 **Yapılacaklar:**
 - **Kullanıcı oluşturma:**

@@ -61,6 +61,7 @@ const OrgStructurePage = page(() => import('@/modules/hr/organization/OrgStructu
 const PositionsPage = page(() => import('@/modules/hr/positions/PositionsPage'), 'PositionsPage');
 const EmployeesPage = page(() => import('@/modules/hr/employees/EmployeesPage'), 'EmployeesPage');
 const EmployeeCardPage = page(() => import('@/modules/hr/employees/EmployeeCardPage'), 'EmployeeCardPage');
+const MyCardPage = page(() => import('@/modules/hr/selfService/MyCardPage'), 'MyCardPage');
 const DocumentTypesPage = page(() => import('@/modules/hr/documentTypes/DocumentTypesPage'), 'DocumentTypesPage');
 const JobTitlesPage = page(() => import('@/modules/hr/jobTitles/JobTitlesPage'), 'JobTitlesPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
@@ -279,6 +280,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={hrPermissions.employeesRead}>
               <EmployeeCardPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/me"
+          element={
+            <RequirePermission permission={hrPermissions.selfProfileRead}>
+              <MyCardPage />
             </RequirePermission>
           }
         />
