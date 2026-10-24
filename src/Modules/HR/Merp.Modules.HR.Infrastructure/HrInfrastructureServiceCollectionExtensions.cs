@@ -81,12 +81,16 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddScoped<IApproverResolver, PositionApproverResolver>();
         services.AddScoped<IApproverManagerLookup, HrApproverManagerLookup>();
         services.AddScoped<ILeaveDurationCalculator, LeaveDurationCalculator>();
+        services.AddScoped<LeavePolicyResolver>();
+        services.AddScoped<LeaveAccrualJob>();
+        services.AddSingleton(RecurringJobDefinition.For<LeaveAccrualJob>(LeaveAccrualJob.JobId, LeaveAccrualJob.Cron));
 
         // Excel imports of the organization and the employees, in the order they are loaded (PLAN H4, D40)
         services.AddScoped<IImportDefinition, JobImport>();
         services.AddScoped<IImportDefinition, OrgUnitImport>();
         services.AddScoped<IImportDefinition, PositionImport>();
         services.AddScoped<IImportDefinition, EmployeeImport>();
+        services.AddScoped<IImportDefinition, LeaveOpeningBalanceImport>();
         return services;
     }
 }

@@ -33,5 +33,6 @@ public sealed class HrModule : IModule
         group.MapDocumentEndpoints();
         group.MapSelfServiceEndpoints();
         group.MapLeaveSettingsEndpoints();
+        group.MapLeaveBalanceEndpoints();
     }
 }

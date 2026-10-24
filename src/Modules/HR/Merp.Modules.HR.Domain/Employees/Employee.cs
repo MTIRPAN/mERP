@@ -250,7 +250,8 @@ public sealed class Employee : AuditableAggregateRoot<EmployeeId>, IHasCustomFie
         string sgkExitCode,
         bool keepSeniority,
         AssignmentDetails assignment,
-        string registryNumber)
+        string registryNumber,
+        bool transferLeaveBalance = true)
     {
         ArgumentNullException.ThrowIfNull(target);
         var found = OpenEmployment(sourceId);
@@ -299,6 +300,7 @@ public sealed class Employee : AuditableAggregateRoot<EmployeeId>, IHasCustomFie
         var employment = new Employment(Id, terms, registryNumber, isPrimary: wasPrimary || !_employments.Any(e => e.IsOpen));
         employment.AddAssignment(assignment, target.HireDate, AssignmentReason.Transfer);
         _employments.Add(employment);
+        Raise(new EmploymentTransferredInGroup(Id, sourceId, employment.Id, source.CompanyId, target.CompanyId, target.HireDate, transferLeaveBalance));
         return employment;
     }
 

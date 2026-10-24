@@ -13,7 +13,10 @@ internal sealed class DefaultSettings(SettingDefinitionRegistry registry) : ISet
 /// <summary>Turns stored JSON into the type a module asks for.</summary>
 public static class SettingValues
 {
+    /// <remarks>An empty date setting is null; other settings always have a value.</remarks>
     public static T Read<T>(JsonElement value) =>
-        value.Deserialize<T>(JsonSerializerOptions.Web)
-            ?? throw new InvalidOperationException($"A setting value cannot be read as {typeof(T).Name}.");
+        value.ValueKind == JsonValueKind.Null && Nullable.GetUnderlyingType(typeof(T)) is not null
+            ? default!
+            : value.Deserialize<T>(JsonSerializerOptions.Web)
+                ?? throw new InvalidOperationException($"A setting value cannot be read as {typeof(T).Name}.");
 }

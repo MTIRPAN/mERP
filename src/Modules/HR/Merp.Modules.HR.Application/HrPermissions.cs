@@ -64,6 +64,15 @@ public static class HrPermissions
             /// <summary>Change them; records of every company need the Tenant scope.</summary>
             public const string Manage = "hr.leave.settings.manage";
         }
+
+        public static class Balances
+        {
+            /// <summary>See the leave balances and their movements of the employees in scope (D43).</summary>
+            public const string Read = "hr.leave.balances.read";
+
+            /// <summary>Correct a balance and import opening balances.</summary>
+            public const string Manage = "hr.leave.balances.manage";
+        }
     }
 
     /// <summary>Self service of the person linked to the user (D39); the Employee system role holds <c>hr.self.*</c>.</summary>
@@ -96,6 +105,8 @@ public sealed class HrPermissionDefinitions : IPermissionDefinitionProvider
         new(HrPermissions.Employees.Documents.Manage),
         new(HrPermissions.Leave.Settings.Read),
         new(HrPermissions.Leave.Settings.Manage),
+        new(HrPermissions.Leave.Balances.Read),
+        new(HrPermissions.Leave.Balances.Manage),
         new(HrPermissions.Self.ProfileRead),
         new(HrPermissions.Self.ProfileRequest),
     ];

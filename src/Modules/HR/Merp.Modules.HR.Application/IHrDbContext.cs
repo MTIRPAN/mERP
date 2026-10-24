@@ -46,6 +46,8 @@ public interface IHrDbContext
 
     DbSet<LeavePolicyRuleSet> LeavePolicyRuleSets { get; }
 
+    DbSet<LeaveAccount> LeaveAccounts { get; }
+
     /// <summary>Files of HR records, e.g. employee photos (D31).</summary>
     DbSet<StoredFile> StoredFiles { get; }
 

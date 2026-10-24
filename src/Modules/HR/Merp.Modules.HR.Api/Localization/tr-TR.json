@@ -654,5 +654,20 @@
   "hr.leave.errors.times_required": "Saatlik izin için başlangıç ve bitiş saati girin.",
   "hr.leave.errors.no_work_schedule": "Personelin çalışma takvimi bulunamadı. Şube, şirket veya kiracı için varsayılan çalışma takvimi tanımlayın.",
   "hr.leave.errors.end_date_required": "Bu izin türünün sabit süresi yok; bitiş tarihini girin.",
-  "hr.leave.errors.range_too_long": "Bir izin en fazla 400 gün olabilir."
+  "hr.leave.errors.range_too_long": "Bir izin en fazla 400 gün olabilir.",
+  "hr.leave.errors.account_closed": "Bu istihdamın izin bakiyesi kapatıldı; hareket eklenemez.",
+  "hr.leave.errors.note_required": "Gerekçe zorunludur.",
+  "hr.leave.errors.invalid_quantity": "Gün sayısı 0 olamaz ve en fazla 999 olabilir.",
+  "hr.leave.errors.opening_balance_exists": "Bu bakiyenin açılış bakiyesi zaten girilmiş. Değişiklik için düzeltme kaydı girin.",
+  "hr.leave.errors.nothing_to_cancel": "Bu talep için iade edilecek gün yok.",
+  "hr.leave.errors.insufficient_balance": "Kullanılabilir izin bakiyesi yetersiz.",
+  "hr.leave.errors.no_balance_type": "Bakiyesi tutulan bir izin türü seçin.",
+  "hr.imports.leave_opening_balances.name": "İzin açılış bakiyeleri",
+  "hr.imports.leave_opening_balances.leave_type": "İzin türü kodu",
+  "hr.imports.leave_opening_balances.leave_type_hint": "Boş bırakılırsa yıllık izin (YILLIK).",
+  "hr.imports.leave_opening_balances.date": "Bakiye tarihi",
+  "hr.imports.leave_opening_balances.date_hint": "Bakiyenin geçerli olduğu gün; genellikle hak ediş başlangıç tarihinden bir gün öncesi.",
+  "hr.imports.leave_opening_balances.days": "Gün",
+  "hr.imports.leave_opening_balances.days_hint": "O güne kadar kalan izin günü. Avans kullanılmışsa eksi girilebilir.",
+  "hr.imports.leave_opening_balances.note": "Açıklama"
 }

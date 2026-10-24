@@ -16,6 +16,9 @@ public enum SettingType
 
     /// <summary>One of <see cref="SettingDefinition.Options"/>, stored as the option's value.</summary>
     Choice,
+
+    /// <summary>A calendar day, stored as <c>yyyy-MM-dd</c>; empty until set (read as a nullable <see cref="DateOnly"/>).</summary>
+    Date,
 }
 
 /// <param name="Value">Stored value, e.g. <c>immediately</c>.</param>
@@ -84,6 +87,13 @@ public sealed record SettingDefinition(
         new(key, SettingType.Choice, JsonSerializer.SerializeToElement(defaultValue), labelKey, descriptionKey, companyOverridable, options, Order: order);
 }
 
+/// <summary>Factories of date settings, which have no default day.</summary>
+public static class DateSettings
+{
+    public static SettingDefinition Create(string key, string labelKey, string? descriptionKey = null, bool companyOverridable = false, int order = 0) =>
+        new(key, SettingType.Date, JsonSerializer.SerializeToElement<DateOnly?>(null), labelKey, descriptionKey, companyOverridable, Order: order);
+}
+
 /// <summary>Modules declare their settings, like their permissions.</summary>
 public interface ISettingDefinitionProvider
 {
@@ -111,6 +121,6 @@ public sealed class SettingDefinitionRegistry(IEnumerable<ISettingDefinitionProv
 /// </summary>
 public interface ISettings
 {
-    /// <typeparam name="T"><c>bool</c>, <c>decimal</c>/<c>int</c> or <c>string</c>, matching the setting's type.</typeparam>
+    /// <typeparam name="T"><c>bool</c>, <c>decimal</c>/<c>int</c>, <c>string</c> or <c>DateOnly?</c>, matching the setting's type.</typeparam>
     Task<T> GetAsync<T>(string key, Guid? companyId = null, CancellationToken cancellationToken = default);
 }

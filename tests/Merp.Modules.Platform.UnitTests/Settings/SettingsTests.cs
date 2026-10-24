@@ -54,6 +54,17 @@ public sealed class SettingsTests
     }
 
     [Fact]
+    public void Date_TakesADay_AndIsEmptyUntilSet()
+    {
+        var definition = DateSettings.Create("hr.leave.accrual_start", "label");
+
+        Check(definition, "\"2026-01-01\"").ShouldBe(("\"2026-01-01\"", null));
+        Check(definition, "\"01.01.2026\"").Error.ShouldBe(SettingErrors.InvalidValueCode);
+        Check(definition, "5").Error.ShouldBe(SettingErrors.InvalidValueCode);
+        definition.DefaultValue.ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    [Fact]
     public void Registry_KnowsTheModuleOfAKey()
     {
         var registry = new SettingDefinitionRegistry([new PlatformSettingDefinitions()]);

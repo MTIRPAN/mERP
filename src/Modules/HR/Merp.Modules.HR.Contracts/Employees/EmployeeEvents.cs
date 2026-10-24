@@ -67,3 +67,15 @@ public sealed record EmployeeGroupTransferred(
     DateOnly TransferDate,
     bool SeniorityKept,
     bool TransferLeaveBalance) : IntegrationEvent;
+
+/// <summary>
+/// An ended employment's leave balance was closed (PLAN L3, D43): <paramref name="RemainingDays"/> are paid with the
+/// last salary, or owed when negative (an advance taken). A balance moved with a group transfer closes with 0.
+/// </summary>
+/// <param name="EmployeeId">The person.</param>
+/// <param name="EmploymentId">The ended employment.</param>
+/// <param name="LeaveTypeCode">The balance, e.g. YILLIK.</param>
+/// <param name="Date">The day it was closed: the last working day.</param>
+/// <param name="RemainingDays">What was left.</param>
+public sealed record EmployeeLeaveBalanceClosed(Guid EmployeeId, Guid EmploymentId, string LeaveTypeCode, DateOnly Date, decimal RemainingDays)
+    : IntegrationEvent;

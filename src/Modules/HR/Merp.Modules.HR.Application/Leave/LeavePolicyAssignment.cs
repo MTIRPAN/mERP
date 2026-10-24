@@ -308,12 +308,49 @@ internal sealed class SetEmploymentLeavePolicyCommandHandler(IHrDbContext db, IA
     }
 }
 
+/// <summary>An employment's policy and why (D41).</summary>
+public sealed record ChosenLeavePolicy(LeavePolicy? Policy, LeavePolicySource Source, PolicyAssignmentRule? Rule, int? RulePosition, PolicySubject Subject);
+
+/// <summary>
+/// Chooses an employment's policy on a day (D41): the override, else the company's first matching rule, else the
+/// company's default, else every company's. The accrual job and the policy resolution query share it.
+/// </summary>
+public sealed class LeavePolicyResolver(IHrDbContext db)
+{
+    public async Task<ChosenLeavePolicy> ChooseAsync(Employee employee, Employment employment, DateOnly day, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(employment);
+        var subject = await LeavePolicyAssignments.SubjectAsync(db, employee, employment, day, cancellationToken);
+        var policies = await db.LeavePolicies.AsNoTracking()
+            .Where(p => p.CompanyId == null || p.CompanyId == employment.CompanyId)
+            .ToDictionaryAsync(p => p.Id, cancellationToken);
+        if (employment.LeavePolicyId is { } overrideId && policies.TryGetValue(LeavePolicyId.From(overrideId), out var chosen))
+        {
+            return new ChosenLeavePolicy(chosen, LeavePolicySource.Override, null, null, subject);
+        }
+
+        var set = await db.LeavePolicyRuleSets.AsNoTracking().SingleOrDefaultAsync(s => s.CompanyId == employment.CompanyId, cancellationToken);
+        if (set?.FirstMatch(subject, id => policies.TryGetValue(id, out var p) && LeavePolicyAssignments.Usable(p, employment.CompanyId)) is { } match)
+        {
+            return new ChosenLeavePolicy(policies[match.Rule.PolicyId], LeavePolicySource.Rule, match.Rule, match.Position, subject);
+        }
+
+        var defaults = policies.Values.Where(p => p.IsDefault && p.IsActive).ToList();
+        return defaults.SingleOrDefault(p => p.CompanyId == employment.CompanyId) is { } companyDefault
+            ? new ChosenLeavePolicy(companyDefault, LeavePolicySource.CompanyDefault, null, null, subject)
+            : defaults.SingleOrDefault(p => p.CompanyId is null) is { } tenantDefault
+                ? new ChosenLeavePolicy(tenantDefault, LeavePolicySource.TenantDefault, null, null, subject)
+                : new ChosenLeavePolicy(null, LeavePolicySource.None, null, null, subject);
+    }
+}
+
 internal sealed class ResolveLeavePolicyQueryHandler(
     IHrDbContext db,
     IAccessScopeProvider scopes,
     IOrganizationLookup organization,
     ICurrentUser currentUser,
-    TimeProvider timeProvider) : IQueryHandler<ResolveLeavePolicyQuery, LeavePolicyResolution>
+    TimeProvider timeProvider,
+    LeavePolicyResolver resolver) : IQueryHandler<ResolveLeavePolicyQuery, LeavePolicyResolution>
 {
     public async Task<Result<LeavePolicyResolution>> Handle(ResolveLeavePolicyQuery request, CancellationToken cancellationToken)
     {
@@ -329,60 +366,23 @@ internal sealed class ResolveLeavePolicyQueryHandler(
         }
 
         var day = request.Date ?? await LeaveTypeRules.TodayAsync(organization, timeProvider, employment.CompanyId, cancellationToken);
-        var subject = await LeavePolicyAssignments.SubjectAsync(db, employee, employment, day, cancellationToken);
-        var policies = await db.LeavePolicies.AsNoTracking()
-            .Where(p => p.CompanyId == null || p.CompanyId == employment.CompanyId)
-            .ToDictionaryAsync(p => p.Id, cancellationToken);
-        var (policy, source, rule) = await ChooseAsync(employment, subject, policies, cancellationToken);
-
-        var years = CompletedYears(employment.SeniorityDate, day);
-        int? age = employee.BirthDate is { } birth ? CompletedYears(birth, day) : null;
+        var chosen = await resolver.ChooseAsync(employee, employment, day, cancellationToken);
+        var policy = chosen.Policy;
+        var years = LeaveAccruals.CompletedYears(employment.SeniorityDate, day);
+        int? age = employee.BirthDate is { } birth ? LeaveAccruals.CompletedYears(birth, day) : null;
         var version = policy?.VersionOn(day);
         return new LeavePolicyResolution(
             employment.Id.Value,
             day,
-            source,
+            chosen.Source,
             policy?.Id.Value,
             policy?.Code,
             policy?.Name.Get(currentUser.Culture, "tr-TR"),
-            rule?.Position,
-            rule?.Rule.Name,
+            chosen.RulePosition,
+            chosen.Rule?.Name,
             version is null || version.ValidFrom == DateOnly.MinValue ? null : version.ValidFrom,
             years,
             age,
-            version?.Rules.Entitlement(years, age, c => c.Matches(subject)) ?? 0);
-    }
-
-    /// <summary>The override, else the company's first matching rule, else the company's default, else every company's.</summary>
-    private async Task<(LeavePolicy? Policy, LeavePolicySource Source, (PolicyAssignmentRule Rule, int Position)? Rule)> ChooseAsync(
-        Employment employment,
-        PolicySubject subject,
-        Dictionary<LeavePolicyId, LeavePolicy> policies,
-        CancellationToken cancellationToken)
-    {
-        if (employment.LeavePolicyId is { } overrideId && policies.TryGetValue(LeavePolicyId.From(overrideId), out var chosen))
-        {
-            return (chosen, LeavePolicySource.Override, null);
-        }
-
-        var set = await db.LeavePolicyRuleSets.AsNoTracking().SingleOrDefaultAsync(s => s.CompanyId == employment.CompanyId, cancellationToken);
-        if (set?.FirstMatch(subject, id => policies.TryGetValue(id, out var p) && LeavePolicyAssignments.Usable(p, employment.CompanyId)) is { } match)
-        {
-            return (policies[match.Rule.PolicyId], LeavePolicySource.Rule, match);
-        }
-
-        var defaults = policies.Values.Where(p => p.IsDefault && p.IsActive).ToList();
-        return defaults.SingleOrDefault(p => p.CompanyId == employment.CompanyId) is { } companyDefault
-            ? (companyDefault, LeavePolicySource.CompanyDefault, null)
-            : defaults.SingleOrDefault(p => p.CompanyId is null) is { } tenantDefault
-                ? (tenantDefault, LeavePolicySource.TenantDefault, null)
-                : (null, LeavePolicySource.None, null);
-    }
-
-    /// <summary>Whole years from <paramref name="from"/> to <paramref name="day"/>, an anniversary counting on its day.</summary>
-    private static int CompletedYears(DateOnly from, DateOnly day)
-    {
-        var years = day.Year - from.Year;
-        return Math.Max(0, from.AddYears(years) > day ? years - 1 : years);
+            version?.Rules.Entitlement(years, age, c => c.Matches(chosen.Subject)) ?? 0);
     }
 }

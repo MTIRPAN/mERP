@@ -11,6 +11,22 @@ import { SettingsPage } from './SettingsPage';
 
 const updateSettings = vi.fn<(variables: UpdateSettingsMutationVariables) => Promise<void>>();
 
+const dateSetting: SettingModuleGroup['settings'][number] = {
+  key: 'hr.leave.accrual_start',
+  label: 'İzin hak edişi başlangıç tarihi',
+  description: null,
+  type: 'Date',
+  options: [],
+  min: null,
+  max: null,
+  wholeNumber: false,
+  maxLength: null,
+  companyOverridable: true,
+  value: '2024-01-01',
+  inheritedValue: '',
+  defaultValue: '',
+};
+
 const groups: SettingModuleGroup[] = [
   {
     module: 'platform',
@@ -110,5 +126,16 @@ describe('SettingsPage', () => {
 
     expect(screen.queryByRole('button', { name: 'Kaydet' })).not.toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Bildirimleri e-postayla da gönder' })).toBeDisabled();
+  });
+
+  it('edits a date setting with a date picker', () => {
+    groups[0]!.settings.push(dateSetting);
+    try {
+      render(['platform.settings.read', 'platform.settings.manage']);
+
+      expect(screen.getByLabelText('İzin hak edişi başlangıç tarihi')).toBeInTheDocument();
+    } finally {
+      groups[0]!.settings.pop();
+    }
   });
 });

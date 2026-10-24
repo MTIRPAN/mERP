@@ -10,6 +10,11 @@ export const settingText = (
   value: SettingValue,
   t: TFunction,
 ): string => {
+  // A date setting is empty until set
+  if (value === null || value === undefined) {
+    return t('web.settings.not_set');
+  }
+
   switch (setting.type) {
     case 'Boolean':
       return t(value === true ? 'web.settings.yes' : 'web.settings.no');
