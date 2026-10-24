@@ -1188,3 +1188,8 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Yetkiler:** `hr.leave.balances.read` ve `hr.leave.balances.manage`; `hr.leave.*` deseniyle İK Yöneticisi ve İK Uzmanı rollerine geçer.
 
 **Yapı taşı:** Ayarlara `Date` tipi eklendi (`yyyy-MM-dd`, varsayılanı boş, nullable `DateOnly` olarak okunur). Ayarlar ekranı bu tip için tarih seçici gösterir.
+
+**Uygulama notları (L3b):**
+- Personel kartında "İzinler" sekmesi `hr.leave.balances.read` ile görünür. Her bakiye bir karttır: kullanılabilir, kazanılan, kullanılan, onay bekleyen gün, sonraki hak ediş ve hareketler (tarih, hareket türü, ±gün, açıklama veya dönem, kayıt anı). Birden çok istihdamı olan kişide istihdam seçilir; kapanmış bakiye kapanış tarihiyle gösterilir.
+- "Bakiye düzelt" (`hr.leave.balances.manage`) tür, tarih, ±gün ve zorunlu açıklama alır.
+- Personel listesinde "İzin açılış bakiyeleri" içe aktarma düğmesi `hr.leave.balances.manage` ile görünür.

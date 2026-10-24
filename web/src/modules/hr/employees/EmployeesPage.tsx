@@ -119,19 +119,28 @@ export const EmployeesPage = () => {
         title={t('web.hr.employees.title')}
         subtitle={t('web.hr.employees.subtitle')}
         extra={
-          <Can permission={hrPermissions.employeesCreate}>
-            <Space>
+          <Space wrap>
+            <Can permission={hrPermissions.leaveBalancesManage}>
               <ImportButton
-                importKey="hr.employees"
-                name={t('web.hr.employees.title')}
+                importKey="hr.leave-opening-balances"
+                name={t('web.hr.leave_balances.opening_import')}
                 onImported={refresh}
-                supportsUpdate
               />
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setHiring(true)}>
-                {t('web.hr.employees.hire')}
-              </Button>
-            </Space>
-          </Can>
+            </Can>
+            <Can permission={hrPermissions.employeesCreate}>
+              <Space>
+                <ImportButton
+                  importKey="hr.employees"
+                  name={t('web.hr.employees.title')}
+                  onImported={refresh}
+                  supportsUpdate
+                />
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => setHiring(true)}>
+                  {t('web.hr.employees.hire')}
+                </Button>
+              </Space>
+            </Can>
+          </Space>
         }
       />
       <DataTable<EmployeeListItem>

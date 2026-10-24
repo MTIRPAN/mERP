@@ -9,6 +9,7 @@ import { isApiError } from '@/shared/api/problem';
 import { useHasPermission } from '@/shared/auth/permissionContext';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { NotFoundPage } from '@/shared/pages/NotFoundPage';
+import { LeaveBalancesTab } from '../leave/balances/LeaveBalancesTab';
 import { hrPermissions } from '../permissions';
 import { EmployeeProfileChangesTab } from '../selfService/EmployeeProfileChangesTab';
 import { mainEmployment } from './employeeFormat';
@@ -58,6 +59,8 @@ export const EmployeeCardPage = () => {
   const canTerminate = useHasPermission(hrPermissions.employeesTerminate);
   const canUpdateSensitive = useHasPermission(hrPermissions.sensitiveUpdate);
   const canReadDocuments = useHasPermission(hrPermissions.documentsRead);
+  const canReadLeave = useHasPermission(hrPermissions.leaveBalancesRead);
+  const canManageLeave = useHasPermission(hrPermissions.leaveBalancesManage);
   const [drawer, setDrawer] = useState<Drawer>({ kind: 'none' });
   const [tab, selectTab] = useCardTab([
     'general',
@@ -66,6 +69,7 @@ export const EmployeeCardPage = () => {
     'family',
     'qualifications',
     ...(canReadDocuments ? ['documents'] : []),
+    ...(canReadLeave ? ['leave'] : []),
     'requests',
   ]);
 
@@ -188,6 +192,21 @@ export const EmployeeCardPage = () => {
                       key: 'documents',
                       label: t('web.hr.employees.tabs.documents'),
                       children: <DocumentsTab employeeId={data.id} />,
+                    },
+                  ]
+                : []),
+              ...(canReadLeave
+                ? [
+                    {
+                      key: 'leave',
+                      label: t('web.hr.employees.tabs.leave'),
+                      children: (
+                        <LeaveBalancesTab
+                          employeeId={data.id}
+                          employments={data.employments}
+                          canManage={canManageLeave}
+                        />
+                      ),
                     },
                   ]
                 : []),
