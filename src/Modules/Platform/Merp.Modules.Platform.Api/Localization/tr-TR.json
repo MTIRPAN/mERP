@@ -776,5 +776,6 @@
   "web.imports.invalid_valid_rows_hint": "Hata raporunu indirip düzelttiğiniz dosyayı yeniden yükleyebilir ya da yalnız hatasız satırları şimdi içe aktarabilirsiniz. Hatalı satırlara bağlı satırlar da atlanır.",
   "web.imports.commit_valid": "Hatasız satırları aktar",
   "web.imports.commit_valid_count": "Hatasız {rows} satırı aktar",
-  "web.imports.commit_valid_confirm": "{rows} satır içe aktarılacak, hatalı {skipped} satır atlanacak. Devam edilsin mi?"
+  "web.imports.commit_valid_confirm": "{rows} satır içe aktarılacak, hatalı {skipped} satır atlanacak. Devam edilsin mi?",
+  "web.settings.not_set": "Ayarlanmadı"
 }

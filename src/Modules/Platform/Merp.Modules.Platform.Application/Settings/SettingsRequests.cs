@@ -116,6 +116,9 @@ internal static class SettingRules
             case SettingType.Choice when value.ValueKind == JsonValueKind.String
                 && (definition.Options ?? []).Any(o => string.Equals(o.Value, value.GetString(), StringComparison.Ordinal)):
                 return (value.GetRawText(), null, null);
+            case SettingType.Date when value.ValueKind == JsonValueKind.String
+                && DateOnly.TryParseExact(value.GetString(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var date):
+                return (JsonSerializer.Serialize(date), null, null);
             default:
                 return (null, SettingErrors.InvalidValueCode, null);
         }

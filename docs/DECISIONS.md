@@ -1151,3 +1151,40 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Sabit süreli türlerde (EVLILIK, BABALIK…) bitiş tarihi verilmezse sürüm (olay tarihine ya da ilk güne göre) süreyi verir. Takvim gününde bitiş, sürenin son günüdür (S8); iş gününde, sayılan süreye ulaşılan gündür.
 
 **Önizleme:** `POST /api/hr/leave/duration-preview` (`hr.employees.read`, istihdamın şirketi kapsamda olmalı; değilse 404) aralığı, süreyi ve her günün payını tatil adıyla döner. Çalışanın kendi önizlemesi self servis izinle (L5) `/api/hr/me` altında gelecek; böylece D22 listesine yeni bir oturum-yeter uç noktası eklenmedi.
+
+## D43 — İzin bakiyesi ve hak ediş
+
+**Bağlam:** L3, `docs/domain/izin-kurallari.md` §5'teki bakiye defterini (ledger) ve hak ediş işini kurar. Hak edişin başlangıcı kullanıcıyla kararlaştırıldı (2026-10-24).
+
+**Bölünme:** L3 iki PR'dır: L3a backend (defter, hak ediş işi, bakiye sorgusu, düzeltme, açılış bakiyesi aktarımı, nakil ve kapanış), L3b web (personel kartı İzinler sekmesi, düzeltme formu, açılış bakiyesi aktarma düğmesi).
+
+**İzin hesabı (aggregate):**
+- Bakiye bir sayı olarak saklanmaz. Her istihdam ve bakiyeli izin türü için bir `LeaveAccount` vardır; hareketler (`LeaveLedgerEntry`: tarih, ±gün 2 ondalık, kaynak, kaynak kaydı, dönem anahtarı, not, kaydeden) onun içindedir. Bakiye hareketlerin toplamıdır.
+- Hareketleri ayrı aggregate yapmak, birkaç yıllık telafiyi ya da kapanışı tek komutta yazmayı kural 7'ye aykırı kılardı. Hesap tek aggregate olduğu için bunlar tek değişikliktir.
+- Kaynaklar: `Accrual`, `Request`, `RequestCancel`, `Adjustment`, `OpeningBalance`, `Transfer`, `Termination`.
+- Dönem başına tek hak ediş vardır (E8): hesap tekrarı atlar, veritabanında `(account_id, period_key)` hak ediş için tekildir.
+- Bakiyeli türler, kendi bakiyesinden düşen (`DeductsFrom` kendi kodu) aktif türlerdir; seed'de YILLIK. Politika hak edişi şirketin, yoksa tüm şirketlerin yıllık türüne yazar.
+- Kapanmış hesaba hareket eklenmez. Talep (L4) için `CanTake(gün, bekleyen, avans)` kullanılır (§6 kural 7, E1, E10, E10b). Onaylı talep `Request`, iptali `RequestCancel` yazar (E12).
+
+**Hak ediş işi (`hr.leave-accruals`, her gece 01:00):**
+- **Başlangıç (kullanıcı kararı):** şirkette ya da kiracıda ayarlanan "İzin hak edişi başlangıç tarihi" (`hr.leave.accrual_start`, yeni tarih tipi ayar). Bu tarihten önceki hak edişler yazılmaz, geçmiş açılış bakiyesiyle gelir. Ayar boşken açık istihdamlara hak ediş yazılmaz.
+- Her istihdam ayrı komuttur; biri hata verse diğerleri sürer, sonraki gece telafi edilir. Tarih, şirketin saat dilimindeki bugündür.
+- Hak edişler başlangıç tarihinden ve işe girişten sonra, bugüne (biten istihdamda son güne) kadar yazılır. Kaçırılan günler telafi edilir.
+- Yöntemler (`LeaveAccruals`):
+  - Kıdem yıldönümü: tamamlanan yıl ve o günkü yaşa göre toptan.
+  - Aylık: kıdem tarihinin her ayki gününde, devam eden hizmet yılının gününün 1/12'si.
+  - 1 Ocak: tamamlanan yıla ve yaşa göre toptan; ilk yıl kısmi verilmez.
+- Politika, son günde personele uygulanan politikadır ve her hak ediş gününde o politikanın o günkü sürümü kullanılır. Ek gün kurallarının kriterleri personelin bugünkü durumuyla değerlendirilir.
+- Grup kıdemi ve ücretsiz iznin hak edişi kaydırması politikada tutulur; ücretsiz izinler talep akışıyla (L4) geleceği için şimdilik uygulanmaz.
+
+**Bakiye sorgusu:** `GET /api/hr/employees/{id}/employments/{employmentId}/leave-balances` (`hr.leave.balances.read`, şirket kapsamı) her bakiye için kazanılanı, kullanılanı, bekleyeni (talepler L4'te gelince), kullanılabiliri, kapanış tarihini, sonraki hak edişin tarihini ve gününü ve hareketleri döner. Hesabı henüz olmayan yıllık bakiye sıfırlarla görünür.
+
+**Bakiye hareketleri:**
+- **Düzeltme:** `POST …/leave-balances/adjustments` (`hr.leave.balances.manage`), ± gün ve zorunlu gerekçe.
+- **Açılış bakiyesi:** `hr.leave-opening-balances` içe aktarması (D35, D40). Satırda şirket kodu, TCKN, tür kodu (boşsa yıllık), tarih, gün (eksi olabilir) ve açıklama vardır. Kişinin şirkette açık istihdamı olmalıdır; her bakiyenin tek açılışı olur.
+- **Grup içi nakil:** nakil domain olayı (`EmploymentTransferredInGroup`, aynı işlemde) bakiyeyi kaynak istihdamdan nakil gününün bir gün öncesinde çıkarır, hesabı kapatır ve yeni istihdama nakil gününde ekler (E9). "Bakiyeyi taşı" seçilmezse kaynak, bitişten sonra hak ediş işiyle kapanır ve ödenir.
+- **Çıkış:** son günü geçmiş istihdamın hesabını hak ediş işi, son günün hak edişlerinden sonra kapatır. Kalan (avans kullanılmışsa eksi) `Termination` hareketiyle çıkar. `EmployeeLeaveBalanceClosed` entegrasyon olayı kalan günü bordroya bildirir; nakille taşınan bakiye 0 ile kapanır.
+
+**Yetkiler:** `hr.leave.balances.read` ve `hr.leave.balances.manage`; `hr.leave.*` deseniyle İK Yöneticisi ve İK Uzmanı rollerine geçer.
+
+**Yapı taşı:** Ayarlara `Date` tipi eklendi (`yyyy-MM-dd`, varsayılanı boş, nullable `DateOnly` olarak okunur). Ayarlar ekranı bu tip için tarih seçici gösterir.

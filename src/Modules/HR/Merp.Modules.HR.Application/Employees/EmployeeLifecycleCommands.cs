@@ -453,7 +453,8 @@ internal sealed class GroupTransferCommandHandler(
             request.SgkExitCode!.Trim().ToUpperInvariant(),
             request.KeepSeniority,
             assignment.Value,
-            registryNumber);
+            registryNumber,
+            request.TransferLeaveBalance);
         if (moved.IsFailure)
         {
             return moved.Error;

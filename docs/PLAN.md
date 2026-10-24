@@ -829,6 +829,10 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 **Kabul kriterleri:**
 - §8.2 E1–E10b ve E12 testleri geçer.
 
+**Alt PR'lar (D43):**
+- [x] **L3a backend:** izin hesabı ve hareketler, hak ediş işi (ayardaki başlangıçtan telafi, idempotent), bakiye sorgusu, düzeltme, açılış bakiyesi içe aktarması, grup içi nakil ve çıkışta kapanış (`EmployeeLeaveBalanceClosed`), ayarlara tarih tipi
+- [ ] **L3b web:** personel kartı İzinler sekmesi (bakiye kartları + hareketler), düzeltme formu, açılış bakiyesi aktarımı
+
 ### [ ] L4 İzin talebi ve onay 🔍 — XL (2 PR: backend, web)
 
 **Yapılacaklar:**

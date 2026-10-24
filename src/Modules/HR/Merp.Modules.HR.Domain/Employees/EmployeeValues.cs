@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Merp.SharedKernel.Domain;
 using Merp.SharedKernel.Identity;
 
 namespace Merp.Modules.HR.Domain.Employees;
@@ -215,3 +216,16 @@ public sealed record AssignmentDetails(
 
 /// <summary>How an employment ended.</summary>
 public sealed record TerminationDetails(DateOnly Date, string SgkExitCode, string? Reason, bool Rehireable, string? Note);
+
+/// <summary>
+/// The person moved to another company of the group (D38): the source employment ended the day before
+/// <paramref name="TransferDate"/>; with <paramref name="TransferLeaveBalance"/> its leave balance moves along (D43).
+/// </summary>
+public sealed record EmploymentTransferredInGroup(
+    EmployeeId EmployeeId,
+    EmploymentId SourceEmploymentId,
+    EmploymentId TargetEmploymentId,
+    Guid SourceCompanyId,
+    Guid TargetCompanyId,
+    DateOnly TransferDate,
+    bool TransferLeaveBalance) : IDomainEvent;

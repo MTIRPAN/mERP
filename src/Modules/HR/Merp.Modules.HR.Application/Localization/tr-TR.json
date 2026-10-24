@@ -172,5 +172,10 @@
   "permissions.hr.leave": "İzin",
   "permissions.hr.leave.settings": "İzin ayarları",
   "permissions.hr.leave.settings.read": "İzin türleri, politikalar ve atama kurallarını görüntüleme",
-  "permissions.hr.leave.settings.manage": "İzin türleri, politikalar ve atama kurallarını yönetme"
+  "permissions.hr.leave.settings.manage": "İzin türleri, politikalar ve atama kurallarını yönetme",
+  "permissions.hr.leave.balances": "İzin bakiyeleri",
+  "permissions.hr.leave.balances.read": "Bakiye ve hareketleri görüntüleme",
+  "permissions.hr.leave.balances.manage": "Bakiye düzeltme ve açılış bakiyesi aktarma",
+  "hr.settings.leave.accrual_start": "İzin hak edişi başlangıç tarihi",
+  "hr.settings.leave.accrual_start_hint": "Hak ediş işi bu tarihten itibaren hak ediş yazar; önceki dönem açılış bakiyesiyle aktarılır. Boşken hak ediş yazılmaz."
 }

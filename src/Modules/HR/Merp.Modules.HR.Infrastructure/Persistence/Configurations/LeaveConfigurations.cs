@@ -49,3 +49,35 @@ internal sealed class LeavePolicyRuleSetConfiguration : IEntityTypeConfiguration
         builder.HasIndex(r => r.CompanyId).IsUnique();
     }
 }
+
+internal sealed class LeaveAccountConfiguration : IEntityTypeConfiguration<LeaveAccount>
+{
+    public void Configure(EntityTypeBuilder<LeaveAccount> builder)
+    {
+        builder.ToTable("leave_accounts");
+        builder.HasKey(a => a.Id);
+        builder.Property(a => a.Id).ValueGeneratedNever();
+        builder.Property(a => a.LeaveTypeCode).HasMaxLength(LeaveType.CodeMaxLength);
+        builder.HasMany(a => a.Entries).WithOne().HasForeignKey(e => e.AccountId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(a => a.Entries).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.HasIndex(a => new { a.EmploymentId, a.LeaveTypeCode }).IsUnique();
+        builder.HasIndex(a => a.EmployeeId);
+    }
+}
+
+internal sealed class LeaveLedgerEntryConfiguration : IEntityTypeConfiguration<LeaveLedgerEntry>
+{
+    public void Configure(EntityTypeBuilder<LeaveLedgerEntry> builder)
+    {
+        builder.ToTable("leave_ledger_entries");
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id).ValueGeneratedNever();
+        builder.Property(e => e.Quantity).HasPrecision(7, 2);
+        builder.Property(e => e.Source).HasConversion<string>().HasMaxLength(20);
+        builder.Property(e => e.PeriodKey).HasMaxLength(LeaveLedgerEntry.PeriodKeyMaxLength);
+        builder.Property(e => e.Note).HasMaxLength(LeaveLedgerEntry.NoteMaxLength);
+
+        // One accrual per period of an account, whatever runs the job (docs/domain/izin-kurallari.md §5)
+        builder.HasIndex(e => new { e.AccountId, e.PeriodKey }).IsUnique().HasFilter("source = 'Accrual'");
+    }
+}

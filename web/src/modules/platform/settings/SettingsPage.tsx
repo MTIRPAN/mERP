@@ -1,6 +1,21 @@
 import { UndoOutlined } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { App, Button, Card, Empty, Flex, Input, InputNumber, Select, Skeleton, Switch, Tag, Typography } from 'antd';
+import {
+  App,
+  Button,
+  Card,
+  DatePicker,
+  Empty,
+  Flex,
+  Input,
+  InputNumber,
+  Select,
+  Skeleton,
+  Switch,
+  Tag,
+  Typography,
+} from 'antd';
+import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMe } from '@/app/me/meContext';
@@ -209,6 +224,16 @@ const SettingInput = ({
           disabled={disabled}
           aria-label={label}
           onChange={(number) => number !== null && onChange(number)}
+        />
+      );
+    case 'Date':
+      return (
+        <DatePicker
+          value={typeof value === 'string' && value ? dayjs(value) : null}
+          format="L"
+          disabled={disabled}
+          aria-label={label}
+          onChange={(day) => day && onChange(day.format('YYYY-MM-DD'))}
         />
       );
     case 'Choice':

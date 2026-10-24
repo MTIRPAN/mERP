@@ -23,6 +23,12 @@ public sealed class HrSettingDefinitions : ISettingDefinitionProvider
 
     public const string Immediately = "immediately";
 
+    /// <summary>
+    /// The first day the accrual job writes entitlements on (D43); earlier ones come with the opening balances. Empty: no
+    /// accruals yet.
+    /// </summary>
+    public const string LeaveAccrualStart = "hr.leave.accrual_start";
+
     public IEnumerable<SettingDefinition> GetSettings() =>
     [
         SettingDefinition.Choice(
@@ -35,6 +41,7 @@ public sealed class HrSettingDefinitions : ISettingDefinitionProvider
             "hr.settings.users.deactivation",
             "hr.settings.users.deactivation_hint",
             companyOverridable: true),
+        DateSettings.Create(LeaveAccrualStart, "hr.settings.leave.accrual_start", "hr.settings.leave.accrual_start_hint", companyOverridable: true, order: 10),
     ];
 }
 

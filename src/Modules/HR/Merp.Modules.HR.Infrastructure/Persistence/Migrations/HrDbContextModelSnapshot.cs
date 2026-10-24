@@ -951,6 +951,133 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                     b.ToTable("sgk_exit_codes", "hr");
                 });
 
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Leave.LeaveAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateOnly?>("ClosedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("closed_on");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<Guid>("EmploymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employment_id");
+
+                    b.Property<string>("LeaveTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("leave_type_code");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_leave_accounts");
+
+                    b.HasIndex("EmployeeId")
+                        .HasDatabaseName("ix_leave_accounts_employee_id");
+
+                    b.HasIndex("EmploymentId", "LeaveTypeCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_leave_accounts_employment_id_leave_type_code");
+
+                    b.ToTable("leave_accounts", "hr");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Leave.LeaveLedgerEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<string>("PeriodKey")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("period_key");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(7, 2)
+                        .HasColumnType("numeric(7,2)")
+                        .HasColumnName("quantity");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("recorded_at");
+
+                    b.Property<Guid?>("RecordedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recorded_by");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("source");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_leave_ledger_entries");
+
+                    b.HasIndex("AccountId", "PeriodKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_leave_ledger_entries_account_id_period_key")
+                        .HasFilter("source = 'Accrual'");
+
+                    b.ToTable("leave_ledger_entries", "hr");
+                });
+
             modelBuilder.Entity("Merp.Modules.HR.Domain.Leave.LeavePolicy", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1631,6 +1758,16 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_job_assignments_positions_position_id");
                 });
 
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Leave.LeaveLedgerEntry", b =>
+                {
+                    b.HasOne("Merp.Modules.HR.Domain.Leave.LeaveAccount", null)
+                        .WithMany("Entries")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_leave_ledger_entries_leave_accounts_account_id");
+                });
+
             modelBuilder.Entity("Merp.Modules.HR.Domain.Organization.OrgUnit", b =>
                 {
                     b.HasOne("Merp.Modules.HR.Domain.Organization.Position", null)
@@ -1687,6 +1824,11 @@ namespace Merp.Modules.HR.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Merp.Modules.HR.Domain.Employees.Employment", b =>
                 {
                     b.Navigation("Assignments");
+                });
+
+            modelBuilder.Entity("Merp.Modules.HR.Domain.Leave.LeaveAccount", b =>
+                {
+                    b.Navigation("Entries");
                 });
 #pragma warning restore 612, 618
         }

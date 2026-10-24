@@ -15,4 +15,5 @@ export const SettingType = {
   Number: 'Number',
   Text: 'Text',
   Choice: 'Choice',
+  Date: 'Date',
 } as const;

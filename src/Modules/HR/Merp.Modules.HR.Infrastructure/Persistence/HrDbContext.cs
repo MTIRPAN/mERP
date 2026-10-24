@@ -41,6 +41,8 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
 
     public DbSet<LeavePolicyRuleSet> LeavePolicyRuleSets => Set<LeavePolicyRuleSet>();
 
+    public DbSet<LeaveAccount> LeaveAccounts => Set<LeaveAccount>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
@@ -73,6 +75,7 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
         modelBuilder.Ignore<ExtraDayRule>();
         modelBuilder.Ignore<PolicyCriterion>();
         modelBuilder.Ignore<PolicyAssignmentRule>();
+        modelBuilder.Ignore<LedgerStamp>();
         base.OnModelCreating(modelBuilder);
     }
 }
