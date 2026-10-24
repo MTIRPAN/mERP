@@ -29,6 +29,11 @@ public sealed class HrSettingDefinitions : ISettingDefinitionProvider
     /// </summary>
     public const string LeaveAccrualStart = "hr.leave.accrual_start";
 
+    /// <summary>
+    /// The leave calendar warns of a day on which more people of a unit are away than this (D45); 0 is off.
+    /// </summary>
+    public const string LeaveCalendarThreshold = "hr.leave.calendar_threshold";
+
     public IEnumerable<SettingDefinition> GetSettings() =>
     [
         SettingDefinition.Choice(
@@ -42,6 +47,16 @@ public sealed class HrSettingDefinitions : ISettingDefinitionProvider
             "hr.settings.users.deactivation_hint",
             companyOverridable: true),
         DateSettings.Create(LeaveAccrualStart, "hr.settings.leave.accrual_start", "hr.settings.leave.accrual_start_hint", companyOverridable: true, order: 10),
+        SettingDefinition.Number(
+            LeaveCalendarThreshold,
+            0,
+            "hr.settings.leave.calendar_threshold",
+            "hr.settings.leave.calendar_threshold_hint",
+            companyOverridable: true,
+            min: 0,
+            max: 1000,
+            wholeNumber: true,
+            order: 20),
     ];
 }
 

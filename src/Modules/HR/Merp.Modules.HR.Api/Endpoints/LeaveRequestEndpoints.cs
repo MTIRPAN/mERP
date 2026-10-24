@@ -25,7 +25,36 @@ internal static class LeaveRequestEndpoints
     {
         MapMyLeave(group.MapGroup("/me"), group);
         MapHrLeave(group.MapGroup("/leave-requests"), group);
+
+        group.MapGet("/leave/calendar", CalendarAsync)
+            .RequirePermission(HrPermissions.Leave.Calendar.Read)
+            .WithName("GetLeaveCalendar")
+            .WithSummary("Leaves of the employees in scope between two days, with the public holidays and the days a unit is short of people")
+            .ProducesValidationProblem();
     }
+
+    /// <param name="from">First day.</param>
+    /// <param name="to">Last day, at most 100 days after the first.</param>
+    /// <param name="companyId">Only people of this company.</param>
+    /// <param name="orgUnitId">Only people of this unit.</param>
+    /// <param name="includeSubUnits">With orgUnitId: also its sub units (default).</param>
+    /// <param name="myTeam">Only the caller's team: the people below the caller's positions.</param>
+    /// <param name="includePending">Also the requests waiting for approval (default).</param>
+    /// <param name="sender">Mediator.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    private static async Task<Results<Ok<LeaveCalendar>, ProblemHttpResult>> CalendarAsync(
+        DateOnly from,
+        DateOnly to,
+        Guid? companyId,
+        Guid? orgUnitId,
+        bool? includeSubUnits,
+        bool? myTeam,
+        bool? includePending,
+        ISender sender,
+        CancellationToken cancellationToken) =>
+        OkOrProblem(await sender.Send(
+            new GetLeaveCalendarQuery(from, to, companyId, orgUnitId, includeSubUnits ?? true, myTeam ?? false, includePending ?? true),
+            cancellationToken));
 
     private static void MapMyLeave(RouteGroupBuilder me, IEndpointRouteBuilder root)
     {
