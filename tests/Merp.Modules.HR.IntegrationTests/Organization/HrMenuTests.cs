@@ -38,6 +38,16 @@ public sealed class HrMenuTests(HrFactory factory) : IClassFixture<HrFactory>
     }
 
     [Fact]
+    public async Task Me_WithTheLeaveSettingsPermission_ListsTheLeaveSettings()
+    {
+        var me = (await factory.CreateClientFor("ik", HrFactory.Tenant, HrPermissions.Leave.Settings.Read, HrPermissions.Org.Read)
+            .GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!;
+
+        me.Menu.Single(m => m.Key == "hr").Children!.Select(c => c.Path)
+            .ShouldBe(["/hr/organization", "/hr/positions", "/hr/job-titles", "/hr/leave-settings"]);
+    }
+
+    [Fact]
     public async Task Me_WithoutHrPermissions_HasNoHrMenu()
     {
         var me = (await factory.CreateClientFor("calisan", HrFactory.Tenant).GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!;
