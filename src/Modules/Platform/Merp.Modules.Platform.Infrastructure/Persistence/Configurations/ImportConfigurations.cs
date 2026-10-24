@@ -17,6 +17,7 @@ internal sealed class ImportJobConfiguration : IEntityTypeConfiguration<ImportJo
         builder.Property(j => j.FileName).HasMaxLength(ImportJob.FileNameMaxLength);
         builder.Property(j => j.Status).HasConversion<string>().HasMaxLength(30);
         builder.Property(j => j.Errors).HasJson();
+        builder.Ignore(j => j.CanCommitValidRows);
 
         // A user's latest jobs of an import
         builder.HasIndex(j => new { j.UserId, j.ImportKey, j.CreatedAt });

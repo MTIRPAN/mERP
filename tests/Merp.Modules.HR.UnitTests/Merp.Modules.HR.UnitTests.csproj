@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Bogus" />
+    <PackageReference Include="ClosedXML" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/Modules/HR/Merp.Modules.HR.Domain/Merp.Modules.HR.Domain.csproj" />
     <ProjectReference Include="../../src/Modules/HR/Merp.Modules.HR.Application/Merp.Modules.HR.Application.csproj" />
     <ProjectReference Include="../../src/Modules/HR/Merp.Modules.HR.Infrastructure/Merp.Modules.HR.Infrastructure.csproj" />

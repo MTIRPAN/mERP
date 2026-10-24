@@ -25,4 +25,10 @@ public interface IOrganizationLookup
 
     /// <summary>The branches among <paramref name="ids"/> that exist.</summary>
     Task<IReadOnlyList<BranchSummary>> GetBranchesAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>The companies with these codes (any case), e.g. for imports that name companies by code (D40).</summary>
+    Task<IReadOnlyList<CompanySummary>> FindCompaniesByCodeAsync(IReadOnlyCollection<string> codes, CancellationToken cancellationToken = default);
+
+    /// <summary>All branches of these companies, e.g. to find branches by code.</summary>
+    Task<IReadOnlyList<BranchSummary>> GetBranchesOfCompaniesAsync(IReadOnlyCollection<Guid> companyIds, CancellationToken cancellationToken = default);
 }

@@ -480,7 +480,7 @@
   "platform.locations.errors.unknown_district": "Seçilen ilçe bu ile ait değil.",
   "platform.imports.errors.not_spreadsheet": "Dosya okunamadı. Lütfen indirdiğiniz şablonu Excel (.xlsx) olarak kaydedip yükleyin.",
   "platform.imports.errors.too_many_rows": "Bir dosyada en fazla {max} satır olabilir. Lütfen dosyayı bölün.",
-  "platform.imports.errors.not_ready": "Bu dosya içe aktarılmaya hazır değil. Yalnızca hatasız doğrulanmış bir dosya içe aktarılabilir.",
+  "platform.imports.errors.not_ready": "Bu dosya içe aktarılmaya hazır değil. Hatasız doğrulanmış bir dosya ya da hatalı satırları olan bir dosyanın hatasız satırları içe aktarılabilir.",
   "platform.imports.errors.empty": "Dosyada içe aktarılacak satır yok.",
   "platform.imports.errors.missing_column": "\"{column}\" sütunu dosyada yok. Lütfen indirdiğiniz şablonu kullanın.",
   "platform.imports.errors.required": "Bu alan zorunludur.",
@@ -766,5 +766,6 @@
   "web.notification_templates.field.company_name": "Şirketin kısa adı",
   "web.notification_templates.field.args": "Bildirim türüne özgü değerler, örneğin args.number",
   "web.notification_templates.field.texts_open": "\"Görüntüle\" düğmesinin metni",
-  "web.notification_templates.field.texts_footer": "E-postanın alt bilgi metni"
+  "web.notification_templates.field.texts_footer": "E-postanın alt bilgi metni",
+  "platform.imports.errors.update_not_supported": "Bu içe aktarma mevcut kayıtları güncellemeyi desteklemiyor."
 }

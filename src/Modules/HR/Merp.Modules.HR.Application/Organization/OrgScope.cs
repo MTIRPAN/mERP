@@ -91,9 +91,13 @@ internal sealed class OrgScope
     }
 
     /// <summary>Only the Tenant and Company scopes, for commands that manage records of a company (D37).</summary>
-    public static async Task<OrgScope> ForCompaniesAsync(IAccessScopeProvider scopes, string permission, CancellationToken cancellationToken)
+    public static async Task<OrgScope> ForCompaniesAsync(IAccessScopeProvider scopes, string permission, CancellationToken cancellationToken) =>
+        ForCompanies(await scopes.GetCurrentUserScopesAsync(permission, cancellationToken));
+
+    /// <summary>The Tenant and Company scopes of <paramref name="list"/>, e.g. of an importing user (D40).</summary>
+    public static OrgScope ForCompanies(IReadOnlyList<AccessScope> list)
     {
-        var list = await scopes.GetCurrentUserScopesAsync(permission, cancellationToken);
+        ArgumentNullException.ThrowIfNull(list);
         return new OrgScope(list.Any(s => s.Type == AccessScopeTypes.Tenant), IdsOf(list, AccessScopeTypes.Company), [], [], [], []);
     }
 

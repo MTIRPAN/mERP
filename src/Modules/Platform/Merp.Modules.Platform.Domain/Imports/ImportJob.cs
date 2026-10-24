@@ -18,7 +18,7 @@ public enum ImportStatus
 
     Validating,
 
-    /// <summary>Validated with errors; the file is fixed and uploaded again.</summary>
+    /// <summary>Validated with errors; the file is fixed and uploaded again, or its rows without errors are committed (D40).</summary>
     Invalid,
 
     /// <summary>Validated without errors; waits for the user to commit.</summary>
@@ -28,7 +28,10 @@ public enum ImportStatus
 
     Completed,
 
-    /// <summary>Some batches failed at commit; their rows are in the errors, the others were written.</summary>
+    /// <summary>
+    /// Some rows were not written: rows with errors left out on purpose (D40) or rows of batches that failed at commit;
+    /// they are in the errors, the others were written.
+    /// </summary>
     PartiallyCompleted,
 
     /// <summary>Validation or commit stopped on an unexpected error.</summary>
@@ -78,6 +81,18 @@ public sealed class ImportJob : AuditableAggregateRoot<ImportJobId>
 
     public int CommittedRows { get; private set; }
 
+    /// <summary>Rows of existing records update them instead of being errors (D40).</summary>
+    public bool UpdatesExisting { get; private set; }
+
+    /// <summary>Rows without errors that update an existing record; the rest add one.</summary>
+    public int UpdateRows { get; private set; }
+
+    /// <summary>
+    /// Validated with errors in some rows only: the rows without errors may be committed (D40). Not when the file
+    /// as a whole is wrong, e.g. a missing column.
+    /// </summary>
+    public bool CanCommitValidRows => Status == ImportStatus.Invalid && ErrorRows < TotalRows && !Errors.Any(e => e.Row < 2);
+
     public IReadOnlyList<ImportJobError> Errors { get; private set; } = [];
 
     public DateTimeOffset? CompletedAt { get; private set; }
@@ -90,7 +105,17 @@ public sealed class ImportJob : AuditableAggregateRoot<ImportJobId>
     /// <param name="fileName">The uploaded file's name.</param>
     /// <param name="totalRows">Data rows of the file.</param>
     /// <param name="queued">Validated in the background, so waiting in the queue first.</param>
-    public static ImportJob Create(ImportJobId id, string importKey, Guid userId, string culture, Guid fileId, string fileName, int totalRows, bool queued) => new()
+    /// <param name="updatesExisting">Rows of existing records update them (D40).</param>
+    public static ImportJob Create(
+        ImportJobId id,
+        string importKey,
+        Guid userId,
+        string culture,
+        Guid fileId,
+        string fileName,
+        int totalRows,
+        bool queued,
+        bool updatesExisting = false) => new()
     {
         Id = id,
         ImportKey = Text.Required(importKey, KeyMaxLength, nameof(importKey)),
@@ -100,23 +125,30 @@ public sealed class ImportJob : AuditableAggregateRoot<ImportJobId>
         FileName = Text.Required(fileName, FileNameMaxLength, nameof(fileName)),
         TotalRows = totalRows,
         Status = queued ? ImportStatus.Queued : ImportStatus.Validating,
+        UpdatesExisting = updatesExisting,
     };
 
     public void StartValidation() => Status = ImportStatus.Validating;
 
     /// <summary>The rows were checked: ready to commit, or invalid with the errors.</summary>
-    public void Validated(IReadOnlyList<ImportJobError> errors)
+    /// <param name="errors">The errors of the rows and of the file.</param>
+    /// <param name="updateRows">Rows without errors that would update an existing record.</param>
+    public void Validated(IReadOnlyList<ImportJobError> errors, int updateRows = 0)
     {
         ArgumentNullException.ThrowIfNull(errors);
         Errors = [.. errors.Take(MaxErrors)];
         ErrorRows = errors.Select(e => e.Row).Distinct().Count();
+        UpdateRows = updateRows;
         Status = errors.Count == 0 ? ImportStatus.Ready : ImportStatus.Invalid;
     }
 
-    /// <summary>Only a validated file without errors is committed, once.</summary>
-    public bool StartCommit()
+    /// <summary>
+    /// A validated file is committed once: without errors, or with <paramref name="skipInvalidRows"/> its rows without
+    /// errors (D40).
+    /// </summary>
+    public bool StartCommit(bool skipInvalidRows = false)
     {
-        if (Status != ImportStatus.Ready)
+        if (Status != ImportStatus.Ready && !(skipInvalidRows && CanCommitValidRows))
         {
             return false;
         }

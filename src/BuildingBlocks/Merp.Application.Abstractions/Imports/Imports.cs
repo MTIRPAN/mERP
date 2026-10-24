@@ -61,14 +61,28 @@ public sealed class ImportRow(int number, IReadOnlyDictionary<string, object?> v
     public bool? AsBoolean(string key) => Values.GetValueOrDefault(key) as bool?;
 }
 
+/// <summary>What a row of an existing record does (D40).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ImportMode>))]
+public enum ImportMode
+{
+    /// <summary>Every row adds a record; a row of an existing record is an error.</summary>
+    Create,
+
+    /// <summary>A row of an existing record updates it; only imports with <see cref="IImportDefinition.SupportsUpdate"/>.</summary>
+    CreateOrUpdate,
+}
+
 /// <summary>
-/// Who imports, in which language. A large import is validated in the background as the system, so the user's data
-/// scope is checked through their id, not the current caller.
+/// Who imports, in which language and mode. A large import is validated in the background as the system, so the
+/// user's data scope is checked through their id, not the current caller.
 /// </summary>
-public sealed record ImportContext(Guid UserId, string Culture);
+public sealed record ImportContext(Guid UserId, string Culture, ImportMode Mode = ImportMode.Create);
 
 /// <summary>A problem of a row, at a column when it is one cell's; the message is in the user's language.</summary>
 public sealed record ImportError(int Row, string? Column, string Message);
+
+/// <summary>The outcome of checking rows: their errors, and the rows that would update an existing record (D40).</summary>
+public sealed record ImportValidation(IReadOnlyList<ImportError> Errors, IReadOnlyCollection<int>? UpdatedRows = null);
 
 /// <summary>
 /// An Excel import a module offers (D35), e.g. branches. Platform reads the file, checks the cells against the
@@ -91,14 +105,19 @@ public interface IImportDefinition
     /// <summary>Rows per transaction when committing.</summary>
     int BatchSize => 100;
 
+    /// <summary>A row may update an existing record in <see cref="ImportMode.CreateOrUpdate"/> (D40).</summary>
+    bool SupportsUpdate => false;
+
     /// <summary>
-    /// Checks rows whose cells are fine, as a whole: references to existing records, duplicates in the file or the
-    /// database, the caller's data scope. Reads only. Should look records up once per call, not per row.
+    /// Checks rows whose cells are fine, as a whole: references to existing records and to earlier rows of the file,
+    /// duplicates in the file or the database, the caller's data scope. Reads only. Should look records up once per
+    /// call, not per row. When the user imports the rows without errors, it is called again without them (D40), so a
+    /// row that needs a dropped row fails then.
     /// </summary>
-    Task<IReadOnlyList<ImportError>> ValidateAsync(IReadOnlyList<ImportRow> rows, ImportContext context, CancellationToken cancellationToken = default);
+    Task<ImportValidation> ValidateAsync(IReadOnlyList<ImportRow> rows, ImportContext context, CancellationToken cancellationToken = default);
 
     /// <summary>The command that writes one batch; it fails as a whole, so its transaction rolls back.</summary>
-    IImportBatchCommand CreateBatch(IReadOnlyList<ImportRow> rows);
+    IImportBatchCommand CreateBatch(IReadOnlyList<ImportRow> rows, ImportContext context);
 }
 
 /// <summary>

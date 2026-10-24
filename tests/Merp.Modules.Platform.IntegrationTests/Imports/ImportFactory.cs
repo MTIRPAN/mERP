@@ -51,11 +51,17 @@ public sealed class ImportFactory(PostgresFixture postgres) : AccessFactory(post
     public static string?[] BranchRow(string company, string code, string type = "Fabrika", string province = "Kocaeli", string district = "Gebze") =>
         [company, code, "Şube " + code, type, province, district, "OSB 3. Cad. No: 5", "41400", "0262 123 45 67", null];
 
-    public static Task<HttpResponseMessage> UploadAsync(HttpClient client, byte[] content, string url = BranchesUrl, string fileName = "subeler.xlsx")
+    public static Task<HttpResponseMessage> UploadAsync(HttpClient client, byte[] content, string url = BranchesUrl, string fileName = "subeler.xlsx", string? mode = null)
     {
         var file = new ByteArrayContent(content);
         file.Headers.ContentType = new("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        return client.PostAsync(url, new MultipartFormDataContent { { file, "file", fileName } }, TestContext.Current.CancellationToken);
+        var form = new MultipartFormDataContent { { file, "file", fileName } };
+        if (mode is not null)
+        {
+            form.Add(new StringContent(mode), "mode");
+        }
+
+        return client.PostAsync(url, form, TestContext.Current.CancellationToken);
     }
 
     /// <summary>Uploads and returns the job as it stands after the request (background work runs inline in tests).</summary>
@@ -70,8 +76,8 @@ public sealed class ImportFactory(PostgresFixture postgres) : AccessFactory(post
     public static async Task<ImportJobDetails> JobAsync(HttpClient client, Guid id) =>
         (await client.GetFromJsonAsync<ImportJobDetails>($"/api/platform/imports/jobs/{id}", TestContext.Current.CancellationToken))!;
 
-    public static Task<HttpResponseMessage> CommitAsync(HttpClient client, Guid id) =>
-        client.PostAsync($"/api/platform/imports/jobs/{id}/commit", null, TestContext.Current.CancellationToken);
+    public static Task<HttpResponseMessage> CommitAsync(HttpClient client, Guid id, bool skipInvalidRows = false) =>
+        client.PostAsync($"/api/platform/imports/jobs/{id}/commit{(skipInvalidRows ? "?skipInvalidRows=true" : string.Empty)}", null, TestContext.Current.CancellationToken);
 
     /// <summary>Runs <paramref name="query"/> against the Platform database of <paramref name="tenantCode"/>.</summary>
     public async Task<T> QueryAsync<T>(Func<PlatformDbContext, Task<T>> query, string tenantCode = "acme")

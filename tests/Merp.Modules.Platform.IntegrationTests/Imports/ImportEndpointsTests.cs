@@ -23,7 +23,7 @@ public sealed class ImportEndpointsTests(ImportFactory factory) : IClassFixture<
     public async Task Definitions_ListOnlyTheImportsTheUserMayUse()
     {
         var imports = (await factory.AsRoot().GetFromJsonAsync<List<ImportDefinitionItem>>("/api/platform/imports", Ct))!;
-        imports.ShouldContain(new ImportDefinitionItem("platform.branches", "Şubeler"));
+        imports.ShouldContain(new ImportDefinitionItem("platform.branches", "Şubeler", SupportsUpdate: false));
 
         var (reader, _) = await factory.UserWithAsync([PlatformPermissions.Branches.Read]);
         (await reader.GetFromJsonAsync<List<ImportDefinitionItem>>("/api/platform/imports", Ct)).ShouldBeEmpty();
@@ -134,6 +134,45 @@ public sealed class ImportEndpointsTests(ImportFactory factory) : IClassFixture<
         sheet.Cell(3, 1).Style.Fill.BackgroundColor.ShouldBe(XLColor.FromHtml("#FDE2E1"));
         sheet.Cell(3, errorsColumn).GetString().ShouldContain("Şirket bulunamadı.");
         sheet.Cell(2, 1).HasComment.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task FileWithErrorsInSomeRows_CommitsItsValidRows_WhenAsked()
+    {
+        var root = factory.AsRoot();
+        var (companyId, company) = await CompanyAsync();
+
+        var job = await ImportFactory.StartAsync(root, ImportFactory.Workbook(
+        [
+            ImportFactory.BranchRow(company, "S1"),
+            ImportFactory.BranchRow("NOPE", "S2"),
+            ImportFactory.BranchRow(company, "S3", province: "Atlantis"),
+            ImportFactory.BranchRow(company, "S4"),
+        ]));
+
+        job.Status.ShouldBe(ImportStatus.Invalid);
+        job.CanCommitValidRows.ShouldBeTrue();
+        (await ImportFactory.CommitAsync(root, job.Id)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        (await ImportFactory.CommitAsync(root, job.Id, skipInvalidRows: true)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        job = await ImportFactory.JobAsync(root, job.Id);
+        job.Status.ShouldBe(ImportStatus.PartiallyCompleted);
+        job.CommittedRows.ShouldBe(2);
+        job.Errors.ShouldContain(new ImportJobError(3, "companyCode", "Şirket bulunamadı."));
+        (await factory.QueryAsync(db => db.Branches.Where(b => b.CompanyId == CompanyId.From(companyId)).Select(b => b.Code).ToListAsync(Ct)))
+            .ShouldBe(["S1", "S4"], ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task UpdateMode_OfAnImportWithoutUpdates_Returns400()
+    {
+        var (_, company) = await CompanyAsync();
+
+        var response = await ImportFactory.UploadAsync(factory.AsRoot(), ImportFactory.Workbook([ImportFactory.BranchRow(company, "U1")]), mode: "CreateOrUpdate");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Problem.ReadAsync(response)).Errors!.ShouldContainKey("mode");
     }
 
     [Fact]

@@ -6,6 +6,7 @@
  */
 import type { ImportJobDetailsColumnNames } from './importJobDetailsColumnNames';
 import type { ImportJobError } from './importJobError';
+import type { ImportMode } from './importMode';
 import type { ImportStatus } from './importStatus';
 
 export interface ImportJobDetails {
@@ -14,8 +15,11 @@ export interface ImportJobDetails {
   importName: string;
   fileName: string;
   status: ImportStatus;
+  mode: ImportMode;
   totalRows: number;
   errorRows: number;
+  updateRows: number;
+  canCommitValidRows: boolean;
   committedRows: number;
   errorCount: number;
   errors: ImportJobError[];

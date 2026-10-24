@@ -722,6 +722,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 - **Sınırlar:** En fazla 10.000 satır (`MaxRows`) ve 10 MB. Bir işte en fazla 1000 hata saklanır, ekranda ilk 200'ü gösterilir.
 - **Audit:** İçe aktarma işi audit'e dahil edilmez; işin kendisi kayıttır. Oluşan kayıtlar (örn. şubeler) kendi audit kayıtlarını yazar.
 - **İlk tanım:** Şubeler (`platform.branches`, `platform.branches.manage`). Şirket kodu, il adı ya da plaka kodu, ilçe adı ile eşlenir.
+- **Hatasız satırlar ve güncelleme modu:** D40 hatalı dosyanın hatasız satırlarını aktarma seçeneğini ve TCKN gibi bir anahtara göre güncelleme modunu ekler.
 
 **Dışa aktarma (P11c):**
 - **Uç noktalar:** Her liste kendi yanında `GET …/{liste}/export` sunar (örn. `/api/platform/branches/export`). Liste ile aynı yetkiyi ve aynı filtre parametrelerini alır, ek olarak `columns` (virgülle ayrılmış sütun anahtarları) ve `sort`.
@@ -1046,3 +1047,41 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Talep formları İK'nın iletişim ve aile formlarıyla aynıdır, açıklama alanı eklenir ve "Onaya gönder" ile talep oluşturur; IBAN için ayrı form vardır. Bir bölümde açık talep varken o bölümün "Değişiklik iste" düğmesi pasiftir. İade edilen talep "Düzelt ve gönder" ile önerdiği değerlerden açılır.
 - Talep listesi (Kartım'da "Taleplerim", İK kartında "Değişiklik talepleri") satır açıldığında önerilen değerleri, açıklamayı, iade gerekçesini ve onay sürecini gösterir. Kartın sekmesi adreste tutulur (`?tab=requests`); bildirim ve onay görevi bağlantıları doğrudan talepler sekmesini açar.
 
+## D40 — Organizasyon ve personel içe aktarma
+
+**Bağlam:** H4, D35'teki içe aktarma altyapısına İK tanımlarını ekler. Kabul kriterleri altyapıda iki değişiklik gerektirir: hatalı satırlar varken diğer satırların aktarılabilmesi ve kayıtlı personelin TCKN'ye göre güncellenmesi. İkisi de kullanıcıyla kararlaştırıldı (2026-10-24).
+
+**Bölünme:** H4 iki PR'dır: H4a backend (altyapı değişiklikleri, dört tanım, örnek dosyalar), H4b web.
+
+**Hatasız satırları aktarma (D35'i genişletir):**
+- Doğrulamada hata varsa iş yine "hatalı" olur ve hata raporu indirilir. Yalnız bazı satırlarda hata varsa kullanıcı "Hatasız satırları aktar" seçebilir (`POST …/jobs/{id}/commit?skipInvalidRows=true`). Dosyanın bütününe ait hata (eksik sütun, yetki) varsa bu seçenek yoktur.
+- Commit sırasında satırlar hatalılar çıkarılarak yeniden doğrulanır ve hiçbir satır düşmeyene kadar tekrarlanır. Böylece hatalı bir satıra bağlı satırlar da atlanır (ör. üst birimi hatalı olan birim) ve doğrulamadan sonra değişen kayıtlar yakalanır.
+- İş "kısmen tamamlandı" olarak kapanır; atlanan satırlar hatalarıyla raporda kalır.
+- Seçenek bütün içe aktarmalar için geçerlidir, şubeler dahil. Kullanıcı seçmedikçe hatalı dosya aktarılmaz.
+
+**Güncelleme modu:**
+- Tanım `SupportsUpdate` ile güncellemeyi destekleyebilir; yükleme `mode=CreateOrUpdate` ile yapılır (varsayılan `Create`). Mod işte saklanır, doğrulama özeti kaç satırın güncelleme olduğunu gösterir (`updateRows`). Desteklemeyen tanımda bu mod 400 döner.
+- Doğrulama bir denemedir (dry run): hiçbir şey yazılmaz, satırlar alanın kurallarıyla (ör. personelde `Employee.Hire`) sınanır, kaç kayıt ekleneceği ve güncelleneceği görülür. Ayrı bir deneme düğmesi yoktur.
+- Şimdilik yalnız personel güncellemeyi destekler. Unvan, birim ve pozisyon dosyaları yalnız yeni kayıt ekler.
+
+**Tanımlar (İK):** Dosyalar bu sırayla yüklenir; her biri öncekilerin kodlarına başvurur.
+- `hr.jobs` (Unvanlar): kod, ad, meslek ailesi, kademe. Katalog kiracı genelinde olduğu için Tenant kapsamı gerekir (D37); yoksa dosyanın bütünü hatalıdır.
+- `hr.org-units` (Birimler): şirket kodu, birim kodu, ad, tür, üst birim kodu, masraf merkezi, şube kodu, başlangıç tarihi. Üst birim şirkette kayıtlı olmalı ya da dosyada daha önceki bir satırda gelmelidir; sonra gelirse hata satırı aşağı taşımayı söyler.
+- `hr.positions` (Pozisyonlar): şirket, kod, birim, unvan, bağlı olduğu pozisyon (kayıtlı ya da daha önceki satır), norm kadro, yönetici pozisyonu, "Birimin yöneticisi". Sonuncusu birimin yönetici pozisyonunu ayarlar; birimin zaten yöneticisi varsa hatadır.
+- `hr.employees` (Personel): kişi, birincil e-posta ve cep telefonu, istihdam ve ilk görev aynı satırda (işe giriş tarihi, çalışma şekli, sözleşme bitişi, haftalık saat, deneme süresi, kıdem tarihi ve gerekçesi, pozisyon, şube, yönetici pozisyon, kademe, masraf merkezi). Yetki `hr.employees.create`; sicil numarası numaratörden alınır ve `EmployeeHired` yayınlanır. IBAN ve özel nitelikli veriler dosyada yoktur, kartta ayrı yetkiyle girilir. Zorunlu özel alanı olan şirkette satır, alanın adıyla hata verir.
+- Şirket kodla, şube şirketin aktif şubeleri arasında kodla bulunur. Bunun için `IOrganizationLookup`'a iki salt-okunur sorgu eklenir: `FindCompaniesByCodeAsync` ve `GetBranchesOfCompaniesAsync`.
+- Veri kapsamı: her satırın şirketi kullanıcının ilgili yetkideki kapsamında olmalıdır (Tenant ya da şirket); arka planda kapsam kullanıcının kimliğiyle okunur (D35).
+
+**Personelin güncellenmesi:**
+- `CreateOrUpdate` ile kayıtlı TCKN'nin satırı kişiyi günceller: ad, soyad, doğum tarihi ve yeri, cinsiyet, uyruk, medeni ve askerlik durumu. Boş hücre mevcut değeri korur.
+- E-posta ve telefon birincil olur: listede varsa birincil işaretlenir, yoksa eklenir; diğerleri kalır.
+- İstihdam ve görev sütunları kayıtlı kişide kullanılmaz. Görev değişikliği tarih ve gerekçesiyle karttan yapılır (D38).
+- Kişinin satırdaki şirkette açık istihdamı olmalıdır; yoksa satır hata verir ve tekrar işe giriş ya da grup içi nakil karttan yapılır. Güncelleme için `hr.employees.update` yetkisinin kapsamı şirketi kapsamalıdır.
+- `Create` modunda kayıtlı TCKN hatadır.
+
+**Domain olayları (yapı taşı değişikliği):** Unit of work bir turdaki eşit domain olaylarını (aynı değerli record'lar) bir kez işler. 100 pozisyonluk bir parti şirketin raporlama hatlarını pozisyon başına değil bir kez yeniden kurar.
+
+**Örnek dosyalar:**
+- `samples/` klasöründe `DEMO` kodlu şirket için dört dosya vardır: 24 unvan, 71 birim, 147 pozisyon ve 2.000 personel. Veriler hayalidir, sabit tohumla Bogus ile üretilir.
+- Üretici `tests/Merp.Modules.HR.UnitTests/Imports/SampleFiles.cs`'tedir. Başlıklar ve seçenekler şablonlarınkiyle aynıdır, İK'nın `tr-TR.json`'undan okunur. Bir birim testi commit edilen dosyaların üreticinin çıktısıyla aynı olduğunu denetler; dosyalar açıkça çalıştırılan bir testle yeniden yazılır (`samples/README.md`).
+- Bogus D19'da Test kategorisindedir; üretici test projesinde kalır, uygulamaya girmez.

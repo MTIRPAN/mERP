@@ -770,6 +770,13 @@ Kurallar: D6, D39.
 - Örnek dosya hatasız aktarılır.
 - Hatalı TCKN içeren satır raporda gösterilir, diğer satırlar aktarılır.
 
+**Alt PR'lar (D40):**
+- [x] **H4a backend:**
+  - altyapı: hatalı dosyanın hatasız satırlarını aktarma (bağlı satırlar da atlanır), güncelleme modu (`mode=CreateOrUpdate`), doğrulama özetinde güncellenecek satır sayısı
+  - tanımlar: unvanlar, birimler, pozisyonlar, personel (TCKN'ye göre kişi ve iletişim güncellemesi)
+  - `samples/`: DEMO şirketi için Bogus ile üretilmiş dört dosya, 2.000 personel
+- [ ] **H4b web:** Unvanlar, Organizasyon, Pozisyonlar ve Personel ekranlarında "Excel'den içe aktar"; güncelleme modu seçimi, güncellenecek satır sayısı ve "Hatasız satırları aktar"
+
 ---
 
 ## Faz 3 — İzin

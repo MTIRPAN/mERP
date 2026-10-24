@@ -46,10 +46,12 @@ public static class ImportErrors
 {
     public const string NotSpreadsheetCode = "platform.imports.errors.not_spreadsheet";
     public const string TooManyRowsCode = "platform.imports.errors.too_many_rows";
+    public const string UpdateNotSupportedCode = "platform.imports.errors.update_not_supported";
     public static readonly Error NotReady = Error.Conflict("platform.imports.errors.not_ready");
 }
 
-public sealed record ImportDefinitionItem(string Key, string Name);
+/// <remarks>SupportsUpdate: rows of existing records may update them (D40).</remarks>
+public sealed record ImportDefinitionItem(string Key, string Name, bool SupportsUpdate);
 
 /// <summary>The imports the caller may use.</summary>
 public sealed record GetImportDefinitionsQuery : IQuery<IReadOnlyList<ImportDefinitionItem>>;
@@ -63,21 +65,33 @@ public sealed record ImportFile(string FileName, byte[] Content)
 /// <summary>The template of an import: localized headers with explanations, lists for choice columns.</summary>
 public sealed record GetImportTemplateQuery(string Key) : IQuery<ImportFile>;
 
-/// <summary>Uploads a file to import; it is validated at once, or in the background when large. Returns the job id.</summary>
-public sealed record StartImportCommand(string Key, FileUpload? File) : ICommand<Guid>;
+/// <summary>
+/// Uploads a file to import; it is validated at once, or in the background when large. Returns the job id. With
+/// <see cref="ImportMode.CreateOrUpdate"/> rows of existing records update them (D40).
+/// </summary>
+public sealed record StartImportCommand(string Key, FileUpload? File, ImportMode Mode = ImportMode.Create) : ICommand<Guid>;
 
-/// <summary>Writes a validated file without errors; at once, or in the background when large.</summary>
-public sealed record CommitImportCommand(Guid JobId) : ICommand;
+/// <summary>
+/// Writes a validated file without errors, or with <paramref name="SkipInvalidRows"/> the rows of a file without
+/// errors (D40); at once, or in the background when large.
+/// </summary>
+public sealed record CommitImportCommand(Guid JobId, bool SkipInvalidRows = false) : ICommand;
 
-/// <remarks>Errors holds the first 200; ErrorCount all that were kept.</remarks>
+/// <remarks>
+/// Errors holds the first 200; ErrorCount all that were kept. UpdateRows are the rows without errors that update an
+/// existing record; CanCommitValidRows tells that only some rows have errors, so the others may be committed (D40).
+/// </remarks>
 public sealed record ImportJobDetails(
     Guid Id,
     string ImportKey,
     string ImportName,
     string FileName,
     ImportStatus Status,
+    ImportMode Mode,
     int TotalRows,
     int ErrorRows,
+    int UpdateRows,
+    bool CanCommitValidRows,
     int CommittedRows,
     int ErrorCount,
     IReadOnlyList<ImportJobError> Errors,
@@ -98,7 +112,7 @@ public sealed record GetImportReportQuery(Guid Id) : IQuery<ImportFile>;
 public sealed record StartImportValidationCommand(Guid JobId) : ICommand;
 
 /// <summary>Background step: the result of the validation.</summary>
-public sealed record RecordImportValidationCommand(Guid JobId, IReadOnlyList<ImportJobError> Errors) : ICommand;
+public sealed record RecordImportValidationCommand(Guid JobId, IReadOnlyList<ImportJobError> Errors, int UpdateRows = 0) : ICommand;
 
 /// <summary>Background step: the result of the commit.</summary>
 public sealed record RecordImportCommitCommand(Guid JobId, int CommittedRows, IReadOnlyList<ImportJobError> Errors) : ICommand;
@@ -117,8 +131,11 @@ internal static class ImportJobs
             definition is null ? job.ImportKey : localizer.Get(definition.NameKey),
             job.FileName,
             job.Status,
+            job.UpdatesExisting ? ImportMode.CreateOrUpdate : ImportMode.Create,
             job.TotalRows,
             job.ErrorRows,
+            job.UpdateRows,
+            job.CanCommitValidRows,
             job.CommittedRows,
             job.Errors.Count,
             withErrors ? [.. job.Errors.Take(200)] : [],
@@ -144,7 +161,7 @@ internal sealed class GetImportDefinitionsQueryHandler(ImportRegistry registry, 
         {
             if (await permissions.HasPermissionAsync(definition.Permission, cancellationToken))
             {
-                items.Add(new ImportDefinitionItem(definition.Key, localizer.Get(definition.NameKey)));
+                items.Add(new ImportDefinitionItem(definition.Key, localizer.Get(definition.NameKey), definition.SupportsUpdate));
             }
         }
 
@@ -196,7 +213,11 @@ internal sealed class GetImportTemplateQueryHandler(
 
 internal sealed class StartImportCommandValidator : AbstractValidator<StartImportCommand>
 {
-    public StartImportCommandValidator() => RuleFor(c => c.File).NotNull().OverridePropertyName(FileErrors.Field);
+    public StartImportCommandValidator()
+    {
+        RuleFor(c => c.File).NotNull().OverridePropertyName(FileErrors.Field);
+        RuleFor(c => c.Mode).IsInEnum();
+    }
 }
 
 internal sealed class StartImportCommandHandler(
@@ -221,6 +242,11 @@ internal sealed class StartImportCommandHandler(
         if (currentUser.UserId is not { } userId || !await permissions.HasPermissionAsync(definition.Permission, cancellationToken))
         {
             return CommonErrors.Forbidden;
+        }
+
+        if (request.Mode == ImportMode.CreateOrUpdate && !definition.SupportsUpdate)
+        {
+            return Error.Validation([new FieldError("mode", ImportErrors.UpdateNotSupportedCode)]);
         }
 
         var jobId = Guid.CreateVersion7();
@@ -250,7 +276,16 @@ internal sealed class StartImportCommandHandler(
         }
 
         var queued = rows > settings.BackgroundThreshold;
-        var job = ImportJob.Create(ImportJobId.From(jobId), definition.Key, userId, currentUser.Culture, stored.Value.Id, stored.Value.FileName, rows, queued);
+        var job = ImportJob.Create(
+            ImportJobId.From(jobId),
+            definition.Key,
+            userId,
+            currentUser.Culture,
+            stored.Value.Id,
+            stored.Value.FileName,
+            rows,
+            queued,
+            request.Mode == ImportMode.CreateOrUpdate);
         db.ImportJobs.Add(job);
         db.StoredFiles.Add(stored.Value);
 
@@ -283,7 +318,7 @@ internal sealed class CommitImportCommandHandler(
             return CommonErrors.NotFound;
         }
 
-        if (!job.StartCommit())
+        if (!job.StartCommit(request.SkipInvalidRows))
         {
             return ImportErrors.NotReady;
         }
@@ -398,7 +433,7 @@ internal sealed class RecordImportValidationCommandHandler(IPlatformDbContext db
     public async Task<Result> Handle(RecordImportValidationCommand request, CancellationToken cancellationToken)
     {
         var job = await db.ImportJobs.SingleAsync(j => j.Id == ImportJobId.From(request.JobId), cancellationToken);
-        job.Validated(request.Errors);
+        job.Validated(request.Errors, request.UpdateRows);
         return Result.Success();
     }
 }
