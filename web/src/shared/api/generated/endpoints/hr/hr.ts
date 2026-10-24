@@ -23,9 +23,12 @@ import type {
 import type {
   AddEmployeeDocumentBody,
   ChangeEmployeeAssignmentCommand,
+  CheckLeavePolicyRulesQuery,
   CreateDocumentTypeCommand,
   CreateEmployeeUserCommand,
   CreateJobCommand,
+  CreateLeavePolicyCommand,
+  CreateLeaveTypeCommand,
   CreateOrgUnitCommand,
   CreatePositionCommand,
   EmployeeDetails,
@@ -38,10 +41,17 @@ import type {
   HireEmployeeCommand,
   HttpValidationProblemDetails,
   JobDetails,
+  LeaveLegalWarning,
+  LeavePolicyItem,
+  LeavePolicyResolution,
+  LeavePolicyRules,
+  LeaveTypeItem,
   LinkEmployeeUserCommand,
   ListEmployeeDocumentTypesParams,
   ListEmployeesParams,
   ListJobsParams,
+  ListLeavePoliciesParams,
+  ListLeaveTypesParams,
   ListOrgUnitsParams,
   ListPositionsParams,
   ListSgkExitCodesParams,
@@ -57,9 +67,12 @@ import type {
   ProfileChangeItem,
   RehireEmployeeCommand,
   ReplaceEmployeeDocumentFileBody,
+  ReplaceLeavePolicyRulesCommand,
+  ResolveLeavePolicyParams,
   SearchEmployeeUserCandidatesParams,
   SetEmployeeIbanCommand,
   SetEmployeePhotoBody,
+  SetEmploymentLeavePolicyCommand,
   SgkExitCodeItem,
   SubmitContactsChangeCommand,
   SubmitFamilyChangeCommand,
@@ -73,6 +86,8 @@ import type {
   UpdateEmployeeQualificationsCommand,
   UpdateEmployeeSensitiveDataCommand,
   UpdateJobCommand,
+  UpdateLeavePolicyCommand,
+  UpdateLeaveTypeCommand,
   UpdateOrgUnitCommand,
   UpdatePositionCommand,
   UserSummary,
@@ -4003,6 +4018,114 @@ export function useListEmployeeProfileChanges<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getSetEmploymentLeavePolicyUrl = (employeeId: string, employmentId: string) => {
+  return `/api/hr/employees/${employeeId}/employments/${employmentId}/leave-policy`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.manage.
+ * @summary Give an employment a leave policy by hand, or with null let the company's rules decide
+ */
+export const setEmploymentLeavePolicy = async (
+  employeeId: string,
+  employmentId: string,
+  setEmploymentLeavePolicyCommand: SetEmploymentLeavePolicyCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getSetEmploymentLeavePolicyUrl(employeeId, employmentId), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setEmploymentLeavePolicyCommand),
+  });
+};
+
+export const getSetEmploymentLeavePolicyMutationKey = () => ['setEmploymentLeavePolicy'] as const;
+
+export const getSetEmploymentLeavePolicyMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof setEmploymentLeavePolicy>>,
+    TError,
+    SetEmploymentLeavePolicyMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof setEmploymentLeavePolicy>>,
+  TError,
+  SetEmploymentLeavePolicyMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSetEmploymentLeavePolicyMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof setEmploymentLeavePolicy>>,
+    SetEmploymentLeavePolicyMutationVariables
+  > = (props) => {
+    const { employeeId, employmentId, data } = props ?? {};
+
+    return setEmploymentLeavePolicy(employeeId, employmentId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetEmploymentLeavePolicyMutationResult = NonNullable<Awaited<ReturnType<typeof setEmploymentLeavePolicy>>>;
+export type SetEmploymentLeavePolicyMutationBody = SetEmploymentLeavePolicyCommand;
+export type SetEmploymentLeavePolicyMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SetEmploymentLeavePolicyMutationVariables = {
+  employeeId: string;
+  employmentId: string;
+  data: SetEmploymentLeavePolicyCommand;
+};
+
+/**
+ * @summary Give an employment a leave policy by hand, or with null let the company's rules decide
+ */
+export const useSetEmploymentLeavePolicy = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof setEmploymentLeavePolicy>>,
+      TError,
+      SetEmploymentLeavePolicyMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof setEmploymentLeavePolicy>>,
+  TError,
+  SetEmploymentLeavePolicyMutationVariables,
+  TContext
+> => {
+  return useMutation(getSetEmploymentLeavePolicyMutationOptions(options), queryClient);
+};
 export const getListEmployeeDocumentsUrl = (employeeId: string) => {
   return `/api/hr/employees/${employeeId}/documents`;
 };
@@ -5605,3 +5728,1135 @@ export const useWithdrawProfileChange = <TError = ErrorType<ProblemDetails>, TCo
 > => {
   return useMutation(getWithdrawProfileChangeMutationOptions(options), queryClient);
 };
+export const getListLeaveTypesUrl = (params?: ListLeaveTypesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/leave/types?${stringifiedParams}` : `/api/hr/leave/types`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.read.
+ * @summary Leave types of every company and of a company, with their versions and legal minimum warnings
+ */
+export const listLeaveTypes = async (
+  params?: ListLeaveTypesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveTypeItem[]> => {
+  return customFetch<LeaveTypeItem[]>(getListLeaveTypesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListLeaveTypesQueryKey = (params?: ListLeaveTypesParams) => {
+  return [`/api/hr/leave/types`, ...(params ? [params] : [])] as const;
+};
+
+export const getListLeaveTypesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListLeaveTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListLeaveTypesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listLeaveTypes>>> = ({ signal }) =>
+    listLeaveTypes(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listLeaveTypes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListLeaveTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listLeaveTypes>>>;
+export type ListLeaveTypesQueryError = ErrorType<ProblemDetails>;
+
+export function useListLeaveTypes<
+  TData = Awaited<ReturnType<typeof listLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | ListLeaveTypesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveTypes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLeaveTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listLeaveTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListLeaveTypes<
+  TData = Awaited<ReturnType<typeof listLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListLeaveTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveTypes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLeaveTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listLeaveTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListLeaveTypes<
+  TData = Awaited<ReturnType<typeof listLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListLeaveTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Leave types of every company and of a company, with their versions and legal minimum warnings
+ */
+
+export function useListLeaveTypes<
+  TData = Awaited<ReturnType<typeof listLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListLeaveTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListLeaveTypesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateLeaveTypeUrl = () => {
+  return `/api/hr/leave/types`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.manage.
+ * @summary Add a leave type, of every company (Tenant scope) or of a company
+ */
+export const createLeaveType = async (
+  createLeaveTypeCommand: CreateLeaveTypeCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateLeaveTypeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createLeaveTypeCommand),
+  });
+};
+
+export const getCreateLeaveTypeMutationKey = () => ['createLeaveType'] as const;
+
+export const getCreateLeaveTypeMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLeaveType>>,
+    TError,
+    CreateLeaveTypeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLeaveType>>,
+  TError,
+  CreateLeaveTypeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateLeaveTypeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createLeaveType>>, CreateLeaveTypeMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return createLeaveType(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLeaveTypeMutationResult = NonNullable<Awaited<ReturnType<typeof createLeaveType>>>;
+export type CreateLeaveTypeMutationBody = CreateLeaveTypeCommand;
+export type CreateLeaveTypeMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateLeaveTypeMutationVariables = { data: CreateLeaveTypeCommand };
+
+/**
+ * @summary Add a leave type, of every company (Tenant scope) or of a company
+ */
+export const useCreateLeaveType = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createLeaveType>>,
+      TError,
+      CreateLeaveTypeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createLeaveType>>,
+  TError,
+  CreateLeaveTypeMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateLeaveTypeMutationOptions(options), queryClient);
+};
+export const getUpdateLeaveTypeUrl = (id: string) => {
+  return `/api/hr/leave/types/${id}`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.manage.
+ * @summary Change a leave type; versions that have started stay as they are
+ */
+export const updateLeaveType = async (
+  id: string,
+  updateLeaveTypeCommand: UpdateLeaveTypeCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateLeaveTypeUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateLeaveTypeCommand),
+  });
+};
+
+export const getUpdateLeaveTypeMutationKey = () => ['updateLeaveType'] as const;
+
+export const getUpdateLeaveTypeMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateLeaveType>>,
+    TError,
+    UpdateLeaveTypeMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateLeaveType>>,
+  TError,
+  UpdateLeaveTypeMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateLeaveTypeMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateLeaveType>>, UpdateLeaveTypeMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return updateLeaveType(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateLeaveTypeMutationResult = NonNullable<Awaited<ReturnType<typeof updateLeaveType>>>;
+export type UpdateLeaveTypeMutationBody = UpdateLeaveTypeCommand;
+export type UpdateLeaveTypeMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateLeaveTypeMutationVariables = { id: string; data: UpdateLeaveTypeCommand };
+
+/**
+ * @summary Change a leave type; versions that have started stay as they are
+ */
+export const useUpdateLeaveType = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateLeaveType>>,
+      TError,
+      UpdateLeaveTypeMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateLeaveType>>,
+  TError,
+  UpdateLeaveTypeMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateLeaveTypeMutationOptions(options), queryClient);
+};
+export const getListLeavePoliciesUrl = (params?: ListLeavePoliciesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/leave/policies?${stringifiedParams}` : `/api/hr/leave/policies`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.read.
+ * @summary Leave policies of every company and of a company, with their versions and legal minimum warnings
+ */
+export const listLeavePolicies = async (
+  params?: ListLeavePoliciesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeavePolicyItem[]> => {
+  return customFetch<LeavePolicyItem[]>(getListLeavePoliciesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListLeavePoliciesQueryKey = (params?: ListLeavePoliciesParams) => {
+  return [`/api/hr/leave/policies`, ...(params ? [params] : [])] as const;
+};
+
+export const getListLeavePoliciesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listLeavePolicies>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListLeavePoliciesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeavePolicies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListLeavePoliciesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listLeavePolicies>>> = ({ signal }) =>
+    listLeavePolicies(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listLeavePolicies>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListLeavePoliciesQueryResult = NonNullable<Awaited<ReturnType<typeof listLeavePolicies>>>;
+export type ListLeavePoliciesQueryError = ErrorType<ProblemDetails>;
+
+export function useListLeavePolicies<
+  TData = Awaited<ReturnType<typeof listLeavePolicies>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | ListLeavePoliciesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeavePolicies>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLeavePolicies>>,
+          TError,
+          Awaited<ReturnType<typeof listLeavePolicies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListLeavePolicies<
+  TData = Awaited<ReturnType<typeof listLeavePolicies>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListLeavePoliciesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeavePolicies>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLeavePolicies>>,
+          TError,
+          Awaited<ReturnType<typeof listLeavePolicies>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListLeavePolicies<
+  TData = Awaited<ReturnType<typeof listLeavePolicies>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListLeavePoliciesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeavePolicies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Leave policies of every company and of a company, with their versions and legal minimum warnings
+ */
+
+export function useListLeavePolicies<
+  TData = Awaited<ReturnType<typeof listLeavePolicies>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListLeavePoliciesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeavePolicies>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListLeavePoliciesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateLeavePolicyUrl = () => {
+  return `/api/hr/leave/policies`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.manage.
+ * @summary Add a leave policy, of every company (Tenant scope) or of a company
+ */
+export const createLeavePolicy = async (
+  createLeavePolicyCommand: CreateLeavePolicyCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateLeavePolicyUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createLeavePolicyCommand),
+  });
+};
+
+export const getCreateLeavePolicyMutationKey = () => ['createLeavePolicy'] as const;
+
+export const getCreateLeavePolicyMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLeavePolicy>>,
+    TError,
+    CreateLeavePolicyMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLeavePolicy>>,
+  TError,
+  CreateLeavePolicyMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateLeavePolicyMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createLeavePolicy>>,
+    CreateLeavePolicyMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createLeavePolicy(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLeavePolicyMutationResult = NonNullable<Awaited<ReturnType<typeof createLeavePolicy>>>;
+export type CreateLeavePolicyMutationBody = CreateLeavePolicyCommand;
+export type CreateLeavePolicyMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateLeavePolicyMutationVariables = { data: CreateLeavePolicyCommand };
+
+/**
+ * @summary Add a leave policy, of every company (Tenant scope) or of a company
+ */
+export const useCreateLeavePolicy = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createLeavePolicy>>,
+      TError,
+      CreateLeavePolicyMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createLeavePolicy>>,
+  TError,
+  CreateLeavePolicyMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateLeavePolicyMutationOptions(options), queryClient);
+};
+export const getUpdateLeavePolicyUrl = (id: string) => {
+  return `/api/hr/leave/policies/${id}`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.manage.
+ * @summary Change a leave policy; versions that have started stay as they are
+ */
+export const updateLeavePolicy = async (
+  id: string,
+  updateLeavePolicyCommand: UpdateLeavePolicyCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateLeavePolicyUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateLeavePolicyCommand),
+  });
+};
+
+export const getUpdateLeavePolicyMutationKey = () => ['updateLeavePolicy'] as const;
+
+export const getUpdateLeavePolicyMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateLeavePolicy>>,
+    TError,
+    UpdateLeavePolicyMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateLeavePolicy>>,
+  TError,
+  UpdateLeavePolicyMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateLeavePolicyMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateLeavePolicy>>,
+    UpdateLeavePolicyMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateLeavePolicy(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateLeavePolicyMutationResult = NonNullable<Awaited<ReturnType<typeof updateLeavePolicy>>>;
+export type UpdateLeavePolicyMutationBody = UpdateLeavePolicyCommand;
+export type UpdateLeavePolicyMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateLeavePolicyMutationVariables = { id: string; data: UpdateLeavePolicyCommand };
+
+/**
+ * @summary Change a leave policy; versions that have started stay as they are
+ */
+export const useUpdateLeavePolicy = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateLeavePolicy>>,
+      TError,
+      UpdateLeavePolicyMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateLeavePolicy>>,
+  TError,
+  UpdateLeavePolicyMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateLeavePolicyMutationOptions(options), queryClient);
+};
+export const getCheckLeavePolicyRulesUrl = () => {
+  return `/api/hr/leave/policies/legal-check`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.read.
+ * @summary The settings of annual leave rules below the law, while a policy is edited
+ */
+export const checkLeavePolicyRules = async (
+  checkLeavePolicyRulesQuery: CheckLeavePolicyRulesQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveLegalWarning[]> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<LeaveLegalWarning[]>(getCheckLeavePolicyRulesUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(checkLeavePolicyRulesQuery),
+  });
+};
+
+export const getCheckLeavePolicyRulesMutationKey = () => ['checkLeavePolicyRules'] as const;
+
+export const getCheckLeavePolicyRulesMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkLeavePolicyRules>>,
+    TError,
+    CheckLeavePolicyRulesMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof checkLeavePolicyRules>>,
+  TError,
+  CheckLeavePolicyRulesMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCheckLeavePolicyRulesMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof checkLeavePolicyRules>>,
+    CheckLeavePolicyRulesMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return checkLeavePolicyRules(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CheckLeavePolicyRulesMutationResult = NonNullable<Awaited<ReturnType<typeof checkLeavePolicyRules>>>;
+export type CheckLeavePolicyRulesMutationBody = CheckLeavePolicyRulesQuery;
+export type CheckLeavePolicyRulesMutationError = ErrorType<HttpValidationProblemDetails>;
+export type CheckLeavePolicyRulesMutationVariables = { data: CheckLeavePolicyRulesQuery };
+
+/**
+ * @summary The settings of annual leave rules below the law, while a policy is edited
+ */
+export const useCheckLeavePolicyRules = <TError = ErrorType<HttpValidationProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof checkLeavePolicyRules>>,
+      TError,
+      CheckLeavePolicyRulesMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof checkLeavePolicyRules>>,
+  TError,
+  CheckLeavePolicyRulesMutationVariables,
+  TContext
+> => {
+  return useMutation(getCheckLeavePolicyRulesMutationOptions(options), queryClient);
+};
+export const getGetLeavePolicyRulesUrl = (companyId: string) => {
+  return `/api/hr/leave/policy-rules/${companyId}`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.read.
+ * @summary The policy assignment rules of a company in priority order
+ */
+export const getLeavePolicyRules = async (
+  companyId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeavePolicyRules> => {
+  return customFetch<LeavePolicyRules>(getGetLeavePolicyRulesUrl(companyId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLeavePolicyRulesQueryKey = (companyId: string) => {
+  return [`/api/hr/leave/policy-rules/${companyId}`] as const;
+};
+
+export const getGetLeavePolicyRulesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLeavePolicyRules>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  companyId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeavePolicyRules>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLeavePolicyRulesQueryKey(companyId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeavePolicyRules>>> = ({ signal }) =>
+    getLeavePolicyRules(companyId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: companyId !== null && companyId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getLeavePolicyRules>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetLeavePolicyRulesQueryResult = NonNullable<Awaited<ReturnType<typeof getLeavePolicyRules>>>;
+export type GetLeavePolicyRulesQueryError = ErrorType<ProblemDetails>;
+
+export function useGetLeavePolicyRules<
+  TData = Awaited<ReturnType<typeof getLeavePolicyRules>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  companyId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeavePolicyRules>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeavePolicyRules>>,
+          TError,
+          Awaited<ReturnType<typeof getLeavePolicyRules>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeavePolicyRules<
+  TData = Awaited<ReturnType<typeof getLeavePolicyRules>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  companyId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeavePolicyRules>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeavePolicyRules>>,
+          TError,
+          Awaited<ReturnType<typeof getLeavePolicyRules>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeavePolicyRules<
+  TData = Awaited<ReturnType<typeof getLeavePolicyRules>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  companyId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeavePolicyRules>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The policy assignment rules of a company in priority order
+ */
+
+export function useGetLeavePolicyRules<
+  TData = Awaited<ReturnType<typeof getLeavePolicyRules>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  companyId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeavePolicyRules>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetLeavePolicyRulesQueryOptions(companyId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getReplaceLeavePolicyRulesUrl = (companyId: string) => {
+  return `/api/hr/leave/policy-rules/${companyId}`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.manage.
+ * @summary Replace the policy assignment rules of a company; their order is their priority
+ */
+export const replaceLeavePolicyRules = async (
+  companyId: string,
+  replaceLeavePolicyRulesCommand: ReplaceLeavePolicyRulesCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getReplaceLeavePolicyRulesUrl(companyId), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(replaceLeavePolicyRulesCommand),
+  });
+};
+
+export const getReplaceLeavePolicyRulesMutationKey = () => ['replaceLeavePolicyRules'] as const;
+
+export const getReplaceLeavePolicyRulesMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof replaceLeavePolicyRules>>,
+    TError,
+    ReplaceLeavePolicyRulesMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof replaceLeavePolicyRules>>,
+  TError,
+  ReplaceLeavePolicyRulesMutationVariables,
+  TContext
+> => {
+  const mutationKey = getReplaceLeavePolicyRulesMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof replaceLeavePolicyRules>>,
+    ReplaceLeavePolicyRulesMutationVariables
+  > = (props) => {
+    const { companyId, data } = props ?? {};
+
+    return replaceLeavePolicyRules(companyId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReplaceLeavePolicyRulesMutationResult = NonNullable<Awaited<ReturnType<typeof replaceLeavePolicyRules>>>;
+export type ReplaceLeavePolicyRulesMutationBody = ReplaceLeavePolicyRulesCommand;
+export type ReplaceLeavePolicyRulesMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type ReplaceLeavePolicyRulesMutationVariables = { companyId: string; data: ReplaceLeavePolicyRulesCommand };
+
+/**
+ * @summary Replace the policy assignment rules of a company; their order is their priority
+ */
+export const useReplaceLeavePolicyRules = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof replaceLeavePolicyRules>>,
+      TError,
+      ReplaceLeavePolicyRulesMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof replaceLeavePolicyRules>>,
+  TError,
+  ReplaceLeavePolicyRulesMutationVariables,
+  TContext
+> => {
+  return useMutation(getReplaceLeavePolicyRulesMutationOptions(options), queryClient);
+};
+export const getResolveLeavePolicyUrl = (params: ResolveLeavePolicyParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/policy-resolution?${stringifiedParams}`
+    : `/api/hr/leave/policy-resolution`;
+};
+
+/**
+ * Requires permission: hr.leave.settings.read.
+ * @summary Which policy applies to an employment on a day, why, and the annual leave it gives
+ */
+export const resolveLeavePolicy = async (
+  params: ResolveLeavePolicyParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeavePolicyResolution> => {
+  return customFetch<LeavePolicyResolution>(getResolveLeavePolicyUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getResolveLeavePolicyQueryKey = (params?: ResolveLeavePolicyParams) => {
+  return [`/api/hr/leave/policy-resolution`, ...(params ? [params] : [])] as const;
+};
+
+export const getResolveLeavePolicyQueryOptions = <
+  TData = Awaited<ReturnType<typeof resolveLeavePolicy>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ResolveLeavePolicyParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveLeavePolicy>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getResolveLeavePolicyQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof resolveLeavePolicy>>> = ({ signal }) =>
+    resolveLeavePolicy(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof resolveLeavePolicy>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ResolveLeavePolicyQueryResult = NonNullable<Awaited<ReturnType<typeof resolveLeavePolicy>>>;
+export type ResolveLeavePolicyQueryError = ErrorType<ProblemDetails>;
+
+export function useResolveLeavePolicy<
+  TData = Awaited<ReturnType<typeof resolveLeavePolicy>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ResolveLeavePolicyParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveLeavePolicy>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resolveLeavePolicy>>,
+          TError,
+          Awaited<ReturnType<typeof resolveLeavePolicy>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useResolveLeavePolicy<
+  TData = Awaited<ReturnType<typeof resolveLeavePolicy>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ResolveLeavePolicyParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveLeavePolicy>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof resolveLeavePolicy>>,
+          TError,
+          Awaited<ReturnType<typeof resolveLeavePolicy>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useResolveLeavePolicy<
+  TData = Awaited<ReturnType<typeof resolveLeavePolicy>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ResolveLeavePolicyParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveLeavePolicy>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Which policy applies to an employment on a day, why, and the annual leave it gives
+ */
+
+export function useResolveLeavePolicy<
+  TData = Awaited<ReturnType<typeof resolveLeavePolicy>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ResolveLeavePolicyParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof resolveLeavePolicy>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getResolveLeavePolicyQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

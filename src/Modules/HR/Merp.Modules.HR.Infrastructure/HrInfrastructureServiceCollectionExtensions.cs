@@ -19,6 +19,7 @@ using Merp.Modules.HR.Application.SelfService;
 using Merp.Modules.HR.Contracts.Organization;
 using Merp.Modules.HR.Infrastructure.Documents;
 using Merp.Modules.HR.Infrastructure.Employees;
+using Merp.Modules.HR.Infrastructure.Leave;
 using Merp.Modules.HR.Infrastructure.Organization;
 using Merp.Modules.HR.Infrastructure.Persistence;
 using Merp.Modules.Platform.Contracts.Approvals;
@@ -54,6 +55,7 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddSingleton<INumberSequenceDefinitionProvider, HrNumberSequences>();
         services.AddSingleton<ICustomFieldEntityProvider, HrCustomFieldEntities>();
         services.AddSingleton<ITenantDataSeeder, HrReferenceDataSeeder>();
+        services.AddSingleton<ITenantDataSeeder, LeaveSeeder>();
         services.AddScoped<AssignmentsEffectiveJob>();
         services.AddSingleton(RecurringJobDefinition.For<AssignmentsEffectiveJob>(AssignmentsEffectiveJob.JobId, AssignmentsEffectiveJob.Cron));
 

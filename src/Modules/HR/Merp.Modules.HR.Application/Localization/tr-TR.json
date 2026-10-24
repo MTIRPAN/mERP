@@ -168,5 +168,9 @@
   "hr.approvals.steps.hr_review": "İK onayı",
   "hr.notifications.profile_change_completed.label": "Değişiklik taleplerimin sonucu",
   "hr.notifications.profile_change_completed.title": "Değişiklik talebiniz {number} sonuçlandı",
-  "hr.notifications.profile_change_completed.body": "{number} numaralı değişiklik talebiniz: {result}."
+  "hr.notifications.profile_change_completed.body": "{number} numaralı değişiklik talebiniz: {result}.",
+  "permissions.hr.leave": "İzin",
+  "permissions.hr.leave.settings": "İzin ayarları",
+  "permissions.hr.leave.settings.read": "İzin türleri, politikalar ve atama kurallarını görüntüleme",
+  "permissions.hr.leave.settings.manage": "İzin türleri, politikalar ve atama kurallarını yönetme"
 }

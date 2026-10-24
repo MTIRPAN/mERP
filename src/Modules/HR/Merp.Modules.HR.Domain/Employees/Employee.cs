@@ -153,6 +153,19 @@ public sealed class Employee : AuditableAggregateRoot<EmployeeId>, IHasCustomFie
         return employment;
     }
 
+    /// <summary>The leave policy of an open employment set by hand, or null to follow the assignment rules (D41).</summary>
+    public Result SetLeavePolicy(EmploymentId employmentId, Guid? policyId)
+    {
+        var found = OpenEmployment(employmentId);
+        if (found.IsFailure)
+        {
+            return found.Error;
+        }
+
+        found.Value.SetLeavePolicy(policyId);
+        return Result.Success();
+    }
+
     /// <summary>
     /// A new assignment from <paramref name="validFrom"/>, which may be in the future; the previous one ends the day
     /// before. A change starting on the latest assignment's first day replaces it (correction).

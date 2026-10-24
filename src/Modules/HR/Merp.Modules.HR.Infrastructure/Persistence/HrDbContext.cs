@@ -2,6 +2,7 @@ using Merp.Infrastructure.Persistence;
 using Merp.Modules.HR.Application;
 using Merp.Modules.HR.Domain.Documents;
 using Merp.Modules.HR.Domain.Employees;
+using Merp.Modules.HR.Domain.Leave;
 using Merp.Modules.HR.Domain.Organization;
 using Merp.Modules.HR.Domain.SelfService;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,12 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
 
     public DbSet<ProfileChangeRequest> ProfileChangeRequests => Set<ProfileChangeRequest>();
 
+    public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
+
+    public DbSet<LeavePolicy> LeavePolicies => Set<LeavePolicy>();
+
+    public DbSet<LeavePolicyRuleSet> LeavePolicyRuleSets => Set<LeavePolicyRuleSet>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
@@ -56,6 +63,16 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
         modelBuilder.Ignore<Education>();
         modelBuilder.Ignore<Certificate>();
         modelBuilder.Ignore<LanguageSkill>();
+
+        // Versions and rules of leave types and policies are jsonb columns too (D41)
+        modelBuilder.Ignore<LeaveTypeVersion>();
+        modelBuilder.Ignore<LeavePolicyVersion>();
+        modelBuilder.Ignore<AnnualLeaveRules>();
+        modelBuilder.Ignore<EntitlementTier>();
+        modelBuilder.Ignore<AgeMinimum>();
+        modelBuilder.Ignore<ExtraDayRule>();
+        modelBuilder.Ignore<PolicyCriterion>();
+        modelBuilder.Ignore<PolicyAssignmentRule>();
         base.OnModelCreating(modelBuilder);
     }
 }
