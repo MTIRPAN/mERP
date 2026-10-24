@@ -833,7 +833,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - [x] **L3a backend:** izin hesabı ve hareketler, hak ediş işi (ayardaki başlangıçtan telafi, idempotent), bakiye sorgusu, düzeltme, açılış bakiyesi içe aktarması, grup içi nakil ve çıkışta kapanış (`EmployeeLeaveBalanceClosed`), ayarlara tarih tipi
 - [x] **L3b web:** personel kartı İzinler sekmesi (bakiye kartları + hareketler), düzeltme formu, açılış bakiyesi aktarımı
 
-### [ ] L4 İzin talebi ve onay 🔍 — XL (2 PR: backend, web)
+### [x] L4 İzin talebi ve onay 🔍 — XL (2 PR: backend, web)
 
 **Yapılacaklar:**
 - Numaralandırma: `hr.leave-request` (`IZN-{yyyy}-{seq:6}`, yıllık) tanımı HR modülünden bildirilir (P5, D29).
@@ -875,7 +875,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 
 **Alt PR'lar (D44):**
 - [x] **L4a backend:** talep (taslak, gönder, düzelt, iptal, iptal talebi), §6 doğrulaması ve önizleme, onay olayları ve iptal akışı, bakiyeye yazma ve bekleyen gün, İK adına talep, geçmiş kayıt, iptal, erken dönüş, toplu izin, ekler, bildirimler ve hatırlatma işi
-- [ ] **L4b web:** İzinlerim, yeni talep çekmecesi, talep detayı ve zaman çizelgesi, İK izin talepleri, toplu izin
+- [x] **L4b web:** İzinlerim, yeni talep çekmecesi, talep detayı ve zaman çizelgesi, İK izin talepleri, toplu izin
 
 ### [ ] L5 İzin takvimi — S
 

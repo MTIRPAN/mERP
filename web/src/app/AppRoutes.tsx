@@ -57,6 +57,8 @@ const NotificationTemplatesPage = page(
   () => import('@/modules/platform/documents/NotificationTemplatesPage'),
   'NotificationTemplatesPage',
 );
+const MyLeavePage = page(() => import('@/modules/hr/leave/requests/MyLeavePage'), 'MyLeavePage');
+const LeaveRequestsPage = page(() => import('@/modules/hr/leave/requests/LeaveRequestsPage'), 'LeaveRequestsPage');
 const OrgStructurePage = page(() => import('@/modules/hr/organization/OrgStructurePage'), 'OrgStructurePage');
 const PositionsPage = page(() => import('@/modules/hr/positions/PositionsPage'), 'PositionsPage');
 const EmployeesPage = page(() => import('@/modules/hr/employees/EmployeesPage'), 'EmployeesPage');
@@ -289,6 +291,30 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={hrPermissions.selfProfileRead}>
               <MyCardPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/me/leave"
+          element={
+            <RequirePermission permission={hrPermissions.selfLeaveRead}>
+              <MyLeavePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/leave-requests"
+          element={
+            <RequirePermission permission={hrPermissions.leaveRequestsRead}>
+              <LeaveRequestsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/leave-requests/:id"
+          element={
+            <RequirePermission permission={hrPermissions.leaveRequestsRead}>
+              <LeaveRequestsPage />
             </RequirePermission>
           }
         />

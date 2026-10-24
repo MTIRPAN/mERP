@@ -363,6 +363,31 @@ public sealed class LeaveRequestTests(HrClockFactory factory) : IClassFixture<Hr
         reminder.SelectMany(n => n.RecipientUserIds).ShouldBe([team.Employee.UserId, team.Manager.UserId], ignoreOrder: true);
     }
 
+    [Fact]
+    public async Task TheForm_OffersTheTypesOfTheEmployment_AndColleaguesToStandIn()
+    {
+        var team = await TeamAsync();
+        var employee = Self(team.Employee);
+
+        var mine = (await employee.GetFromJsonAsync<List<LeaveTypeOption>>("/api/hr/me/leave-types", Ct))!;
+        mine.ShouldContain(t => t.Code == "YILLIK" && t.DeductsFrom == "YILLIK" && !t.HasFixedLength);
+        mine.ShouldContain(t => t.Code == "EVLILIK" && t.HasFixedLength && t.RequiresDocument);
+        mine.ShouldNotContain(t => t.Code == "SUT" || t.Code == "YOL");
+
+        var colleagues = (await employee.GetFromJsonAsync<List<ColleagueItem>>("/api/hr/me/colleagues", Ct))!;
+        colleagues.ShouldContain(c => c.EmployeeId == team.Manager.Employee);
+        colleagues.ShouldNotContain(c => c.EmployeeId == team.Employee.Employee);
+
+        var url = $"{Hr}/leave-types?employmentId={team.Employee.Employment}";
+        (await team.Admin.GetFromJsonAsync<List<LeaveTypeOption>>(url, Ct))!.ShouldContain(t => t.Code == "YILLIK");
+        var elsewhere = await HrFactory.CreateCompanyAsync(team.Admin);
+        (await factory.CreateClientFor("ik", HrFactory.Tenant, HrPermissions.Leave.Requests.Read).WithScopes(AccessScope.Company(elsewhere)).GetAsync(url, Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await factory.CreateClientFor("ik", HrFactory.Tenant, HrPermissions.Leave.Balances.Read).GetAsync(url, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await factory.CreateClientFor(team.Employee.Subject, HrFactory.Tenant, HrPermissions.Self.LeaveRead).GetAsync("/api/hr/me/colleagues", Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
     private sealed record Person(Guid Employee, Guid Employment, Guid UserId, string Subject);
 
     private sealed record Team(HttpClient Admin, EmployeeSetup Setup, Person Manager, Person Employee);

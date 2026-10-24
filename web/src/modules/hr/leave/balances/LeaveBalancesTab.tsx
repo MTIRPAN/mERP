@@ -84,7 +84,7 @@ export const LeaveBalancesTab = ({ employeeId, employments, canManage }: LeaveBa
 };
 
 /** One balance: its figures, the next entitlement and the movements. */
-const BalanceCard = ({ balance }: { balance: LeaveBalanceItem }) => {
+export const BalanceCard = ({ balance }: { balance: LeaveBalanceItem }) => {
   const { t, i18n } = useTranslation();
   const days = (value: number) => t('web.hr.leave_balances.days_value', { days: value.toLocaleString(i18n.language) });
   return (
