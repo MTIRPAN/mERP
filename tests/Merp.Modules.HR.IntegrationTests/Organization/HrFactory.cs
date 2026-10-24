@@ -46,6 +46,7 @@ public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(pos
         HrPermissions.Leave.Requests.Manage,
         HrPermissions.Leave.Requests.Record,
         HrPermissions.Leave.Bulk,
+        HrPermissions.Leave.Calendar.Read,
         "platform.companies.read",
         "platform.companies.manage",
         "platform.branches.read",

@@ -50,10 +50,10 @@ public sealed class HrMenuTests(HrFactory factory) : IClassFixture<HrFactory>
     [Fact]
     public async Task Me_WithTheLeavePermissions_ListsTheOwnLeaveAndTheRequests()
     {
-        var me = (await factory.CreateClientFor("yonetici", HrFactory.Tenant, HrPermissions.Self.ProfileRead, HrPermissions.Self.LeaveRead, HrPermissions.Leave.Requests.Read)
+        var me = (await factory.CreateClientFor("yonetici", HrFactory.Tenant, HrPermissions.Self.ProfileRead, HrPermissions.Self.LeaveRead, HrPermissions.Leave.Requests.Read, HrPermissions.Leave.Calendar.Read)
             .GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!;
 
-        me.Menu.Single(m => m.Key == "hr").Children!.Select(c => c.Path).ShouldBe(["/hr/me", "/hr/me/leave", "/hr/leave-requests"]);
+        me.Menu.Single(m => m.Key == "hr").Children!.Select(c => c.Path).ShouldBe(["/hr/me", "/hr/me/leave", "/hr/leave-requests", "/hr/leave-calendar"]);
     }
 
     [Fact]

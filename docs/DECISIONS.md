@@ -1261,3 +1261,24 @@ Seçilen kültür `Content-Language` başlığında döner.
 - İK sayfası: kapsamdaki talepler (arama, durum, tarih aralığı), "Personel adına talep", "Geçmiş izin kaydet" ve "Toplu izin" (yetkiye göre). İK detayında iptal (onaylıda gerekçe zorunlu), erken dönüş ve ekler.
 - Toplu izin: şirket, tür, personel listesi ya da birim (alt birimlerle), tarih aralığı ve açıklama. Önce önizlenir; "Onaylı kaydet" sorunsuz kişiler için kaydeder ve kişi başına sonucu gösterir.
 - Çalışanların İK listelerine yetkisi olmadığından iki uç nokta eklendi: `GET /api/hr/me/leave-types` (talep edilebilir türler, form bilgileriyle) ve `GET /api/hr/me/colleagues?search=` (vekil seçimi; çalışanın şirketlerinde çalışanların yalnızca adı, en fazla 20). İK formu türleri `GET /api/hr/leave-requests/leave-types?employmentId=` ile alır.
+
+## D45 — İzin takvimi
+
+**Bağlam:** L5, kapsamdaki personelin izinlerini tatillerle birlikte takvimde gösterir ve aynı birimde aynı gün çok kişi izindeyse uyarır. Görev küçük olduğu için tek PR'dır (backend ve web).
+
+**Uç nokta ve kapsam:**
+- `GET /api/hr/leave/calendar?from=&to=` (`hr.leave.calendar.read`) en fazla 100 günlük aralık alır. Ay görünümünün baştaki ve sondaki haftaları ya da bir çeyrek bu sınıra sığar.
+- Veri kapsamı personel listesiyle aynıdır (D38). Yönetici rolü yetkiyi ekip kapsamıyla (`ManagedTeam`) aldığı için yalnızca astlarını görür (L5 kabul kriteri).
+- Süzgeçler kapsamı daraltır: şirket, birim (varsayılan olarak alt birimler dahil) ve "Ekibim". "Ekibim", kullanıcının pozisyonlarının altındaki kişileri ve yönetici ataması kullanıcının pozisyonunu gösteren kişileri seçer; böylece geniş kapsamlı bir İK kullanıcısı da kendi ekibine bakabilir.
+- Onaylı izinler (iptal talebi bekleyenler dahil) her zaman gösterilir. Onay bekleyen ve iade edilmiş talepler varsayılan olarak gösterilir, `includePending=false` ile gizlenir. Yol izni günleri iznin parçası olarak gösterilir.
+- Personelin birimi, bugünkü görevinin pozisyonunun birimidir (personel listesindeki gibi).
+
+**Tatil katmanı:** Seçilen şirketin, şirket seçilmemişse gösterilen ilk personelin şirketinin çalışma takviminden (Platform `IWorkingCalendar`) gelir. Yarım gün tatil işaretlenir.
+
+**Kalabalık gün uyarısı:**
+- Ayar `hr.leave.calendar_threshold` (tam sayı, şirket ezebilir). Varsayılanı 0'dır, yani uyarı kapalıdır. Birim büyüklükleri çok farklı olduğu için tek bir varsayılan sayı yanlış uyarı üretirdi; İK ayarı kendi açar.
+- Bir birimde bir günde izinde olan kişi sayısı eşiği aşarsa (gösterilen izinlerle; onay bekleyenler dahilse onlar da sayılır) o gün ve birim uyarı olarak döner.
+
+**Web:**
+- İK → "İzin takvimi" (`/hr/leave-calendar`): FullCalendar ay ve liste görünümü, türe (kategori) göre renk, onay bekleyen izin soluk ve "onay bekliyor" notlu, tatiller arka plan günü. Talepleri görebilen kullanıcı izne tıklayınca talep detayına gider.
+- Paketler: `@fullcalendar/core`, `react`, `daygrid`, `list` 6.1.20 (MIT, D19'daki "yalnızca MIT çekirdek paketleri"). 7.x paket yapısını değiştirip ek bir `temporal-polyfill` bağımlılığı istediği için olgun 6.1 sürümü seçildi.

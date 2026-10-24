@@ -43,12 +43,14 @@ import type {
   EmployeeDocumentTypeItem,
   EntityCreatedResponse,
   ExportEmployeesParams,
+  GetLeaveCalendarParams,
   GetOrgUnitTreeParams,
   GroupTransferCommand,
   HireEmployeeCommand,
   HttpValidationProblemDetails,
   JobDetails,
   LeaveBalanceItem,
+  LeaveCalendar,
   LeaveDurationPreview,
   LeaveLegalWarning,
   LeavePolicyItem,
@@ -4156,6 +4158,138 @@ export const useSetEmploymentLeavePolicy = <
 > => {
   return useMutation(getSetEmploymentLeavePolicyMutationOptions(options), queryClient);
 };
+export const getGetLeaveCalendarUrl = (params: GetLeaveCalendarParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/leave/calendar?${stringifiedParams}` : `/api/hr/leave/calendar`;
+};
+
+/**
+ * Requires permission: hr.leave.calendar.read.
+ * @summary Leaves of the employees in scope between two days, with the public holidays and the days a unit is short of people
+ */
+export const getLeaveCalendar = async (
+  params: GetLeaveCalendarParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveCalendar> => {
+  return customFetch<LeaveCalendar>(getGetLeaveCalendarUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLeaveCalendarQueryKey = (params?: GetLeaveCalendarParams) => {
+  return [`/api/hr/leave/calendar`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetLeaveCalendarQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLeaveCalendar>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveCalendarParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveCalendar>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLeaveCalendarQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaveCalendar>>> = ({ signal }) =>
+    getLeaveCalendar(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLeaveCalendar>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetLeaveCalendarQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaveCalendar>>>;
+export type GetLeaveCalendarQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetLeaveCalendar<
+  TData = Awaited<ReturnType<typeof getLeaveCalendar>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveCalendarParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveCalendar>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveCalendar>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveCalendar>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveCalendar<
+  TData = Awaited<ReturnType<typeof getLeaveCalendar>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveCalendarParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveCalendar>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveCalendar>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveCalendar>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveCalendar<
+  TData = Awaited<ReturnType<typeof getLeaveCalendar>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveCalendarParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveCalendar>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Leaves of the employees in scope between two days, with the public holidays and the days a unit is short of people
+ */
+
+export function useGetLeaveCalendar<
+  TData = Awaited<ReturnType<typeof getLeaveCalendar>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveCalendarParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveCalendar>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetLeaveCalendarQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getListEmployeeDocumentsUrl = (employeeId: string) => {
   return `/api/hr/employees/${employeeId}/documents`;
 };

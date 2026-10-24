@@ -877,7 +877,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - [x] **L4a backend:** talep (taslak, gönder, düzelt, iptal, iptal talebi), §6 doğrulaması ve önizleme, onay olayları ve iptal akışı, bakiyeye yazma ve bekleyen gün, İK adına talep, geçmiş kayıt, iptal, erken dönüş, toplu izin, ekler, bildirimler ve hatırlatma işi
 - [x] **L4b web:** İzinlerim, yeni talep çekmecesi, talep detayı ve zaman çizelgesi, İK izin talepleri, toplu izin
 
-### [ ] L5 İzin takvimi — S
+### [x] L5 İzin takvimi — S
 
 **Yapılacaklar:**
 - Kapsam (ekip / birim / şirket) ve tarih aralığına göre etkinlik endpoint'i, tatil katmanıyla.

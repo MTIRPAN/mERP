@@ -54,6 +54,7 @@ const icons: Record<string, ReactNode> = {
   'leave-settings': <CarryOutOutlined />,
   'my-leave': <CoffeeOutlined />,
   'leave-requests': <ProfileOutlined />,
+  'leave-calendar': <CalendarOutlined />,
   'document-types': <FileDoneOutlined />,
   positions: <SolutionOutlined />,
   'job-titles': <TagsOutlined />,

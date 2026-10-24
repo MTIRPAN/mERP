@@ -222,5 +222,9 @@
   "hr.notifications.leave_cancellation_completed.body": "{employee} için {start} – {end} tarihli {type}: {result}.",
   "hr.notifications.leave_reminder.label": "Yarın başlayan izinler",
   "hr.notifications.leave_reminder.title": "{employee} yarın izinde",
-  "hr.notifications.leave_reminder.body": "{employee}, {start} – {end} tarihleri arasında {length} {type} kullanacak."
+  "hr.notifications.leave_reminder.body": "{employee}, {start} – {end} tarihleri arasında {length} {type} kullanacak.",
+  "permissions.hr.leave.calendar": "İzin takvimi",
+  "permissions.hr.leave.calendar.read": "Kapsamdaki personelin izin takvimini görüntüleme",
+  "hr.settings.leave.calendar_threshold": "İzin takvimi uyarı eşiği",
+  "hr.settings.leave.calendar_threshold_hint": "Aynı birimde aynı gün bu sayıdan fazla kişi izindeyse takvim uyarır. 0 uyarıyı kapatır."
 }
