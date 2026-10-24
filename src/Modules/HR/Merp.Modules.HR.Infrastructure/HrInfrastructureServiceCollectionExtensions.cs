@@ -1,5 +1,6 @@
 using Merp.Application.Abstractions.Approvals;
 using Merp.Application.Abstractions.CustomFields;
+using Merp.Application.Abstractions.Documents;
 using Merp.Application.Abstractions.Imports;
 using Merp.Application.Abstractions.Jobs;
 using Merp.Application.Abstractions.Notifications;
@@ -94,6 +95,8 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddScoped<LeaveRequestAccess>();
         services.AddScoped<LeaveRecorder>();
         services.AddScoped<IApprovalDocumentAccessPolicy, LeaveRequestAccessPolicy>();
+        services.AddScoped<LeaveDocumentPrinter>();
+        services.AddSingleton<IDocumentTypeProvider, HrDocumentTypes>();
         services.AddScoped<LeaveRemindersJob>();
         services.AddSingleton(RecurringJobDefinition.For<LeaveRemindersJob>(LeaveRemindersJob.JobId, LeaveRemindersJob.Cron));
 

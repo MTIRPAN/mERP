@@ -43,8 +43,16 @@ import type {
   EmployeeDocumentTypeItem,
   EntityCreatedResponse,
   ExportEmployeesParams,
+  ExportLeaveBalanceReportParams,
+  ExportLeaveUsageReportParams,
+  ExportLongTimeNoLeaveReportParams,
+  ExportUpcomingLeavesReportParams,
+  GetLeaveBalanceReportParams,
   GetLeaveCalendarParams,
+  GetLeaveUsageReportParams,
+  GetLongTimeNoLeaveReportParams,
   GetOrgUnitTreeParams,
+  GetUpcomingLeavesReportParams,
   GroupTransferCommand,
   HireEmployeeCommand,
   HttpValidationProblemDetails,
@@ -79,7 +87,10 @@ import type {
   OrgUnitTree,
   PagedResultOfEmployeeListItem,
   PagedResultOfJobListItem,
+  PagedResultOfLeaveBalanceReportRow,
   PagedResultOfLeaveRequestListItem,
+  PagedResultOfLeaveUsageReportRow,
+  PagedResultOfLongTimeNoLeaveRow,
   PagedResultOfOrgUnitListItem,
   PagedResultOfPositionListItem,
   PositionDetails,
@@ -4282,6 +4293,375 @@ export function useGetLeaveCalendar<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getGetLeaveCalendarQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetLeaveRecordDocumentUrl = (employeeId: string, employmentId: string) => {
+  return `/api/hr/employees/${employeeId}/employments/${employmentId}/leave-record`;
+};
+
+/**
+ * Requires permission: hr.leave.balances.read.
+ * @summary The annual leave record of an employment as PDF: seniority, days earned, leaves taken and signatures
+ */
+export const getLeaveRecordDocument = async (
+  employeeId: string,
+  employmentId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getGetLeaveRecordDocumentUrl(employeeId, employmentId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLeaveRecordDocumentQueryKey = (employeeId: string, employmentId: string) => {
+  return [`/api/hr/employees/${employeeId}/employments/${employmentId}/leave-record`] as const;
+};
+
+export const getGetLeaveRecordDocumentQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLeaveRecordDocument>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  employeeId: string,
+  employmentId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRecordDocument>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLeaveRecordDocumentQueryKey(employeeId, employmentId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaveRecordDocument>>> = ({ signal }) =>
+    getLeaveRecordDocument(employeeId, employmentId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: employeeId !== null && employeeId !== undefined && employmentId !== null && employmentId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getLeaveRecordDocument>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetLeaveRecordDocumentQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaveRecordDocument>>>;
+export type GetLeaveRecordDocumentQueryError = ErrorType<ProblemDetails>;
+
+export function useGetLeaveRecordDocument<
+  TData = Awaited<ReturnType<typeof getLeaveRecordDocument>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  employeeId: string,
+  employmentId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRecordDocument>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveRecordDocument>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveRecordDocument>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveRecordDocument<
+  TData = Awaited<ReturnType<typeof getLeaveRecordDocument>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  employeeId: string,
+  employmentId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRecordDocument>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveRecordDocument>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveRecordDocument>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveRecordDocument<
+  TData = Awaited<ReturnType<typeof getLeaveRecordDocument>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  employeeId: string,
+  employmentId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRecordDocument>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The annual leave record of an employment as PDF: seniority, days earned, leaves taken and signatures
+ */
+
+export function useGetLeaveRecordDocument<
+  TData = Awaited<ReturnType<typeof getLeaveRecordDocument>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  employeeId: string,
+  employmentId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRecordDocument>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetLeaveRecordDocumentQueryOptions(employeeId, employmentId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetLeaveRequestFormUrl = (id: string) => {
+  return `/api/hr/leave-requests/${id}/form`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.read.
+ * @summary A leave request form as PDF, to be signed
+ */
+export const getLeaveRequestForm = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getGetLeaveRequestFormUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLeaveRequestFormQueryKey = (id: string) => {
+  return [`/api/hr/leave-requests/${id}/form`] as const;
+};
+
+export const getGetLeaveRequestFormQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequestForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLeaveRequestFormQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaveRequestForm>>> = ({ signal }) =>
+    getLeaveRequestForm(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLeaveRequestForm>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetLeaveRequestFormQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaveRequestForm>>>;
+export type GetLeaveRequestFormQueryError = ErrorType<ProblemDetails>;
+
+export function useGetLeaveRequestForm<
+  TData = Awaited<ReturnType<typeof getLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequestForm>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveRequestForm>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveRequestForm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveRequestForm<
+  TData = Awaited<ReturnType<typeof getLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequestForm>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveRequestForm>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveRequestForm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveRequestForm<
+  TData = Awaited<ReturnType<typeof getLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequestForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A leave request form as PDF, to be signed
+ */
+
+export function useGetLeaveRequestForm<
+  TData = Awaited<ReturnType<typeof getLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveRequestForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetLeaveRequestFormQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetMyLeaveRequestFormUrl = (id: string) => {
+  return `/api/hr/me/leave-requests/${id}/form`;
+};
+
+/**
+ * Requires permission: hr.self.leave.read.
+ * @summary The form of one of the user's leave requests as PDF
+ */
+export const getMyLeaveRequestForm = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getGetMyLeaveRequestFormUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetMyLeaveRequestFormQueryKey = (id: string) => {
+  return [`/api/hr/me/leave-requests/${id}/form`] as const;
+};
+
+export const getGetMyLeaveRequestFormQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequestForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyLeaveRequestFormQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyLeaveRequestForm>>> = ({ signal }) =>
+    getMyLeaveRequestForm(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyLeaveRequestForm>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMyLeaveRequestFormQueryResult = NonNullable<Awaited<ReturnType<typeof getMyLeaveRequestForm>>>;
+export type GetMyLeaveRequestFormQueryError = ErrorType<ProblemDetails>;
+
+export function useGetMyLeaveRequestForm<
+  TData = Awaited<ReturnType<typeof getMyLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequestForm>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyLeaveRequestForm>>,
+          TError,
+          Awaited<ReturnType<typeof getMyLeaveRequestForm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyLeaveRequestForm<
+  TData = Awaited<ReturnType<typeof getMyLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequestForm>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyLeaveRequestForm>>,
+          TError,
+          Awaited<ReturnType<typeof getMyLeaveRequestForm>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyLeaveRequestForm<
+  TData = Awaited<ReturnType<typeof getMyLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequestForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The form of one of the user's leave requests as PDF
+ */
+
+export function useGetMyLeaveRequestForm<
+  TData = Awaited<ReturnType<typeof getMyLeaveRequestForm>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyLeaveRequestForm>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMyLeaveRequestFormQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
@@ -10427,6 +10807,1080 @@ export function useDownloadLeaveRequestFile<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getDownloadLeaveRequestFileQueryOptions(id, fileId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetLeaveBalanceReportUrl = (params: GetLeaveBalanceReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/reports/balances?${stringifiedParams}`
+    : `/api/hr/leave/reports/balances`;
+};
+
+/**
+ * Requires permission: hr.leave.reports.read.
+ * @summary Balances of the employments in scope as of a day: earned, used and left
+ */
+export const getLeaveBalanceReport = async (
+  params: GetLeaveBalanceReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfLeaveBalanceReportRow> => {
+  return customFetch<PagedResultOfLeaveBalanceReportRow>(getGetLeaveBalanceReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLeaveBalanceReportQueryKey = (params?: GetLeaveBalanceReportParams) => {
+  return [`/api/hr/leave/reports/balances`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetLeaveBalanceReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveBalanceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveBalanceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLeaveBalanceReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaveBalanceReport>>> = ({ signal }) =>
+    getLeaveBalanceReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLeaveBalanceReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetLeaveBalanceReportQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaveBalanceReport>>>;
+export type GetLeaveBalanceReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetLeaveBalanceReport<
+  TData = Awaited<ReturnType<typeof getLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveBalanceReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveBalanceReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveBalanceReport>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveBalanceReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveBalanceReport<
+  TData = Awaited<ReturnType<typeof getLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveBalanceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveBalanceReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveBalanceReport>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveBalanceReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveBalanceReport<
+  TData = Awaited<ReturnType<typeof getLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveBalanceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveBalanceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Balances of the employments in scope as of a day: earned, used and left
+ */
+
+export function useGetLeaveBalanceReport<
+  TData = Awaited<ReturnType<typeof getLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveBalanceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveBalanceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetLeaveBalanceReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportLeaveBalanceReportUrl = (params: ExportLeaveBalanceReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/reports/balances/export?${stringifiedParams}`
+    : `/api/hr/leave/reports/balances/export`;
+};
+
+/**
+ * Requires permission: hr.leave.reports.read.
+ * @summary The balance report as Excel, with its filters, sort and chosen columns
+ */
+export const exportLeaveBalanceReport = async (
+  params: ExportLeaveBalanceReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportLeaveBalanceReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportLeaveBalanceReportQueryKey = (params?: ExportLeaveBalanceReportParams) => {
+  return [`/api/hr/leave/reports/balances/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportLeaveBalanceReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveBalanceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveBalanceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportLeaveBalanceReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportLeaveBalanceReport>>> = ({ signal }) =>
+    exportLeaveBalanceReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportLeaveBalanceReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportLeaveBalanceReportQueryResult = NonNullable<Awaited<ReturnType<typeof exportLeaveBalanceReport>>>;
+export type ExportLeaveBalanceReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportLeaveBalanceReport<
+  TData = Awaited<ReturnType<typeof exportLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveBalanceReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveBalanceReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportLeaveBalanceReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportLeaveBalanceReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportLeaveBalanceReport<
+  TData = Awaited<ReturnType<typeof exportLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveBalanceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveBalanceReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportLeaveBalanceReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportLeaveBalanceReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportLeaveBalanceReport<
+  TData = Awaited<ReturnType<typeof exportLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveBalanceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveBalanceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The balance report as Excel, with its filters, sort and chosen columns
+ */
+
+export function useExportLeaveBalanceReport<
+  TData = Awaited<ReturnType<typeof exportLeaveBalanceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveBalanceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveBalanceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportLeaveBalanceReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetLeaveUsageReportUrl = (params: GetLeaveUsageReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/reports/usage?${stringifiedParams}`
+    : `/api/hr/leave/reports/usage`;
+};
+
+/**
+ * Requires permission: hr.leave.reports.read.
+ * @summary Approved leaves starting in a period, by person and type: their count and days
+ */
+export const getLeaveUsageReport = async (
+  params: GetLeaveUsageReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfLeaveUsageReportRow> => {
+  return customFetch<PagedResultOfLeaveUsageReportRow>(getGetLeaveUsageReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLeaveUsageReportQueryKey = (params?: GetLeaveUsageReportParams) => {
+  return [`/api/hr/leave/reports/usage`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetLeaveUsageReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveUsageReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveUsageReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLeaveUsageReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaveUsageReport>>> = ({ signal }) =>
+    getLeaveUsageReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLeaveUsageReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetLeaveUsageReportQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaveUsageReport>>>;
+export type GetLeaveUsageReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetLeaveUsageReport<
+  TData = Awaited<ReturnType<typeof getLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveUsageReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveUsageReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveUsageReport>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveUsageReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveUsageReport<
+  TData = Awaited<ReturnType<typeof getLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveUsageReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveUsageReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaveUsageReport>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaveUsageReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLeaveUsageReport<
+  TData = Awaited<ReturnType<typeof getLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveUsageReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveUsageReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Approved leaves starting in a period, by person and type: their count and days
+ */
+
+export function useGetLeaveUsageReport<
+  TData = Awaited<ReturnType<typeof getLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetLeaveUsageReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaveUsageReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetLeaveUsageReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportLeaveUsageReportUrl = (params: ExportLeaveUsageReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/reports/usage/export?${stringifiedParams}`
+    : `/api/hr/leave/reports/usage/export`;
+};
+
+/**
+ * Requires permission: hr.leave.reports.read.
+ * @summary The usage report as Excel, with its filters, sort and chosen columns
+ */
+export const exportLeaveUsageReport = async (
+  params: ExportLeaveUsageReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportLeaveUsageReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportLeaveUsageReportQueryKey = (params?: ExportLeaveUsageReportParams) => {
+  return [`/api/hr/leave/reports/usage/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportLeaveUsageReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveUsageReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveUsageReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportLeaveUsageReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportLeaveUsageReport>>> = ({ signal }) =>
+    exportLeaveUsageReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportLeaveUsageReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportLeaveUsageReportQueryResult = NonNullable<Awaited<ReturnType<typeof exportLeaveUsageReport>>>;
+export type ExportLeaveUsageReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportLeaveUsageReport<
+  TData = Awaited<ReturnType<typeof exportLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveUsageReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveUsageReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportLeaveUsageReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportLeaveUsageReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportLeaveUsageReport<
+  TData = Awaited<ReturnType<typeof exportLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveUsageReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveUsageReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportLeaveUsageReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportLeaveUsageReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportLeaveUsageReport<
+  TData = Awaited<ReturnType<typeof exportLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveUsageReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveUsageReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The usage report as Excel, with its filters, sort and chosen columns
+ */
+
+export function useExportLeaveUsageReport<
+  TData = Awaited<ReturnType<typeof exportLeaveUsageReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportLeaveUsageReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLeaveUsageReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportLeaveUsageReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetUpcomingLeavesReportUrl = (params?: GetUpcomingLeavesReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/reports/upcoming?${stringifiedParams}`
+    : `/api/hr/leave/reports/upcoming`;
+};
+
+/**
+ * Requires permission: hr.leave.reports.read.
+ * @summary Leaves starting in the coming days
+ */
+export const getUpcomingLeavesReport = async (
+  params?: GetUpcomingLeavesReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfLeaveRequestListItem> => {
+  return customFetch<PagedResultOfLeaveRequestListItem>(getGetUpcomingLeavesReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetUpcomingLeavesReportQueryKey = (params?: GetUpcomingLeavesReportParams) => {
+  return [`/api/hr/leave/reports/upcoming`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetUpcomingLeavesReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetUpcomingLeavesReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUpcomingLeavesReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUpcomingLeavesReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUpcomingLeavesReport>>> = ({ signal }) =>
+    getUpcomingLeavesReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUpcomingLeavesReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetUpcomingLeavesReportQueryResult = NonNullable<Awaited<ReturnType<typeof getUpcomingLeavesReport>>>;
+export type GetUpcomingLeavesReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetUpcomingLeavesReport<
+  TData = Awaited<ReturnType<typeof getUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | GetUpcomingLeavesReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUpcomingLeavesReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUpcomingLeavesReport>>,
+          TError,
+          Awaited<ReturnType<typeof getUpcomingLeavesReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetUpcomingLeavesReport<
+  TData = Awaited<ReturnType<typeof getUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetUpcomingLeavesReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUpcomingLeavesReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUpcomingLeavesReport>>,
+          TError,
+          Awaited<ReturnType<typeof getUpcomingLeavesReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetUpcomingLeavesReport<
+  TData = Awaited<ReturnType<typeof getUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetUpcomingLeavesReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUpcomingLeavesReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Leaves starting in the coming days
+ */
+
+export function useGetUpcomingLeavesReport<
+  TData = Awaited<ReturnType<typeof getUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetUpcomingLeavesReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUpcomingLeavesReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetUpcomingLeavesReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportUpcomingLeavesReportUrl = (params?: ExportUpcomingLeavesReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/reports/upcoming/export?${stringifiedParams}`
+    : `/api/hr/leave/reports/upcoming/export`;
+};
+
+/**
+ * Requires permission: hr.leave.reports.read.
+ * @summary The upcoming leaves as Excel, with their filters, sort and chosen columns
+ */
+export const exportUpcomingLeavesReport = async (
+  params?: ExportUpcomingLeavesReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportUpcomingLeavesReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportUpcomingLeavesReportQueryKey = (params?: ExportUpcomingLeavesReportParams) => {
+  return [`/api/hr/leave/reports/upcoming/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportUpcomingLeavesReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportUpcomingLeavesReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUpcomingLeavesReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportUpcomingLeavesReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportUpcomingLeavesReport>>> = ({ signal }) =>
+    exportUpcomingLeavesReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportUpcomingLeavesReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportUpcomingLeavesReportQueryResult = NonNullable<Awaited<ReturnType<typeof exportUpcomingLeavesReport>>>;
+export type ExportUpcomingLeavesReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportUpcomingLeavesReport<
+  TData = Awaited<ReturnType<typeof exportUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ExportUpcomingLeavesReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUpcomingLeavesReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportUpcomingLeavesReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportUpcomingLeavesReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportUpcomingLeavesReport<
+  TData = Awaited<ReturnType<typeof exportUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportUpcomingLeavesReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUpcomingLeavesReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportUpcomingLeavesReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportUpcomingLeavesReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportUpcomingLeavesReport<
+  TData = Awaited<ReturnType<typeof exportUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportUpcomingLeavesReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUpcomingLeavesReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The upcoming leaves as Excel, with their filters, sort and chosen columns
+ */
+
+export function useExportUpcomingLeavesReport<
+  TData = Awaited<ReturnType<typeof exportUpcomingLeavesReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportUpcomingLeavesReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportUpcomingLeavesReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportUpcomingLeavesReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetLongTimeNoLeaveReportUrl = (params?: GetLongTimeNoLeaveReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/reports/long-time-no-leave?${stringifiedParams}`
+    : `/api/hr/leave/reports/long-time-no-leave`;
+};
+
+/**
+ * Requires permission: hr.leave.reports.read.
+ * @summary People who have not taken leave from a balance for some months, with their balance now
+ */
+export const getLongTimeNoLeaveReport = async (
+  params?: GetLongTimeNoLeaveReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfLongTimeNoLeaveRow> => {
+  return customFetch<PagedResultOfLongTimeNoLeaveRow>(getGetLongTimeNoLeaveReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetLongTimeNoLeaveReportQueryKey = (params?: GetLongTimeNoLeaveReportParams) => {
+  return [`/api/hr/leave/reports/long-time-no-leave`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetLongTimeNoLeaveReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetLongTimeNoLeaveReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLongTimeNoLeaveReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>> = ({ signal }) =>
+    getLongTimeNoLeaveReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetLongTimeNoLeaveReportQueryResult = NonNullable<Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>>;
+export type GetLongTimeNoLeaveReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetLongTimeNoLeaveReport<
+  TData = Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | GetLongTimeNoLeaveReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>,
+          TError,
+          Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLongTimeNoLeaveReport<
+  TData = Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetLongTimeNoLeaveReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>,
+          TError,
+          Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetLongTimeNoLeaveReport<
+  TData = Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetLongTimeNoLeaveReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary People who have not taken leave from a balance for some months, with their balance now
+ */
+
+export function useGetLongTimeNoLeaveReport<
+  TData = Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetLongTimeNoLeaveReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getLongTimeNoLeaveReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetLongTimeNoLeaveReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportLongTimeNoLeaveReportUrl = (params?: ExportLongTimeNoLeaveReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave/reports/long-time-no-leave/export?${stringifiedParams}`
+    : `/api/hr/leave/reports/long-time-no-leave/export`;
+};
+
+/**
+ * Requires permission: hr.leave.reports.read.
+ * @summary The people without leave as Excel, with their filters, sort and chosen columns
+ */
+export const exportLongTimeNoLeaveReport = async (
+  params?: ExportLongTimeNoLeaveReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportLongTimeNoLeaveReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportLongTimeNoLeaveReportQueryKey = (params?: ExportLongTimeNoLeaveReportParams) => {
+  return [`/api/hr/leave/reports/long-time-no-leave/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportLongTimeNoLeaveReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportLongTimeNoLeaveReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportLongTimeNoLeaveReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>> = ({ signal }) =>
+    exportLongTimeNoLeaveReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportLongTimeNoLeaveReportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>
+>;
+export type ExportLongTimeNoLeaveReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportLongTimeNoLeaveReport<
+  TData = Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ExportLongTimeNoLeaveReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportLongTimeNoLeaveReport<
+  TData = Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportLongTimeNoLeaveReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportLongTimeNoLeaveReport<
+  TData = Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportLongTimeNoLeaveReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The people without leave as Excel, with their filters, sort and chosen columns
+ */
+
+export function useExportLongTimeNoLeaveReport<
+  TData = Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportLongTimeNoLeaveReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportLongTimeNoLeaveReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportLongTimeNoLeaveReportQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;
