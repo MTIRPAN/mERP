@@ -35,8 +35,8 @@ internal static class SampleFiles
     // (code, name, family, level); the first is the general manager
     private static readonly (string Code, string Name, string Family, string Level)[] JobCatalog =
     [
-        ("GM", "Genel Müdür", "Yönetim", "Üst Yönetici"),
-        ("DIR", "Direktör", "Yönetim", "Üst Yönetici"),
+        ("GM", "Genel Müdür", "Yönetim", "Yönetici"),
+        ("DIR", "Direktör", "Yönetim", "Yönetici"),
         ("MDR", "Müdür", "Yönetim", "Müdür"),
         ("SEF", "Şef", "Yönetim", "Şef"),
         ("TL", "Takım Lideri", "Yönetim", "Şef"),
@@ -49,7 +49,7 @@ internal static class SampleFiles
         ("PAZ-UZM", "Pazarlama Uzmanı", "Pazarlama", "Uzman"),
         ("YAZ-GEL", "Yazılım Geliştirici", "Bilgi Teknolojileri", "Uzman"),
         ("SIS-UZM", "Sistem Uzmanı", "Bilgi Teknolojileri", "Uzman"),
-        ("DEST-UZM", "Destek Uzmanı", "Bilgi Teknolojileri", "Uzman Yardımcısı"),
+        ("DEST-UZM", "Destek Uzmanı", "Bilgi Teknolojileri", "Yardımcı"),
         ("URT-OPR", "Üretim Operatörü", "Üretim", "Operatör"),
         ("BAKIM", "Bakım Teknisyeni", "Üretim", "Teknisyen"),
         ("KALITE", "Kalite Kontrol Uzmanı", "Üretim", "Uzman"),
@@ -57,7 +57,7 @@ internal static class SampleFiles
         ("SEVK", "Sevkiyat Uzmanı", "Lojistik", "Uzman"),
         ("SATIN", "Satın Alma Uzmanı", "Satın Alma", "Uzman"),
         ("IDARI", "İdari İşler Uzmanı", "İdari İşler", "Uzman"),
-        ("ASIST", "Yönetici Asistanı", "İdari İşler", "Uzman Yardımcısı"),
+        ("ASIST", "Yönetici Asistanı", "İdari İşler", "Yardımcı"),
         ("STJ", "Stajyer", "Genel", "Stajyer"),
     ];
 
@@ -112,14 +112,28 @@ internal static class SampleFiles
     public static IReadOnlyDictionary<string, byte[]> Generate(string repositoryRoot)
     {
         var texts = Texts(repositoryRoot);
+        return Files().ToDictionary(file => file.Name, file => Workbook(texts, file.Columns, file.NameKey, file.Rows), StringComparer.Ordinal);
+    }
+
+    /// <summary>Cells longer than their column allows, as <c>{file} {row}/{column}</c>; none is expected.</summary>
+    public static IEnumerable<string> CellsLongerThanTheirColumns() =>
+        from file in Files()
+        from column in file.Columns
+        where column.MaxLength is not null
+        from row in file.Rows.Select((cells, index) => (cells, number: index + 2))
+        where row.cells.GetValueOrDefault(column.Key)?.Length > column.MaxLength
+        select $"{file.Name} {row.number}/{column.Key}";
+
+    private static List<(string Name, IReadOnlyList<ImportColumn> Columns, string NameKey, List<Dictionary<string, string?>> Rows)> Files()
+    {
         var data = Build();
-        return new Dictionary<string, byte[]>(StringComparer.Ordinal)
-        {
-            [Jobs] = Workbook(texts, Columns(new JobImport(null!, null!, null!, null!)), "hr.imports.jobs.name", data.Jobs),
-            [Units] = Workbook(texts, Columns(new OrgUnitImport(null!, null!, null!, null!, null!)), "hr.imports.org_units.name", data.Units),
-            [Positions] = Workbook(texts, Columns(new PositionImport(null!, null!, null!, null!, null!)), "hr.imports.positions.name", data.Positions),
-            [Employees] = Workbook(texts, Columns(new EmployeeImport(null!, null!, null!, null!, null!, null!)), "hr.imports.employees.name", data.Employees),
-        };
+        return
+        [
+            (Jobs, Columns(new JobImport(null!, null!, null!, null!)), "hr.imports.jobs.name", data.Jobs),
+            (Units, Columns(new OrgUnitImport(null!, null!, null!, null!, null!)), "hr.imports.org_units.name", data.Units),
+            (Positions, Columns(new PositionImport(null!, null!, null!, null!, null!)), "hr.imports.positions.name", data.Positions),
+            (Employees, Columns(new EmployeeImport(null!, null!, null!, null!, null!, null!)), "hr.imports.employees.name", data.Employees),
+        ];
     }
 
     /// <summary>The cells of a sheet, for comparing files by content (a workbook's bytes carry its creation time).</summary>

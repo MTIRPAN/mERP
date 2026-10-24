@@ -54,6 +54,9 @@ public sealed class SampleFilesTests
     }
 
     [Fact]
+    public void Cells_FitTheLengthsOfTheirColumns() => SampleFiles.CellsLongerThanTheirColumns().ShouldBeEmpty();
+
+    [Fact]
     public void ParentsAndManagers_ComeBeforeTheRowsThatNameThem()
     {
         var files = SampleFiles.Generate(Root);
