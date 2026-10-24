@@ -39,6 +39,7 @@ import type {
   AuditEntityType,
   BranchDetails,
   ChangeAssignmentCommand,
+  CommitImportParams,
   CompanyDetails,
   CopiedHolidays,
   CopyFixedHolidaysRequest,
@@ -11222,7 +11223,7 @@ export const getStartImportUrl = (key: string) => {
 };
 
 /**
- * @summary Upload a filled template; it is validated at once, or in the background when large
+ * @summary Upload a filled template; it is validated at once, or in the background when large; mode CreateOrUpdate updates existing records
  */
 export const startImport = async (
   key: string,
@@ -11232,6 +11233,10 @@ export const startImport = async (
   const formData = new FormData();
   if (startImportBody.file !== undefined) {
     formData.append(`file`, startImportBody.file);
+  }
+
+  if (startImportBody.mode !== undefined) {
+    formData.append(`mode`, startImportBody.mode);
   }
 
   return customFetch<EntityCreatedResponse>(getStartImportUrl(key), {
@@ -11279,7 +11284,7 @@ export type StartImportMutationError = ErrorType<HttpValidationProblemDetails | 
 export type StartImportMutationVariables = { key: string; data: StartImportBody };
 
 /**
- * @summary Upload a filled template; it is validated at once, or in the background when large
+ * @summary Upload a filled template; it is validated at once, or in the background when large; mode CreateOrUpdate updates existing records
  */
 export const useStartImport = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
   options?: {
@@ -11643,15 +11648,31 @@ export function useGetImportReport<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export const getCommitImportUrl = (id: string) => {
-  return `/api/platform/imports/jobs/${id}/commit`;
+export const getCommitImportUrl = (id: string, params?: CommitImportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/platform/imports/jobs/${id}/commit?${stringifiedParams}`
+    : `/api/platform/imports/jobs/${id}/commit`;
 };
 
 /**
- * @summary Write a validated file without errors
+ * @summary Write a validated file without errors, or with skipInvalidRows its rows without errors
  */
-export const commitImport = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
-  return customFetch<void>(getCommitImportUrl(id), {
+export const commitImport = async (
+  id: string,
+  params?: CommitImportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getCommitImportUrl(id, params), {
     ...options,
     method: 'POST',
   });
@@ -11678,9 +11699,9 @@ export const getCommitImportMutationOptions = <TError = ErrorType<ProblemDetails
   const mutationFn: MutationFunction<Awaited<ReturnType<typeof commitImport>>, CommitImportMutationVariables> = (
     props,
   ) => {
-    const { id } = props ?? {};
+    const { id, params } = props ?? {};
 
-    return commitImport(id, requestOptions);
+    return commitImport(id, params, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -11689,10 +11710,10 @@ export const getCommitImportMutationOptions = <TError = ErrorType<ProblemDetails
 export type CommitImportMutationResult = NonNullable<Awaited<ReturnType<typeof commitImport>>>;
 
 export type CommitImportMutationError = ErrorType<ProblemDetails>;
-export type CommitImportMutationVariables = { id: string };
+export type CommitImportMutationVariables = { id: string; params?: CommitImportParams };
 
 /**
- * @summary Write a validated file without errors
+ * @summary Write a validated file without errors, or with skipInvalidRows its rows without errors
  */
 export const useCommitImport = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
   options?: {

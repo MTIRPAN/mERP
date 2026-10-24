@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.Imports;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Modules.Platform.Application.Imports;
 using Merp.SharedKernel.Results;
@@ -41,7 +42,7 @@ internal static class ImportEndpoints
             // Authentication is a bearer token, never a cookie, so cross-site request forgery does not apply.
             .DisableAntiforgery()
             .WithName("StartImport")
-            .WithSummary("Upload a filled template; it is validated at once, or in the background when large")
+            .WithSummary("Upload a filled template; it is validated at once, or in the background when large; mode CreateOrUpdate updates existing records")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
@@ -66,7 +67,7 @@ internal static class ImportEndpoints
         imports.MapPost("/jobs/{id:guid}/commit", CommitAsync)
             .RequireAuthenticatedUser()
             .WithName("CommitImport")
-            .WithSummary("Write a validated file without errors")
+            .WithSummary("Write a validated file without errors, or with skipInvalidRows its rows without errors")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
     }
@@ -81,13 +82,15 @@ internal static class ImportEndpoints
     /// <param name="file">The filled template (xlsx).</param>
     /// <param name="sender">Mediator.</param>
     /// <param name="cancellationToken">Request aborted.</param>
+    /// <param name="mode">Create (default) or CreateOrUpdate, for imports that support updates (D40).</param>
     private static async Task<Results<Created<EntityCreatedResponse>, ProblemHttpResult>> StartAsync(
         string key,
         IFormFile? file,
         ISender sender,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromForm] ImportMode mode = ImportMode.Create)
     {
-        var result = await sender.Send(new StartImportCommand(key, file.ToUpload()), cancellationToken);
+        var result = await sender.Send(new StartImportCommand(key, file.ToUpload(), mode), cancellationToken);
         return result.IsSuccess
             ? TypedResults.Created($"/api/platform/imports/jobs/{result.Value}", new EntityCreatedResponse(result.Value))
             : (ProblemHttpResult)result.Error.ToProblem();
@@ -108,9 +111,13 @@ internal static class ImportEndpoints
     private static async Task<Results<FileContentHttpResult, ProblemHttpResult>> ReportAsync(Guid id, ISender sender, CancellationToken cancellationToken) =>
         File(await sender.Send(new GetImportReportQuery(id), cancellationToken));
 
-    private static async Task<Results<NoContent, ProblemHttpResult>> CommitAsync(Guid id, ISender sender, CancellationToken cancellationToken)
+    /// <param name="id">The import job.</param>
+    /// <param name="skipInvalidRows">Write the rows without errors of a file with errors (D40).</param>
+    /// <param name="sender">Mediator.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    private static async Task<Results<NoContent, ProblemHttpResult>> CommitAsync(Guid id, bool? skipInvalidRows, ISender sender, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(new CommitImportCommand(id), cancellationToken);
+        var result = await sender.Send(new CommitImportCommand(id, skipInvalidRows ?? false), cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : (ProblemHttpResult)result.Error.ToProblem();
     }
 

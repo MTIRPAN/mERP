@@ -1394,6 +1394,14 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("total_rows");
 
+                    b.Property<int>("UpdateRows")
+                        .HasColumnType("integer")
+                        .HasColumnName("update_rows");
+
+                    b.Property<bool>("UpdatesExisting")
+                        .HasColumnType("boolean")
+                        .HasColumnName("updates_existing");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");

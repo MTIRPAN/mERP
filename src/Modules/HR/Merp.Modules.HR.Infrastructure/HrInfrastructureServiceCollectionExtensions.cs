@@ -1,5 +1,6 @@
 using Merp.Application.Abstractions.Approvals;
 using Merp.Application.Abstractions.CustomFields;
+using Merp.Application.Abstractions.Imports;
 using Merp.Application.Abstractions.Jobs;
 using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Settings;
@@ -12,6 +13,7 @@ using Merp.Modules.HR.Application;
 using Merp.Modules.HR.Application.Approvals;
 using Merp.Modules.HR.Application.Documents;
 using Merp.Modules.HR.Application.Employees;
+using Merp.Modules.HR.Application.Imports;
 using Merp.Modules.HR.Application.Organization;
 using Merp.Modules.HR.Application.SelfService;
 using Merp.Modules.HR.Contracts.Organization;
@@ -75,6 +77,12 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddScoped<IApproverResolver, OrgUnitManagerApproverResolver>();
         services.AddScoped<IApproverResolver, PositionApproverResolver>();
         services.AddScoped<IApproverManagerLookup, HrApproverManagerLookup>();
+
+        // Excel imports of the organization and the employees, in the order they are loaded (PLAN H4, D40)
+        services.AddScoped<IImportDefinition, JobImport>();
+        services.AddScoped<IImportDefinition, OrgUnitImport>();
+        services.AddScoped<IImportDefinition, PositionImport>();
+        services.AddScoped<IImportDefinition, EmployeeImport>();
         return services;
     }
 }

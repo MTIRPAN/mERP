@@ -34,9 +34,12 @@ public sealed partial class ImportRunner(
         {
             var sheet = await ReadAsync(job, definition, cancellationToken);
             var errors = sheet.Errors.ToList();
+            IReadOnlyCollection<int> updates = [];
             if (sheet.Rows.Count > 0)
             {
-                errors.AddRange(await definition.ValidateAsync(sheet.Rows, new ImportContext(job.UserId, job.Culture), cancellationToken));
+                var validation = await definition.ValidateAsync(sheet.Rows, Context(job), cancellationToken);
+                errors.AddRange(validation.Errors);
+                updates = validation.UpdatedRows ?? [];
             }
 
             if (sheet.Rows.Count == 0 && errors.Count == 0)
@@ -44,7 +47,8 @@ public sealed partial class ImportRunner(
                 errors.Add(new ImportError(0, null, reader.Message("platform.imports.errors.empty", job.Culture)));
             }
 
-            await SendAsync(new RecordImportValidationCommand(jobId, ToJobErrors(errors)), cancellationToken);
+            var failed = errors.Select(e => e.Row).ToHashSet();
+            await SendAsync(new RecordImportValidationCommand(jobId, ToJobErrors(errors), updates.Count(r => !failed.Contains(r))), cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -59,11 +63,22 @@ public sealed partial class ImportRunner(
         try
         {
             var sheet = await ReadAsync(job, definition, cancellationToken);
+            var context = Context(job);
             var committed = 0;
             var errors = new List<ImportJobError>();
-            foreach (var batch in sheet.Rows.Chunk(Math.Max(1, definition.BatchSize)))
+            var rows = sheet.Rows;
+
+            // A file with errors is committed only without its rows with errors (D40)
+            if (job.ErrorRows > 0)
             {
-                var result = await sender.Send(definition.CreateBatch(batch), cancellationToken);
+                var (valid, skipped) = await ValidRowsAsync(definition, sheet, context, cancellationToken);
+                rows = valid;
+                errors.AddRange(ToJobErrors(skipped));
+            }
+
+            foreach (var batch in rows.Chunk(Math.Max(1, definition.BatchSize)))
+            {
+                var result = await sender.Send(definition.CreateBatch(batch, context), cancellationToken);
                 if (result.IsSuccess)
                 {
                     committed += batch.Length;
@@ -80,6 +95,38 @@ public sealed partial class ImportRunner(
             LogFailed(logger, exception, jobId);
             await SendAsync(new FailImportCommand(jobId, reader.Message("platform.imports.errors.unexpected", job.Culture)), cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// The rows without errors and the errors of the others. The rows are checked again without the rows with errors
+    /// until none fails, so a row that needs a dropped row (its parent unit, say) is dropped too (D40); what changed
+    /// since the validation is caught as well.
+    /// </summary>
+    private static async Task<(IReadOnlyList<ImportRow> Rows, List<ImportError> Errors)> ValidRowsAsync(
+        IImportDefinition definition,
+        ImportSheet sheet,
+        ImportContext context,
+        CancellationToken cancellationToken)
+    {
+        var errors = sheet.Errors.ToList();
+        var rows = sheet.Rows.ToList();
+        while (rows.Count > 0)
+        {
+            var found = (await definition.ValidateAsync(rows, context, cancellationToken)).Errors;
+            if (found.Count == 0)
+            {
+                break;
+            }
+
+            errors.AddRange(found);
+            var failed = found.Select(e => e.Row).ToHashSet();
+            var remaining = rows.Where(r => !failed.Contains(r.Number)).ToList();
+
+            // Errors that name no row of these leave nothing safe to write
+            rows = remaining.Count < rows.Count ? remaining : [];
+        }
+
+        return (rows, errors);
     }
 
     /// <summary>
@@ -131,6 +178,9 @@ public sealed partial class ImportRunner(
             throw new InvalidOperationException($"{command.GetType().Name} failed: {result.Error.Code}");
         }
     }
+
+    private static ImportContext Context(ImportJob job) =>
+        new(job.UserId, job.Culture, job.UpdatesExisting ? ImportMode.CreateOrUpdate : ImportMode.Create);
 
     private static List<ImportJobError> ToJobErrors(IEnumerable<ImportError> errors) =>
         [.. errors.OrderBy(e => e.Row).Select(e => new ImportJobError(e.Row, e.Column, e.Message))];

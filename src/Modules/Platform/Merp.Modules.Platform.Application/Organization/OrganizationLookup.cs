@@ -37,4 +37,34 @@ public sealed class OrganizationLookup(IPlatformDbContext db) : IOrganizationLoo
             .Select(b => new BranchSummary(b.Id.Value, b.CompanyId.Value, b.Code, b.Name, b.IsActive))
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<CompanySummary>> FindCompaniesByCodeAsync(IReadOnlyCollection<string> codes, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(codes);
+        var normalized = codes.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim().ToUpperInvariant()).Distinct().ToList();
+        if (normalized.Count == 0)
+        {
+            return [];
+        }
+
+        return await db.Companies.AsNoTracking()
+            .Where(c => normalized.Contains(c.Code))
+            .Select(c => new CompanySummary(c.Id.Value, c.Code, c.ShortName, c.TimeZoneId, c.IsActive))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<BranchSummary>> GetBranchesOfCompaniesAsync(IReadOnlyCollection<Guid> companyIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(companyIds);
+        if (companyIds.Count == 0)
+        {
+            return [];
+        }
+
+        var ids = companyIds.Distinct().Select(CompanyId.From).ToList();
+        return await db.Branches.AsNoTracking()
+            .Where(b => ids.Contains(b.CompanyId))
+            .Select(b => new BranchSummary(b.Id.Value, b.CompanyId.Value, b.Code, b.Name, b.IsActive))
+            .ToListAsync(cancellationToken);
+    }
 }

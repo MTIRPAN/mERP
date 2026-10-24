@@ -5,7 +5,10 @@
  * OpenAPI spec version: v1
  */
 import type { IFormFile } from './iFormFile';
+import type { ImportMode } from './importMode';
 
 export type StartImportBody = {
   file?: IFormFile;
+} & {
+  mode?: ImportMode;
 };

@@ -62,7 +62,7 @@ public sealed class BranchImport(
         new(Columns.SgkWorkplaceNumber, "platform.imports.branches.sgk"),
     ];
 
-    public async Task<IReadOnlyList<ImportError>> ValidateAsync(IReadOnlyList<ImportRow> rows, ImportContext context, CancellationToken cancellationToken = default)
+    public async Task<ImportValidation> ValidateAsync(IReadOnlyList<ImportRow> rows, ImportContext context, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(rows);
         ArgumentNullException.ThrowIfNull(context);
@@ -139,10 +139,10 @@ public sealed class BranchImport(
             }
         }
 
-        return errors;
+        return new ImportValidation(errors);
     }
 
-    public IImportBatchCommand CreateBatch(IReadOnlyList<ImportRow> rows) => new ImportBranchesCommand(rows);
+    public IImportBatchCommand CreateBatch(IReadOnlyList<ImportRow> rows, ImportContext context) => new ImportBranchesCommand(rows);
 }
 
 /// <summary>Writes a batch of validated branch rows in one transaction (D35).</summary>

@@ -105,7 +105,9 @@ public sealed class ModuleUnitOfWork<TContext>(
                     $"Domain events were still being raised after {options.Value.MaxDomainEventRounds} rounds; check for handlers that raise events in a loop.");
             }
 
-            var events = aggregates.SelectMany(aggregate => aggregate.DomainEvents).ToList();
+            // Equal events of a round (records with the same values) are handled once: an import batch that adds many
+            // positions of a company rebuilds its reporting lines once, not per position (D40)
+            var events = aggregates.SelectMany(aggregate => aggregate.DomainEvents).Distinct().ToList();
             aggregates.ForEach(aggregate => aggregate.ClearDomainEvents());
 
             foreach (var domainEvent in events)

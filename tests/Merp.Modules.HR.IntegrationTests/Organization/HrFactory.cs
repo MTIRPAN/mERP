@@ -94,11 +94,11 @@ public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(pos
 
     public static string NewCode(string prefix) => prefix + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
 
-    public static async Task<Guid> CreateCompanyAsync(HttpClient client)
+    public static async Task<Guid> CreateCompanyAsync(HttpClient client, string? code = null)
     {
         var body = new
         {
-            code = NewCode("C"),
+            code = code ?? NewCode("C"),
             title = "Acme Holding Anonim Şirketi",
             shortName = "Acme",
             taxOffice = "Kadıköy",
