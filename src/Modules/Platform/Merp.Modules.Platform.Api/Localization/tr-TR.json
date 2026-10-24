@@ -767,5 +767,14 @@
   "web.notification_templates.field.args": "Bildirim türüne özgü değerler, örneğin args.number",
   "web.notification_templates.field.texts_open": "\"Görüntüle\" düğmesinin metni",
   "web.notification_templates.field.texts_footer": "E-postanın alt bilgi metni",
-  "platform.imports.errors.update_not_supported": "Bu içe aktarma mevcut kayıtları güncellemeyi desteklemiyor."
+  "platform.imports.errors.update_not_supported": "Bu içe aktarma mevcut kayıtları güncellemeyi desteklemiyor.",
+  "web.imports.mode.label": "Kayıtlı kayıtlar",
+  "web.imports.mode.create": "Yalnız yeni kayıt ekle",
+  "web.imports.mode.create_or_update": "Kayıtlı olanları güncelle",
+  "web.imports.mode.create_or_update_hint": "Kayıtlı kişinin satırı kişi ve iletişim bilgilerini günceller, boş hücreler değişmez. Görev bilgileri güncellenmez.",
+  "web.imports.ready_counts": "{created} kayıt eklenecek, {updated} kayıt güncellenecek. İçe aktar'a bastığınızda kaydedilir.",
+  "web.imports.invalid_valid_rows_hint": "Hata raporunu indirip düzelttiğiniz dosyayı yeniden yükleyebilir ya da yalnız hatasız satırları şimdi içe aktarabilirsiniz. Hatalı satırlara bağlı satırlar da atlanır.",
+  "web.imports.commit_valid": "Hatasız satırları aktar",
+  "web.imports.commit_valid_count": "Hatasız {rows} satırı aktar",
+  "web.imports.commit_valid_confirm": "{rows} satır içe aktarılacak, hatalı {skipped} satır atlanacak. Devam edilsin mi?"
 }

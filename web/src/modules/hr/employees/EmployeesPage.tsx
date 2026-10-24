@@ -16,7 +16,9 @@ import { PageHeader } from '@/shared/components/PageHeader';
 import { CustomFieldFilter } from '@/shared/customFields/CustomFieldFilter';
 import { displayValue } from '@/shared/customFields/customFieldValues';
 import { formatDate } from '@/shared/format/date';
+import { ImportButton } from '@/shared/imports/ImportButton';
 import { hrPermissions } from '../permissions';
+import { useHrRefresh } from '../useHrRefresh';
 import { EmployeeAvatar } from './EmployeePhoto';
 import { EmployeeStatusTag } from './EmployeeStatusTag';
 import { EMPLOYEE_ENTITY, statusFilters, toStatusParam, type StatusFilter } from './employeeFilters';
@@ -30,6 +32,7 @@ export const EmployeesPage = () => {
   const { t, i18n } = useTranslation();
   const activeCompanyId = useActiveCompanyId();
   const canExport = useHasPermission(hrPermissions.employeesExport);
+  const refresh = useHrRefresh();
   const [params] = useSearchParams();
   const [search, setSearch] = useState<string | undefined>(() => params.get('search') ?? undefined);
   const [status, setStatus] = useState<StatusFilter>(() => (params.get('search') ? 'all' : 'active'));
@@ -117,9 +120,17 @@ export const EmployeesPage = () => {
         subtitle={t('web.hr.employees.subtitle')}
         extra={
           <Can permission={hrPermissions.employeesCreate}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setHiring(true)}>
-              {t('web.hr.employees.hire')}
-            </Button>
+            <Space>
+              <ImportButton
+                importKey="hr.employees"
+                name={t('web.hr.employees.title')}
+                onImported={refresh}
+                supportsUpdate
+              />
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setHiring(true)}>
+                {t('web.hr.employees.hire')}
+              </Button>
+            </Space>
           </Can>
         }
       />

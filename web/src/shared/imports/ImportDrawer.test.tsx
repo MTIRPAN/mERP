@@ -31,6 +31,12 @@ const texts: Record<string, string> = {
   'web.imports.completed': '{rows} kayıt içe aktarıldı.',
   'web.imports.errors.row': 'Satır',
   'web.imports.errors.column': 'Sütun',
+  'web.imports.mode.create': 'Yalnız yeni kayıt ekle',
+  'web.imports.mode.create_or_update': 'Kayıtlı olanları güncelle',
+  'web.imports.ready_counts': '{created} kayıt eklenecek, {updated} kayıt güncellenecek.',
+  'web.imports.commit_valid': 'Hatasız satırları aktar',
+  'web.imports.commit_valid_count': 'Hatasız {rows} satırı aktar',
+  'web.imports.commit_valid_confirm': '{rows} satır içe aktarılacak, hatalı {skipped} satır atlanacak.',
 };
 
 const details = (status: ImportStatus, overrides: Partial<ImportJobDetails> = {}): ImportJobDetails => ({
@@ -116,5 +122,82 @@ describe('ImportDrawer', () => {
       <ImportDrawer importKey="platform.branches" name="Şubeler" open onClose={vi.fn()} onImported={onImported} />,
     );
     expect(onImported).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks whether known records are updated, sends the mode and shows what will change', async () => {
+    job = details(ImportStatus.Ready, { mode: 'CreateOrUpdate', updateRows: 1 });
+    renderWithProviders(
+      <ImportDrawer
+        importKey="hr.employees"
+        name="Personel"
+        open
+        onClose={vi.fn()}
+        onImported={vi.fn()}
+        supportsUpdate
+      />,
+      texts,
+    );
+
+    expect(screen.getByRole('radio', { name: 'Yalnız yeni kayıt ekle' })).toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: /Kayıtlı olanları güncelle/ }));
+    await upload();
+
+    await waitFor(() =>
+      expect(startImport).toHaveBeenCalledWith({
+        key: 'hr.employees',
+        data: { file: expect.any(File) as File, mode: 'CreateOrUpdate' },
+      }),
+    );
+    expect(await screen.findByText('2 kayıt eklenecek, 1 kayıt güncellenecek.')).toBeInTheDocument();
+  });
+
+  it('offers no mode to an import without updates', async () => {
+    renderWithProviders(
+      <ImportDrawer importKey="platform.branches" name="Şubeler" open onClose={vi.fn()} onImported={vi.fn()} />,
+      texts,
+    );
+    await screen.findByText('Şubeler: Excel içe aktar');
+
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    await upload();
+    await waitFor(() =>
+      expect(startImport).toHaveBeenCalledWith({ key: 'platform.branches', data: { file: expect.any(File) as File } }),
+    );
+  });
+
+  it('commits the rows without errors of a file with errors after a confirmation', async () => {
+    job = details(ImportStatus.Invalid, {
+      errorRows: 1,
+      errorCount: 1,
+      canCommitValidRows: true,
+      errors: [{ row: 3, column: 'tckn', message: 'T.C. kimlik numarası geçersiz.' }],
+    });
+    renderWithProviders(
+      <ImportDrawer importKey="hr.employees" name="Personel" open onClose={vi.fn()} onImported={vi.fn()} />,
+      texts,
+    );
+    await upload();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Hatasız 2 satırı aktar' }));
+    expect(await screen.findByText('2 satır içe aktarılacak, hatalı 1 satır atlanacak.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Hatasız satırları aktar' }));
+
+    await waitFor(() => expect(commitImport).toHaveBeenCalledWith({ id: 'job-1', params: { skipInvalidRows: true } }));
+  });
+
+  it('offers no partial commit when the file as a whole is wrong', async () => {
+    job = details(ImportStatus.Invalid, {
+      errorRows: 1,
+      errorCount: 1,
+      errors: [{ row: 1, column: 'tckn', message: 'Sütun dosyada yok.' }],
+    });
+    renderWithProviders(
+      <ImportDrawer importKey="hr.employees" name="Personel" open onClose={vi.fn()} onImported={vi.fn()} />,
+      texts,
+    );
+    await upload();
+
+    expect(await screen.findByText('Sütun dosyada yok.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Hatasız/ })).not.toBeInTheDocument();
   });
 });

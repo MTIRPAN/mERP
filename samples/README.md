@@ -12,7 +12,7 @@
 ## Nasıl yüklenir
 
 1. Organizasyon → Şirketler'de kodu `DEMO` olan bir şirket açın.
-2. Dosyaları numara sırasıyla, ilgili ekrandaki "Excel'den içe aktar" ile yükleyin. Her dosya bir öncekinin kodlarına başvurur.
+2. Dosyaları numara sırasıyla "Excel'den içe aktar" ile yükleyin: unvanları İnsan kaynakları → Unvanlar'da, birimleri Organizasyon'da, pozisyonları Pozisyonlar'da, personeli Personel'de ("Yalnız yeni kayıt ekle"). Her dosya bir öncekinin kodlarına başvurur.
 3. Her dosya hatasız doğrulanır; "İçe aktar" ile kaydedin. Personel dosyası 1.000 satırı aştığı için arka planda işlenir.
 
 ## Yeniden üretmek

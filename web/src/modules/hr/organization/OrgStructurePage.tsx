@@ -25,7 +25,9 @@ import { useGetOrgUnitTree } from '@/shared/api/generated/endpoints/hr/hr';
 import type { OrgUnitTreeNode } from '@/shared/api/generated/model';
 import { useHasPermission } from '@/shared/auth/permissionContext';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { ImportButton } from '@/shared/imports/ImportButton';
 import { hrPermissions } from '../permissions';
+import { useHrRefresh } from '../useHrRefresh';
 import { PositionFormDrawer } from '../positions/PositionFormDrawer';
 import { MoveOrgUnitModal } from './MoveOrgUnitModal';
 import { OrgChart } from './OrgChart';
@@ -47,6 +49,7 @@ export const OrgStructurePage = () => {
   const me = useMe();
   const activeCompanyId = useActiveCompanyId();
   const canManage = useHasPermission(hrPermissions.orgManage);
+  const refresh = useHrRefresh();
   const [pickedCompanyId, setPickedCompanyId] = useState<string>();
   const companyId = activeCompanyId ?? pickedCompanyId ?? me.companies[0]?.id;
   const [view, setView] = useState<ViewMode>('tree');
@@ -110,6 +113,9 @@ export const OrgStructurePage = () => {
                 { value: 'chart', label: t('web.hr.org.view_chart'), icon: <ClusterOutlined /> },
               ]}
             />
+            {canManage && (
+              <ImportButton importKey="hr.org-units" name={t('web.hr.org.units_import')} onImported={refresh} />
+            )}
             {canManage && companyId && (
               <Button type="primary" icon={<PlusOutlined />} onClick={() => setUnitDrawer({ open: true })}>
                 {t('web.hr.org.new_unit')}

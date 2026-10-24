@@ -1085,3 +1085,8 @@ Seçilen kültür `Content-Language` başlığında döner.
 - `samples/` klasöründe `DEMO` kodlu şirket için dört dosya vardır: 24 unvan, 71 birim, 147 pozisyon ve 2.000 personel. Veriler hayalidir, sabit tohumla Bogus ile üretilir.
 - Üretici `tests/Merp.Modules.HR.UnitTests/Imports/SampleFiles.cs`'tedir. Başlıklar ve seçenekler şablonlarınkiyle aynıdır, İK'nın `tr-TR.json`'undan okunur. Bir birim testi commit edilen dosyaların üreticinin çıktısıyla aynı olduğunu denetler; dosyalar açıkça çalıştırılan bir testle yeniden yazılır (`samples/README.md`).
 - Bogus D19'da Test kategorisindedir; üretici test projesinde kalır, uygulamaya girmez.
+
+**Uygulama notları (H4b):**
+- "Excel'den içe aktar" İK → Unvanlar, Organizasyon (birimler), Pozisyonlar ve Personel ekranlarında, kaydı ekleme yetkisi olana görünür (`hr.org.manage`, personelde `hr.employees.create`). İçe aktarma sonrası İK'nın bütün listeleri yenilenir.
+- Güncellemeyi destekleyen içe aktarmada çekmece yüklemeden önce "Yalnız yeni kayıt ekle" (varsayılan) ya da "Kayıtlı olanları güncelle" sorar. Hatasız dosyada güncelleme modunda kaç kaydın ekleneceği ve güncelleneceği yazar.
+- Yalnız bazı satırlarında hata olan dosyada hata raporunun yanında "Hatasız N satırı aktar" düğmesi çıkar; onay penceresi kaç satırın atlanacağını söyler.

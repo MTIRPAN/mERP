@@ -472,5 +472,6 @@
   "hr.imports.positions.errors.unit_has_manager": "Birimin zaten bir yönetici pozisyonu var.",
   "hr.imports.employees.errors.required_for_new": "Yeni personel için bu alan zorunludur.",
   "hr.imports.employees.errors.no_open_employment": "Bu T.C. kimlik numarasıyla kayıtlı kişinin bu şirkette açık istihdamı yok. Tekrar işe giriş veya grup içi nakli personel kartından yapın.",
-  "hr.imports.employees.errors.custom_field": "\"{field}\" özel alanı: {message}"
+  "hr.imports.employees.errors.custom_field": "\"{field}\" özel alanı: {message}",
+  "web.hr.org.units_import": "Birimler"
 }
