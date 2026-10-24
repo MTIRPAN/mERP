@@ -41,6 +41,7 @@ import type {
   HireEmployeeCommand,
   HttpValidationProblemDetails,
   JobDetails,
+  LeaveDurationPreview,
   LeaveLegalWarning,
   LeavePolicyItem,
   LeavePolicyResolution,
@@ -63,6 +64,7 @@ import type {
   PagedResultOfOrgUnitListItem,
   PagedResultOfPositionListItem,
   PositionDetails,
+  PreviewLeaveDurationQuery,
   ProblemDetails,
   ProfileChangeItem,
   RehireEmployeeCommand,
@@ -6860,3 +6862,106 @@ export function useResolveLeavePolicy<
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export const getPreviewLeaveDurationUrl = () => {
+  return `/api/hr/leave/duration-preview`;
+};
+
+/**
+ * Requires permission: hr.employees.read.
+ * @summary The length of a leave on the employee's work schedule, with each day's share, before it is asked for
+ */
+export const previewLeaveDuration = async (
+  previewLeaveDurationQuery: PreviewLeaveDurationQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveDurationPreview> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<LeaveDurationPreview>(getPreviewLeaveDurationUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(previewLeaveDurationQuery),
+  });
+};
+
+export const getPreviewLeaveDurationMutationKey = () => ['previewLeaveDuration'] as const;
+
+export const getPreviewLeaveDurationMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof previewLeaveDuration>>,
+    TError,
+    PreviewLeaveDurationMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof previewLeaveDuration>>,
+  TError,
+  PreviewLeaveDurationMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPreviewLeaveDurationMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof previewLeaveDuration>>,
+    PreviewLeaveDurationMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return previewLeaveDuration(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PreviewLeaveDurationMutationResult = NonNullable<Awaited<ReturnType<typeof previewLeaveDuration>>>;
+export type PreviewLeaveDurationMutationBody = PreviewLeaveDurationQuery;
+export type PreviewLeaveDurationMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type PreviewLeaveDurationMutationVariables = { data: PreviewLeaveDurationQuery };
+
+/**
+ * @summary The length of a leave on the employee's work schedule, with each day's share, before it is asked for
+ */
+export const usePreviewLeaveDuration = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof previewLeaveDuration>>,
+      TError,
+      PreviewLeaveDurationMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof previewLeaveDuration>>,
+  TError,
+  PreviewLeaveDurationMutationVariables,
+  TContext
+> => {
+  return useMutation(getPreviewLeaveDurationMutationOptions(options), queryClient);
+};

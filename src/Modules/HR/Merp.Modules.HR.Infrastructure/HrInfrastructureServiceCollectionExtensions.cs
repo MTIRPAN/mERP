@@ -14,6 +14,7 @@ using Merp.Modules.HR.Application.Approvals;
 using Merp.Modules.HR.Application.Documents;
 using Merp.Modules.HR.Application.Employees;
 using Merp.Modules.HR.Application.Imports;
+using Merp.Modules.HR.Application.Leave;
 using Merp.Modules.HR.Application.Organization;
 using Merp.Modules.HR.Application.SelfService;
 using Merp.Modules.HR.Contracts.Organization;
@@ -79,6 +80,7 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddScoped<IApproverResolver, OrgUnitManagerApproverResolver>();
         services.AddScoped<IApproverResolver, PositionApproverResolver>();
         services.AddScoped<IApproverManagerLookup, HrApproverManagerLookup>();
+        services.AddScoped<ILeaveDurationCalculator, LeaveDurationCalculator>();
 
         // Excel imports of the organization and the employees, in the order they are loaded (PLAN H4, D40)
         services.AddScoped<IImportDefinition, JobImport>();

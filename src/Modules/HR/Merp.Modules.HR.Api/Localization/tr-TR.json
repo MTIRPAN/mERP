@@ -649,5 +649,10 @@
   "web.hr.leave.check.override_save": "Elle ver",
   "web.hr.leave.check.override_clear": "Kurallara bırak",
   "web.hr.leave.check.override_saved": "Politika elle verildi.",
-  "web.hr.leave.check.override_cleared": "Politika yeniden kurallara göre belirleniyor."
+  "web.hr.leave.check.override_cleared": "Politika yeniden kurallara göre belirleniyor.",
+  "hr.leave.errors.zero_duration": "Seçilen aralıkta izin günü yok: hafta sonu, tatil ya da tatile denk gelen yarım gün.",
+  "hr.leave.errors.times_required": "Saatlik izin için başlangıç ve bitiş saati girin.",
+  "hr.leave.errors.no_work_schedule": "Personelin çalışma takvimi bulunamadı. Şube, şirket veya kiracı için varsayılan çalışma takvimi tanımlayın.",
+  "hr.leave.errors.end_date_required": "Bu izin türünün sabit süresi yok; bitiş tarihini girin.",
+  "hr.leave.errors.range_too_long": "Bir izin en fazla 400 gün olabilir."
 }

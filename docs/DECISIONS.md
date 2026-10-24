@@ -1133,3 +1133,21 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Politika formu, açık sürümün kurallarını yazmayı bıraktıktan kısa süre sonra kanuni alt sınıra karşı denetler ve uyarıları formun üstünde gösterir.
 - Atama kuralları şirket seçilerek düzenlenir; sıra yukarı/aşağı düğmeleriyle değişir, liste tek seferde kaydedilir. Kriter kurucu şube, birim ve istihdam tipini listeden seçtirir; kademe ve özel alan değerleri yazılır.
 - "Hangi politika?" sekmesi personeli ve tarihi alır; politikayı, nedenini, sürümünü, kıdemi, yaşı ve yıllık izin gününü gösterir. Ayarları yönetebilen kişi burada istihdama elle politika verir ya da kurallara bırakır.
+
+## D42 — İzin süresi hesabı
+
+**Bağlam:** L2, `docs/domain/izin-kurallari.md` §4'teki süre hesabını kurar. Kurallar belgede tanımlı; aşağıdakiler uygulamada verilen ayrıntılardır.
+
+**Hesaplayıcı:**
+- `ILeaveDurationCalculator` (İK, Application) istihdamın takvimini bulur, günleri Platform'un `IWorkingCalendar` sözleşmesinden alır ve saf `LeaveDurations.Count` ile sayar. Talepler (L4) aynı hesaplayıcıyı kullanacak.
+- Takvim sırası: istihdamın kendi takvimi (`Employment.WorkScheduleId`), yoksa iznin ilk günündeki görevin şubesinin takvimi, yoksa şirketin, yoksa kiracının varsayılanı. Son üçünü Platform çözer (`ResolveScheduleIdAsync`). Takvim yoksa hata verir.
+- Bir izin en fazla 400 gündür (takvim sözleşmesinin sınırı).
+
+**Sayma:**
+- İş günü: günün değeri `WorkingDay.LeaveDayValue`'dur (çalışma günü 1, yarım gün tatil 0,5, tatil ve hafta sonu 0). Yarım gün tatil (arife, 28 Ekim) öğleden sonradır; sabahı sayılır.
+- İlk gün "öğleden sonra" (`startPart = Afternoon`) ise yalnız öğleden sonrası, son gün "sabah" (`endPart = Morning`) ise yalnız sabahı sayılır. İstenen yarım tatile denk gelirse o gün 0'dır (S6). Toplam 0 ise `hr.leave.errors.zero_duration` döner.
+- Takvim günü: aralıktaki her gün 1 sayılır.
+- Saat: ilk gün başlangıç saatinden, son gün bitiş saatine kadar mesaiyle kesişen süre, en fazla günün çalışma saati kadar sayılır. Yarım gün tatil o günün mesaisini tatilin başladığı saatte bitirir. Gün karşılığı, aralıktaki tam çalışma günlerinin en uzununa bölünerek verilir (`dayEquivalent`).
+- Sabit süreli türlerde (EVLILIK, BABALIK…) bitiş tarihi verilmezse sürüm (olay tarihine ya da ilk güne göre) süreyi verir. Takvim gününde bitiş, sürenin son günüdür (S8); iş gününde, sayılan süreye ulaşılan gündür.
+
+**Önizleme:** `POST /api/hr/leave/duration-preview` (`hr.employees.read`, istihdamın şirketi kapsamda olmalı; değilse 404) aralığı, süreyi ve her günün payını tatil adıyla döner. Çalışanın kendi önizlemesi self servis izinle (L5) `/api/hr/me` altında gelecek; böylece D22 listesine yeni bir oturum-yeter uç noktası eklenmedi.
