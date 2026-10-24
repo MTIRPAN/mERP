@@ -1090,3 +1090,39 @@ Seçilen kültür `Content-Language` başlığında döner.
 - "Excel'den içe aktar" İK → Unvanlar, Organizasyon (birimler), Pozisyonlar ve Personel ekranlarında, kaydı ekleme yetkisi olana görünür (`hr.org.manage`, personelde `hr.employees.create`). İçe aktarma sonrası İK'nın bütün listeleri yenilenir.
 - Güncellemeyi destekleyen içe aktarmada çekmece yüklemeden önce "Yalnız yeni kayıt ekle" (varsayılan) ya da "Kayıtlı olanları güncelle" sorar. Hatasız dosyada güncelleme modunda kaç kaydın ekleneceği ve güncelleneceği yazar.
 - Yalnız bazı satırlarında hata olan dosyada hata raporunun yanında "Hatasız N satırı aktar" düğmesi çıkar; onay penceresi kaç satırın atlanacağını söyler.
+
+## D41 — İzin türleri ve politikaları
+
+**Bağlam:** L1, `docs/domain/izin-kurallari.md` §1–3'teki üç katmanlı modeli (izin türü, politika, atama kuralı) kurar. Bölünme ve sürüm davranışı kullanıcıyla kararlaştırıldı (2026-10-24).
+
+**Bölünme:** L1 iki PR'dır: L1a backend (modeller, seed, kanuni alt sınır, uç noktalar), L1b web.
+
+**Yer ve yetkiler:**
+- İzin İK modülündedir (`hr` şeması, `Merp.Modules.HR.*` içinde `Leave`), ayrı modül değildir. Süre hesabı ve talepler (L2–L6) de burada olacak.
+- Yeni yetkiler: `hr.leave.settings.read` (türler, politikalar, kurallar ve "hangi politika" sorgusu) ve `hr.leave.settings.manage`. Sistem rollerindeki `hr.leave.*` deseni bunları İK Yöneticisi ve İK Uzmanı'na kendiliğinden verir. Yönetici rolü yalnız `hr.leave.requests.read` ve `hr.leave.calendar.read` aldığı için almaz.
+- Tür ve politikalar ya tüm şirketlerde geçerlidir (`CompanyId` boş) ya da bir şirkete aittir. Tüm şirketlerinkini yönetmek Tenant kapsamı ister (unvan kataloğu gibi, D37); şirketinkini şirket kapsamı yeter. Okuyan, tüm şirketlerinkini ve kapsamındaki şirketlerinkini görür.
+
+**Sürümler:**
+- Tür limitleri (`LeaveTypeVersion`: olay başına gün, olaydan önceki gün, çoğul gebelik eki, yıllık ve talep başına üst sınır, günlük saat, bildirim süresi) ve politika kuralları (`LeavePolicyVersion` içinde `AnnualLeaveRules`) `ValidFrom` ile sürümlenir. İlk sürüm `0001-01-01` olabilir: "başlangıçtan beri".
+- **Başlamış sürüm kilitlidir:** `ValidFrom` bugün veya daha önce olan sürüm değiştirilemez ve silinemez. Yeni sürüm en erken yarından başlar; henüz başlamamış sürümler değiştirilebilir veya silinebilir. "Bugün", kaydın şirketinin saat dilimine göre (yoksa Europe/Istanbul) hesaplanır. Böylece geçmiş hak edişler hep aynı kurala dayanır.
+- Güncelleme sürüm listesinin tamamını gönderir; domain başlamış sürümleri değer olarak karşılaştırır (JSON). Yeni kayıtta sürüm tarihleri serbesttir.
+- Olaya bağlı türlerde (BABALIK, DOGUM) sürümü olayın tarihi seçer (doğum tarihi), diğerlerinde iznin ilk günü. Seed BABALIK için 5 ve 10 gün, DOGUM için 16 ve 24 hafta (doğumdan önce 8, çoğul gebelikte +2) sürümlerini 01.05.2026 sınırıyla kurar.
+
+**Atama ve öncelik:**
+- Atama kuralları şirket başına tek bir sıralı listedir (`LeavePolicyRuleSet`). Böylece sıra tek komutta değişir (kural 7). Her kural bir politika ve kriterler taşır; kriterlerin hepsi eşleşmelidir, kriteri olmayan kural herkese uyar.
+- Kriterler: şube, istihdam tipi, birim (alt birimler hariç ya da dahil), kademe, özel alan. Değerlerden biri eşleşirse kriter eşleşir; şube ve birim kimlikleri şirketin olmalıdır.
+- Personelin politikası sırasıyla şöyle bulunur:
+  1. İstihdama elle verilmiş politika (`Employment.LeavePolicyId`, `PUT /api/hr/employees/{id}/employments/{employmentId}/leave-policy`).
+  2. Şirket kurallarından ilk eşleşen.
+  3. Şirketin varsayılan politikası.
+  4. Tüm şirketlerin varsayılan politikası.
+- Her şirkette bir ve tüm şirketlerde bir varsayılan olabilir; yeni varsayılan eskisini aynı işlemde düşürür (domain olayı). Varsayılan politika pasif yapılamaz. Seed politikası `KANUNI` tüm şirketlerin varsayılanıdır.
+- "Bu personele hangi politika uygulanıyor?" (`GET /api/hr/leave/policy-resolution?employmentId=&date=`) politikayı, kaynağını (elle, kural ve sırası, şirket ya da kiracı varsayılanı), o günkü sürümü, tamamlanan kıdem yılını, yaşı ve politikanın vereceği yıllık izin gününü döner.
+
+**Kanuni alt sınır:**
+- `LegalMinimums` politikanın şu ayarlarını uyarı olarak döner: hak kazanma için 1 yıldan uzun hizmet; 1–4, 5–14 ve 15+ yıl bantlarında kanundan az gün; 18 ve 50 yaşta 20 günden az; devir sınırı; 10 gün kuralının kapalı olması; yol izninin 4 günden az olması.
+- Seed türlerinde EVLILIK, EVLAT_EDINME, VEFAT, BABALIK, DOGUM, ENGELLI_COCUK ve SUT kanundaki sürelerle karşılaştırılır.
+- Kayıt engellenmez. Uyarılar listelerde sürümüyle döner; politika formu kaydetmeden önce `POST /api/hr/leave/policies/legal-check` ile sorar.
+- Yıllık izin günü `AnnualLeaveRules.Entitlement` ile hesaplanır: kıdem kademesinin günü, yaş alt sınırına yükseltilir, sonra eşleşen ek gün kuralları eklenir (§8.2 E2–E7 birim testleri). Hak ediş hareketleri L3'tedir.
+
+**Yapı taşı ve sonrası:** Domain olaylarının bir turda bir kez işlenmesi (D40) varsayılan politika değişimini de tek seferde yapar. Grup kıdemi, ücretsiz iznin hak edişi kaydırması ve birikim yöntemleri politikada tutulur, L3 hak ediş işinde uygulanır.

@@ -109,6 +109,8 @@ public sealed class Employment : Entity<EmploymentId>
         LeavePolicyId = terms.LeavePolicyId;
     }
 
+    internal void SetLeavePolicy(Guid? policyId) => LeavePolicyId = policyId;
+
     internal JobAssignment AddAssignment(AssignmentDetails details, DateOnly validFrom, AssignmentReason reason)
     {
         var assignment = new JobAssignment(Id, details, validFrom, reason);

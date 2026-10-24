@@ -799,6 +799,10 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Seed politikası §2'deki tabloyla birebir aynıdır.
 - Kanuni alt sınırın altındaki ayar uyarı verir.
 
+**Alt PR'lar (D41):**
+- [x] **L1a backend:** izin türleri (sürümlü limitler), sürümlü politikalar ve yıllık izin hesabı, şirket başına atama kuralları, personel ezmesi, "hangi politika" sorgusu, kanuni alt sınır uyarıları, §2–3 seed'i
+- [ ] **L1b web:** izin türleri, politika formu, atama kuralları ve "bu personele hangi politika" test aracı
+
 ### [ ] L2 Süre hesaplayıcı — M
 
 **Yapılacaklar:**

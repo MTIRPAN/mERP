@@ -54,6 +54,18 @@ public static class HrPermissions
         }
     }
 
+    public static class Leave
+    {
+        public static class Settings
+        {
+            /// <summary>See leave types, policies and their assignment rules, and which policy applies to an employee (D41).</summary>
+            public const string Read = "hr.leave.settings.read";
+
+            /// <summary>Change them; records of every company need the Tenant scope.</summary>
+            public const string Manage = "hr.leave.settings.manage";
+        }
+    }
+
     /// <summary>Self service of the person linked to the user (D39); the Employee system role holds <c>hr.self.*</c>.</summary>
     public static class Self
     {
@@ -82,6 +94,8 @@ public sealed class HrPermissionDefinitions : IPermissionDefinitionProvider
         new(HrPermissions.Employees.Sensitive.Update),
         new(HrPermissions.Employees.Documents.Read),
         new(HrPermissions.Employees.Documents.Manage),
+        new(HrPermissions.Leave.Settings.Read),
+        new(HrPermissions.Leave.Settings.Manage),
         new(HrPermissions.Self.ProfileRead),
         new(HrPermissions.Self.ProfileRequest),
     ];
