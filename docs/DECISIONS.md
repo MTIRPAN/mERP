@@ -1301,3 +1301,8 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Modeldeki tarih ve sayılar belgenin dilinde metin olarak hazırlanır (`d.MM.yyyy`, `3,5`). Etiketler `hr.documents.{tür}.texts.*` anahtarlarından gelir; şablonda metin yoktur.
 - Dosya adı belgenin dilindeki `file_name` metninden gelir (sicil ya da talep numarasıyla).
 - Entegrasyon testlerinde HR, PDF dönüştürücüsünü sayfanın HTML'ini döndüren bir sahte ile değiştirir; belgenin içeriği HTML'den kontrol edilir. Gerçek PDF üretimi Platform'un Gotenberg'li testlerinde doğrulanır (D36).
+
+**Uygulama notları (L6b):**
+- İK → "İzin raporları" (`/hr/leave-reports`, `hr.leave.reports.read`) dört sekmedir; açık sekme adreste tutulur (`?tab=`). Bakiye sekmesi bugünü, kullanım sekmesi yılın başından bugüne kadarki dönemi, yaklaşan izinler 30 günü, izin kullanmayanlar 12 ayı açar. Her sekme şirket süzgeci, sütun seçici ve Excel düğmesiyle gelir; personeli görebilen kişi adına tıklayıp karta gider.
+- Personel kartı İzinler sekmesinde "Kayıt belgesi" düğmesi seçili istihdamın yıllık izin kayıt belgesini indirir.
+- Talep detayında (taslak dışında) "Talep formu" düğmesi formu indirir; çalışan kendi talebinin, İK kapsamındaki talebin formunu alır.

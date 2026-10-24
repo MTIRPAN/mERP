@@ -21,6 +21,7 @@ export const hrPermissions = {
   leaveRequestsRecord: 'hr.leave.requests.record',
   leaveBulk: 'hr.leave.bulk',
   leaveCalendarRead: 'hr.leave.calendar.read',
+  leaveReportsRead: 'hr.leave.reports.read',
   selfProfileRead: 'hr.self.profile.read',
   selfProfileRequest: 'hr.self.profile.request',
   selfLeaveRead: 'hr.self.leave.read',

@@ -1,14 +1,31 @@
-import { EditOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Empty, Flex, Row, Select, Skeleton, Statistic, Table, Tag, Typography } from 'antd';
+import { EditOutlined, FilePdfOutlined } from '@ant-design/icons';
+import {
+  App,
+  Button,
+  Card,
+  Col,
+  Empty,
+  Flex,
+  Row,
+  Select,
+  Skeleton,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Typography,
+} from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useListLeaveBalances } from '@/shared/api/generated/endpoints/hr/hr';
+import { getLeaveRecordDocument, useListLeaveBalances } from '@/shared/api/generated/endpoints/hr/hr';
 import type {
   EmploymentItem,
   LeaveBalanceItem,
   LeaveLedgerItem,
   LeaveLedgerSource,
 } from '@/shared/api/generated/model';
+import { saveFile } from '@/shared/api/download';
+import { isApiError } from '@/shared/api/problem';
 import { formatDate, formatDateTime } from '@/shared/format/date';
 import { mainEmployment } from '../../employees/employeeFormat';
 import { AdjustBalanceDrawer } from './AdjustBalanceDrawer';
@@ -38,6 +55,24 @@ export const LeaveBalancesTab = ({ employeeId, employments, canManage }: LeaveBa
   const [employmentId, setEmploymentId] = useState(mainEmployment(employments)?.id);
   const [adjusting, setAdjusting] = useState(false);
   const balances = useListLeaveBalances(employeeId, employmentId ?? '', { query: { enabled: !!employmentId } });
+  const { message } = App.useApp();
+  const [printing, setPrinting] = useState(false);
+
+  /** The annual leave record of the employment as PDF (D46). */
+  const printRecord = async () => {
+    const registry = employments.find((e) => e.id === employmentId)?.registryNumber ?? '';
+    setPrinting(true);
+    try {
+      await saveFile(
+        getLeaveRecordDocument(employeeId, employmentId ?? ''),
+        t('web.hr.leave_balances.record_file', { registry }),
+      );
+    } catch (error) {
+      void message.error(isApiError(error) ? error.message : String(error));
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   if (!employmentId) {
     return <Empty />;
@@ -58,11 +93,16 @@ export const LeaveBalancesTab = ({ employeeId, employments, canManage }: LeaveBa
         ) : (
           <span />
         )}
-        {canManage && items.some((b) => !b.closedOn) && (
-          <Button icon={<EditOutlined />} onClick={() => setAdjusting(true)}>
-            {t('web.hr.leave_balances.adjust')}
+        <Space wrap>
+          <Button icon={<FilePdfOutlined />} loading={printing} onClick={() => void printRecord()}>
+            {t('web.hr.leave_balances.record')}
           </Button>
-        )}
+          {canManage && items.some((b) => !b.closedOn) && (
+            <Button icon={<EditOutlined />} onClick={() => setAdjusting(true)}>
+              {t('web.hr.leave_balances.adjust')}
+            </Button>
+          )}
+        </Space>
       </Flex>
       {balances.isLoading ? (
         <Skeleton active />

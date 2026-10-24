@@ -887,7 +887,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 **Kabul kriterleri:**
 - Yönetici sadece astlarının izinlerini görür.
 
-### [ ] L6 İzin raporları ve belgeleri — M
+### [x] L6 İzin raporları ve belgeleri — M
 
 **Yapılacaklar:**
 - Raporlar:
@@ -905,7 +905,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 
 **Alt PR'lar (D46):**
 - [x] **L6a backend:** dört rapor (sayfalı, süzgeçli, Excel), yıllık izin kayıt belgesi ve izin talep formu (yerleşik şablonlu PDF), `hr.leave.reports.read`
-- [ ] **L6b web:** İzin raporları sayfası (dört sekme, Excel), personel kartında kayıt belgesi, talep detayında form
+- [x] **L6b web:** İzin raporları sayfası (dört sekme, Excel), personel kartında kayıt belgesi, talep detayında form
 
 ---
 

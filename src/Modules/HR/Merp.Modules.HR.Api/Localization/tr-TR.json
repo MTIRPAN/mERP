@@ -877,5 +877,21 @@
   "web.hr.leave_reports.columns.status": "Durum",
   "web.hr.leave_reports.columns.hire_date": "İşe giriş",
   "web.hr.leave_reports.columns.last_leave_end": "Son izin bitişi",
-  "web.hr.leave_reports.columns.days_since": "Geçen gün"
+  "web.hr.leave_reports.columns.days_since": "Geçen gün",
+  "web.shell.menu.hr_leave_reports": "İzin raporları",
+  "web.hr.leave_reports.title": "İzin raporları",
+  "web.hr.leave_reports.subtitle": "Kapsamınızdaki personelin izin bakiyeleri, kullanımı ve yaklaşan izinleri; Excel'e aktarılabilir.",
+  "web.hr.leave_reports.company": "Şirket",
+  "web.hr.leave_reports.all_companies": "Tüm şirketler",
+  "web.hr.leave_reports.search": "Ad veya sicil no",
+  "web.hr.leave_reports.as_of": "Tarih itibarıyla",
+  "web.hr.leave_reports.period": "Dönem",
+  "web.hr.leave_reports.next_days": "{days} gün",
+  "web.hr.leave_reports.include_pending": "Onay bekleyenler",
+  "web.hr.leave_reports.months": "aydır izin kullanmayanlar",
+  "web.hr.leave_reports.never": "Hiç kullanmadı",
+  "web.hr.leave_balances.record": "Kayıt belgesi",
+  "web.hr.leave_balances.record_file": "yillik-izin-kayit-belgesi-{registry}.pdf",
+  "web.hr.leave_requests.form": "Talep formu",
+  "web.hr.leave_requests.form_file": "izin-talep-formu-{number}.pdf"
 }
