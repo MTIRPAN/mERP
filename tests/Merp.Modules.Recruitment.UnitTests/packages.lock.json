@@ -533,7 +533,7 @@
       "merp.modules.recruitment.application": {
         "type": "Project",
         "dependencies": {
-          "Merp.Application.Abstractions": "[1.0.0, )",
+          "Merp.Application.Persistence": "[1.0.0, )",
           "Merp.Modules.Recruitment.Contracts": "[1.0.0, )",
           "Merp.Modules.Recruitment.Domain": "[1.0.0, )"
         }

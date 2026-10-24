@@ -17,6 +17,13 @@ internal sealed class RecruitmentMenu : IMenuContributor
                 Icon: "ai",
                 Permission: RecruitmentPermissions.Cv.Analyze,
                 AiFeature: RecruitmentAiFeatures.CvAnalysis),
+            new(
+                "recruitment-settings",
+                "web.shell.menu.recruitment_settings",
+                Path: "/recruitment/settings",
+                Icon: "settings",
+                Permission: RecruitmentPermissions.Settings.Read,
+                Order: 100),
         ]),
     ];
 }

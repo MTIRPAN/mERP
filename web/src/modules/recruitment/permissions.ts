@@ -1,6 +1,8 @@
 /** Mirrors Merp.Modules.Recruitment.Application.RecruitmentPermissions. */
 export const recruitmentPermissions = {
   cvAnalyze: 'recruitment.cv.analyze',
+  settingsRead: 'recruitment.settings.read',
+  settingsManage: 'recruitment.settings.manage',
 } as const;
 
 /** Mirrors Merp.Modules.Recruitment.Application.RecruitmentAiFeatures. */

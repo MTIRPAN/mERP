@@ -12,6 +12,15 @@ public static class RecruitmentPermissions
         /// <summary>Analyze a CV with AI (D24).</summary>
         public const string Analyze = "recruitment.cv.analyze";
     }
+
+    public static class Settings
+    {
+        /// <summary>See the stage templates, the reasons, sources and tags, and the KVKK texts (D47).</summary>
+        public const string Read = "recruitment.settings.read";
+
+        /// <summary>Change them; the tenant's catalogs and the texts of every company need the Tenant scope.</summary>
+        public const string Manage = "recruitment.settings.manage";
+    }
 }
 
 /// <summary>Permission catalog of the Recruitment module (docs/domain/yetki-ve-onay.md §1.5).</summary>
@@ -20,5 +29,7 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
     public IEnumerable<PermissionDefinition> GetPermissions() =>
     [
         new(RecruitmentPermissions.Cv.Analyze),
+        new(RecruitmentPermissions.Settings.Read),
+        new(RecruitmentPermissions.Settings.Manage),
     ];
 }

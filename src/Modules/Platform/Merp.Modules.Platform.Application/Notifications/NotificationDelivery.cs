@@ -77,6 +77,44 @@ internal sealed class NotificationRequestedHandler(
     }
 }
 
+/// <summary>
+/// Delivers <see cref="ExternalEmailRequested"/> (D47): an e-mail to an address outside the platform, in the queue and
+/// sent after the commit, where the tenant or the company keeps e-mails on.
+/// </summary>
+internal sealed class ExternalEmailRequestedHandler(
+    IPlatformDbContext db,
+    NotificationTypeRegistry types,
+    EmailComposer composer,
+    IAfterCommit afterCommit,
+    ISender sender,
+    ISettings settings,
+    TimeProvider timeProvider) : IIntegrationEventHandler<ExternalEmailRequested>
+{
+    public async Task Handle(ExternalEmailRequested integrationEvent, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(integrationEvent);
+        var type = types.Find(integrationEvent.Type) is { External: true } found
+            ? found
+            : throw new InvalidOperationException($"External notification type {integrationEvent.Type} is not registered.");
+        if (!await settings.GetAsync<bool>(PlatformSettingDefinitions.EmailNotificationsEnabled, integrationEvent.CompanyId, cancellationToken))
+        {
+            return;
+        }
+
+        var email = await composer.ComposeExternalAsync(
+            type,
+            integrationEvent.To,
+            integrationEvent.ToName,
+            integrationEvent.Culture,
+            integrationEvent.Args,
+            integrationEvent.CompanyId,
+            timeProvider.GetUtcNow(),
+            cancellationToken);
+        db.EmailMessages.Add(email);
+        afterCommit.Enqueue(ct => sender.Send(new SendQueuedEmailsCommand([email.Id.Value]), ct));
+    }
+}
+
 /// <summary>Sends queued e-mails now; those that fail stay in the queue for the retry job.</summary>
 public sealed record SendQueuedEmailsCommand(IReadOnlyList<Guid> Ids) : ICommand;
 

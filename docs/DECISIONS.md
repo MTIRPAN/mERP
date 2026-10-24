@@ -1306,3 +1306,35 @@ Seçilen kültür `Content-Language` başlığında döner.
 - İK → "İzin raporları" (`/hr/leave-reports`, `hr.leave.reports.read`) dört sekmedir; açık sekme adreste tutulur (`?tab=`). Bakiye sekmesi bugünü, kullanım sekmesi yılın başından bugüne kadarki dönemi, yaklaşan izinler 30 günü, izin kullanmayanlar 12 ayı açar. Her sekme şirket süzgeci, sütun seçici ve Excel düğmesiyle gelir; personeli görebilen kişi adına tıklayıp karta gider.
 - Personel kartı İzinler sekmesinde "Kayıt belgesi" düğmesi seçili istihdamın yıllık izin kayıt belgesini indirir.
 - Talep detayında (taslak dışında) "Talep formu" düğmesi formu indirir; çalışan kendi talebinin, İK kapsamındaki talebin formunu alır.
+
+## D47 — İşe alım ayarları ve aday e-postaları
+
+**Bağlam:** R1, işe alım modülünün ayarlarını kurar. Kullanıcı kararları (2026-10-25): adaylara giden e-postalar Platform'un e-posta altyapısıyla gider (dış alıcı); aday verisinin varsayılan saklama süresi 24 aydır; R1 tek PR'dır.
+
+**Yetkiler:** `recruitment.settings.read` ve `recruitment.settings.manage`; `recruitment.*` deseniyle İK Yöneticisi ve İşe Alım Uzmanı rollerine geçer. Aşama şablonları ve listeler kiracının kataloglarıdır, değiştirmek Tenant kapsamı ister (unvan kataloğu ve izin türleri gibi, D37, D41). KVKK metinleri şirket bazındadır: şirketin metni şirket kapsamıyla, tüm şirketlerin metni Tenant kapsamıyla yayınlanır.
+
+**Aşama şablonu (`StageTemplate`, aggregate):**
+- Ad (çok dilli), sıralı aşamalar, varsayılan ve aktiflik. Aşama: kalıcı kimlik, ad (çok dilli), tip ve süre (SLA, gün).
+- Tipler: Applied, Screening, Interview, Assessment, Reference, Offer, Hired, Rejected, Withdrawn.
+- Kurallar: ilk aşama Applied'dır ve tektir; Hired, Rejected ve Withdrawn birer kez bulunur ve listenin sonundadır. Son aşamalarda süre girilmez, diğerlerinde 1–365 gündür. Aşamalar satırın jsonb kolonundadır.
+- Bir şablon kiracının varsayılanıdır; yeni varsayılan eskisini aynı işlemde düşürür (domain olayı). Varsayılan pasif yapılamaz.
+- İlan (R3) şablonun kopyasını alır; şablonun sonraki değişiklikleri açık ilanları etkilemez. Aşama kimlikleri kopyada da aynıdır.
+- Seed: "Standart işe alım" (Başvuru, Ön eleme, İK mülakatı, Yönetici mülakatı, Teklif, İşe alındı, Reddedildi, Geri çekildi).
+
+**Listeler (`RecruitmentLookup`):** Tek tablo, tür alanıyla: red nedenleri, çekilme nedenleri, aday kaynakları, etiketler. Kod listesinde tekildir ve değişmez; ad çok dillidir; sıra ve aktiflik vardır. Pasif kayıt onu kullanan kayıtlarda kalır. Seed: yaygın red ve çekilme nedenleri ile kaynaklar (kariyer sayfası, LinkedIn, iş ilanı sitesi, çalışan referansı, danışmanlık firması, iç aday).
+
+**KVKK metinleri (`ConsentText`):**
+- Türler: aydınlatma metni ve açık rıza metni (adayın CV'sinin havuzda başka pozisyonlar için saklanması).
+- Her yayın tür × şirket (ya da tüm şirketler) × dil için yeni bir sürümdür (revizyon 1, 2, …). Yayınlanmış sürüm değişmez; adayın onayı gördüğü sürümle kaydedilir (R3).
+- Adayın göreceği metin: önce adayın dili, sonra şirketin metni, sonra tüm şirketlerinki, en yeni revizyon. Hiç yayın yoksa yerleşik metin (revizyon 0) kullanılır. Yerleşik aydınlatma metni, kiracıda yapay zeka CV analizi açıksa yapay zeka ve yurt dışına aktarım maddesini içerir (`docs/domain/yapay-zeka.md` §10.3). Yerleşik metin seed edilmez; çalışma anında üretilir, böylece yapay zeka ayarı değişince güncel kalır.
+
+**Aday e-postaları (kullanıcı kararı):**
+- Platform'a `ExternalEmailRequested` olayı eklendi (Platform.Contracts): tür, adres, ad, dil ve argümanlar. Platform bunu e-posta kuyruğuna yazar ve mevcut yeniden deneme ile gönderir. Kiracıda ya da şirkette e-postalar kapalıysa gönderilmez.
+- Bildirim türlerine `External` işareti eklendi: dış alıcılı türler zile düşmez, kullanıcı tercihlerinde görünmez ve kullanıcılara gönderilemez. Konu ve metin türün `{modül}.notifications.{ad}.title/body` metinlerinden gelir; kiracı Sistem → Bildirim şablonları ekranında şirket ve dil bazında kendi şablonunu yazar (D32 seçim sırası).
+- İşe alımın türleri: `recruitment.application_received`, `recruitment.interview_invitation`, `recruitment.application_rejected`, `recruitment.offer_sent`. Gönderimleri R3–R6'da gelir. Takvim daveti (R5) ve teklif PDF'i (R6) için olaya ek desteği o görevlerde eklenecek.
+
+**Saklama:** `recruitment.retention_months` ayarı (varsayılan 24, şirket ezebilir, 1–120). Anonimleştirme işi R8'de gelir.
+
+**Yapı taşı:** jsonb kolonlarındaki çok dilli adlar (`LocalizedString`) kendi kolonlarıyla aynı biçimde (`{"tr-TR": "…"}`) yazılır.
+
+**Web:** İşe alım → "İşe alım ayarları" (`/recruitment/settings`, `recruitment.settings.read`): aşama şablonları (aşama ekleme, sıralama, tip ve süre), listeler, KVKK metinleri (tür, şirket ve dil seçilerek geçerli metin, sürüm geçmişi ve yeni sürüm yayınlama) ve aday e-postalarının ve saklama süresinin hangi ekranda ayarlandığını gösteren sekme.
