@@ -7,6 +7,8 @@ import { renderWithProviders } from '@/test/render';
 import { LeaveBalancesTab } from './LeaveBalancesTab';
 
 const adjust = vi.fn().mockResolvedValue(undefined);
+const saveFile = vi.fn().mockResolvedValue(undefined);
+const record = vi.fn().mockResolvedValue(new Blob(['%PDF']));
 
 const balances: LeaveBalanceItem[] = [
   {
@@ -43,12 +45,19 @@ const balances: LeaveBalanceItem[] = [
 vi.mock('@/shared/api/generated/endpoints/hr/hr', () => ({
   useListLeaveBalances: () => ({ data: balances, isLoading: false }),
   useAdjustLeaveBalance: () => ({ mutateAsync: adjust }),
+  getLeaveRecordDocument: (...args: unknown[]) => record(...args) as Promise<Blob>,
   getListLeaveBalancesQueryKey: (employeeId: string, employmentId: string) => [
     `/api/hr/employees/${employeeId}/employments/${employmentId}/leave-balances`,
   ],
 }));
 
+vi.mock('@/shared/api/download', () => ({
+  saveFile: (...args: unknown[]) => saveFile(...args) as Promise<void>,
+}));
+
 const texts: Record<string, string> = {
+  'web.hr.leave_balances.record': 'Kayıt belgesi',
+  'web.hr.leave_balances.record_file': 'yillik-izin-kayit-belgesi-{registry}.pdf',
   'web.hr.leave_balances.available': 'Kullanılabilir',
   'web.hr.leave_balances.adjust': 'Bakiye düzelt',
   'web.hr.leave_balances.next_accrual': 'Sonraki hak ediş: {date}, {days}',
@@ -85,6 +94,17 @@ describe('LeaveBalancesTab', () => {
     expect(screen.getByText('Eski sistemden fark')).toBeInTheDocument();
     expect(screen.getByText('2026-03-16')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Bakiye düzelt/ })).not.toBeInTheDocument();
+  });
+
+  it('prints the annual leave record of the employment', async () => {
+    render(false);
+
+    await userEvent.click(screen.getByRole('button', { name: /Kayıt belgesi/ }));
+
+    await waitFor(() =>
+      expect(saveFile).toHaveBeenCalledWith(expect.any(Promise), 'yillik-izin-kayit-belgesi-000042.pdf'),
+    );
+    expect(record).toHaveBeenCalledWith('e1', 'm1');
   });
 
   it('corrects a balance with a reason', async () => {

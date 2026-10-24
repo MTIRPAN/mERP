@@ -1,4 +1,4 @@
-import { DeleteOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { DeleteOutlined, DownloadOutlined, FilePdfOutlined, UploadOutlined } from '@ant-design/icons';
 import { Alert, App, Button, Card, Descriptions, Drawer, Empty, Flex, List, Popconfirm, Skeleton, Upload } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,8 @@ import {
   deleteMyLeaveRequestFile,
   downloadLeaveRequestFile,
   downloadMyLeaveRequestFile,
+  getLeaveRequestForm,
+  getMyLeaveRequestForm,
   requestMyLeaveCancellation,
   returnFromLeaveEarly,
   submitMyLeaveRequest,
@@ -73,6 +75,18 @@ export const LeaveRequestDetailDrawer = ({ mode, id, onClose }: LeaveRequestDeta
     }
   };
 
+  /** The request form as PDF, to be signed (D46). */
+  const printForm = async (number: string) => {
+    try {
+      await saveFile(
+        self ? getMyLeaveRequestForm(id) : getLeaveRequestForm(id),
+        t('web.hr.leave_requests.form_file', { number }),
+      );
+    } catch (error) {
+      void message.error(isApiError(error) ? error.message : String(error));
+    }
+  };
+
   const download = (file: LeaveRequestFileItem) =>
     void saveFile(
       self ? downloadMyLeaveRequestFile(id, file.id) : downloadLeaveRequestFile(id, file.id),
@@ -81,6 +95,11 @@ export const LeaveRequestDetailDrawer = ({ mode, id, onClose }: LeaveRequestDeta
 
   const footer = details && (
     <Flex justify="flex-end" gap={8} wrap>
+      {details.request.status !== 'Draft' && (
+        <Button icon={<FilePdfOutlined />} onClick={() => void printForm(details.request.number)}>
+          {t('web.hr.leave_requests.form')}
+        </Button>
+      )}
       {details.actions.edit && <Button onClick={() => setDialog('edit')}>{t('web.common.edit')}</Button>}
       {details.actions.submit && self && (
         <Button

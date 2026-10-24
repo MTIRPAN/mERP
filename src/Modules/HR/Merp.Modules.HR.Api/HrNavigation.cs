@@ -18,6 +18,7 @@ internal sealed class HrMenu : IMenuContributor
             new("hr-employees", "web.shell.menu.hr_employees", Path: "/hr/employees", Icon: "employees", Permission: HrPermissions.Employees.Read, Order: -10),
             new("hr-leave-requests", "web.shell.menu.hr_leave_requests", Path: "/hr/leave-requests", Icon: "leave-requests", Permission: HrPermissions.Leave.Requests.Read, Order: -5),
             new("hr-leave-calendar", "web.shell.menu.hr_leave_calendar", Path: "/hr/leave-calendar", Icon: "leave-calendar", Permission: HrPermissions.Leave.Calendar.Read, Order: -4),
+            new("hr-leave-reports", "web.shell.menu.hr_leave_reports", Path: "/hr/leave-reports", Icon: "leave-reports", Permission: HrPermissions.Leave.Reports.Read, Order: -3),
             new("hr-organization", "web.shell.menu.hr_organization", Path: "/hr/organization", Icon: "organization", Permission: HrPermissions.Org.Read),
             new("hr-positions", "web.shell.menu.hr_positions", Path: "/hr/positions", Icon: "positions", Permission: HrPermissions.Org.Read, Order: 10),
             new("hr-job-titles", "web.shell.menu.hr_job_titles", Path: "/hr/job-titles", Icon: "job-titles", Permission: HrPermissions.Org.Read, Order: 20),
