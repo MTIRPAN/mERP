@@ -9,6 +9,7 @@ using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
 using Merp.Application.Abstractions.Validation;
+using Merp.Modules.HR.Application.Approvals;
 using Merp.Modules.HR.Application.Documents;
 using Merp.Modules.HR.Application.Employees;
 using Merp.Modules.HR.Application.Organization;
@@ -94,13 +95,58 @@ public sealed record CompleteProfileChangeCommand(Guid RequestId, ApprovalOutcom
 /// <summary>An approver returned the request for correction (inbox).</summary>
 public sealed record ReturnProfileChangeCommand(Guid RequestId, string Comment) : ICommand;
 
-/// <summary>The approvable document type of change requests (docs/domain/yetki-ve-onay.md §2.1, D39).</summary>
+/// <summary>
+/// The approvable document types of HR (docs/domain/yetki-ve-onay.md §2.1): change requests (D39), leave requests
+/// and their cancellations (D44).
+/// </summary>
 public sealed class HrApprovalDocumentTypes : IApprovalDocumentTypeProvider
 {
     public const string ProfileChange = "hr.profile-change";
+    public const string LeaveRequest = "hr.leave-request";
+    public const string LeaveCancellation = "hr.leave-cancellation";
+
+    private const string HrSpecialistRole = "hr-specialist";
+
+    /// <summary>The second step of a leave request (§2.8): more than five days, or unpaid leave.</summary>
+    private const string LongOrUnpaidLeave =
+        """{"any":[{"fact":"days","op":"gt","value":5},{"fact":"leaveTypeCode","op":"eq","value":"UCRETSIZ"}]}""";
+
+    private static readonly IReadOnlyList<ApprovalFact> LeaveFacts =
+    [
+        new("leaveTypeCode", ApprovalFactType.Text, "hr.approvals.facts.leave_type_code"),
+        new("days", ApprovalFactType.Number, "hr.approvals.facts.leave_days"),
+        new("requesterEmployeeId", ApprovalFactType.Identifier, "hr.approvals.facts.requester_employee"),
+        new("orgUnitId", ApprovalFactType.Identifier, "hr.approvals.facts.org_unit"),
+        new("branchId", ApprovalFactType.Identifier, "hr.approvals.facts.branch"),
+        new("companyId", ApprovalFactType.Identifier, "hr.approvals.facts.company"),
+        new("isPastDate", ApprovalFactType.Boolean, "hr.approvals.facts.is_past_date"),
+    ];
+
+    private static readonly Dictionary<string, string> FirstLevel = new() { [LineManagerApproverResolver.LevelParameter] = "1" };
 
     public IEnumerable<ApprovalDocumentType> GetDocumentTypes() =>
     [
+        new(
+            LeaveRequest,
+            "hr.approvals.document_types.leave_request",
+            LeaveFacts,
+            AutoApproveWhenNoDefinition: false,
+            DefaultFlow:
+            [
+                new ApprovalDefaultStep("hr.approvals.steps.line_manager", LineManagerApproverResolver.ResolverKey, FirstLevel, AllowReturn: true),
+                new ApprovalDefaultStep(
+                    "hr.approvals.steps.hr_review",
+                    "role",
+                    new Dictionary<string, string> { [ApprovalDefaultStep.RoleCodeParameter] = HrSpecialistRole },
+                    LongOrUnpaidLeave,
+                    AllowReturn: true),
+            ]),
+        new(
+            LeaveCancellation,
+            "hr.approvals.document_types.leave_cancellation",
+            LeaveFacts,
+            AutoApproveWhenNoDefinition: false,
+            DefaultFlow: [new ApprovalDefaultStep("hr.approvals.steps.line_manager", LineManagerApproverResolver.ResolverKey, FirstLevel)]),
         new(
             ProfileChange,
             "hr.approvals.document_types.profile_change",
@@ -111,7 +157,7 @@ public sealed class HrApprovalDocumentTypes : IApprovalDocumentTypeProvider
                 new ApprovalDefaultStep(
                     "hr.approvals.steps.hr_review",
                     "role",
-                    new Dictionary<string, string> { [ApprovalDefaultStep.RoleCodeParameter] = "hr-specialist" },
+                    new Dictionary<string, string> { [ApprovalDefaultStep.RoleCodeParameter] = HrSpecialistRole },
                     AllowReturn: true),
             ]),
     ];

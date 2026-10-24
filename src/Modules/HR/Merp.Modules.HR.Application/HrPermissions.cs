@@ -73,6 +73,21 @@ public static class HrPermissions
             /// <summary>Correct a balance and import opening balances.</summary>
             public const string Manage = "hr.leave.balances.manage";
         }
+
+        public static class Requests
+        {
+            /// <summary>See the leave requests of the employees in scope; managers hold it for their team (D44).</summary>
+            public const string Read = "hr.leave.requests.read";
+
+            /// <summary>Ask for leave on an employee's behalf, cancel an approved leave and end a started one early.</summary>
+            public const string Manage = "hr.leave.requests.manage";
+
+            /// <summary>Record a leave approved without a flow, e.g. a past one.</summary>
+            public const string Record = "hr.leave.requests.record";
+        }
+
+        /// <summary>Record the same leave for many employees at once (toplu izin).</summary>
+        public const string Bulk = "hr.leave.bulk";
     }
 
     /// <summary>Self service of the person linked to the user (D39); the Employee system role holds <c>hr.self.*</c>.</summary>
@@ -83,6 +98,12 @@ public static class HrPermissions
 
         /// <summary>Ask for changes of one's contacts, family and IBAN.</summary>
         public const string ProfileRequest = "hr.self.profile.request";
+
+        /// <summary>See one's own leave balances and requests ("İzinlerim").</summary>
+        public const string LeaveRead = "hr.self.leave.read";
+
+        /// <summary>Ask for leave, correct, send and cancel one's requests, and ask to cancel an approved one.</summary>
+        public const string LeaveRequest = "hr.self.leave.request";
     }
 }
 
@@ -107,8 +128,14 @@ public sealed class HrPermissionDefinitions : IPermissionDefinitionProvider
         new(HrPermissions.Leave.Settings.Manage),
         new(HrPermissions.Leave.Balances.Read),
         new(HrPermissions.Leave.Balances.Manage),
+        new(HrPermissions.Leave.Requests.Read),
+        new(HrPermissions.Leave.Requests.Manage),
+        new(HrPermissions.Leave.Requests.Record),
+        new(HrPermissions.Leave.Bulk),
         new(HrPermissions.Self.ProfileRead),
         new(HrPermissions.Self.ProfileRequest),
+        new(HrPermissions.Self.LeaveRead),
+        new(HrPermissions.Self.LeaveRequest),
     ];
 }
 
@@ -141,9 +168,13 @@ public sealed class HrNumberSequences : INumberSequenceDefinitionProvider
     /// <summary>A person's change request (D39), numbered per company and year.</summary>
     public const string ProfileChange = "hr.profile-change";
 
+    /// <summary>A leave request (D44), numbered per company and year.</summary>
+    public const string LeaveRequest = "hr.leave-request";
+
     public IEnumerable<NumberSequenceDefinition> GetSequences() =>
     [
         new(Employee, "{seq:6}", NumberResetPeriod.Never),
         new(ProfileChange, "PDT-{yyyy}-{seq:5}", NumberResetPeriod.Yearly),
+        new(LeaveRequest, "IZN-{yyyy}-{seq:6}", NumberResetPeriod.Yearly),
     ];
 }

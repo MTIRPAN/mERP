@@ -81,3 +81,33 @@ internal sealed class LeaveLedgerEntryConfiguration : IEntityTypeConfiguration<L
         builder.HasIndex(e => new { e.AccountId, e.PeriodKey }).IsUnique().HasFilter("source = 'Accrual'");
     }
 }
+
+internal sealed class LeaveRequestConfiguration : IEntityTypeConfiguration<LeaveRequest>
+{
+    public void Configure(EntityTypeBuilder<LeaveRequest> builder)
+    {
+        builder.ToTable("leave_requests");
+        builder.HasKey(r => r.Id);
+        builder.Property(r => r.Id).ValueGeneratedNever();
+        builder.Property(r => r.Number).HasMaxLength(LeaveRequest.NumberMaxLength);
+        builder.Property(r => r.Origin).HasConversion<string>().HasMaxLength(20);
+        builder.Property(r => r.Status).HasConversion<string>().HasMaxLength(30);
+        builder.Property(r => r.LeaveTypeCode).HasMaxLength(LeaveType.CodeMaxLength);
+        builder.Property(r => r.DeductsFrom).HasMaxLength(LeaveType.CodeMaxLength);
+        builder.Property(r => r.StartPart).HasConversion<string>().HasMaxLength(20);
+        builder.Property(r => r.EndPart).HasConversion<string>().HasMaxLength(20);
+        builder.Property(r => r.Basis).HasConversion<string>().HasMaxLength(20);
+        builder.Property(r => r.Quantity).HasPrecision(7, 2);
+        builder.Property(r => r.Days).HasPrecision(7, 2);
+        builder.Property(r => r.Note).HasMaxLength(LeaveRequest.NoteMaxLength);
+        builder.Property(r => r.Address).HasMaxLength(LeaveRequest.AddressMaxLength);
+        builder.Property(r => r.Phone).HasMaxLength(LeaveRequest.PhoneMaxLength);
+        builder.Property(r => r.ReturnComment).HasMaxLength(LeaveRequest.CommentMaxLength);
+        builder.Property(r => r.CancellationReason).HasMaxLength(LeaveRequest.CommentMaxLength);
+        builder.Ignore(r => r.Period);
+        builder.HasIndex(r => new { r.CompanyId, r.Number }).IsUnique();
+        builder.HasIndex(r => new { r.EmployeeId, r.StartDate });
+        builder.HasIndex(r => new { r.EmploymentId, r.Status });
+        builder.HasIndex(r => new { r.Status, r.StartDate });
+    }
+}

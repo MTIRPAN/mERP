@@ -84,6 +84,18 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddScoped<LeavePolicyResolver>();
         services.AddScoped<LeaveAccrualJob>();
         services.AddSingleton(RecurringJobDefinition.For<LeaveAccrualJob>(LeaveAccrualJob.JobId, LeaveAccrualJob.Cron));
+        services.AddScoped<LeaveBalanceReader>();
+
+        // Leave requests: the §6 checks, the approval flow and the reminders of the day before (D44)
+        services.AddScoped<LeaveRequestChecker>();
+        services.AddScoped<LeaveRequestNotifier>();
+        services.AddScoped<LeaveRequestSubmitter>();
+        services.AddScoped<LeaveRequestPreviewer>();
+        services.AddScoped<LeaveRequestAccess>();
+        services.AddScoped<LeaveRecorder>();
+        services.AddScoped<IApprovalDocumentAccessPolicy, LeaveRequestAccessPolicy>();
+        services.AddScoped<LeaveRemindersJob>();
+        services.AddSingleton(RecurringJobDefinition.For<LeaveRemindersJob>(LeaveRemindersJob.JobId, LeaveRemindersJob.Cron));
 
         // Excel imports of the organization and the employees, in the order they are loaded (PLAN H4, D40)
         services.AddScoped<IImportDefinition, JobImport>();
