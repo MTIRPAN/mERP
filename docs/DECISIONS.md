@@ -1282,3 +1282,22 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Web:**
 - İK → "İzin takvimi" (`/hr/leave-calendar`): FullCalendar ay ve liste görünümü, türe (kategori) göre renk, onay bekleyen izin soluk ve "onay bekliyor" notlu, tatiller arka plan günü. Talepleri görebilen kullanıcı izne tıklayınca talep detayına gider.
 - Paketler: `@fullcalendar/core`, `react`, `daygrid`, `list` 6.1.20 (MIT, D19'daki "yalnızca MIT çekirdek paketleri"). 7.x paket yapısını değiştirip ek bir `temporal-polyfill` bağımlılığı istediği için olgun 6.1 sürümü seçildi.
+
+## D46 — İzin raporları ve belgeleri
+
+**Bağlam:** L6, izin raporlarını (Excel'e aktarılabilir) ve izin belgelerini (P12 altyapısıyla PDF) kurar. Diğer izin görevleri gibi iki PR'dır: L6a backend, L6b web.
+
+**Yetki:** `hr.leave.reports.read` raporları görmeyi ve Excel'e aktarmayı verir; `hr.leave.*` deseniyle İK Yöneticisi ve İK Uzmanı'na geçer. Raporlar personel listesindeki veri kapsamıyla süzülür (D38). Ayrı bir dışa aktarma yetkisi yoktur: raporu gören dosyasını da alır, dışa aktarma audit'e yazılır (D35).
+
+**Raporlar (`/api/hr/leave/reports/...`, hepsi sayfalı, sıralanabilir ve `/export` ile Excel):**
+- **Bakiye** (`balances?asOf=`): her istihdamın her bakiyesi için o güne kadarki hareketlerden kazanılan, kullanılan ve kalan. O günden önce kapanmış bakiyeler gösterilmez. Şirket, tür ve ad/sicil araması süzer.
+- **Kullanım** (`usage?from=&to=`): dönemde başlayan onaylı izinler, kişi ve tür bazında talep sayısı ve gün.
+- **Yaklaşan izinler** (`upcoming`): bugünden (ya da verilen günden) itibaren en fazla 366 gün içinde başlayan onaylı izinler; istenirse onay bekleyenler de.
+- **Uzun süredir izin kullanmayanlar** (`long-time-no-leave?months=`, varsayılan 12): o süreden eski açık istihdamlardan, bakiyeden düşen son izni bu süreden önce biten ya da hiç izin almamış olanlar, şu anki bakiyeleriyle. "İzin" bakiyeden düşen (yıllık) izindir; mazeret ve idari izinler sayılmaz.
+
+**Belgeler (D36 belge türleri, yerleşik şablonlu; kiracı Belge şablonları ekranından kendi şablonunu yazabilir):**
+- `hr.leave_record` — Yıllık izin kayıt belgesi: personel, sicil, işe giriş, kıdem başlangıcı ve tamamlanan kıdem yılı, unvan, birim; hak edişler (tarih, hareket, açıklama, gün), kullanılan yıllık izinler (talep no, başlangıç, bitiş, yol izni, gün), toplamlar ve bugünkü bakiye; işçi ve işveren imza alanları. `GET /api/hr/employees/{id}/employments/{employmentId}/leave-record` (`hr.leave.balances.read`, şirket kapsamı).
+- `hr.leave_form` — İzin talep formu: talep bilgileri, personel, talep eden, yönetici ve İK imza alanları. `GET /api/hr/leave-requests/{id}/form` (`hr.leave.requests.read`) ve çalışanın kendi talebi için `GET /api/hr/me/leave-requests/{id}/form` (`hr.self.leave.read`).
+- Modeldeki tarih ve sayılar belgenin dilinde metin olarak hazırlanır (`d.MM.yyyy`, `3,5`). Etiketler `hr.documents.{tür}.texts.*` anahtarlarından gelir; şablonda metin yoktur.
+- Dosya adı belgenin dilindeki `file_name` metninden gelir (sicil ya da talep numarasıyla).
+- Entegrasyon testlerinde HR, PDF dönüştürücüsünü sayfanın HTML'ini döndüren bir sahte ile değiştirir; belgenin içeriği HTML'den kontrol edilir. Gerçek PDF üretimi Platform'un Gotenberg'li testlerinde doğrulanır (D36).

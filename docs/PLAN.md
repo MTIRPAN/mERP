@@ -903,6 +903,10 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 **Kabul kriterleri:**
 - Kayıt belgesi kıdem, hak edilen ve kullanılan izin tarihleri ile imza alanlarını içeren PDF üretir.
 
+**Alt PR'lar (D46):**
+- [x] **L6a backend:** dört rapor (sayfalı, süzgeçli, Excel), yıllık izin kayıt belgesi ve izin talep formu (yerleşik şablonlu PDF), `hr.leave.reports.read`
+- [ ] **L6b web:** İzin raporları sayfası (dört sekme, Excel), personel kartında kayıt belgesi, talep detayında form
+
 ---
 
 ## Faz 4 — İşe Alım (`Recruitment` modülü)

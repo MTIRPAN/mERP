@@ -86,6 +86,12 @@ public static class HrPermissions
             public const string Record = "hr.leave.requests.record";
         }
 
+        public static class Reports
+        {
+            /// <summary>See and export the leave reports of the employees in scope (D46).</summary>
+            public const string Read = "hr.leave.reports.read";
+        }
+
         public static class Calendar
         {
             /// <summary>See the leave calendar of the employees in scope; managers hold it for their team (D45).</summary>
@@ -139,6 +145,7 @@ public sealed class HrPermissionDefinitions : IPermissionDefinitionProvider
         new(HrPermissions.Leave.Requests.Record),
         new(HrPermissions.Leave.Bulk),
         new(HrPermissions.Leave.Calendar.Read),
+        new(HrPermissions.Leave.Reports.Read),
         new(HrPermissions.Self.ProfileRead),
         new(HrPermissions.Self.ProfileRequest),
         new(HrPermissions.Self.LeaveRead),

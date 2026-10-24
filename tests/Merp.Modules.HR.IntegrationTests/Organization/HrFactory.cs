@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Merp.Application.Abstractions.Documents;
 using Merp.Infrastructure.Messaging.Integration;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
@@ -11,6 +12,7 @@ using Merp.Modules.HR.IntegrationTests.Employees;
 using Merp.Modules.Platform.Application.Access;
 using Merp.Testing.Containers;
 using Merp.Testing.Data;
+using Merp.SharedKernel.Results;
 using Merp.Testing.Web;
 using Merp.Web.Endpoints;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +49,7 @@ public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(pos
         HrPermissions.Leave.Requests.Record,
         HrPermissions.Leave.Bulk,
         HrPermissions.Leave.Calendar.Read,
+        HrPermissions.Leave.Reports.Read,
         "platform.companies.read",
         "platform.companies.manage",
         "platform.branches.read",
@@ -64,8 +67,13 @@ public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(pos
     /// <summary>Keycloak of the employee–user link (D39).</summary>
     public FakeIdentityAdmin Identity { get; } = new();
 
-    protected override void ConfigureServices(IServiceCollection services) =>
+    protected override void ConfigureServices(IServiceCollection services)
+    {
         services.Replace(ServiceDescriptor.Singleton<IIdentityAdmin>(Identity));
+
+        // HR's documents are checked on their HTML; Platform's tests print real PDFs with Gotenberg
+        services.Replace(ServiceDescriptor.Singleton<IPdfConverter, HtmlPdfConverter>());
+    }
 
     /// <summary>
     /// Moves integration events between the modules until none is left: the outboxes of HR and Platform are sent and
@@ -198,6 +206,13 @@ public class HrFactory(PostgresFixture postgres) : MerpWebApplicationFactory(pos
 public sealed class HrClockFactory(PostgresFixture postgres) : HrFactory(postgres)
 {
     protected override bool UseFakeTime => true;
+}
+
+/// <summary>Returns the page's HTML as the "PDF", so tests read what a document holds.</summary>
+public sealed class HtmlPdfConverter : IPdfConverter
+{
+    public Task<Result<byte[]>> ConvertHtmlAsync(string html, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success(System.Text.Encoding.UTF8.GetBytes(html)));
 }
 
 /// <summary>ProblemDetails as the web client sees it.</summary>
