@@ -1252,3 +1252,12 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Uç noktalar: çalışan `/api/hr/me/leave-requests` (liste, detay, önizleme, oluştur, düzelt, gönder, iptal, iptal talebi, ekler) ve `/api/hr/me/leave-balances`; İK `/api/hr/leave-requests` (liste, detay, önizleme, adına talep, `records` ve önizlemesi, iptal, erken dönüş, `bulk` ve önizlemesi, ekler).
 - Toplu izin uç noktası önce önizlemeyi çalıştırır, sonra sorunsuz her kişi için ayrı komut gönderir; yanıt kişi başına oluşan talebi ya da sorunu döner. En fazla 500 kişi.
 - Bakiye sorgusu ve "Bakiyelerim" aynı okuyucuyu kullanır; bekleyen gün artık taleplerden gelir.
+
+**Uygulama notları (L4b):**
+- Menü: "İzinlerim" (`/hr/me/leave`, `hr.self.leave.read`) ve "İzin talepleri" (`/hr/leave-requests`, `hr.leave.requests.read`). Onay kutusundaki bağlantı `/hr/leave-requests/{id}` talebi aynı sayfada açar; bildirimdeki `/hr/me/leave?request={id}` çalışanın talebini açar.
+- İzinlerim: bakiye kartları, taleplerim (duruma göre süzülür) ve talep detayı (bilgiler, ekler, onay ve iptal zaman çizelgeleri, düzelt, gönder, iptal, iptal talebi).
+- Talep formu türün yapısına göre alan gösterir: sabit süreli türde bitiş yerine olay tarihi, saatlik türde tarih ve saatler, yarım günlük türde "öğleden sonra başla / öğlene kadar", yıllıkta yol izni. Form yazıldıkça önizleme (süre, talep öncesi ve sonrası bakiye, sorun, uyarılar, onaylayacaklar) yenilenir; sorun varken "Gönder" kapalıdır.
+- Eklenen dosyalar talep gönderilmeden önce yüklenir: çalışanın talebi önce taslak kaydedilir, dosyalar yüklenir, sonra gönderilir. Böylece belge isteyen tür belgesiyle gider. Gönderim başarısız olursa aynı taslak düzeltilir, ikinci taslak açılmaz.
+- İK sayfası: kapsamdaki talepler (arama, durum, tarih aralığı), "Personel adına talep", "Geçmiş izin kaydet" ve "Toplu izin" (yetkiye göre). İK detayında iptal (onaylıda gerekçe zorunlu), erken dönüş ve ekler.
+- Toplu izin: şirket, tür, personel listesi ya da birim (alt birimlerle), tarih aralığı ve açıklama. Önce önizlenir; "Onaylı kaydet" sorunsuz kişiler için kaydeder ve kişi başına sonucu gösterir.
+- Çalışanların İK listelerine yetkisi olmadığından iki uç nokta eklendi: `GET /api/hr/me/leave-types` (talep edilebilir türler, form bilgileriyle) ve `GET /api/hr/me/colleagues?search=` (vekil seçimi; çalışanın şirketlerinde çalışanların yalnızca adı, en fazla 20). İK formu türleri `GET /api/hr/leave-requests/leave-types?employmentId=` ile alır.

@@ -36,6 +36,20 @@ internal static class LeaveRequestEndpoints
             .WithSummary("The user's leave balances; those of the main employment unless one is named")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        me.MapGet("/leave-types", async Task<Results<Ok<IReadOnlyList<LeaveTypeOption>>, ProblemHttpResult>> (Guid? employmentId, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new GetMyLeaveTypesQuery(employmentId), ct)))
+            .RequirePermission(HrPermissions.Self.LeaveRequest)
+            .WithName("ListMyLeaveTypes")
+            .WithSummary("The leave types the user may ask for; those of the main employment unless one is named")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        me.MapGet("/colleagues", async Task<Results<Ok<IReadOnlyList<ColleagueItem>>, ProblemHttpResult>> (string? search, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new GetMyColleaguesQuery(search), ct)))
+            .RequirePermission(HrPermissions.Self.LeaveRequest)
+            .WithName("SearchMyColleagues")
+            .WithSummary("Colleagues working in the user's companies, by name, to stand in during a leave (at most 20)")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         me.MapGet("/leave-requests", ListMineAsync)
             .RequirePermission(HrPermissions.Self.LeaveRead)
             .WithName("ListMyLeaveRequests")
@@ -137,6 +151,13 @@ internal static class LeaveRequestEndpoints
             .WithName("ListLeaveRequests")
             .WithSummary("The leave requests of the employees in the caller's scope; drafts stay with their requesters")
             .ProducesValidationProblem();
+
+        requests.MapGet("/leave-types", async Task<Results<Ok<IReadOnlyList<LeaveTypeOption>>, ProblemHttpResult>> (Guid employmentId, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new GetLeaveRequestTypesQuery(employmentId), ct)))
+            .RequirePermission(HrPermissions.Leave.Requests.Read)
+            .WithName("ListLeaveRequestTypes")
+            .WithSummary("The leave types an employment in the caller's scope may take")
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         requests.MapGet("/{id:guid}", async Task<Results<Ok<LeaveRequestDetails>, ProblemHttpResult>> (Guid id, ISender sender, CancellationToken ct) =>
                 OkOrProblem(await sender.Send(new GetLeaveRequestQuery(id), ct)))

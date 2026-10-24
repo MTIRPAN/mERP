@@ -28,6 +28,7 @@ import type {
   CancelMyLeaveRequestCommand,
   ChangeEmployeeAssignmentCommand,
   CheckLeavePolicyRulesQuery,
+  ColleagueItem,
   CreateDocumentTypeCommand,
   CreateEmployeeUserCommand,
   CreateJobCommand,
@@ -56,15 +57,18 @@ import type {
   LeaveRequestDetails,
   LeaveRequestPreview,
   LeaveTypeItem,
+  LeaveTypeOption,
   LinkEmployeeUserCommand,
   ListEmployeeDocumentTypesParams,
   ListEmployeesParams,
   ListJobsParams,
   ListLeavePoliciesParams,
+  ListLeaveRequestTypesParams,
   ListLeaveRequestsParams,
   ListLeaveTypesParams,
   ListMyLeaveBalancesParams,
   ListMyLeaveRequestsParams,
+  ListMyLeaveTypesParams,
   ListOrgUnitsParams,
   ListPositionsParams,
   ListSgkExitCodesParams,
@@ -92,6 +96,7 @@ import type {
   ResolveLeavePolicyParams,
   ReturnFromLeaveEarlyCommand,
   SearchEmployeeUserCandidatesParams,
+  SearchMyColleaguesParams,
   SetEmployeeIbanCommand,
   SetEmployeePhotoBody,
   SetEmploymentLeavePolicyCommand,
@@ -7359,6 +7364,270 @@ export function useListMyLeaveBalances<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getListMyLeaveTypesUrl = (params?: ListMyLeaveTypesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/me/leave-types?${stringifiedParams}` : `/api/hr/me/leave-types`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary The leave types the user may ask for; those of the main employment unless one is named
+ */
+export const listMyLeaveTypes = async (
+  params?: ListMyLeaveTypesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveTypeOption[]> => {
+  return customFetch<LeaveTypeOption[]>(getListMyLeaveTypesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListMyLeaveTypesQueryKey = (params?: ListMyLeaveTypesParams) => {
+  return [`/api/hr/me/leave-types`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMyLeaveTypesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListMyLeaveTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyLeaveTypesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyLeaveTypes>>> = ({ signal }) =>
+    listMyLeaveTypes(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyLeaveTypes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMyLeaveTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listMyLeaveTypes>>>;
+export type ListMyLeaveTypesQueryError = ErrorType<ProblemDetails>;
+
+export function useListMyLeaveTypes<
+  TData = Awaited<ReturnType<typeof listMyLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | ListMyLeaveTypesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveTypes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyLeaveTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listMyLeaveTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyLeaveTypes<
+  TData = Awaited<ReturnType<typeof listMyLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListMyLeaveTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveTypes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyLeaveTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listMyLeaveTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyLeaveTypes<
+  TData = Awaited<ReturnType<typeof listMyLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListMyLeaveTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The leave types the user may ask for; those of the main employment unless one is named
+ */
+
+export function useListMyLeaveTypes<
+  TData = Awaited<ReturnType<typeof listMyLeaveTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: ListMyLeaveTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyLeaveTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMyLeaveTypesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSearchMyColleaguesUrl = (params?: SearchMyColleaguesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/me/colleagues?${stringifiedParams}` : `/api/hr/me/colleagues`;
+};
+
+/**
+ * Requires permission: hr.self.leave.request.
+ * @summary Colleagues working in the user's companies, by name, to stand in during a leave (at most 20)
+ */
+export const searchMyColleagues = async (
+  params?: SearchMyColleaguesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ColleagueItem[]> => {
+  return customFetch<ColleagueItem[]>(getSearchMyColleaguesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchMyColleaguesQueryKey = (params?: SearchMyColleaguesParams) => {
+  return [`/api/hr/me/colleagues`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchMyColleaguesQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchMyColleagues>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: SearchMyColleaguesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyColleagues>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchMyColleaguesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchMyColleagues>>> = ({ signal }) =>
+    searchMyColleagues(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchMyColleagues>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchMyColleaguesQueryResult = NonNullable<Awaited<ReturnType<typeof searchMyColleagues>>>;
+export type SearchMyColleaguesQueryError = ErrorType<ProblemDetails>;
+
+export function useSearchMyColleagues<
+  TData = Awaited<ReturnType<typeof searchMyColleagues>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: undefined | SearchMyColleaguesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyColleagues>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchMyColleagues>>,
+          TError,
+          Awaited<ReturnType<typeof searchMyColleagues>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchMyColleagues<
+  TData = Awaited<ReturnType<typeof searchMyColleagues>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: SearchMyColleaguesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyColleagues>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchMyColleagues>>,
+          TError,
+          Awaited<ReturnType<typeof searchMyColleagues>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchMyColleagues<
+  TData = Awaited<ReturnType<typeof searchMyColleagues>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: SearchMyColleaguesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyColleagues>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Colleagues working in the user's companies, by name, to stand in during a leave (at most 20)
+ */
+
+export function useSearchMyColleagues<
+  TData = Awaited<ReturnType<typeof searchMyColleagues>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params?: SearchMyColleaguesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyColleagues>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchMyColleaguesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getListMyLeaveRequestsUrl = (params?: ListMyLeaveRequestsParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -8773,6 +9042,140 @@ export const useCreateLeaveRequestOnBehalf = <
 > => {
   return useMutation(getCreateLeaveRequestOnBehalfMutationOptions(options), queryClient);
 };
+export const getListLeaveRequestTypesUrl = (params: ListLeaveRequestTypesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/hr/leave-requests/leave-types?${stringifiedParams}`
+    : `/api/hr/leave-requests/leave-types`;
+};
+
+/**
+ * Requires permission: hr.leave.requests.read.
+ * @summary The leave types an employment in the caller's scope may take
+ */
+export const listLeaveRequestTypes = async (
+  params: ListLeaveRequestTypesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<LeaveTypeOption[]> => {
+  return customFetch<LeaveTypeOption[]>(getListLeaveRequestTypesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListLeaveRequestTypesQueryKey = (params?: ListLeaveRequestTypesParams) => {
+  return [`/api/hr/leave-requests/leave-types`, ...(params ? [params] : [])] as const;
+};
+
+export const getListLeaveRequestTypesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listLeaveRequestTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListLeaveRequestTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequestTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListLeaveRequestTypesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listLeaveRequestTypes>>> = ({ signal }) =>
+    listLeaveRequestTypes(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listLeaveRequestTypes>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListLeaveRequestTypesQueryResult = NonNullable<Awaited<ReturnType<typeof listLeaveRequestTypes>>>;
+export type ListLeaveRequestTypesQueryError = ErrorType<ProblemDetails>;
+
+export function useListLeaveRequestTypes<
+  TData = Awaited<ReturnType<typeof listLeaveRequestTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListLeaveRequestTypesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequestTypes>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLeaveRequestTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listLeaveRequestTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListLeaveRequestTypes<
+  TData = Awaited<ReturnType<typeof listLeaveRequestTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListLeaveRequestTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequestTypes>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLeaveRequestTypes>>,
+          TError,
+          Awaited<ReturnType<typeof listLeaveRequestTypes>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListLeaveRequestTypes<
+  TData = Awaited<ReturnType<typeof listLeaveRequestTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListLeaveRequestTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequestTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The leave types an employment in the caller's scope may take
+ */
+
+export function useListLeaveRequestTypes<
+  TData = Awaited<ReturnType<typeof listLeaveRequestTypes>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListLeaveRequestTypesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listLeaveRequestTypes>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListLeaveRequestTypesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 export const getGetLeaveRequestUrl = (id: string) => {
   return `/api/hr/leave-requests/${id}`;
 };

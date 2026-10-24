@@ -16,6 +16,12 @@ export const hrPermissions = {
   leaveSettingsManage: 'hr.leave.settings.manage',
   leaveBalancesRead: 'hr.leave.balances.read',
   leaveBalancesManage: 'hr.leave.balances.manage',
+  leaveRequestsRead: 'hr.leave.requests.read',
+  leaveRequestsManage: 'hr.leave.requests.manage',
+  leaveRequestsRecord: 'hr.leave.requests.record',
+  leaveBulk: 'hr.leave.bulk',
   selfProfileRead: 'hr.self.profile.read',
   selfProfileRequest: 'hr.self.profile.request',
+  selfLeaveRead: 'hr.self.leave.read',
+  selfLeaveRequest: 'hr.self.leave.request',
 } as const;
