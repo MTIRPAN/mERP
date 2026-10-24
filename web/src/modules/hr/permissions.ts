@@ -12,6 +12,8 @@ export const hrPermissions = {
   sensitiveUpdate: 'hr.employees.sensitive.update',
   documentsRead: 'hr.employees.documents.read',
   documentsManage: 'hr.employees.documents.manage',
+  leaveSettingsRead: 'hr.leave.settings.read',
+  leaveSettingsManage: 'hr.leave.settings.manage',
   selfProfileRead: 'hr.self.profile.read',
   selfProfileRequest: 'hr.self.profile.request',
 } as const;

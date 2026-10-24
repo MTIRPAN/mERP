@@ -62,6 +62,7 @@ const PositionsPage = page(() => import('@/modules/hr/positions/PositionsPage'),
 const EmployeesPage = page(() => import('@/modules/hr/employees/EmployeesPage'), 'EmployeesPage');
 const EmployeeCardPage = page(() => import('@/modules/hr/employees/EmployeeCardPage'), 'EmployeeCardPage');
 const MyCardPage = page(() => import('@/modules/hr/selfService/MyCardPage'), 'MyCardPage');
+const LeaveSettingsPage = page(() => import('@/modules/hr/leave/LeaveSettingsPage'), 'LeaveSettingsPage');
 const DocumentTypesPage = page(() => import('@/modules/hr/documentTypes/DocumentTypesPage'), 'DocumentTypesPage');
 const JobTitlesPage = page(() => import('@/modules/hr/jobTitles/JobTitlesPage'), 'JobTitlesPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
@@ -288,6 +289,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={hrPermissions.selfProfileRead}>
               <MyCardPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/leave-settings"
+          element={
+            <RequirePermission permission={hrPermissions.leaveSettingsRead}>
+              <LeaveSettingsPage />
             </RequirePermission>
           }
         />
