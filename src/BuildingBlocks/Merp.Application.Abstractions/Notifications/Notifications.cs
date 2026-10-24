@@ -12,7 +12,11 @@ namespace Merp.Application.Abstractions.Notifications;
 /// <param name="Type">Stable code, <c>{module}.{name}</c> in lower case.</param>
 /// <param name="DefaultChannels">Channels a user gets until they change their preferences.</param>
 /// <param name="Mandatory">Users cannot switch it off (e.g. security messages).</param>
-public sealed record NotificationTypeDefinition(string Type, IReadOnlyList<NotificationChannel> DefaultChannels, bool Mandatory = false)
+/// <param name="External">
+/// Sent by e-mail to an address outside the platform, e.g. to a candidate (D47): no bell, no preferences; its template is
+/// edited with the others.
+/// </param>
+public sealed record NotificationTypeDefinition(string Type, IReadOnlyList<NotificationChannel> DefaultChannels, bool Mandatory = false, bool External = false)
 {
     public string Module => Type.Split('.')[0];
 

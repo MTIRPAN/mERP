@@ -61,6 +61,10 @@ const MyLeavePage = page(() => import('@/modules/hr/leave/requests/MyLeavePage')
 const LeaveRequestsPage = page(() => import('@/modules/hr/leave/requests/LeaveRequestsPage'), 'LeaveRequestsPage');
 const LeaveCalendarPage = page(() => import('@/modules/hr/leave/calendar/LeaveCalendarPage'), 'LeaveCalendarPage');
 const LeaveReportsPage = page(() => import('@/modules/hr/leave/reports/LeaveReportsPage'), 'LeaveReportsPage');
+const RecruitmentSettingsPage = page(
+  () => import('@/modules/recruitment/settings/RecruitmentSettingsPage'),
+  'RecruitmentSettingsPage',
+);
 const OrgStructurePage = page(() => import('@/modules/hr/organization/OrgStructurePage'), 'OrgStructurePage');
 const PositionsPage = page(() => import('@/modules/hr/positions/PositionsPage'), 'PositionsPage');
 const EmployeesPage = page(() => import('@/modules/hr/employees/EmployeesPage'), 'EmployeesPage');
@@ -365,6 +369,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={hrPermissions.orgRead}>
               <JobTitlesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/settings"
+          element={
+            <RequirePermission permission={recruitmentPermissions.settingsRead}>
+              <RecruitmentSettingsPage />
             </RequirePermission>
           }
         />

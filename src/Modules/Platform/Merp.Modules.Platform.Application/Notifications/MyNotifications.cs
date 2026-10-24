@@ -152,6 +152,7 @@ internal sealed class GetMyNotificationPreferencesQueryHandler(
         IReadOnlyList<NotificationPreferenceItem> items =
         [
             .. types.All
+                .Where(t => !t.External)
                 .Select(t => new NotificationPreferenceItem(
                     t.Type,
                     localizer.Get(t.LabelKey),
@@ -170,7 +171,7 @@ internal sealed class UpdateMyNotificationPreferencesCommandValidator : Abstract
     {
         RuleFor(c => c.Preferences).NotNull();
         RuleForEach(c => c.Preferences).ChildRules(preference =>
-            preference.RuleFor(p => p.Type).Must(type => types.Find(type) is not null).WithErrorCode(NotificationErrors.UnknownTypeCode));
+            preference.RuleFor(p => p.Type).Must(type => types.Find(type) is { External: false }).WithErrorCode(NotificationErrors.UnknownTypeCode));
     }
 }
 

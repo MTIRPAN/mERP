@@ -4,15 +4,61 @@
  * mERP API
  * OpenAPI spec version: v1
  */
-import { useMutation } from '@tanstack/react-query';
-import type { MutationFunction, QueryClient, UseMutationOptions, UseMutationResult } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult,
+} from '@tanstack/react-query';
 
-import type { AnalyzeCvBody, CvAnalysisResponse, HttpValidationProblemDetails, ProblemDetails } from '../../model';
+import type {
+  AnalyzeCvBody,
+  ConsentTextItem,
+  CreateRecruitmentLookupCommand,
+  CreateStageTemplateCommand,
+  CvAnalysisResponse,
+  EntityCreatedResponse,
+  GetCurrentConsentTextParams,
+  HttpValidationProblemDetails,
+  ListConsentTextsParams,
+  ListRecruitmentLookupsParams,
+  ListStageTemplatesParams,
+  ProblemDetails,
+  PublishConsentTextCommand,
+  RecruitmentLookupItem,
+  StageTemplateItem,
+  UpdateRecruitmentLookupCommand,
+  UpdateStageTemplateCommand,
+} from '../../model';
 
 import { customFetch } from '../../../http';
 import type { ErrorType } from '../../../http';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
 
 export const getAnalyzeCvUrl = () => {
   return `/api/recruitment/cv-analyses`;
@@ -92,3 +138,1050 @@ export const useAnalyzeCv = <TError = ErrorType<HttpValidationProblemDetails | P
 ): UseMutationResult<Awaited<ReturnType<typeof analyzeCv>>, TError, AnalyzeCvMutationVariables, TContext> => {
   return useMutation(getAnalyzeCvMutationOptions(options), queryClient);
 };
+export const getListStageTemplatesUrl = (params?: ListStageTemplatesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/settings/stage-templates?${stringifiedParams}`
+    : `/api/recruitment/settings/stage-templates`;
+};
+
+/**
+ * Requires permission: recruitment.settings.read.
+ * @summary The stage templates, the default first; active ones unless asked
+ */
+export const listStageTemplates = async (
+  params?: ListStageTemplatesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<StageTemplateItem[]> => {
+  return customFetch<StageTemplateItem[]>(getListStageTemplatesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListStageTemplatesQueryKey = (params?: ListStageTemplatesParams) => {
+  return [`/api/recruitment/settings/stage-templates`, ...(params ? [params] : [])] as const;
+};
+
+export const getListStageTemplatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListStageTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listStageTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListStageTemplatesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listStageTemplates>>> = ({ signal }) =>
+    listStageTemplates(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listStageTemplates>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListStageTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listStageTemplates>>>;
+export type ListStageTemplatesQueryError = ErrorType<unknown>;
+
+export function useListStageTemplates<
+  TData = Awaited<ReturnType<typeof listStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | ListStageTemplatesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listStageTemplates>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listStageTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listStageTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListStageTemplates<
+  TData = Awaited<ReturnType<typeof listStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListStageTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listStageTemplates>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listStageTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listStageTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListStageTemplates<
+  TData = Awaited<ReturnType<typeof listStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListStageTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listStageTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The stage templates, the default first; active ones unless asked
+ */
+
+export function useListStageTemplates<
+  TData = Awaited<ReturnType<typeof listStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListStageTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listStageTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListStageTemplatesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateStageTemplateUrl = () => {
+  return `/api/recruitment/settings/stage-templates`;
+};
+
+/**
+ * Requires permission: recruitment.settings.manage.
+ * @summary Add a stage template: Applied first, Hired, Rejected and Withdrawn last (Tenant scope required)
+ */
+export const createStageTemplate = async (
+  createStageTemplateCommand: CreateStageTemplateCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateStageTemplateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createStageTemplateCommand),
+  });
+};
+
+export const getCreateStageTemplateMutationKey = () => ['createStageTemplate'] as const;
+
+export const getCreateStageTemplateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStageTemplate>>,
+    TError,
+    CreateStageTemplateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createStageTemplate>>,
+  TError,
+  CreateStageTemplateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateStageTemplateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createStageTemplate>>,
+    CreateStageTemplateMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createStageTemplate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateStageTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createStageTemplate>>>;
+export type CreateStageTemplateMutationBody = CreateStageTemplateCommand;
+export type CreateStageTemplateMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateStageTemplateMutationVariables = { data: CreateStageTemplateCommand };
+
+/**
+ * @summary Add a stage template: Applied first, Hired, Rejected and Withdrawn last (Tenant scope required)
+ */
+export const useCreateStageTemplate = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createStageTemplate>>,
+      TError,
+      CreateStageTemplateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createStageTemplate>>,
+  TError,
+  CreateStageTemplateMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateStageTemplateMutationOptions(options), queryClient);
+};
+export const getUpdateStageTemplateUrl = (id: string) => {
+  return `/api/recruitment/settings/stage-templates/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.settings.manage.
+ * @summary Change a stage template; openings keep the copy they took (Tenant scope required)
+ */
+export const updateStageTemplate = async (
+  id: string,
+  updateStageTemplateCommand: UpdateStageTemplateCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateStageTemplateUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateStageTemplateCommand),
+  });
+};
+
+export const getUpdateStageTemplateMutationKey = () => ['updateStageTemplate'] as const;
+
+export const getUpdateStageTemplateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateStageTemplate>>,
+    TError,
+    UpdateStageTemplateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateStageTemplate>>,
+  TError,
+  UpdateStageTemplateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateStageTemplateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateStageTemplate>>,
+    UpdateStageTemplateMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateStageTemplate(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateStageTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof updateStageTemplate>>>;
+export type UpdateStageTemplateMutationBody = UpdateStageTemplateCommand;
+export type UpdateStageTemplateMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateStageTemplateMutationVariables = { id: string; data: UpdateStageTemplateCommand };
+
+/**
+ * @summary Change a stage template; openings keep the copy they took (Tenant scope required)
+ */
+export const useUpdateStageTemplate = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateStageTemplate>>,
+      TError,
+      UpdateStageTemplateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateStageTemplate>>,
+  TError,
+  UpdateStageTemplateMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateStageTemplateMutationOptions(options), queryClient);
+};
+export const getListRecruitmentLookupsUrl = (params?: ListRecruitmentLookupsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/settings/lookups?${stringifiedParams}`
+    : `/api/recruitment/settings/lookups`;
+};
+
+/**
+ * Requires permission: recruitment.settings.read.
+ * @summary Rejection and withdrawal reasons, candidate sources and tags, in their order
+ */
+export const listRecruitmentLookups = async (
+  params?: ListRecruitmentLookupsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<RecruitmentLookupItem[]> => {
+  return customFetch<RecruitmentLookupItem[]>(getListRecruitmentLookupsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListRecruitmentLookupsQueryKey = (params?: ListRecruitmentLookupsParams) => {
+  return [`/api/recruitment/settings/lookups`, ...(params ? [params] : [])] as const;
+};
+
+export const getListRecruitmentLookupsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listRecruitmentLookups>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListRecruitmentLookupsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRecruitmentLookups>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListRecruitmentLookupsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listRecruitmentLookups>>> = ({ signal }) =>
+    listRecruitmentLookups(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listRecruitmentLookups>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListRecruitmentLookupsQueryResult = NonNullable<Awaited<ReturnType<typeof listRecruitmentLookups>>>;
+export type ListRecruitmentLookupsQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListRecruitmentLookups<
+  TData = Awaited<ReturnType<typeof listRecruitmentLookups>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListRecruitmentLookupsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRecruitmentLookups>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRecruitmentLookups>>,
+          TError,
+          Awaited<ReturnType<typeof listRecruitmentLookups>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListRecruitmentLookups<
+  TData = Awaited<ReturnType<typeof listRecruitmentLookups>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListRecruitmentLookupsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRecruitmentLookups>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listRecruitmentLookups>>,
+          TError,
+          Awaited<ReturnType<typeof listRecruitmentLookups>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListRecruitmentLookups<
+  TData = Awaited<ReturnType<typeof listRecruitmentLookups>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListRecruitmentLookupsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRecruitmentLookups>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Rejection and withdrawal reasons, candidate sources and tags, in their order
+ */
+
+export function useListRecruitmentLookups<
+  TData = Awaited<ReturnType<typeof listRecruitmentLookups>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListRecruitmentLookupsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listRecruitmentLookups>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListRecruitmentLookupsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateRecruitmentLookupUrl = () => {
+  return `/api/recruitment/settings/lookups`;
+};
+
+/**
+ * Requires permission: recruitment.settings.manage.
+ * @summary Add a choice to a list; its code is unique in the list (Tenant scope required)
+ */
+export const createRecruitmentLookup = async (
+  createRecruitmentLookupCommand: CreateRecruitmentLookupCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateRecruitmentLookupUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createRecruitmentLookupCommand),
+  });
+};
+
+export const getCreateRecruitmentLookupMutationKey = () => ['createRecruitmentLookup'] as const;
+
+export const getCreateRecruitmentLookupMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createRecruitmentLookup>>,
+    TError,
+    CreateRecruitmentLookupMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createRecruitmentLookup>>,
+  TError,
+  CreateRecruitmentLookupMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateRecruitmentLookupMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createRecruitmentLookup>>,
+    CreateRecruitmentLookupMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createRecruitmentLookup(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateRecruitmentLookupMutationResult = NonNullable<Awaited<ReturnType<typeof createRecruitmentLookup>>>;
+export type CreateRecruitmentLookupMutationBody = CreateRecruitmentLookupCommand;
+export type CreateRecruitmentLookupMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateRecruitmentLookupMutationVariables = { data: CreateRecruitmentLookupCommand };
+
+/**
+ * @summary Add a choice to a list; its code is unique in the list (Tenant scope required)
+ */
+export const useCreateRecruitmentLookup = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createRecruitmentLookup>>,
+      TError,
+      CreateRecruitmentLookupMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createRecruitmentLookup>>,
+  TError,
+  CreateRecruitmentLookupMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateRecruitmentLookupMutationOptions(options), queryClient);
+};
+export const getUpdateRecruitmentLookupUrl = (id: string) => {
+  return `/api/recruitment/settings/lookups/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.settings.manage.
+ * @summary Rename, reorder or retire a choice (Tenant scope required)
+ */
+export const updateRecruitmentLookup = async (
+  id: string,
+  updateRecruitmentLookupCommand: UpdateRecruitmentLookupCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateRecruitmentLookupUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateRecruitmentLookupCommand),
+  });
+};
+
+export const getUpdateRecruitmentLookupMutationKey = () => ['updateRecruitmentLookup'] as const;
+
+export const getUpdateRecruitmentLookupMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateRecruitmentLookup>>,
+    TError,
+    UpdateRecruitmentLookupMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateRecruitmentLookup>>,
+  TError,
+  UpdateRecruitmentLookupMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateRecruitmentLookupMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateRecruitmentLookup>>,
+    UpdateRecruitmentLookupMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateRecruitmentLookup(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateRecruitmentLookupMutationResult = NonNullable<Awaited<ReturnType<typeof updateRecruitmentLookup>>>;
+export type UpdateRecruitmentLookupMutationBody = UpdateRecruitmentLookupCommand;
+export type UpdateRecruitmentLookupMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateRecruitmentLookupMutationVariables = { id: string; data: UpdateRecruitmentLookupCommand };
+
+/**
+ * @summary Rename, reorder or retire a choice (Tenant scope required)
+ */
+export const useUpdateRecruitmentLookup = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateRecruitmentLookup>>,
+      TError,
+      UpdateRecruitmentLookupMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateRecruitmentLookup>>,
+  TError,
+  UpdateRecruitmentLookupMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateRecruitmentLookupMutationOptions(options), queryClient);
+};
+export const getListConsentTextsUrl = (params?: ListConsentTextsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/settings/consent-texts?${stringifiedParams}`
+    : `/api/recruitment/settings/consent-texts`;
+};
+
+/**
+ * Requires permission: recruitment.settings.read.
+ * @summary The published versions of the KVKK texts, newest first
+ */
+export const listConsentTexts = async (
+  params?: ListConsentTextsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ConsentTextItem[]> => {
+  return customFetch<ConsentTextItem[]>(getListConsentTextsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListConsentTextsQueryKey = (params?: ListConsentTextsParams) => {
+  return [`/api/recruitment/settings/consent-texts`, ...(params ? [params] : [])] as const;
+};
+
+export const getListConsentTextsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listConsentTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListConsentTextsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsentTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListConsentTextsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listConsentTexts>>> = ({ signal }) =>
+    listConsentTexts(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listConsentTexts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListConsentTextsQueryResult = NonNullable<Awaited<ReturnType<typeof listConsentTexts>>>;
+export type ListConsentTextsQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListConsentTexts<
+  TData = Awaited<ReturnType<typeof listConsentTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListConsentTextsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsentTexts>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConsentTexts>>,
+          TError,
+          Awaited<ReturnType<typeof listConsentTexts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConsentTexts<
+  TData = Awaited<ReturnType<typeof listConsentTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListConsentTextsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsentTexts>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConsentTexts>>,
+          TError,
+          Awaited<ReturnType<typeof listConsentTexts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListConsentTexts<
+  TData = Awaited<ReturnType<typeof listConsentTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListConsentTextsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsentTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The published versions of the KVKK texts, newest first
+ */
+
+export function useListConsentTexts<
+  TData = Awaited<ReturnType<typeof listConsentTexts>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListConsentTextsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listConsentTexts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListConsentTextsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getPublishConsentTextUrl = () => {
+  return `/api/recruitment/settings/consent-texts`;
+};
+
+/**
+ * Requires permission: recruitment.settings.manage.
+ * @summary Publish a new version of a KVKK text for a company (every company needs the Tenant scope) and a language
+ */
+export const publishConsentText = async (
+  publishConsentTextCommand: PublishConsentTextCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getPublishConsentTextUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(publishConsentTextCommand),
+  });
+};
+
+export const getPublishConsentTextMutationKey = () => ['publishConsentText'] as const;
+
+export const getPublishConsentTextMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof publishConsentText>>,
+    TError,
+    PublishConsentTextMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof publishConsentText>>,
+  TError,
+  PublishConsentTextMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPublishConsentTextMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof publishConsentText>>,
+    PublishConsentTextMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return publishConsentText(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PublishConsentTextMutationResult = NonNullable<Awaited<ReturnType<typeof publishConsentText>>>;
+export type PublishConsentTextMutationBody = PublishConsentTextCommand;
+export type PublishConsentTextMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type PublishConsentTextMutationVariables = { data: PublishConsentTextCommand };
+
+/**
+ * @summary Publish a new version of a KVKK text for a company (every company needs the Tenant scope) and a language
+ */
+export const usePublishConsentText = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof publishConsentText>>,
+      TError,
+      PublishConsentTextMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof publishConsentText>>,
+  TError,
+  PublishConsentTextMutationVariables,
+  TContext
+> => {
+  return useMutation(getPublishConsentTextMutationOptions(options), queryClient);
+};
+export const getGetCurrentConsentTextUrl = (params: GetCurrentConsentTextParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/settings/consent-texts/current?${stringifiedParams}`
+    : `/api/recruitment/settings/consent-texts/current`;
+};
+
+/**
+ * Requires permission: recruitment.settings.read.
+ * @summary The KVKK text a candidate of a company sees in a language; the built-in text (revision 0) while none is published
+ */
+export const getCurrentConsentText = async (
+  params: GetCurrentConsentTextParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ConsentTextItem> => {
+  return customFetch<ConsentTextItem>(getGetCurrentConsentTextUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetCurrentConsentTextQueryKey = (params?: GetCurrentConsentTextParams) => {
+  return [`/api/recruitment/settings/consent-texts/current`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetCurrentConsentTextQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCurrentConsentText>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetCurrentConsentTextParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentConsentText>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCurrentConsentTextQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentConsentText>>> = ({ signal }) =>
+    getCurrentConsentText(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentConsentText>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetCurrentConsentTextQueryResult = NonNullable<Awaited<ReturnType<typeof getCurrentConsentText>>>;
+export type GetCurrentConsentTextQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetCurrentConsentText<
+  TData = Awaited<ReturnType<typeof getCurrentConsentText>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetCurrentConsentTextParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentConsentText>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCurrentConsentText>>,
+          TError,
+          Awaited<ReturnType<typeof getCurrentConsentText>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCurrentConsentText<
+  TData = Awaited<ReturnType<typeof getCurrentConsentText>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetCurrentConsentTextParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentConsentText>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCurrentConsentText>>,
+          TError,
+          Awaited<ReturnType<typeof getCurrentConsentText>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCurrentConsentText<
+  TData = Awaited<ReturnType<typeof getCurrentConsentText>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetCurrentConsentTextParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentConsentText>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The KVKK text a candidate of a company sees in a language; the built-in text (revision 0) while none is published
+ */
+
+export function useGetCurrentConsentText<
+  TData = Awaited<ReturnType<typeof getCurrentConsentText>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetCurrentConsentTextParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCurrentConsentText>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetCurrentConsentTextQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

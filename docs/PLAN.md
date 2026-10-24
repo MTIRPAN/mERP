@@ -911,7 +911,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 
 ## Faz 4 — İşe Alım (`Recruitment` modülü)
 
-### [ ] R1 Modül iskeleti ve ayarlar — M
+### [x] R1 Modül iskeleti ve ayarlar — M
 
 **Yapılacaklar:**
 - Modül projeleri, şema `recruitment`, yetkiler, menü. *(Projeler, şema, `RecruitmentDbContext` ve "İşe alım" menüsü A2 ile geldi; kalanlar bu görevde.)*

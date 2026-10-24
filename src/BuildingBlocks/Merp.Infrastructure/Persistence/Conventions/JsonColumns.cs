@@ -14,7 +14,7 @@ public static class JsonColumns
     {
         // Stored in the database, never rendered as HTML: keep non-ASCII text (ç, ğ, ı, ş...) readable.
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        Converters = { new JsonStringEnumConverter() },
+        Converters = { new JsonStringEnumConverter(), new LocalizedStringJsonConverter() },
     };
 
     /// <summary>Stores a value as jsonb; changes are detected by comparing the JSON.</summary>

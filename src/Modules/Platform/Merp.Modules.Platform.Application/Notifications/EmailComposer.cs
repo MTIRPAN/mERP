@@ -54,7 +54,42 @@ public sealed class EmailComposer(
         var defaultCulture = tenant.RequiredTenant.DefaultCulture;
         var culture = user.Culture ?? company?.Culture ?? defaultCulture;
 
-        var model = Model(type, user, args, link, company?.ShortName, culture);
+        var model = Model(type, user.DisplayName, user.Email, args, link, company?.ShortName, culture);
+        return await RenderAsync(type, model, user.Id, user.Email!, user.DisplayName, companyId, culture, defaultCulture, now, cancellationToken);
+    }
+
+    /// <summary>An e-mail to an address outside the platform (D47), in the given culture or the company's or tenant's.</summary>
+    public async Task<EmailMessage> ComposeExternalAsync(
+        NotificationTypeDefinition type,
+        string to,
+        string? toName,
+        string? culture,
+        IReadOnlyDictionary<string, string> args,
+        Guid? companyId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var company = companyId is { } id
+            ? await db.Companies.AsNoTracking().Where(c => c.Id == CompanyId.From(id)).Select(c => new { c.ShortName, c.Culture }).SingleOrDefaultAsync(cancellationToken)
+            : null;
+        var defaultCulture = tenant.RequiredTenant.DefaultCulture;
+        var language = culture ?? company?.Culture ?? defaultCulture;
+        var model = Model(type, toName, to, args, null, company?.ShortName, language);
+        return await RenderAsync(type, model, null, to, toName, companyId, language, defaultCulture, now, cancellationToken);
+    }
+
+    private async Task<EmailMessage> RenderAsync(
+        NotificationTypeDefinition type,
+        Dictionary<string, object?> model,
+        UserId? recipientId,
+        string to,
+        string? toName,
+        Guid? companyId,
+        string culture,
+        string defaultCulture,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
         var template = await FindTemplateAsync(type.Type, companyId, culture, defaultCulture, cancellationToken);
         var subject = renderer.Render(template?.Subject ?? DefaultSubject, model, html: false);
         var body = renderer.Render(template?.Body ?? DefaultBody, model, html: true);
@@ -67,7 +102,7 @@ public sealed class EmailComposer(
 
         var title = (string)model["title"]!;
         var text = string.Join("\n\n", new[] { title, (string?)model["body"], (string?)model["link"] }.Where(p => !string.IsNullOrEmpty(p)));
-        return EmailMessage.Create(user.Id, type.Type, user.Email!, user.DisplayName, subject.Value, body.Value, text, now);
+        return EmailMessage.Create(recipientId, type.Type, to, toName, subject.Value, body.Value, text, now);
     }
 
     /// <summary>Title and body of a notification in a culture; the body is null when the type has none.</summary>
@@ -81,7 +116,8 @@ public sealed class EmailComposer(
 
     private Dictionary<string, object?> Model(
         NotificationTypeDefinition type,
-        User user,
+        string? recipientName,
+        string? recipientEmail,
         IReadOnlyDictionary<string, string> args,
         string? link,
         string? companyName,
@@ -93,7 +129,7 @@ public sealed class EmailComposer(
             ["title"] = title,
             ["body"] = body,
             ["link"] = link is null ? null : settings.WebBaseUrl.TrimEnd('/') + link,
-            ["recipient"] = new Dictionary<string, object?> { ["name"] = user.DisplayName, ["email"] = user.Email },
+            ["recipient"] = new Dictionary<string, object?> { ["name"] = recipientName, ["email"] = recipientEmail },
             ["company"] = companyName is null ? null : new Dictionary<string, object?> { ["name"] = companyName },
             ["args"] = args.ToDictionary(p => p.Key, p => (object?)p.Value, StringComparer.Ordinal),
             ["texts"] = new Dictionary<string, object?>

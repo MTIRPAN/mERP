@@ -1,10 +1,14 @@
-using Merp.Infrastructure.Localization;
-using Merp.Infrastructure.Messaging;
+using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
+using Merp.Application.Abstractions.Settings;
+using Merp.Infrastructure.Localization;
+using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Application;
+using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
+using Merp.Modules.Recruitment.Infrastructure.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Merp.Modules.Recruitment.Infrastructure;
@@ -15,10 +19,16 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddRecruitmentInfrastructure(this IServiceCollection services)
     {
         services.AddModuleDbContext<RecruitmentDbContext>(Application.AssemblyReference.Assembly);
+        services.AddScoped<IRecruitmentDbContext>(provider => provider.GetRequiredService<RecruitmentDbContext>());
         services.AddRequestHandlersFromAssembly(Application.AssemblyReference.Assembly);
         services.AddSingleton<IPermissionDefinitionProvider, RecruitmentPermissionDefinitions>();
         services.AddSingleton<INumberSequenceDefinitionProvider, RecruitmentNumberSequences>();
         services.AddLocalizationResources(Application.AssemblyReference.Assembly);
+
+        // Settings: stage templates, lists, KVKK texts, retention and the e-mails candidates get (D47)
+        services.AddSingleton<ITenantDataSeeder, RecruitmentSeeder>();
+        services.AddSingleton<ISettingDefinitionProvider, RecruitmentSettingDefinitions>();
+        services.AddSingleton<INotificationTypeProvider, RecruitmentNotificationTypes>();
         return services;
     }
 }
