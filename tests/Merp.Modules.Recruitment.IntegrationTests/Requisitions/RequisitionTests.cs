@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using Merp.Application.Abstractions.Paging;
 using Merp.Application.Abstractions.Security;
 using Merp.Modules.HR.Application;
+using Merp.Modules.HR.Contracts.Employees;
 using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application.Approvals;
 using Merp.Modules.Platform.Application.Roles;
@@ -152,6 +153,8 @@ public sealed class RequisitionTests(RequisitionFactory factory) : IClassFixture
             new { companyId = org.CompanyId, positionId = org.OpenPosition, headcount = 1, reason = "Replacement", replacedEmployeeId = Guid.NewGuid(), employmentType = "Indefinite", justification = "Ayrılan çalışan", hiringManagerUserId = org.Manager.UserId },
             Ct);
         replaced.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var people = (await requester.GetFromJsonAsync<List<EmployeeSummary>>($"{Url}/employees?companyId={org.CompanyId}&search=y%C4%B1lmaz", Ct))!;
+        people.Select(p => p.EmployeeId).ShouldBe([org.Manager.Employee, org.Requester.Employee], ignoreOrder: true);
 
         var id = await RequisitionFactory.CreatedIdAsync(await requester.PostAsJsonAsync(
             Url,
