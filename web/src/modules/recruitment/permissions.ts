@@ -5,6 +5,8 @@ export const recruitmentPermissions = {
   settingsManage: 'recruitment.settings.manage',
   requisitionsRead: 'recruitment.requisitions.read',
   requisitionsManage: 'recruitment.requisitions.manage',
+  openingsRead: 'recruitment.openings.read',
+  openingsManage: 'recruitment.openings.manage',
 } as const;
 
 /** Mirrors Merp.Modules.Recruitment.Application.RecruitmentAiFeatures. */

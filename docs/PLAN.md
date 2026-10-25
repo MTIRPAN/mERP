@@ -967,6 +967,13 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Anonim kullanıcı CV ile başvurur; aday ve başvuru oluşur; "başvurunuz alındı" e-postası Mailpit'e düşer.
 - Rıza işaretlenmeden yapılan başvuru reddedilir.
 
+**Alt PR'lar (D49):**
+- [x] **R3a ilanlar:**
+  - `JobOpening`: talepten ya da doğrudan, aşama şablonunun kopyası, işe alım ekibi, başvuru formu ve eleme soruları
+  - yayınla, beklet, kapat; HTML sunucuda temizlenir (`IRichTextSanitizer`, HtmlSanitizer)
+  - web: İş ilanları sayfası, TipTap editörlü form, talep ekranında "İlan oluştur"
+- [ ] **R3b kariyer sayfası ve başvuru:** herkese açık API, aday (e-postayla tek) ve başvuru, KVKK onayı, "başvurunuz alındı" e-postası, kariyer sayfası, iç başvuru
+
 ### [ ] R4 Aday havuzu ve başvurular 🔍 — L
 
 **Yapılacaklar:**

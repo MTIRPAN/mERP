@@ -30,6 +30,15 @@ public static class RecruitmentPermissions
         /// <summary>Open, correct, send and cancel them, and see their salary range.</summary>
         public const string Manage = "recruitment.requisitions.manage";
     }
+
+    public static class Openings
+    {
+        /// <summary>See the job openings of the companies in scope (D49).</summary>
+        public const string Read = "recruitment.openings.read";
+
+        /// <summary>Open, correct, publish, hold and close them.</summary>
+        public const string Manage = "recruitment.openings.manage";
+    }
 }
 
 /// <summary>Permission catalog of the Recruitment module (docs/domain/yetki-ve-onay.md §1.5).</summary>
@@ -42,5 +51,7 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Settings.Manage),
         new(RecruitmentPermissions.Requisitions.Read),
         new(RecruitmentPermissions.Requisitions.Manage),
+        new(RecruitmentPermissions.Openings.Read),
+        new(RecruitmentPermissions.Openings.Manage),
     ];
 }
