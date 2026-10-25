@@ -74,6 +74,7 @@ const LeaveSettingsPage = page(() => import('@/modules/hr/leave/LeaveSettingsPag
 const DocumentTypesPage = page(() => import('@/modules/hr/documentTypes/DocumentTypesPage'), 'DocumentTypesPage');
 const JobTitlesPage = page(() => import('@/modules/hr/jobTitles/JobTitlesPage'), 'JobTitlesPage');
 const RequisitionsPage = page(() => import('@/modules/recruitment/requisitions/RequisitionsPage'), 'RequisitionsPage');
+const OpeningsPage = page(() => import('@/modules/recruitment/openings/OpeningsPage'), 'OpeningsPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -386,6 +387,22 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={recruitmentPermissions.requisitionsRead}>
               <RequisitionsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/openings"
+          element={
+            <RequirePermission permission={recruitmentPermissions.openingsRead}>
+              <OpeningsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/openings/:id"
+          element={
+            <RequirePermission permission={recruitmentPermissions.openingsRead}>
+              <OpeningsPage />
             </RequirePermission>
           }
         />

@@ -347,6 +347,149 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "recruitment");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Openings.JobOpening", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<string>("CloseReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("close_reason");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("EmploymentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("employment_type");
+
+                    b.Property<string>("Form")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("form");
+
+                    b.Property<int>("Headcount")
+                        .HasColumnType("integer")
+                        .HasColumnName("headcount");
+
+                    b.Property<Guid>("HiringManagerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("hiring_manager_user_id");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<DateOnly?>("PublishFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("publish_from");
+
+                    b.Property<DateOnly?>("PublishUntil")
+                        .HasColumnType("date")
+                        .HasColumnName("publish_until");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Qualifications")
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)")
+                        .HasColumnName("qualifications");
+
+                    b.Property<Guid?>("RequisitionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requisition_id");
+
+                    b.Property<Guid>("StageTemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("stage_template_id");
+
+                    b.Property<string>("Stages")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("stages");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Team")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("team");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("title");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("visibility");
+
+                    b.Property<string>("WorkModel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("work_model");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_openings");
+
+                    b.HasIndex("RequisitionId")
+                        .HasDatabaseName("ix_job_openings_requisition_id");
+
+                    b.HasIndex("CompanyId", "CreatedAt")
+                        .HasDatabaseName("ix_job_openings_company_id_created_at");
+
+                    b.HasIndex("Status", "Visibility")
+                        .HasDatabaseName("ix_job_openings_status_visibility");
+
+                    b.ToTable("job_openings", "recruitment");
+                });
+
             modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Requisitions.JobRequisition", b =>
                 {
                     b.Property<Guid>("Id")

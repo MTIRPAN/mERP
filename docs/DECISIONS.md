@@ -237,6 +237,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
 | Loglama / izleme | Serilog, OpenTelemetry | Apache-2.0 |
 | Excel | ClosedXML | MIT |
 | Şablon | Fluid | MIT |
+| HTML temizleme (zengin metin, D49) | HtmlSanitizer (Ganss.Xss; bağımlılıkları AngleSharp, AngleSharp.Css) | MIT |
 | PDF | Gotenberg (konteyner, HTTP ile) | MIT |
 | E-posta | MailKit | MIT |
 | Takvim daveti | Ical.Net | MIT |
@@ -1362,3 +1363,51 @@ Seçilen kültür `Content-Language` başlığında döner.
 **İlan:** Onaylanmış ve dolmamış talepte `CanCreateOpening` true döner; web detayında "ilan açılabilir" bilgisi çıkar. "İlan oluştur" düğmesi ve ilanın talebe bağlanması R3'te gelir.
 
 **Web:** İşe alım → "Personel talepleri" (`/recruitment/requisitions`, `/recruitment/requisitions/:id` onay kutusunun bağlantısı): durum ve metin süzgeçli liste, taslak kaydetme ve onaya gönderme seçenekli form (pozisyonlar açık taleplerden sonra kalan boş kadroyla listelenir), onay zaman çizelgeli detay ve iptal.
+
+## D49 — İş ilanları ve kariyer sayfası
+
+**Bağlam:** R3, ilanları (`JobOpening`) ve herkese açık kariyer sayfasını getirir. Kullanıcı kararları (2026-10-25):
+- R3 iki PR'dır: R3a ilanlar (backend ve web), R3b kariyer sayfası ve başvuru.
+- İlan metinleri HTML olarak saklanır ve sunucuda temizlenir.
+- Aday kiracıda e-posta adresiyle tektir.
+- Kiracı başına tek kariyer sayfası vardır.
+
+**Yetkiler:** `recruitment.openings.read` (şirket kapsamındaki ilanları görme) ve `recruitment.openings.manage` (açma, düzeltme, yayınlama, bekletme ve kapatma). `recruitment.*` deseniyle İK Yöneticisi ve İşe Alım Uzmanı rollerine geçer. Kapsam talepteki gibi şirket bazındadır; kapsam dışındaki ilan 404 döner.
+
+**İlan (R3a):**
+- Alanlar:
+  - şirket ve isteğe bağlı onaylanmış personel talebi
+  - başlık, açıklama ve aranan nitelikler (zengin metin)
+  - şube, çalışma şekli (işyerinde, uzaktan, hibrit), istihdam tipi (talepteki tipler), açık kadro sayısı (1–99)
+  - görünürlük ve yayın tarihleri (başlangıç, bitiş)
+- **Görünürlük:** İç ilan yalnızca çalışanlara görünür. Dış ilan kariyer sayfasında ve çalışanlara görünür.
+- **Talepten ilan:** Talep onaylanmış olmalı, aynı şirkette olmalı ve ilanın kadro sayısı talebin kalan kişi sayısını (`Headcount − FilledCount`) aşmamalı. Bir talepten birden çok ilan açılabilir (örn. farklı kanallar). Talep ekranındaki "İlan oluştur" formu talebin bilgileriyle doldurur.
+- **Aşamalar:** İlan, seçilen aşama şablonunun (varsayılan: kiracının varsayılanı) aşamalarını kopyalar (D47). Şablon yalnızca taslakta değiştirilebilir; yayından sonra aşamalar sabittir. Aşamaların ilan içinde düzenlenmesi R4'te ele alınacak.
+- **İşe alım ekibi:** işe alan yönetici (zorunlu), işe alım uzmanları ve mülakatçılar (aktif kullanıcılar). Ekibin adaylara erişimi R4–R5'te kullanılır.
+- **Başvuru formu:**
+  - Standart alanlar: ad, soyad ve e-posta her zaman istenir. Telefon ve CV'nin zorunluluğu ile ön yazı sorulup sorulmayacağı ilanda seçilir.
+  - En fazla 20 özel soru. Tipler: kısa metin, uzun metin, evet/hayır, tek seçim, çok seçim, sayı.
+  - Evet/hayır ve seçimli sorular eleme sorusu olabilir: kabul edilen cevaplar işaretlenir. Bu cevapların dışında kalan başvuru "elemeye takıldı" olarak işaretlenir (R3b); başvuru yine alınır, ne yapılacağına işe alım ekibi karar verir (R4).
+- **Durumlar:** Taslak → Yayında ⇄ Beklemede → Kapalı. Taslak ve yayındaki ya da bekleyen ilan düzeltilebilir; kapalı ilan değişmez.
+  - Yayınlama: talepli ilanda talep hâlâ onaylı olmalı. Bitiş tarihi geçmiş olmamalı. Başlangıç tarihi verilmemişse şirketin bugünü yazılır.
+  - Kariyer sayfasında yalnızca yayındaki ve tarih aralığı içindeki dış ilanlar görünür.
+- **Zengin metin:**
+  - TipTap (MIT) HTML üretir. Sunucu, `IRichTextSanitizer` ile kayıtta izinli etiketler dışındaki her şeyi siler.
+    - İzinli etiketler: paragraf, satır sonu, kalın, italik, altı çizili, üstü çizili, başlık 2–4, listeler, alıntı, bağlantı (`http`, `https`, `mailto`).
+    - Bağlantılar `rel="noopener noreferrer nofollow"` ve `target="_blank"` ile yazılır.
+  - Temizlik kütüphanesi HtmlSanitizer'dır (Ganss.Xss, MIT; bağımlılıkları AngleSharp ve AngleSharp.Css, MIT).
+  - Temizlenmiş HTML kariyer sayfasında, e-postada ve PDF'te doğrudan kullanılabilir.
+  - Boş içerik (yalnızca boş paragraflar) boş sayılır.
+
+**Kariyer sayfası ve başvuru (R3b):**
+- Herkese açık API `/api/public/{tenantCode}/careers/**` (D20).
+  - İçerik: ilan listesi (şirket, şube ve çalışma şekli süzgeçli, şirket adı ve logosuyla), ilan detayı ve başvuru.
+  - Koruma: IP başına rate limit ve honeypot alanı. CV yalnızca PDF, DOC ya da DOCX olabilir (en fazla 5 MB).
+- Sayfa `/careers/:tenant` kiracının tüm şirketlerinin dış ilanlarını listeler.
+- **Aday:** Kiracıda e-posta adresiyle tektir (kullanıcı kararı). Başvuruda aday yoksa oluşturulur; varsa iletişim bilgileri ve CV'si güncellenir.
+  - Aynı adayın aynı ilana ikinci başvurusu reddedilir.
+- **Başvuru:** İlanın ilk (Applied) aşamasında başlar. Soruların cevaplarını ve eleme sonucunu taşır.
+- **KVKK onayı:** Başvuru, aydınlatma metninin onaylandığını işaretlemeden reddedilir. Onay, adayın gördüğü sürümle (D47) kaydedilir.
+  - Açık rıza (havuzda saklama) isteğe bağlıdır.
+- **E-posta:** "Başvurunuz alındı" e-postası `ExternalEmailRequested` (`recruitment.application_received`) ile gider (D47).
+- **İç başvuru:** Çalışan self servisten iç ya da dış ilana başvurur. Başvuru "iç aday" işaretlidir; aday bilgisi personel kaydından gelir.

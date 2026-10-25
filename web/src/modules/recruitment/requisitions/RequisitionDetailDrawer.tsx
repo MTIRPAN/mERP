@@ -1,6 +1,7 @@
 import { Alert, App, Button, Card, Descriptions, Drawer, Flex, Form, Input, Modal, Skeleton, Tag } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import {
   cancelRequisition,
   submitRequisition,
@@ -10,7 +11,9 @@ import type { RequisitionStatus } from '@/shared/api/generated/model';
 import { applyApiErrorsToForm } from '@/shared/api/formErrors';
 import { isApiError } from '@/shared/api/problem';
 import { ApprovalTimeline } from '@/shared/approvals/ApprovalTimeline';
+import { useHasPermission } from '@/shared/auth/permissionContext';
 import { formatDate, formatDateTime } from '@/shared/format/date';
+import { recruitmentPermissions } from '../permissions';
 import { RequisitionDrawer } from './RequisitionDrawer';
 import { REQUISITION_DOCUMENT, statusColors, useRequisitionRefresh } from './requisitions';
 
@@ -78,6 +81,8 @@ export const RequisitionDetailDrawer = ({ id, onClose }: RequisitionDetailDrawer
   const { t, i18n } = useTranslation();
   const { message } = App.useApp();
   const refresh = useRequisitionRefresh();
+  const navigate = useNavigate();
+  const canOpen = useHasPermission(recruitmentPermissions.openingsManage);
   const { data: details } = useGetRequisition(id);
   const [dialog, setDialog] = useState<'edit' | 'cancel'>();
   const [busy, setBusy] = useState(false);
@@ -143,7 +148,22 @@ export const RequisitionDetailDrawer = ({ id, onClose }: RequisitionDetailDrawer
             />
           )}
           {details.canCreateOpening && (
-            <Alert type="success" showIcon title={t('web.recruitment.requisitions.ready_for_opening')} />
+            <Alert
+              type="success"
+              showIcon
+              title={t('web.recruitment.requisitions.ready_for_opening')}
+              action={
+                canOpen && (
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={() => void navigate(`/recruitment/openings?fromRequisition=${id}`)}
+                  >
+                    {t('web.recruitment.requisitions.create_opening')}
+                  </Button>
+                )
+              }
+            />
           )}
           <Descriptions
             size="small"
