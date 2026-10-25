@@ -27,6 +27,27 @@ public sealed record UserOrgPosition(Guid PositionId, Guid OrgUnitId, Guid Compa
 /// <param name="Positions">The primary position first.</param>
 public sealed record UserOrgInfo(Guid UserId, Guid EmployeeId, IReadOnlyList<UserOrgPosition> Positions);
 
+/// <summary>A unit of a company, for other modules' pickers.</summary>
+public sealed record OrgUnitInfo(Guid OrgUnitId, Guid? ParentId, string Code, string Name);
+
+/// <summary>A position with its seats: Norm seats, Filled taken today.</summary>
+/// <remarks>IsActive: open for hiring; a closed position has no vacant seats.</remarks>
+public sealed record OrgPositionInfo(
+    Guid PositionId,
+    string Code,
+    Guid CompanyId,
+    Guid OrgUnitId,
+    string OrgUnitName,
+    Guid JobId,
+    string JobName,
+    int Norm,
+    int Filled,
+    bool IsActive)
+{
+    /// <summary>Seats free today.</summary>
+    public int Vacant => IsActive ? Math.Max(Norm - Filled, 0) : 0;
+}
+
 /// <summary>
 /// The organization for other modules (D37), read only. Scopes are not applied: the caller decides what to show.
 /// Until job assignments exist (H2) positions have no holders, so the person related answers are empty.
@@ -44,4 +65,13 @@ public interface IOrgQuery
 
     /// <summary>The positions of a user's employee; null when the user holds none.</summary>
     Task<UserOrgInfo?> GetUserOrgInfoAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>The units of a company valid today, by name (D48).</summary>
+    Task<IReadOnlyList<OrgUnitInfo>> GetUnitsAsync(Guid companyId, CancellationToken cancellationToken = default);
+
+    /// <summary>The positions of a company, of a unit and the units below it when given, with their seats (D48).</summary>
+    Task<IReadOnlyList<OrgPositionInfo>> GetPositionsAsync(Guid companyId, Guid? orgUnitId, CancellationToken cancellationToken = default);
+
+    /// <summary>A position with its seats; null when unknown.</summary>
+    Task<OrgPositionInfo?> GetPositionAsync(Guid positionId, CancellationToken cancellationToken = default);
 }

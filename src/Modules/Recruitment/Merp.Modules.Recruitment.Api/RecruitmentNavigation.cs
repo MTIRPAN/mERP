@@ -18,6 +18,13 @@ internal sealed class RecruitmentMenu : IMenuContributor
                 Permission: RecruitmentPermissions.Cv.Analyze,
                 AiFeature: RecruitmentAiFeatures.CvAnalysis),
             new(
+                "requisitions",
+                "web.shell.menu.requisitions",
+                Path: "/recruitment/requisitions",
+                Icon: "requisition",
+                Permission: RecruitmentPermissions.Requisitions.Read,
+                Order: 10),
+            new(
                 "recruitment-settings",
                 "web.shell.menu.recruitment_settings",
                 Path: "/recruitment/settings",

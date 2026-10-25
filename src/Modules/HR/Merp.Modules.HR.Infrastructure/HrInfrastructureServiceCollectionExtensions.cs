@@ -18,6 +18,7 @@ using Merp.Modules.HR.Application.Imports;
 using Merp.Modules.HR.Application.Leave;
 using Merp.Modules.HR.Application.Organization;
 using Merp.Modules.HR.Application.SelfService;
+using Merp.Modules.HR.Contracts.Employees;
 using Merp.Modules.HR.Contracts.Organization;
 using Merp.Modules.HR.Infrastructure.Documents;
 using Merp.Modules.HR.Infrastructure.Employees;
@@ -50,6 +51,7 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddScoped<IReportingLines, ReportingLineReader>();
         services.AddScoped<ReportingLinesBuilder>();
         services.AddScoped<IOrgQuery, OrgQuery>();
+        services.AddScoped<IEmployeeLookup, EmployeeLookup>();
         services.AddScoped<ReportingLinesJob>();
         services.AddSingleton(RecurringJobDefinition.For<ReportingLinesJob>(ReportingLinesJob.JobId, ReportingLinesJob.Cron));
 

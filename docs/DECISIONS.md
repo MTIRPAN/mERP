@@ -1338,3 +1338,27 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Yapı taşı:** jsonb kolonlarındaki çok dilli adlar (`LocalizedString`) kendi kolonlarıyla aynı biçimde (`{"tr-TR": "…"}`) yazılır.
 
 **Web:** İşe alım → "İşe alım ayarları" (`/recruitment/settings`, `recruitment.settings.read`): aşama şablonları (aşama ekleme, sıralama, tip ve süre), listeler, KVKK metinleri (tür, şirket ve dil seçilerek geçerli metin, sürüm geçmişi ve yeni sürüm yayınlama) ve aday e-postalarının ve saklama süresinin hangi ekranda ayarlandığını gösteren sekme.
+
+## D48 — Personel talebi
+
+**Bağlam:** R2, işe alımın ilk belgesi olan personel talebini (`JobRequisition`) getirir. Kullanıcı kararları (2026-10-25): talebi yalnızca İK ve işe alım açar (Yönetici rolüne yetki verilmez; yöneticiler onaycıdır); boş kadro hesabında açık talepler de düşülür; R2 tek PR'dır.
+
+**Yetkiler:** `recruitment.requisitions.read` (şirket kapsamındaki talepleri görme) ve `recruitment.requisitions.manage` (açma, düzeltme, gönderme, iptal ve maaş aralığını görme). `recruitment.*` deseniyle İK Yöneticisi ve İşe Alım Uzmanı rollerine geçer. Kapsam şirket bazındadır: Tenant ya da talebin şirketini kapsayan Company kapsamı gerekir; kapsam dışındaki talep 404 döner.
+
+**Talep:**
+- Numara P5 `recruitment.requisition` (`PT-{yyyy}-{seq:5}`), şirketin saat dilimindeki güne göre.
+- Pozisyon: mevcut bir pozisyon (birim pozisyondan alınır) ya da bir birim için yeni pozisyon önerisi (ad ve seviye). Kişi sayısı 1–99. Neden: yeni kadro ya da ayrılan yerine (yerine alınacak kişi şirkette bir istihdamı olan personeldir). Çalışma şekli, istenen başlama tarihi, brüt aylık maaş aralığı ve para birimi (`[Sensitive]`), gerekçe ve işe alan yönetici (aktif kullanıcı).
+- Durumlar: Taslak → Onay bekliyor → (İade edildi → Onay bekliyor) → Onaylandı / Reddedildi; İptal edildi; Dolduruldu (R7'de işe alımlar `FilledCount`'u artırınca).
+- Taslak ve iade edilmiş talep düzeltilir ve gönderilir; karar verilmemiş ya da onaylanmış ve dolmamış talep iptal edilir. Açık onay süreci iptalde `ApprovalCancellationRequested` ile kapanır.
+
+**Boş kadro (kullanıcı kararı):** Mevcut pozisyon için istenebilecek kişi sayısı = pozisyonun bugünkü boş kadrosu (norm − dolu; pasif pozisyonda 0) − aynı pozisyondaki açık taleplerin (Onay bekliyor, İade edildi, Onaylandı) kalan kişi sayısı (`Headcount − FilledCount`). Kontrol kayıtta ve gönderimde yapılır (`recruitment.requisitions.errors.no_vacancy`, kalan sayıyla). Yeni pozisyon önerisi kadro kontrolüne girmez.
+
+**İK'dan okuma (kural 3):** HR.Contracts'a salt-okunur sorgular eklendi: `IOrgQuery.GetUnitsAsync`, `GetPositionsAsync` (birim ve alt birimleri), `GetPositionAsync` (norm, dolu ve boş kadroyla) ve `IEmployeeLookup` (şirketin personeli, yalnızca ad ve sicil numarası). Bu sorgular kapsam uygulamaz; işe alım kendi yetki ve kapsamıyla erişimi denetler.
+
+**Onay:** Belge türü `recruitment.requisition`. Olgular: `companyId`, `orgUnitId`, `headcount`, `reason` (NewHeadcount, Replacement), `isNewPosition`. Tanım yoksa varsayılan akış: hiyerarşik yönetici (1. seviye, talep edenin pozisyonuna göre) ve İK Yöneticisi rolü; iki adımda da iade açıktır. Tanım yoksa otomatik onay yoktur. Sonuç ve iade inbox ile talebe işlenir; talep edene bildirim gider (`recruitment.requisition_completed`, `recruitment.requisition_returned`).
+
+**Erişim ve maaş:** Talebi şirket kapsamındaki okuma yetkisi olanlar ve onaycıları görür (onaycılar için okuma yetkisi de gerekir; yetkisiz onaycı talebi onay görevindeki özetten değerlendirir, belgeye görev üzerinden tam erişim (yetki-ve-onay kural 5) sonraki bir işte ele alınacak). Maaş aralığı yalnızca yönetme yetkisi olanlara ve onaycılara gösterilir; görülmesi audit'e `Read` olarak yazılır. Onay zaman çizelgesini talep eden ve şirket kapsamındaki okuyucular da görür.
+
+**İlan:** Onaylanmış ve dolmamış talepte `CanCreateOpening` true döner; web detayında "ilan açılabilir" bilgisi çıkar. "İlan oluştur" düğmesi ve ilanın talebe bağlanması R3'te gelir.
+
+**Web:** İşe alım → "Personel talepleri" (`/recruitment/requisitions`, `/recruitment/requisitions/:id` onay kutusunun bağlantısı): durum ve metin süzgeçli liste, taslak kaydetme ve onaya gönderme seçenekli form (pozisyonlar açık taleplerden sonra kalan boş kadroyla listelenir), onay zaman çizelgeli detay ve iptal.

@@ -925,7 +925,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 **Kabul kriterleri:**
 - Seed'li varsayılan aşama şablonu ve e-posta şablonları gelir; admin bunları değiştirebilir.
 
-### [ ] R2 Personel talebi — M
+### [x] R2 Personel talebi — M
 
 **Yapılacaklar:**
 - **`JobRequisition`:**

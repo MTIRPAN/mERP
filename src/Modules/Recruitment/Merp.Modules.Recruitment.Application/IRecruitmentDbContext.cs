@@ -1,3 +1,4 @@
+using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -18,6 +19,9 @@ public interface IRecruitmentDbContext
 
     /// <summary>Published versions of the KVKK texts candidates see (D47).</summary>
     DbSet<ConsentText> ConsentTexts { get; }
+
+    /// <summary>Requests to hire people (D48).</summary>
+    DbSet<JobRequisition> JobRequisitions { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

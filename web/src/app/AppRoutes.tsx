@@ -73,6 +73,7 @@ const MyCardPage = page(() => import('@/modules/hr/selfService/MyCardPage'), 'My
 const LeaveSettingsPage = page(() => import('@/modules/hr/leave/LeaveSettingsPage'), 'LeaveSettingsPage');
 const DocumentTypesPage = page(() => import('@/modules/hr/documentTypes/DocumentTypesPage'), 'DocumentTypesPage');
 const JobTitlesPage = page(() => import('@/modules/hr/jobTitles/JobTitlesPage'), 'JobTitlesPage');
+const RequisitionsPage = page(() => import('@/modules/recruitment/requisitions/RequisitionsPage'), 'RequisitionsPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
@@ -369,6 +370,22 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={hrPermissions.orgRead}>
               <JobTitlesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/requisitions"
+          element={
+            <RequirePermission permission={recruitmentPermissions.requisitionsRead}>
+              <RequisitionsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/requisitions/:id"
+          element={
+            <RequirePermission permission={recruitmentPermissions.requisitionsRead}>
+              <RequisitionsPage />
             </RequirePermission>
           }
         />

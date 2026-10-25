@@ -21,6 +21,15 @@ public static class RecruitmentPermissions
         /// <summary>Change them; the tenant's catalogs and the texts of every company need the Tenant scope.</summary>
         public const string Manage = "recruitment.settings.manage";
     }
+
+    public static class Requisitions
+    {
+        /// <summary>See the requisitions of the companies in scope (D48).</summary>
+        public const string Read = "recruitment.requisitions.read";
+
+        /// <summary>Open, correct, send and cancel them, and see their salary range.</summary>
+        public const string Manage = "recruitment.requisitions.manage";
+    }
 }
 
 /// <summary>Permission catalog of the Recruitment module (docs/domain/yetki-ve-onay.md §1.5).</summary>
@@ -31,5 +40,7 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Cv.Analyze),
         new(RecruitmentPermissions.Settings.Read),
         new(RecruitmentPermissions.Settings.Manage),
+        new(RecruitmentPermissions.Requisitions.Read),
+        new(RecruitmentPermissions.Requisitions.Manage),
     ];
 }
