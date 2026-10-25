@@ -3,6 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="../Merp.Modules.Recruitment.Domain/Merp.Modules.Recruitment.Domain.csproj" />
     <ProjectReference Include="../Merp.Modules.Recruitment.Contracts/Merp.Modules.Recruitment.Contracts.csproj" />
+    <ProjectReference Include="../../Platform/Merp.Modules.Platform.Contracts/Merp.Modules.Platform.Contracts.csproj" />
+    <ProjectReference Include="../../HR/Merp.Modules.HR.Contracts/Merp.Modules.HR.Contracts.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/Merp.Application.Persistence/Merp.Application.Persistence.csproj" />
   </ItemGroup>
 

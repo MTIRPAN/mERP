@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Merp.Modules.HR.Application.Organization;
 
 /// <summary><see cref="IOrgQuery"/> over the HR tables (D37).</summary>
-public sealed class OrgQuery(IHrDbContext db, IPositionHolders holders, IReportingLines reportingLines) : IOrgQuery
+public sealed class OrgQuery(IHrDbContext db, IPositionHolders holders, IReportingLines reportingLines, TimeProvider timeProvider) : IOrgQuery
 {
     public async Task<IReadOnlyList<Guid>> GetSubtreeUnitIdsAsync(Guid orgUnitId, CancellationToken cancellationToken = default)
     {
@@ -80,6 +80,56 @@ public sealed class OrgQuery(IHrDbContext db, IPositionHolders holders, IReporti
                     var position = positions[h.PositionId];
                     return new UserOrgPosition(h.PositionId.Value, position.OrgUnitId.Value, position.CompanyId, position.JobId.Value, h.IsPrimary);
                 })]);
+    }
+
+    public async Task<IReadOnlyList<OrgUnitInfo>> GetUnitsAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
+        return await db.OrgUnits.AsNoTracking()
+            .Where(u => u.CompanyId == companyId && (u.ValidTo == null || u.ValidTo >= today))
+            .OrderBy(u => u.Name)
+            .Select(u => new OrgUnitInfo(u.Id.Value, u.ParentId == null ? null : u.ParentId.Value.Value, u.Code, u.Name))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<OrgPositionInfo>> GetPositionsAsync(Guid companyId, Guid? orgUnitId, CancellationToken cancellationToken = default)
+    {
+        var positions = db.Positions.AsNoTracking().Where(p => p.CompanyId == companyId);
+        if (orgUnitId is { } unitId)
+        {
+            var units = await GetSubtreeUnitIdsAsync(unitId, cancellationToken);
+            var ids = units.Select(OrgUnitId.From).ToList();
+            positions = positions.Where(p => ids.Contains(p.OrgUnitId));
+        }
+
+        return await InfosAsync(positions, cancellationToken);
+    }
+
+    public async Task<OrgPositionInfo?> GetPositionAsync(Guid positionId, CancellationToken cancellationToken = default) =>
+        (await InfosAsync(db.Positions.AsNoTracking().Where(p => p.Id == PositionId.From(positionId)), cancellationToken)).SingleOrDefault();
+
+    private async Task<IReadOnlyList<OrgPositionInfo>> InfosAsync(IQueryable<Position> positions, CancellationToken cancellationToken)
+    {
+        var rows = await positions
+            .Join(db.OrgUnits.AsNoTracking(), p => p.OrgUnitId, u => u.Id, (p, u) => new { Position = p, UnitName = u.Name })
+            .Join(db.Jobs.AsNoTracking(), x => x.Position.JobId, j => j.Id, (x, j) => new { x.Position, x.UnitName, JobName = j.Name })
+            .OrderBy(x => x.Position.Code)
+            .ToListAsync(cancellationToken);
+        var filled = await holders.CountFilledAsync([.. rows.Select(r => r.Position.Id)], cancellationToken);
+        return
+        [
+            .. rows.Select(r => new OrgPositionInfo(
+                r.Position.Id.Value,
+                r.Position.Code,
+                r.Position.CompanyId,
+                r.Position.OrgUnitId.Value,
+                r.UnitName,
+                r.Position.JobId.Value,
+                r.JobName,
+                r.Position.Norm,
+                filled.GetValueOrDefault(r.Position.Id),
+                r.Position.Status == PositionStatus.Active)),
+        ];
     }
 
     private static List<OrgPerson> People(IEnumerable<PositionHolder> holders) =>

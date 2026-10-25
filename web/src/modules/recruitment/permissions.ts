@@ -3,6 +3,8 @@ export const recruitmentPermissions = {
   cvAnalyze: 'recruitment.cv.analyze',
   settingsRead: 'recruitment.settings.read',
   settingsManage: 'recruitment.settings.manage',
+  requisitionsRead: 'recruitment.requisitions.read',
+  requisitionsManage: 'recruitment.requisitions.manage',
 } as const;
 
 /** Mirrors Merp.Modules.Recruitment.Application.RecruitmentAiFeatures. */

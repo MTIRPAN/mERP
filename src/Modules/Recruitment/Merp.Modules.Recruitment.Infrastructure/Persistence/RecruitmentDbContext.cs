@@ -1,11 +1,12 @@
 using Merp.Modules.Recruitment.Application;
+using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
 using Merp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Merp.Modules.Recruitment.Infrastructure.Persistence;
 
-/// <summary>Schema <c>recruitment</c>: the settings of R1 (D47); applications and the rest come with PLAN R2–R9.</summary>
+/// <summary>Schema <c>recruitment</c>: the settings of R1 (D47) and the requisitions of R2 (D48); openings and the rest come with PLAN R3–R9.</summary>
 public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> options) : ModuleDbContext(options), IModuleSchema, IRecruitmentDbContext
 {
     public static string SchemaName => "recruitment";
@@ -17,6 +18,8 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
     public DbSet<RecruitmentLookup> Lookups => Set<RecruitmentLookup>();
 
     public DbSet<ConsentText> ConsentTexts => Set<ConsentText>();
+
+    public DbSet<JobRequisition> JobRequisitions => Set<JobRequisition>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

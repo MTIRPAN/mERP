@@ -91,6 +91,18 @@
           "Microsoft.EntityFrameworkCore": "[10.0.13, )"
         }
       },
+      "merp.modules.hr.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )"
+        }
+      },
+      "merp.modules.platform.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )"
+        }
+      },
       "merp.modules.recruitment.contracts": {
         "type": "Project",
         "dependencies": {
