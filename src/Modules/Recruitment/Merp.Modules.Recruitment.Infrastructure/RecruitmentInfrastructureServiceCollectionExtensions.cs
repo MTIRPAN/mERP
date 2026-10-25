@@ -7,6 +7,7 @@ using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Application;
+using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
@@ -38,6 +39,10 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         services.AddSingleton<IApprovalDocumentTypeProvider, RecruitmentApprovalDocumentTypes>();
         services.AddSingleton<INotificationTypeProvider, RequisitionNotificationTypes>();
         services.AddScoped<IApprovalDocumentAccessPolicy, RequisitionAccessPolicy>();
+
+        // Openings: the checks of the form and the list rows (D49)
+        services.AddScoped<OpeningRules>();
+        services.AddScoped<OpeningRows>();
         return services;
     }
 }

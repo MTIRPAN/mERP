@@ -22,8 +22,11 @@ import type {
 
 import type {
   AnalyzeCvBody,
+  BranchSummary,
   CancelRequisitionCommand,
+  CloseOpeningCommand,
   ConsentTextItem,
+  CreateOpeningCommand,
   CreateRecruitmentLookupCommand,
   CreateRequisitionCommand,
   CreateStageTemplateCommand,
@@ -33,12 +36,17 @@ import type {
   GetCurrentConsentTextParams,
   HttpValidationProblemDetails,
   ListConsentTextsParams,
+  ListOpeningBranchesParams,
+  ListOpeningsParams,
   ListRecruitmentLookupsParams,
   ListRequisitionPositionsParams,
   ListRequisitionUnitsParams,
   ListRequisitionsParams,
   ListStageTemplatesParams,
+  OpeningDetails,
+  OpeningTemplateOption,
   OrgUnitInfo,
+  PagedResultOfOpeningListItem,
   PagedResultOfRequisitionListItem,
   ProblemDetails,
   PublishConsentTextCommand,
@@ -46,9 +54,11 @@ import type {
   RequisitionDetails,
   RequisitionPositionItem,
   RequisitionUserOption,
+  SearchOpeningUsersParams,
   SearchRequisitionEmployeesParams,
   SearchRequisitionUsersParams,
   StageTemplateItem,
+  UpdateOpeningCommand,
   UpdateRecruitmentLookupCommand,
   UpdateRequisitionCommand,
   UpdateStageTemplateCommand,
@@ -1336,6 +1346,1045 @@ export function useSearchRequisitionUsers<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getSearchRequisitionUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListOpeningsUrl = (params?: ListOpeningsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/recruitment/openings?${stringifiedParams}` : `/api/recruitment/openings`;
+};
+
+/**
+ * Requires permission: recruitment.openings.read.
+ * @summary Openings of the companies in scope, newest first
+ */
+export const listOpenings = async (
+  params?: ListOpeningsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfOpeningListItem> => {
+  return customFetch<PagedResultOfOpeningListItem>(getListOpeningsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListOpeningsQueryKey = (params?: ListOpeningsParams) => {
+  return [`/api/recruitment/openings`, ...(params ? [params] : [])] as const;
+};
+
+export const getListOpeningsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listOpenings>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListOpeningsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listOpenings>>> = ({ signal }) =>
+    listOpenings(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listOpenings>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListOpeningsQueryResult = NonNullable<Awaited<ReturnType<typeof listOpenings>>>;
+export type ListOpeningsQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListOpenings<
+  TData = Awaited<ReturnType<typeof listOpenings>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListOpeningsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenings>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOpenings>>,
+          TError,
+          Awaited<ReturnType<typeof listOpenings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListOpenings<
+  TData = Awaited<ReturnType<typeof listOpenings>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenings>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOpenings>>,
+          TError,
+          Awaited<ReturnType<typeof listOpenings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListOpenings<
+  TData = Awaited<ReturnType<typeof listOpenings>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Openings of the companies in scope, newest first
+ */
+
+export function useListOpenings<
+  TData = Awaited<ReturnType<typeof listOpenings>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListOpeningsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListOpeningsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateOpeningUrl = () => {
+  return `/api/recruitment/openings`;
+};
+
+/**
+ * Requires permission: recruitment.openings.manage.
+ * @summary Open an opening as a draft; from an approved requisition it seeks at most the people left
+ */
+export const createOpening = async (
+  createOpeningCommand: CreateOpeningCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateOpeningUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createOpeningCommand),
+  });
+};
+
+export const getCreateOpeningMutationKey = () => ['createOpening'] as const;
+
+export const getCreateOpeningMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createOpening>>,
+    TError,
+    CreateOpeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof createOpening>>, TError, CreateOpeningMutationVariables, TContext> => {
+  const mutationKey = getCreateOpeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createOpening>>, CreateOpeningMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return createOpening(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof createOpening>>>;
+export type CreateOpeningMutationBody = CreateOpeningCommand;
+export type CreateOpeningMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateOpeningMutationVariables = { data: CreateOpeningCommand };
+
+/**
+ * @summary Open an opening as a draft; from an approved requisition it seeks at most the people left
+ */
+export const useCreateOpening = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createOpening>>,
+      TError,
+      CreateOpeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof createOpening>>, TError, CreateOpeningMutationVariables, TContext> => {
+  return useMutation(getCreateOpeningMutationOptions(options), queryClient);
+};
+export const getGetOpeningUrl = (id: string) => {
+  return `/api/recruitment/openings/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.openings.read.
+ * @summary An opening with its texts, pipeline, hiring team and application form
+ */
+export const getOpening = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<OpeningDetails> => {
+  return customFetch<OpeningDetails>(getGetOpeningUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetOpeningQueryKey = (id: string) => {
+  return [`/api/recruitment/openings/${id}`] as const;
+};
+
+export const getGetOpeningQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOpening>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetOpeningQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getOpening>>> = ({ signal }) =>
+    getOpening(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOpening>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetOpeningQueryResult = NonNullable<Awaited<ReturnType<typeof getOpening>>>;
+export type GetOpeningQueryError = ErrorType<ProblemDetails>;
+
+export function useGetOpening<TData = Awaited<ReturnType<typeof getOpening>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpening>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOpening>>,
+          TError,
+          Awaited<ReturnType<typeof getOpening>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetOpening<TData = Awaited<ReturnType<typeof getOpening>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpening>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOpening>>,
+          TError,
+          Awaited<ReturnType<typeof getOpening>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetOpening<TData = Awaited<ReturnType<typeof getOpening>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary An opening with its texts, pipeline, hiring team and application form
+ */
+
+export function useGetOpening<TData = Awaited<ReturnType<typeof getOpening>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetOpeningQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateOpeningUrl = (id: string) => {
+  return `/api/recruitment/openings/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.openings.manage.
+ * @summary Correct an opening that is not closed; its stages change only while it is a draft
+ */
+export const updateOpening = async (
+  id: string,
+  updateOpeningCommand: UpdateOpeningCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateOpeningUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateOpeningCommand),
+  });
+};
+
+export const getUpdateOpeningMutationKey = () => ['updateOpening'] as const;
+
+export const getUpdateOpeningMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateOpening>>,
+    TError,
+    UpdateOpeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof updateOpening>>, TError, UpdateOpeningMutationVariables, TContext> => {
+  const mutationKey = getUpdateOpeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOpening>>, UpdateOpeningMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return updateOpening(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof updateOpening>>>;
+export type UpdateOpeningMutationBody = UpdateOpeningCommand;
+export type UpdateOpeningMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateOpeningMutationVariables = { id: string; data: UpdateOpeningCommand };
+
+/**
+ * @summary Correct an opening that is not closed; its stages change only while it is a draft
+ */
+export const useUpdateOpening = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateOpening>>,
+      TError,
+      UpdateOpeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof updateOpening>>, TError, UpdateOpeningMutationVariables, TContext> => {
+  return useMutation(getUpdateOpeningMutationOptions(options), queryClient);
+};
+export const getPublishOpeningUrl = (id: string) => {
+  return `/api/recruitment/openings/${id}/publish`;
+};
+
+/**
+ * Requires permission: recruitment.openings.manage.
+ * @summary Publish a draft or an opening on hold
+ */
+export const publishOpening = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getPublishOpeningUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getPublishOpeningMutationKey = () => ['publishOpening'] as const;
+
+export const getPublishOpeningMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof publishOpening>>,
+    TError,
+    PublishOpeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof publishOpening>>,
+  TError,
+  PublishOpeningMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPublishOpeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof publishOpening>>, PublishOpeningMutationVariables> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
+
+    return publishOpening(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PublishOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof publishOpening>>>;
+
+export type PublishOpeningMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type PublishOpeningMutationVariables = { id: string };
+
+/**
+ * @summary Publish a draft or an opening on hold
+ */
+export const usePublishOpening = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof publishOpening>>,
+      TError,
+      PublishOpeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof publishOpening>>, TError, PublishOpeningMutationVariables, TContext> => {
+  return useMutation(getPublishOpeningMutationOptions(options), queryClient);
+};
+export const getHoldOpeningUrl = (id: string) => {
+  return `/api/recruitment/openings/${id}/hold`;
+};
+
+/**
+ * Requires permission: recruitment.openings.manage.
+ * @summary Pause a published opening
+ */
+export const holdOpening = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getHoldOpeningUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getHoldOpeningMutationKey = () => ['holdOpening'] as const;
+
+export const getHoldOpeningMutationOptions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof holdOpening>>,
+    TError,
+    HoldOpeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof holdOpening>>, TError, HoldOpeningMutationVariables, TContext> => {
+  const mutationKey = getHoldOpeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof holdOpening>>, HoldOpeningMutationVariables> = (
+    props,
+  ) => {
+    const { id } = props ?? {};
+
+    return holdOpening(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type HoldOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof holdOpening>>>;
+
+export type HoldOpeningMutationError = ErrorType<ProblemDetails>;
+export type HoldOpeningMutationVariables = { id: string };
+
+/**
+ * @summary Pause a published opening
+ */
+export const useHoldOpening = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof holdOpening>>,
+      TError,
+      HoldOpeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof holdOpening>>, TError, HoldOpeningMutationVariables, TContext> => {
+  return useMutation(getHoldOpeningMutationOptions(options), queryClient);
+};
+export const getCloseOpeningUrl = (id: string) => {
+  return `/api/recruitment/openings/${id}/close`;
+};
+
+/**
+ * Requires permission: recruitment.openings.manage.
+ * @summary Close an opening
+ */
+export const closeOpening = async (
+  id: string,
+  closeOpeningCommand: CloseOpeningCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getCloseOpeningUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(closeOpeningCommand),
+  });
+};
+
+export const getCloseOpeningMutationKey = () => ['closeOpening'] as const;
+
+export const getCloseOpeningMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof closeOpening>>,
+    TError,
+    CloseOpeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof closeOpening>>, TError, CloseOpeningMutationVariables, TContext> => {
+  const mutationKey = getCloseOpeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeOpening>>, CloseOpeningMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return closeOpening(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CloseOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof closeOpening>>>;
+export type CloseOpeningMutationBody = CloseOpeningCommand;
+export type CloseOpeningMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CloseOpeningMutationVariables = { id: string; data: CloseOpeningCommand };
+
+/**
+ * @summary Close an opening
+ */
+export const useCloseOpening = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof closeOpening>>,
+      TError,
+      CloseOpeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof closeOpening>>, TError, CloseOpeningMutationVariables, TContext> => {
+  return useMutation(getCloseOpeningMutationOptions(options), queryClient);
+};
+export const getListOpeningStageTemplatesUrl = () => {
+  return `/api/recruitment/openings/stage-templates`;
+};
+
+/**
+ * Requires permission: recruitment.openings.manage.
+ * @summary Active stage templates with their stages, the default first, for the opening form
+ */
+export const listOpeningStageTemplates = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<OpeningTemplateOption[]> => {
+  return customFetch<OpeningTemplateOption[]>(getListOpeningStageTemplatesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListOpeningStageTemplatesQueryKey = () => {
+  return [`/api/recruitment/openings/stage-templates`] as const;
+};
+
+export const getListOpeningStageTemplatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listOpeningStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningStageTemplates>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListOpeningStageTemplatesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listOpeningStageTemplates>>> = ({ signal }) =>
+    listOpeningStageTemplates({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listOpeningStageTemplates>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListOpeningStageTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listOpeningStageTemplates>>>;
+export type ListOpeningStageTemplatesQueryError = ErrorType<unknown>;
+
+export function useListOpeningStageTemplates<
+  TData = Awaited<ReturnType<typeof listOpeningStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningStageTemplates>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOpeningStageTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listOpeningStageTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListOpeningStageTemplates<
+  TData = Awaited<ReturnType<typeof listOpeningStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningStageTemplates>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOpeningStageTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listOpeningStageTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListOpeningStageTemplates<
+  TData = Awaited<ReturnType<typeof listOpeningStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningStageTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active stage templates with their stages, the default first, for the opening form
+ */
+
+export function useListOpeningStageTemplates<
+  TData = Awaited<ReturnType<typeof listOpeningStageTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningStageTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListOpeningStageTemplatesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListOpeningBranchesUrl = (params: ListOpeningBranchesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/openings/branches?${stringifiedParams}`
+    : `/api/recruitment/openings/branches`;
+};
+
+/**
+ * Requires permission: recruitment.openings.manage.
+ * @summary Active branches of a company, for the opening form
+ */
+export const listOpeningBranches = async (
+  params: ListOpeningBranchesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<BranchSummary[]> => {
+  return customFetch<BranchSummary[]>(getListOpeningBranchesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListOpeningBranchesQueryKey = (params?: ListOpeningBranchesParams) => {
+  return [`/api/recruitment/openings/branches`, ...(params ? [params] : [])] as const;
+};
+
+export const getListOpeningBranchesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listOpeningBranches>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListOpeningBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListOpeningBranchesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listOpeningBranches>>> = ({ signal }) =>
+    listOpeningBranches(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listOpeningBranches>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListOpeningBranchesQueryResult = NonNullable<Awaited<ReturnType<typeof listOpeningBranches>>>;
+export type ListOpeningBranchesQueryError = ErrorType<ProblemDetails>;
+
+export function useListOpeningBranches<
+  TData = Awaited<ReturnType<typeof listOpeningBranches>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListOpeningBranchesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningBranches>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOpeningBranches>>,
+          TError,
+          Awaited<ReturnType<typeof listOpeningBranches>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListOpeningBranches<
+  TData = Awaited<ReturnType<typeof listOpeningBranches>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListOpeningBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningBranches>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOpeningBranches>>,
+          TError,
+          Awaited<ReturnType<typeof listOpeningBranches>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListOpeningBranches<
+  TData = Awaited<ReturnType<typeof listOpeningBranches>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListOpeningBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active branches of a company, for the opening form
+ */
+
+export function useListOpeningBranches<
+  TData = Awaited<ReturnType<typeof listOpeningBranches>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: ListOpeningBranchesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listOpeningBranches>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListOpeningBranchesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSearchOpeningUsersUrl = (params?: SearchOpeningUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/openings/users?${stringifiedParams}`
+    : `/api/recruitment/openings/users`;
+};
+
+/**
+ * Requires permission: recruitment.openings.manage.
+ * @summary Active users by name, for the hiring team (at most 20)
+ */
+export const searchOpeningUsers = async (
+  params?: SearchOpeningUsersParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<RequisitionUserOption[]> => {
+  return customFetch<RequisitionUserOption[]>(getSearchOpeningUsersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchOpeningUsersQueryKey = (params?: SearchOpeningUsersParams) => {
+  return [`/api/recruitment/openings/users`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchOpeningUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchOpeningUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchOpeningUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchOpeningUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchOpeningUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchOpeningUsers>>> = ({ signal }) =>
+    searchOpeningUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchOpeningUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchOpeningUsersQueryResult = NonNullable<Awaited<ReturnType<typeof searchOpeningUsers>>>;
+export type SearchOpeningUsersQueryError = ErrorType<unknown>;
+
+export function useSearchOpeningUsers<
+  TData = Awaited<ReturnType<typeof searchOpeningUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | SearchOpeningUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchOpeningUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchOpeningUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchOpeningUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchOpeningUsers<
+  TData = Awaited<ReturnType<typeof searchOpeningUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchOpeningUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchOpeningUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchOpeningUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchOpeningUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchOpeningUsers<
+  TData = Awaited<ReturnType<typeof searchOpeningUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchOpeningUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchOpeningUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active users by name, for the hiring team (at most 20)
+ */
+
+export function useSearchOpeningUsers<
+  TData = Awaited<ReturnType<typeof searchOpeningUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchOpeningUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchOpeningUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchOpeningUsersQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

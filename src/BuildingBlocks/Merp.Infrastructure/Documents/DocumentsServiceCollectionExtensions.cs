@@ -12,6 +12,7 @@ public static class DocumentsServiceCollectionExtensions
     {
         services.TryAddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
         services.TryAddSingleton<ISpreadsheet, ClosedXmlSpreadsheet>();
+        services.TryAddSingleton<IRichTextSanitizer, RichTextSanitizer>();
 
         // List exports to Excel (D35)
         services.AddOptions<ExportSettings>().BindConfiguration(ExportSettings.SectionName);

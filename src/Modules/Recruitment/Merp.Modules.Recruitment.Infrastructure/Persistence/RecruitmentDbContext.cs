@@ -1,4 +1,5 @@
 using Merp.Modules.Recruitment.Application;
+using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
 using Merp.Infrastructure.Persistence;
@@ -6,7 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Merp.Modules.Recruitment.Infrastructure.Persistence;
 
-/// <summary>Schema <c>recruitment</c>: the settings of R1 (D47) and the requisitions of R2 (D48); openings and the rest come with PLAN R3–R9.</summary>
+/// <summary>
+/// Schema <c>recruitment</c>: the settings of R1 (D47), the requisitions of R2 (D48) and the openings of R3 (D49);
+/// candidates and the rest come with PLAN R3b–R9.
+/// </summary>
 public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> options) : ModuleDbContext(options), IModuleSchema, IRecruitmentDbContext
 {
     public static string SchemaName => "recruitment";
@@ -21,12 +25,17 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
 
     public DbSet<JobRequisition> JobRequisitions => Set<JobRequisition>();
 
+    public DbSet<JobOpening> JobOpenings => Set<JobOpening>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
 
-        // The stages of a template are a jsonb column of its row (D47)
+        // The stages of a template and an opening, and an opening's team and form, are jsonb columns of their rows
         modelBuilder.Ignore<Stage>();
+        modelBuilder.Ignore<OpeningTeam>();
+        modelBuilder.Ignore<ApplicationForm>();
+        modelBuilder.Ignore<OpeningQuestion>();
         base.OnModelCreating(modelBuilder);
     }
 }

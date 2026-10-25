@@ -1,3 +1,4 @@
+using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,9 @@ public interface IRecruitmentDbContext
 
     /// <summary>Requests to hire people (D48).</summary>
     DbSet<JobRequisition> JobRequisitions { get; }
+
+    /// <summary>Job openings (D49).</summary>
+    DbSet<JobOpening> JobOpenings { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;
