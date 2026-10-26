@@ -19,7 +19,7 @@ public static class SystemRoles
         "manager",
         AccessScopeTypes.ManagedTeam,
         ["hr.employees.read", "hr.leave.requests.read", "hr.leave.calendar.read"]);
-    public static readonly SystemRoleDefinition Employee = new("employee", AccessScopeTypes.Self, ["hr.self.*"]);
+    public static readonly SystemRoleDefinition Employee = new("employee", AccessScopeTypes.Self, ["hr.self.*", "recruitment.self.*"]);
     public static readonly SystemRoleDefinition Recruiter = new("recruiter", AccessScopeTypes.Company, ["recruitment.*"]);
     public static readonly SystemRoleDefinition Interviewer = new(
         "interviewer",

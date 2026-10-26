@@ -33,6 +33,12 @@ public sealed class RequisitionFactory(PostgresFixture postgres) : MerpWebApplic
         await CreateTenantAsync(Tenant);
     }
 
+    /// <summary>The career page tests send more anonymous requests than the per-IP limit allows a minute.</summary>
+    protected override IReadOnlyDictionary<string, string?> Settings => new Dictionary<string, string?>
+    {
+        ["RateLimiting:Public:PermitLimit"] = "1000",
+    };
+
     protected override void ConfigureServices(IServiceCollection services) =>
         services.Replace(ServiceDescriptor.Singleton<IIdentityAdmin>(Identity));
 

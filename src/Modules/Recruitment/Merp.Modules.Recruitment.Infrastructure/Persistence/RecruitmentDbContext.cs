@@ -1,4 +1,6 @@
 using Merp.Modules.Recruitment.Application;
+using Merp.Modules.Recruitment.Domain.Applications;
+using Merp.Modules.Recruitment.Domain.Candidates;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
@@ -8,8 +10,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Merp.Modules.Recruitment.Infrastructure.Persistence;
 
 /// <summary>
-/// Schema <c>recruitment</c>: the settings of R1 (D47), the requisitions of R2 (D48) and the openings of R3 (D49);
-/// candidates and the rest come with PLAN R3b–R9.
+/// Schema <c>recruitment</c>: the settings of R1 (D47), the requisitions of R2 (D48) and the openings, candidates
+/// and applications of R3 (D49); the rest comes with PLAN R4–R9.
 /// </summary>
 public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> options) : ModuleDbContext(options), IModuleSchema, IRecruitmentDbContext
 {
@@ -27,6 +29,10 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
 
     public DbSet<JobOpening> JobOpenings => Set<JobOpening>();
 
+    public DbSet<Candidate> Candidates => Set<Candidate>();
+
+    public DbSet<JobApplication> JobApplications => Set<JobApplication>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -36,6 +42,8 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
         modelBuilder.Ignore<OpeningTeam>();
         modelBuilder.Ignore<ApplicationForm>();
         modelBuilder.Ignore<OpeningQuestion>();
+        modelBuilder.Ignore<ApplicationAnswer>();
+        modelBuilder.Ignore<ApplicationConsent>();
         base.OnModelCreating(modelBuilder);
     }
 }

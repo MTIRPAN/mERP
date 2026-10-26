@@ -69,15 +69,21 @@ internal sealed class GetConsentTextsQueryHandler(IRecruitmentDbContext db, IAcc
     }
 }
 
-internal sealed class GetCurrentConsentTextQueryHandler(IRecruitmentDbContext db, ILocalizationSource localization, ITextLocalizer localizer, IAiService ai)
-    : IQueryHandler<GetCurrentConsentTextQuery, ConsentTextItem>
+internal sealed class GetCurrentConsentTextQueryHandler(ConsentTextResolver resolver) : IQueryHandler<GetCurrentConsentTextQuery, ConsentTextItem>
 {
-    public async Task<Result<ConsentTextItem>> Handle(GetCurrentConsentTextQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ConsentTextItem>> Handle(GetCurrentConsentTextQuery request, CancellationToken cancellationToken) =>
+        await resolver.CurrentAsync(request.Kind, request.CompanyId, request.Culture, cancellationToken);
+}
+
+/// <summary>The KVKK text a candidate of a company sees in a language (D47); the settings screen and the career page use it.</summary>
+public sealed class ConsentTextResolver(IRecruitmentDbContext db, ILocalizationSource localization, ITextLocalizer localizer, IAiService ai)
+{
+    public async Task<ConsentTextItem> CurrentAsync(ConsentKind kind, Guid? companyId, string? requestedCulture, CancellationToken cancellationToken)
     {
         var fallback = (await localization.GetAsync(cancellationToken)).DefaultCulture;
-        var culture = string.IsNullOrWhiteSpace(request.Culture) ? fallback : request.Culture;
+        var culture = string.IsNullOrWhiteSpace(requestedCulture) ? fallback : requestedCulture;
         var candidates = await db.ConsentTexts.AsNoTracking()
-            .Where(t => t.Kind == request.Kind && (t.CompanyId == request.CompanyId || t.CompanyId == null) && (t.Culture == culture || t.Culture == fallback))
+            .Where(t => t.Kind == kind && (t.CompanyId == companyId || t.CompanyId == null) && (t.Culture == culture || t.Culture == fallback))
             .ToListAsync(cancellationToken);
 
         // The language first (a candidate must understand it), then the company's own, then the latest version
@@ -91,14 +97,14 @@ internal sealed class GetCurrentConsentTextQueryHandler(IRecruitmentDbContext db
             return new ConsentTextItem(current.Id.Value, current.Kind, current.CompanyId, current.Culture, current.Revision, current.Body, current.PublishedAt);
         }
 
-        var key = request.Kind == ConsentKind.Disclosure ? "recruitment.consents.defaults.disclosure" : "recruitment.consents.defaults.explicit_consent";
+        var key = kind == ConsentKind.Disclosure ? "recruitment.consents.defaults.disclosure" : "recruitment.consents.defaults.explicit_consent";
         var body = localizer.Get(key, culture: culture);
-        if (request.Kind == ConsentKind.Disclosure && ai.IsEnabled(RecruitmentAiFeatures.CvAnalysis))
+        if (kind == ConsentKind.Disclosure && ai.IsEnabled(RecruitmentAiFeatures.CvAnalysis))
         {
             body += "\n\n" + localizer.Get("recruitment.consents.defaults.ai_clause", culture: culture);
         }
 
-        return new ConsentTextItem(null, request.Kind, request.CompanyId, culture, 0, body, null);
+        return new ConsentTextItem(null, kind, companyId, culture, 0, body, null);
     }
 }
 

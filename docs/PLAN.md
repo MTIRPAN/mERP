@@ -942,7 +942,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Yönetici talep açar, onay zinciri işler, onaylanınca "İlan oluştur" aktifleşir.
 - Dolu kadroya talep açılamaz. Yeni kadro önerisi bu kuralın dışındadır.
 
-### [ ] R3 İlanlar ve kariyer sayfası — L
+### [x] R3 İlanlar ve kariyer sayfası — L
 
 **Yapılacaklar:**
 - **`JobOpening`:**
@@ -972,7 +972,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
   - `JobOpening`: talepten ya da doğrudan, aşama şablonunun kopyası, işe alım ekibi, başvuru formu ve eleme soruları
   - yayınla, beklet, kapat; HTML sunucuda temizlenir (`IRichTextSanitizer`, HtmlSanitizer)
   - web: İş ilanları sayfası, TipTap editörlü form, talep ekranında "İlan oluştur"
-- [ ] **R3b kariyer sayfası ve başvuru:** herkese açık API, aday (e-postayla tek) ve başvuru, KVKK onayı, "başvurunuz alındı" e-postası, kariyer sayfası, iç başvuru
+- [x] **R3b kariyer sayfası ve başvuru:** herkese açık API, aday (e-postayla tek) ve başvuru, KVKK onayı, "başvurunuz alındı" e-postası, kariyer sayfası, iç başvuru
 
 ### [ ] R4 Aday havuzu ve başvurular 🔍 — L
 
