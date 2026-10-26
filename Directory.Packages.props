@@ -76,7 +76,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Storage">
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.4" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.6" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
