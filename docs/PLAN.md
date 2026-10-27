@@ -238,7 +238,7 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
   - **Backend:** `restore --locked-mode`, `build -warnaserror`, coverage'lı test, sonuçları artifact olarak yükle.
   - **Web:** `npm ci`, `lint`, `typecheck`, `test`, `build`.
   - **Güvenlik:** `dotnet list package --vulnerable` ve `npm audit --audit-level=high` uyarı verirse job kırılır.
-- Dependabot: nuget, npm ve actions için haftalık.
+- ~~Dependabot: nuget, npm ve actions için haftalık.~~ Kaldırıldı (kullanıcı kararı, 2026-10-27): bot PR açmasın. Paket güncellemeleri elle yapılır (örn. #88); bilinen açıkları CI'ın güvenlik job'ı yakalar.
 - PR şablonu: Definition of Done kontrol listesi.
 
 **Kabul kriterleri:**
