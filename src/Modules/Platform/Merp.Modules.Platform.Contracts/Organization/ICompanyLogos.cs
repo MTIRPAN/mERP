@@ -9,8 +9,8 @@ public sealed record CompanyLogo(Stream Content, string ContentType);
 public interface ICompanyLogos
 {
     /// <summary>The companies among <paramref name="companyIds"/> that have a logo.</summary>
-    Task<IReadOnlySet<Guid>> WithLogoAsync(IReadOnlyCollection<Guid> companyIds, CancellationToken cancellationToken = default);
+    Task<IReadOnlySet<Guid>> ListWithLogoAsync(IReadOnlyCollection<Guid> companyIds, CancellationToken cancellationToken = default);
 
-    /// <summary>The company's logo; null when it has none.</summary>
-    Task<CompanyLogo?> OpenAsync(Guid companyId, CancellationToken cancellationToken = default);
+    /// <summary>The company's logo, opened for reading; null when it has none.</summary>
+    Task<CompanyLogo?> FindAsync(Guid companyId, CancellationToken cancellationToken = default);
 }

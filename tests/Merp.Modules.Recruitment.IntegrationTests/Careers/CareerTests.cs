@@ -18,6 +18,7 @@ using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.IntegrationTests.Requisitions;
 using Merp.Testing.Data;
+using Merp.Testing.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -186,7 +187,7 @@ public sealed class CareerTests(RequisitionFactory factory) : IClassFixture<Requ
         var company = await CompanyAsync();
         var internalOpening = await OpeningAsync(company, OpeningVisibility.Internal);
         var person = await EmployeeAsync(company);
-        var employee = factory.CreateClientFor(person.Subject, RequisitionFactory.Tenant, RecruitmentPermissions.Self.Apply);
+        var employee = ClientFor(person, RecruitmentPermissions.Self.Apply);
 
         var openings = (await employee.GetFromJsonAsync<List<CareerOpeningItem>>("/api/recruitment/me/openings", Ct))!;
         openings.ShouldContain(o => o.Id == internalOpening && o.Visibility == OpeningVisibility.Internal);
@@ -213,7 +214,7 @@ public sealed class CareerTests(RequisitionFactory factory) : IClassFixture<Requ
         var stranger = factory.CreateClientFor("kayitsiz", RequisitionFactory.Tenant, RecruitmentPermissions.Self.Apply);
         var notEmployee = await PostFormAsync(stranger, $"/api/recruitment/me/openings/{internalOpening}/applications", body, Pdf());
         notEmployee.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await factory.CreateClientFor(person.Subject, RequisitionFactory.Tenant).GetAsync("/api/recruitment/me/openings", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await ClientFor(person).GetAsync("/api/recruitment/me/openings", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     private static string NewEmail() => $"aday.{Guid.NewGuid().ToString("N")[..10]}@ornek.test";
@@ -335,9 +336,20 @@ public sealed class CareerTests(RequisitionFactory factory) : IClassFixture<Requ
         var email = $"personel.{Guid.NewGuid().ToString("N")[..10]}@acme.test";
         (await admin.PostAsJsonAsync($"/api/hr/employees/{employee}/user", new { email }, Ct)).StatusCode.ShouldBe(HttpStatusCode.Accepted);
         await factory.DeliverMessagesAsync();
-        var subject = factory.Identity.Identities.Single(i => i.Value.Email == email).Key;
-        (await factory.CreateClientFor(subject, RequisitionFactory.Tenant).GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!.User.Id.ShouldNotBeNull();
-        return new Person(employee, subject, email);
+        var person = new Person(employee, factory.Identity.Identities.Single(i => i.Value.Email == email).Key, email);
+        (await ClientFor(person).GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!.User.Id.ShouldNotBeNull();
+        return person;
+    }
+
+    /// <summary>
+    /// The person's client with the e-mail in the token, as Keycloak sends it: the first request refreshes the user's
+    /// profile from the token, so a token without it would clear the e-mail of the user.
+    /// </summary>
+    private HttpClient ClientFor(Person person, params string[] permissions)
+    {
+        var client = factory.CreateClientFor(person.Subject, RequisitionFactory.Tenant, permissions);
+        client.DefaultRequestHeaders.Add(TestAuthHandler.EmailHeader, person.Email);
+        return client;
     }
 
     private async Task<Candidate?> CandidateAsync(string email)

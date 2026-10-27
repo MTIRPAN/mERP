@@ -401,7 +401,7 @@ internal sealed class GetCareerPageQueryHandler(CareerCatalog catalog, ICompanyL
     public async Task<Result<CareerPage>> Handle(GetCareerPageQuery request, CancellationToken cancellationToken)
     {
         var items = await catalog.ItemsAsync(await catalog.OpenAsync(internalToo: false, cancellationToken), cancellationToken);
-        var withLogo = await logos.WithLogoAsync([.. items.Select(i => i.CompanyId).Distinct()], cancellationToken);
+        var withLogo = await logos.ListWithLogoAsync([.. items.Select(i => i.CompanyId).Distinct()], cancellationToken);
         var companies = items
             .GroupBy(i => i.CompanyId)
             .Select(g => new CareerCompany(g.Key, g.First().CompanyName, withLogo.Contains(g.Key)))
@@ -429,7 +429,7 @@ internal sealed class GetCareerLogoQueryHandler(CareerCatalog catalog, ICompanyL
             return CommonErrors.NotFound;
         }
 
-        return await logos.OpenAsync(request.CompanyId, cancellationToken) is { } logo ? logo : CommonErrors.NotFound;
+        return await logos.FindAsync(request.CompanyId, cancellationToken) is { } logo ? logo : CommonErrors.NotFound;
     }
 }
 
