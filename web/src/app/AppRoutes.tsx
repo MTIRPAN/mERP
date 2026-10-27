@@ -75,11 +75,17 @@ const DocumentTypesPage = page(() => import('@/modules/hr/documentTypes/Document
 const JobTitlesPage = page(() => import('@/modules/hr/jobTitles/JobTitlesPage'), 'JobTitlesPage');
 const RequisitionsPage = page(() => import('@/modules/recruitment/requisitions/RequisitionsPage'), 'RequisitionsPage');
 const OpeningsPage = page(() => import('@/modules/recruitment/openings/OpeningsPage'), 'OpeningsPage');
+const MyOpeningsPage = page(() => import('@/modules/recruitment/careers/MyOpeningsPage'), 'MyOpeningsPage');
+const CareerPage = page(() => import('@/modules/recruitment/careers/CareerPage'), 'CareerPage');
+const CareerOpeningPage = page(() => import('@/modules/recruitment/careers/CareerOpeningPage'), 'CareerOpeningPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 
 export const AppRoutes = () => (
   <Routes>
     <Route path="/auth/callback" element={<AuthCallbackPage />} />
+    {/* The career page is public: no sign-in, no shell (D49) */}
+    <Route path="/careers/:tenant" element={<CareerPage />} />
+    <Route path="/careers/:tenant/openings/:id" element={<CareerOpeningPage />} />
     <Route element={<ProtectedRoute />}>
       <Route
         element={
@@ -403,6 +409,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={recruitmentPermissions.openingsRead}>
               <OpeningsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/my-openings"
+          element={
+            <RequirePermission permission={recruitmentPermissions.selfApply}>
+              <MyOpeningsPage />
             </RequirePermission>
           }
         />

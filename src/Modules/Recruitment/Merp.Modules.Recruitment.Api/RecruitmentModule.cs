@@ -10,8 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Merp.Modules.Recruitment.Api;
 
 /// <summary>
-/// Recruitment (PLAN Faz 4): the AI CV analysis (D24), the settings (R1, D47), the requisitions (R2, D48) and the
-/// openings (R3a, D49); candidates and the rest follow with R3b–R9.
+/// Recruitment (PLAN Faz 4): the AI CV analysis (D24), the settings (R1, D47), the requisitions (R2, D48), the
+/// openings, the career page and applications (R3, D49); the pipeline and the rest follow with R4–R9.
 /// </summary>
 public sealed class RecruitmentModule : IModule
 {
@@ -30,6 +30,8 @@ public sealed class RecruitmentModule : IModule
         group.MapCvAnalysisEndpoints();
         group.MapRequisitionEndpoints();
         group.MapOpeningEndpoints();
+        group.MapSelfServiceCareerEndpoints();
         group.MapSettingsEndpoints();
+        endpoints.MapPublicCareerEndpoints();
     }
 }

@@ -81,3 +81,33 @@ body {
   padding-inline-start: 12px;
   border-inline-start: 3px solid var(--ant-color-border, #d9d9d9);
 }
+
+/* The career page (D49): one readable column, padded on phones. */
+.merp-careers {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.merp-careers-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.merp-careers-filters {
+  margin-bottom: 16px;
+}
+
+.merp-careers-card {
+  width: 100%;
+}
+
+.merp-careers-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

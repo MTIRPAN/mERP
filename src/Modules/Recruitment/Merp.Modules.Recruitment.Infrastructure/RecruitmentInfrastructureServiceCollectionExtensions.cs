@@ -7,6 +7,7 @@ using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Application;
+using Merp.Modules.Recruitment.Application.Careers;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
@@ -43,6 +44,12 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         // Openings: the checks of the form and the list rows (D49)
         services.AddScoped<OpeningRules>();
         services.AddScoped<OpeningRows>();
+
+        // Career page and applications: anonymous and from self service (D49)
+        services.AddScoped<ConsentTextResolver>();
+        services.AddScoped<CareerCatalog>();
+        services.AddScoped<ApplicationIntake>();
+        services.AddScoped<SelfApplicant>();
         return services;
     }
 }

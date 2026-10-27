@@ -1411,3 +1411,16 @@ Seçilen kültür `Content-Language` başlığında döner.
   - Açık rıza (havuzda saklama) isteğe bağlıdır.
 - **E-posta:** "Başvurunuz alındı" e-postası `ExternalEmailRequested` (`recruitment.application_received`) ile gider (D47).
 - **İç başvuru:** Çalışan self servisten iç ya da dış ilana başvurur. Başvuru "iç aday" işaretlidir; aday bilgisi personel kaydından gelir.
+
+**R3b uygulaması (kullanıcı kararı: tek PR):**
+- **Uç noktalar:** `GET /api/public/{tenantCode}/careers` (şirketler ve açık dış ilanlar), `GET …/careers/openings/{id}` (form ve KVKK metinleri; eleme sorularının kabul edilen cevapları gösterilmez), `GET …/careers/companies/{companyId}/logo`, `POST …/careers/openings/{id}/applications`. Başvuru çok parçalı formdur: başvuru `application` alanında JSON, CV `cv` dosyasıdır. Başarılı başvuru 202 döner ve gövdesi yoktur.
+- **Koruma:** Grup `public` istek sınırı politikasını kullanır (`RateLimiting:Public:PermitLimit`, varsayılan IP başına dakikada 30). Bal küpü alanı `website`'tır: doluysa başvuru 202 ile kabul edilmiş gibi görünür ama hiçbir şey kaydedilmez. İlan yayında değilse, tarih aralığı dışındaysa ya da iç ilansa 404 döner.
+- **CV:** Yalnızca PDF ve DOCX, en fazla 5 MB. Eski DOC biçimi içerik denetiminden geçirilemediği ve makro taşıyabildiği için kabul edilmez (CV analizi de aynı biçimleri alır). CV adayın dosyası olarak saklanır (`recruitment.candidate`); başvuru o anki CV'yi gösterir.
+- **KVKK sürümü:** Form, gösterilen aydınlatma ve açık rıza metinlerinin revizyonlarını geri gönderir. Metin bu arada değiştiyse başvuru `recruitment.applications.errors.consent_changed` ile reddedilir; aday sayfayı yenileyip güncel metni onaylar.
+- **Kural 7:** Komutun aggregate'i başvurudur (`JobApplication`). Aday, `ApplicationSubmitted` domain olayıyla aynı işlemde oluşturulur ya da güncellenir.
+- **Logo:** Platform.Contracts'a `ICompanyLogos` eklendi. Logo yalnızca kariyer sayfasında açık ilanı olan şirket için verilir; böylece sayfa kiracının bütün şirketlerini açığa çıkarmaz.
+- **İç başvuru:** Yetki `recruitment.self.apply`. Çalışan rolünün varsayılan desenine `recruitment.self.*` eklendi; İK Yöneticisi ve İşe Alım Uzmanı `recruitment.*` ile alır. Uç noktalar `/api/recruitment/me/openings`, `/me/openings/{id}`, `/me/openings/{id}/applications` ve `/me/applications`.
+  - Çalışan kiracının tüm şirketlerindeki açık iç ve dış ilanları görür.
+  - Ad ve soyad personel kaydından gelir. E-posta kullanıcının e-postasıdır; yoksa personel kaydının birincil e-postası kullanılır. Telefon formdan, boşsa personel kaydından gelir. HR.Contracts'a `IEmployeeLookup.GetContactAsync` eklendi.
+  - Kullanıcı bir personel kaydına bağlı değilse başvuru `recruitment.applications.errors.not_employee` ile reddedilir.
+- **Web:** Kariyer sayfası `/careers/:tenant` ve ilan sayfası `/careers/:tenant/openings/:id` girişsizdir ve uygulama kabuğu olmadan açılır. Çalışanlar İşe alım → "Açık pozisyonlar" (`/recruitment/my-openings`) ekranında ilanları ve kendi başvurularını görür.

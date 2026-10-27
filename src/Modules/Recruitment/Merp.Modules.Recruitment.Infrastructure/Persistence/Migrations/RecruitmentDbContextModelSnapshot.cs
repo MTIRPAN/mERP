@@ -347,6 +347,204 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "recruitment");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Applications.JobApplication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Answers")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("answers");
+
+                    b.Property<DateTimeOffset>("AppliedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("applied_at");
+
+                    b.Property<Guid>("CandidateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("candidate_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<string>("Consent")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("consent");
+
+                    b.Property<string>("CoverLetter")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("cover_letter");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid?>("CvFileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cv_file_id");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_internal");
+
+                    b.Property<bool>("KnockedOut")
+                        .HasColumnType("boolean")
+                        .HasColumnName("knocked_out");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<Guid>("OpeningId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("opening_id");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("source");
+
+                    b.Property<Guid>("StageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("stage_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_job_applications");
+
+                    b.HasIndex("CandidateId", "OpeningId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_job_applications_candidate_id_opening_id");
+
+                    b.HasIndex("CompanyId", "AppliedAt")
+                        .HasDatabaseName("ix_job_applications_company_id_applied_at");
+
+                    b.HasIndex("OpeningId", "StageId")
+                        .HasDatabaseName("ix_job_applications_opening_id_stage_id");
+
+                    b.ToTable("job_applications", "recruitment");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Candidates.Candidate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Culture")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("culture");
+
+                    b.Property<Guid?>("CvFileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cv_file_id");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<Guid?>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("first_name");
+
+                    b.Property<DateTimeOffset>("LastAppliedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_applied_at");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_name");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("phone");
+
+                    b.Property<DateTimeOffset?>("PoolConsentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pool_consent_at");
+
+                    b.Property<int?>("PoolConsentRevision")
+                        .HasColumnType("integer")
+                        .HasColumnName("pool_consent_revision");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("source");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_candidates");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("ix_candidates_email");
+
+                    b.HasIndex("EmployeeId")
+                        .HasDatabaseName("ix_candidates_employee_id");
+
+                    b.ToTable("candidates", "recruitment");
+                });
+
             modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Openings.JobOpening", b =>
                 {
                     b.Property<Guid>("Id")

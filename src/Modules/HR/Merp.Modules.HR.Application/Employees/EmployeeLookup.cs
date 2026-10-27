@@ -33,6 +33,23 @@ public sealed class EmployeeLookup(IHrDbContext db) : IEmployeeLookup
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<EmployeeContact?> GetContactAsync(Guid employeeId, CancellationToken cancellationToken = default)
+    {
+        var id = EmployeeId.From(employeeId);
+        var employee = await db.Employees.AsNoTracking()
+            .Where(e => e.Id == id)
+            .Select(e => new { e.FirstName, e.LastName, e.Emails, e.Phones })
+            .SingleOrDefaultAsync(cancellationToken);
+        return employee is null
+            ? null
+            : new EmployeeContact(
+                employeeId,
+                employee.FirstName,
+                employee.LastName,
+                (employee.Emails.FirstOrDefault(m => m.IsPrimary) ?? (employee.Emails.Count > 0 ? employee.Emails[0] : null))?.Address,
+                (employee.Phones.FirstOrDefault(p => p.IsPrimary) ?? (employee.Phones.Count > 0 ? employee.Phones[0] : null))?.Number);
+    }
+
     // Filters and sorts run on these rows: EF cannot translate the members of a record built by its constructor
     private IQueryable<Row> Rows(Guid companyId) =>
         db.Employees.AsNoTracking()

@@ -24,6 +24,8 @@ import type {
   AnalyzeCvBody,
   BranchSummary,
   CancelRequisitionCommand,
+  CareerOpeningDetails,
+  CareerOpeningItem,
   CloseOpeningCommand,
   ConsentTextItem,
   CreateOpeningCommand,
@@ -34,6 +36,7 @@ import type {
   EmployeeSummary,
   EntityCreatedResponse,
   GetCurrentConsentTextParams,
+  GetMyOpeningParams,
   HttpValidationProblemDetails,
   ListConsentTextsParams,
   ListOpeningBranchesParams,
@@ -43,6 +46,7 @@ import type {
   ListRequisitionUnitsParams,
   ListRequisitionsParams,
   ListStageTemplatesParams,
+  MyApplicationItem,
   OpeningDetails,
   OpeningTemplateOption,
   OrgUnitInfo,
@@ -58,6 +62,7 @@ import type {
   SearchRequisitionEmployeesParams,
   SearchRequisitionUsersParams,
   StageTemplateItem,
+  SubmitMyApplicationBody,
   UpdateOpeningCommand,
   UpdateRecruitmentLookupCommand,
   UpdateRequisitionCommand,
@@ -2385,6 +2390,443 @@ export function useSearchOpeningUsers<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getSearchOpeningUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListMyOpeningsUrl = () => {
+  return `/api/recruitment/me/openings`;
+};
+
+/**
+ * Requires permission: recruitment.self.apply.
+ * @summary Internal and public openings that take applications, for an employee
+ */
+export const listMyOpenings = async (options?: Parameters<typeof customFetch>[1]): Promise<CareerOpeningItem[]> => {
+  return customFetch<CareerOpeningItem[]>(getListMyOpeningsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListMyOpeningsQueryKey = () => {
+  return [`/api/recruitment/me/openings`] as const;
+};
+
+export const getListMyOpeningsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyOpenings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyOpenings>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyOpeningsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyOpenings>>> = ({ signal }) =>
+    listMyOpenings({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyOpenings>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMyOpeningsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyOpenings>>>;
+export type ListMyOpeningsQueryError = ErrorType<unknown>;
+
+export function useListMyOpenings<TData = Awaited<ReturnType<typeof listMyOpenings>>, TError = ErrorType<unknown>>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyOpenings>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyOpenings>>,
+          TError,
+          Awaited<ReturnType<typeof listMyOpenings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyOpenings<TData = Awaited<ReturnType<typeof listMyOpenings>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyOpenings>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyOpenings>>,
+          TError,
+          Awaited<ReturnType<typeof listMyOpenings>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyOpenings<TData = Awaited<ReturnType<typeof listMyOpenings>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Internal and public openings that take applications, for an employee
+ */
+
+export function useListMyOpenings<TData = Awaited<ReturnType<typeof listMyOpenings>>, TError = ErrorType<unknown>>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyOpenings>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMyOpeningsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetMyOpeningUrl = (id: string, params?: GetMyOpeningParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/me/openings/${id}?${stringifiedParams}`
+    : `/api/recruitment/me/openings/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.self.apply.
+ * @summary An opening an employee may apply to, with its form and the KVKK texts
+ */
+export const getMyOpening = async (
+  id: string,
+  params?: GetMyOpeningParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CareerOpeningDetails> => {
+  return customFetch<CareerOpeningDetails>(getGetMyOpeningUrl(id, params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetMyOpeningQueryKey = (id: string, params?: GetMyOpeningParams) => {
+  return [`/api/recruitment/me/openings/${id}`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMyOpeningQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyOpening>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  params?: GetMyOpeningParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOpening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyOpeningQueryKey(id, params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyOpening>>> = ({ signal }) =>
+    getMyOpening(id, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyOpening>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMyOpeningQueryResult = NonNullable<Awaited<ReturnType<typeof getMyOpening>>>;
+export type GetMyOpeningQueryError = ErrorType<ProblemDetails>;
+
+export function useGetMyOpening<TData = Awaited<ReturnType<typeof getMyOpening>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  params: undefined | GetMyOpeningParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOpening>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyOpening>>,
+          TError,
+          Awaited<ReturnType<typeof getMyOpening>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyOpening<TData = Awaited<ReturnType<typeof getMyOpening>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  params?: GetMyOpeningParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOpening>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyOpening>>,
+          TError,
+          Awaited<ReturnType<typeof getMyOpening>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyOpening<TData = Awaited<ReturnType<typeof getMyOpening>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  params?: GetMyOpeningParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOpening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary An opening an employee may apply to, with its form and the KVKK texts
+ */
+
+export function useGetMyOpening<TData = Awaited<ReturnType<typeof getMyOpening>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  params?: GetMyOpeningParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOpening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMyOpeningQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSubmitMyApplicationUrl = (id: string) => {
+  return `/api/recruitment/me/openings/${id}/applications`;
+};
+
+/**
+ * Requires permission: recruitment.self.apply.
+ * @summary An employee applies as an internal candidate: the application as JSON in 'application', the CV in 'cv'
+ */
+export const submitMyApplication = async (
+  id: string,
+  submitMyApplicationBody: SubmitMyApplicationBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const formData = new FormData();
+  if (submitMyApplicationBody.application !== undefined) {
+    formData.append(`application`, submitMyApplicationBody.application);
+  }
+
+  if (submitMyApplicationBody.cv !== undefined) {
+    formData.append(`cv`, submitMyApplicationBody.cv);
+  }
+
+  return customFetch<void>(getSubmitMyApplicationUrl(id), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getSubmitMyApplicationMutationKey = () => ['submitMyApplication'] as const;
+
+export const getSubmitMyApplicationMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitMyApplication>>,
+    TError,
+    SubmitMyApplicationMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitMyApplication>>,
+  TError,
+  SubmitMyApplicationMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubmitMyApplicationMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitMyApplication>>,
+    SubmitMyApplicationMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return submitMyApplication(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitMyApplicationMutationResult = NonNullable<Awaited<ReturnType<typeof submitMyApplication>>>;
+export type SubmitMyApplicationMutationBody = SubmitMyApplicationBody;
+export type SubmitMyApplicationMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SubmitMyApplicationMutationVariables = { id: string; data: SubmitMyApplicationBody };
+
+/**
+ * @summary An employee applies as an internal candidate: the application as JSON in 'application', the CV in 'cv'
+ */
+export const useSubmitMyApplication = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof submitMyApplication>>,
+      TError,
+      SubmitMyApplicationMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof submitMyApplication>>,
+  TError,
+  SubmitMyApplicationMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubmitMyApplicationMutationOptions(options), queryClient);
+};
+export const getListMyApplicationsUrl = () => {
+  return `/api/recruitment/me/applications`;
+};
+
+/**
+ * Requires permission: recruitment.self.apply.
+ * @summary The employee's applications, newest first
+ */
+export const listMyApplications = async (options?: Parameters<typeof customFetch>[1]): Promise<MyApplicationItem[]> => {
+  return customFetch<MyApplicationItem[]>(getListMyApplicationsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListMyApplicationsQueryKey = () => {
+  return [`/api/recruitment/me/applications`] as const;
+};
+
+export const getListMyApplicationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyApplications>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApplications>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyApplicationsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyApplications>>> = ({ signal }) =>
+    listMyApplications({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyApplications>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListMyApplicationsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyApplications>>>;
+export type ListMyApplicationsQueryError = ErrorType<unknown>;
+
+export function useListMyApplications<
+  TData = Awaited<ReturnType<typeof listMyApplications>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApplications>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyApplications>>,
+          TError,
+          Awaited<ReturnType<typeof listMyApplications>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyApplications<
+  TData = Awaited<ReturnType<typeof listMyApplications>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApplications>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyApplications>>,
+          TError,
+          Awaited<ReturnType<typeof listMyApplications>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListMyApplications<
+  TData = Awaited<ReturnType<typeof listMyApplications>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApplications>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The employee's applications, newest first
+ */
+
+export function useListMyApplications<
+  TData = Awaited<ReturnType<typeof listMyApplications>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyApplications>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListMyApplicationsQueryOptions(options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

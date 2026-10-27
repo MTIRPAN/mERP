@@ -238,7 +238,7 @@ Yapay zeka görevleri (A1…A14, D24) ait oldukları görevle birlikte yapılır
   - **Backend:** `restore --locked-mode`, `build -warnaserror`, coverage'lı test, sonuçları artifact olarak yükle.
   - **Web:** `npm ci`, `lint`, `typecheck`, `test`, `build`.
   - **Güvenlik:** `dotnet list package --vulnerable` ve `npm audit --audit-level=high` uyarı verirse job kırılır.
-- Dependabot: nuget, npm ve actions için haftalık.
+- ~~Dependabot: nuget, npm ve actions için haftalık.~~ Kaldırıldı (kullanıcı kararı, 2026-10-27): bot PR açmasın. Paket güncellemeleri elle yapılır (örn. #88); bilinen açıkları CI'ın güvenlik job'ı yakalar.
 - PR şablonu: Definition of Done kontrol listesi.
 
 **Kabul kriterleri:**
@@ -942,7 +942,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Yönetici talep açar, onay zinciri işler, onaylanınca "İlan oluştur" aktifleşir.
 - Dolu kadroya talep açılamaz. Yeni kadro önerisi bu kuralın dışındadır.
 
-### [ ] R3 İlanlar ve kariyer sayfası — L
+### [x] R3 İlanlar ve kariyer sayfası — L
 
 **Yapılacaklar:**
 - **`JobOpening`:**
@@ -972,7 +972,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
   - `JobOpening`: talepten ya da doğrudan, aşama şablonunun kopyası, işe alım ekibi, başvuru formu ve eleme soruları
   - yayınla, beklet, kapat; HTML sunucuda temizlenir (`IRichTextSanitizer`, HtmlSanitizer)
   - web: İş ilanları sayfası, TipTap editörlü form, talep ekranında "İlan oluştur"
-- [ ] **R3b kariyer sayfası ve başvuru:** herkese açık API, aday (e-postayla tek) ve başvuru, KVKK onayı, "başvurunuz alındı" e-postası, kariyer sayfası, iç başvuru
+- [x] **R3b kariyer sayfası ve başvuru:** herkese açık API, aday (e-postayla tek) ve başvuru, KVKK onayı, "başvurunuz alındı" e-postası, kariyer sayfası, iç başvuru
 
 ### [ ] R4 Aday havuzu ve başvurular 🔍 — L
 

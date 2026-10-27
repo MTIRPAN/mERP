@@ -51,5 +51,7 @@
   "recruitment.notifications.requisition_completed.body": "Açtığınız {number} numaralı personel talebinin onay süreci tamamlandı: {result}.",
   "recruitment.notifications.requisition_returned.label": "Düzeltme için iade edilen personel taleplerim",
   "recruitment.notifications.requisition_returned.title": "Personel talebi {number} düzeltme için iade edildi",
-  "recruitment.notifications.requisition_returned.body": "{number} numaralı personel talebiniz iade edildi: {comment}. Talebi düzeltip yeniden gönderin."
+  "recruitment.notifications.requisition_returned.body": "{number} numaralı personel talebiniz iade edildi: {comment}. Talebi düzeltip yeniden gönderin.",
+  "permissions.recruitment.self": "Self servis",
+  "permissions.recruitment.self.apply": "Açık pozisyonlara iç aday olarak başvurma"
 }

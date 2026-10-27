@@ -1,3 +1,5 @@
+using Merp.Modules.Recruitment.Domain.Applications;
+using Merp.Modules.Recruitment.Domain.Candidates;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
@@ -26,6 +28,15 @@ public interface IRecruitmentDbContext
 
     /// <summary>Job openings (D49).</summary>
     DbSet<JobOpening> JobOpenings { get; }
+
+    /// <summary>People who applied, one per e-mail address (D49).</summary>
+    DbSet<Candidate> Candidates { get; }
+
+    /// <summary>Applications of candidates to openings (D49).</summary>
+    DbSet<JobApplication> JobApplications { get; }
+
+    /// <summary>Files of recruitment records, e.g. the CVs of candidates.</summary>
+    DbSet<Merp.Application.Persistence.Files.StoredFile> StoredFiles { get; }
 
     EntityEntry<TEntity> Entry<TEntity>(TEntity entity)
         where TEntity : class;

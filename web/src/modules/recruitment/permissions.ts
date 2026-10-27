@@ -5,6 +5,7 @@ export const recruitmentPermissions = {
   settingsManage: 'recruitment.settings.manage',
   requisitionsRead: 'recruitment.requisitions.read',
   requisitionsManage: 'recruitment.requisitions.manage',
+  selfApply: 'recruitment.self.apply',
   openingsRead: 'recruitment.openings.read',
   openingsManage: 'recruitment.openings.manage',
 } as const;

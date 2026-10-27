@@ -39,6 +39,12 @@ public static class RecruitmentPermissions
         /// <summary>Open, correct, publish, hold and close them.</summary>
         public const string Manage = "recruitment.openings.manage";
     }
+
+    public static class Self
+    {
+        /// <summary>An employee applies to openings from self service (D49); the Employee role has it.</summary>
+        public const string Apply = "recruitment.self.apply";
+    }
 }
 
 /// <summary>Permission catalog of the Recruitment module (docs/domain/yetki-ve-onay.md §1.5).</summary>
@@ -53,5 +59,6 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Requisitions.Manage),
         new(RecruitmentPermissions.Openings.Read),
         new(RecruitmentPermissions.Openings.Manage),
+        new(RecruitmentPermissions.Self.Apply),
     ];
 }

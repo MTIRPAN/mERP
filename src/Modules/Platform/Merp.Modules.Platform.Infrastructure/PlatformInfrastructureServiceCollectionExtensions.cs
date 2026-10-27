@@ -66,6 +66,7 @@ public static class PlatformInfrastructureServiceCollectionExtensions
 
         // Companies and branches for other modules (D37)
         services.AddScoped<IOrganizationLookup, OrganizationLookup>();
+        services.AddScoped<ICompanyLogos, CompanyLogos>();
 
         // Who holds a permission in a company, for other modules that notify the people responsible (D38)
         services.AddScoped<IPermissionHolders, PermissionHolderLookup>();
