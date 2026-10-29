@@ -87,7 +87,7 @@ public sealed class CareerTests(RequisitionFactory factory) : IClassFixture<Requ
             a => a.KnockedOut.ShouldBeFalse(),
             a => a.IsInternal.ShouldBeFalse(),
             a => a.CvFileId.ShouldBe(candidate.CvFileId),
-            a => a.Consent.DisclosureRevision.ShouldBe(0),
+            a => a.Consent!.DisclosureRevision.ShouldBe(0),
             a => a.Answers.Count.ShouldBe(2));
         (await factory.OutboxAsync<ExternalEmailRequested>()).ShouldContain(e =>
             e.To == email && e.Type == "recruitment.application_received" && e.Args["position"] == "Satış Uzmanı" && e.Args["company"] == "Acme");

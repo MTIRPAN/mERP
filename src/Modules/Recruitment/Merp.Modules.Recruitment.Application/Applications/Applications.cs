@@ -90,7 +90,7 @@ public sealed record ApplicationDetails(
     string? CoverLetter,
     IReadOnlyList<ApplicationAnswerItem> Answers,
     ApplicationCvItem? Cv,
-    ApplicationConsent Consent,
+    ApplicationConsent? Consent,
     string? ReasonCode,
     string? ReasonName,
     DateTimeOffset? RejectionEmailDueAt,

@@ -49,6 +49,15 @@ public static class RecruitmentPermissions
         public const string Manage = "recruitment.applications.manage";
     }
 
+    public static class Candidates
+    {
+        /// <summary>See the candidate pool and the cards (D50); the pool is the tenant's, the applications on a card follow the scope.</summary>
+        public const string Read = "recruitment.candidates.read";
+
+        /// <summary>Add and correct candidates, their tags and CVs, write notes and merge duplicates.</summary>
+        public const string Manage = "recruitment.candidates.manage";
+    }
+
     public static class Self
     {
         /// <summary>An employee applies to openings from self service (D49); the Employee role has it.</summary>
@@ -76,6 +85,8 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Openings.Manage),
         new(RecruitmentPermissions.Applications.Read),
         new(RecruitmentPermissions.Applications.Manage),
+        new(RecruitmentPermissions.Candidates.Read),
+        new(RecruitmentPermissions.Candidates.Manage),
         new(RecruitmentPermissions.Self.Apply),
         new(RecruitmentPermissions.Self.Hiring),
     ];

@@ -98,7 +98,8 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
 
     public Guid? CvFileId { get; private set; }
 
-    public ApplicationConsent Consent { get; private set; } = null!;
+    /// <summary>The KVKK texts the candidate accepted on the form; null when HR added the candidate from the pool (D50).</summary>
+    public ApplicationConsent? Consent { get; private set; }
 
     public bool IsInternal { get; private set; }
 
@@ -178,6 +179,41 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
         application.Raise(new ApplicationSubmitted(application.Id, terms.CandidateId, email, candidate, employeeId, terms.CvFileId, terms.Consent.PoolConsentRevision, terms.Source, at));
         return application;
     }
+
+    /// <summary>
+    /// HR adds a candidate of the pool to an opening that is published or on hold (D50): no form, no answers; the
+    /// candidate's latest CV goes with it.
+    /// </summary>
+    public static Result<JobApplication> AddFromPool(JobOpening opening, Candidate candidate, Guid? userId, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(opening);
+        ArgumentNullException.ThrowIfNull(candidate);
+        if (opening.Status is not (OpeningStatus.Published or OpeningStatus.OnHold))
+        {
+            return JobApplicationErrors.OpeningClosed;
+        }
+
+        var applied = opening.Stages.First(s => s.Type == StageType.Applied);
+        var application = new JobApplication
+        {
+            Id = EntityId.New<JobApplicationId>(),
+            CandidateId = candidate.Id,
+            OpeningId = opening.Id,
+            CompanyId = opening.CompanyId,
+            StageId = applied.Id,
+            Status = ApplicationStatus.Active,
+            CvFileId = candidate.CvFileId,
+            IsInternal = candidate.EmployeeId is not null,
+            Source = candidate.Source,
+            AppliedAt = at,
+            StageEnteredAt = at,
+        };
+        application.Record(null, applied.Id, null, null, userId, at);
+        return application;
+    }
+
+    /// <summary>The candidate was merged into another one (D50); the application follows.</summary>
+    public void MoveToCandidate(CandidateId candidateId) => CandidateId = candidateId;
 
     /// <summary>
     /// Moves an application in the pipeline to a working stage of the opening, or to Hired. Rejection and withdrawal

@@ -2,8 +2,10 @@ using Merp.Infrastructure.Persistence.Conventions;
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
 using Merp.Modules.Recruitment.Domain.Settings;
+using Merp.Modules.Recruitment.Infrastructure.Candidates;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NpgsqlTypes;
 
 namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Configurations;
 
@@ -20,11 +22,47 @@ internal sealed class CandidateConfiguration : IEntityTypeConfiguration<Candidat
         builder.Property(c => c.Phone).HasMaxLength(Candidate.PhoneMaxLength);
         builder.Property(c => c.Culture).HasMaxLength(Candidate.CultureMaxLength);
         builder.Property(c => c.Source).HasMaxLength(Candidate.SourceMaxLength);
+        builder.Property(c => c.NormalizedPhone).HasMaxLength(Candidate.PhoneMaxLength);
+        builder.Property(c => c.Location).HasMaxLength(CandidateProfile.TextMaxLength);
+        builder.Property(c => c.CurrentTitle).HasMaxLength(CandidateProfile.TextMaxLength);
+        builder.Property(c => c.CurrentCompany).HasMaxLength(CandidateProfile.TextMaxLength);
+        builder.Property(c => c.ExperienceYears).HasPrecision(4, 1);
+        builder.Property(c => c.Education).HasMaxLength(CandidateProfile.EducationMaxLength);
+        builder.Property(c => c.LinkedInUrl).HasMaxLength(CandidateProfile.UrlMaxLength);
+        builder.Property(c => c.PortfolioUrl).HasMaxLength(CandidateProfile.UrlMaxLength);
+        builder.Property(c => c.Tags).HasJson();
+        builder.Property(c => c.TagText).HasMaxLength(Candidate.TagTextMaxLength);
         builder.Ignore(c => c.FullName);
+        builder.HasMany(c => c.Notes).WithOne().HasForeignKey(n => n.CandidateId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(c => c.Notes).UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        // One candidate per e-mail address in the tenant (D49)
+        // The pool search (D50): names, profile, tags, notes and the CV text, with the Turkish dictionary
+        builder.Property<NpgsqlTsVector>(CandidateSearch.VectorProperty)
+            .HasComputedColumnSql(
+                "to_tsvector('turkish', coalesce(first_name, '') || ' ' || coalesce(last_name, '') || ' ' || coalesce(email, '') || ' ' "
+                + "|| coalesce(current_title, '') || ' ' || coalesce(current_company, '') || ' ' || coalesce(location, '') || ' ' "
+                + "|| coalesce(education, '') || ' ' || coalesce(tag_text, '') || ' ' || coalesce(notes_text, '') || ' ' || coalesce(cv_text, ''))",
+                stored: true);
+        builder.HasIndex(CandidateSearch.VectorProperty).HasMethod("gin");
+
+        // One candidate per e-mail address in the tenant (D49); the same phone or name suggests a duplicate (D50)
         builder.HasIndex(c => c.Email).IsUnique();
         builder.HasIndex(c => c.EmployeeId);
+        builder.HasIndex(c => c.NormalizedPhone);
+        builder.HasIndex(c => new { c.LastName, c.FirstName });
+    }
+}
+
+internal sealed class CandidateNoteConfiguration : IEntityTypeConfiguration<CandidateNote>
+{
+    public void Configure(EntityTypeBuilder<CandidateNote> builder)
+    {
+        builder.ToTable("candidate_notes");
+        builder.HasKey(n => n.Id);
+        builder.Property(n => n.Id).ValueGeneratedNever();
+        builder.Property(n => n.Body).HasMaxLength(CandidateNote.BodyMaxLength);
+        builder.Property(n => n.MentionedUserIds).HasJson();
+        builder.HasIndex(n => new { n.CandidateId, n.At });
     }
 }
 

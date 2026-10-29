@@ -16,7 +16,7 @@ export interface ApplicationDetails {
   coverLetter: string | null;
   answers: ApplicationAnswerItem[];
   cv: null | ApplicationCvItem;
-  consent: ApplicationConsent;
+  consent: null | ApplicationConsent;
   /** @nullable */
   reasonCode: string | null;
   /** @nullable */

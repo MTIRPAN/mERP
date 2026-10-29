@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
 
 #nullable disable
 
@@ -432,7 +433,6 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnName("company_id");
 
                     b.Property<string>("Consent")
-                        .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("consent");
 
@@ -555,9 +555,32 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(10)")
                         .HasColumnName("culture");
 
+                    b.Property<string>("CurrentCompany")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("current_company");
+
+                    b.Property<string>("CurrentTitle")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("current_title");
+
                     b.Property<Guid?>("CvFileId")
                         .HasColumnType("uuid")
                         .HasColumnName("cv_file_id");
+
+                    b.Property<string>("CvText")
+                        .HasColumnType("text")
+                        .HasColumnName("cv_text");
+
+                    b.Property<Guid?>("CvTextFileId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cv_text_file_id");
+
+                    b.Property<string>("Education")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("education");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -569,13 +592,18 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
 
+                    b.Property<decimal?>("ExperienceYears")
+                        .HasPrecision(4, 1)
+                        .HasColumnType("numeric(4,1)")
+                        .HasColumnName("experience_years");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("first_name");
 
-                    b.Property<DateTimeOffset>("LastAppliedAt")
+                    b.Property<DateTimeOffset?>("LastAppliedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_applied_at");
 
@@ -585,6 +613,16 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
 
+                    b.Property<string>("LinkedInUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("linked_in_url");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("location");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modified_at");
@@ -592,6 +630,15 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid")
                         .HasColumnName("modified_by");
+
+                    b.Property<string>("NormalizedPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("normalized_phone");
+
+                    b.Property<string>("NotesText")
+                        .HasColumnType("text")
+                        .HasColumnName("notes_text");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(30)
@@ -606,11 +653,36 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("pool_consent_revision");
 
+                    b.Property<string>("PortfolioUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("portfolio_url");
+
+                    b.Property<Guid?>("ReferrerEmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("referrer_employee_id");
+
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasColumnName("search_vector")
+                        .HasComputedColumnSql("to_tsvector('turkish', coalesce(first_name, '') || ' ' || coalesce(last_name, '') || ' ' || coalesce(email, '') || ' ' || coalesce(current_title, '') || ' ' || coalesce(current_company, '') || ' ' || coalesce(location, '') || ' ' || coalesce(education, '') || ' ' || coalesce(tag_text, '') || ' ' || coalesce(notes_text, '') || ' ' || coalesce(cv_text, ''))", true);
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("source");
+
+                    b.Property<string>("TagText")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("tag_text");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("tags");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -628,7 +700,62 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                     b.HasIndex("EmployeeId")
                         .HasDatabaseName("ix_candidates_employee_id");
 
+                    b.HasIndex("NormalizedPhone")
+                        .HasDatabaseName("ix_candidates_normalized_phone");
+
+                    b.HasIndex("SearchVector")
+                        .HasDatabaseName("ix_candidates_search_vector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "gin");
+
+                    b.HasIndex("LastName", "FirstName")
+                        .HasDatabaseName("ix_candidates_last_name_first_name");
+
                     b.ToTable("candidates", "recruitment");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Candidates.CandidateNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<Guid?>("AuthorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_user_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("body");
+
+                    b.Property<Guid>("CandidateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("candidate_id");
+
+                    b.Property<string>("MentionedUserIds")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("mentioned_user_ids");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_candidate_notes");
+
+                    b.HasIndex("CandidateId", "At")
+                        .HasDatabaseName("ix_candidate_notes_candidate_id_at");
+
+                    b.ToTable("candidate_notes", "recruitment");
                 });
 
             modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Openings.JobOpening", b =>
@@ -1122,9 +1249,24 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_application_stage_changes_job_applications_application_id");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Candidates.CandidateNote", b =>
+                {
+                    b.HasOne("Merp.Modules.Recruitment.Domain.Candidates.Candidate", null)
+                        .WithMany("Notes")
+                        .HasForeignKey("CandidateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_candidate_notes_candidates_candidate_id");
+                });
+
             modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Applications.JobApplication", b =>
                 {
                     b.Navigation("History");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Candidates.Candidate", b =>
+                {
+                    b.Navigation("Notes");
                 });
 #pragma warning restore 612, 618
         }

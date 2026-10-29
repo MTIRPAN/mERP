@@ -21,14 +21,19 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddCandidateNoteCommand,
+  AddCandidateToOpeningCommand,
   AnalyzeCvBody,
   ApplicationDetails,
   BranchSummary,
   CancelRequisitionCommand,
+  CandidateDetails,
+  CandidateOptions,
   CareerOpeningDetails,
   CareerOpeningItem,
   CloseOpeningCommand,
   ConsentTextItem,
+  CreateCandidateCommand,
   CreateOpeningCommand,
   CreateRecruitmentLookupCommand,
   CreateRequisitionCommand,
@@ -40,6 +45,7 @@ import type {
   GetMyOpeningParams,
   HttpValidationProblemDetails,
   ListApplicationsParams,
+  ListCandidatesParams,
   ListConsentTextsParams,
   ListMyHiringApplicationsParams,
   ListOpeningBranchesParams,
@@ -49,6 +55,7 @@ import type {
   ListRequisitionUnitsParams,
   ListRequisitionsParams,
   ListStageTemplatesParams,
+  MergeCandidatesCommand,
   MoveApplicationCommand,
   MyApplicationItem,
   OpeningDetails,
@@ -57,6 +64,7 @@ import type {
   OpeningTemplateOption,
   OrgUnitInfo,
   PagedResultOfApplicationListItem,
+  PagedResultOfCandidateListItem,
   PagedResultOfOpeningListItem,
   PagedResultOfRequisitionListItem,
   ProblemDetails,
@@ -67,16 +75,21 @@ import type {
   RequisitionDetails,
   RequisitionPositionItem,
   RequisitionUserOption,
+  SearchCandidateMentionUsersParams,
+  SearchCandidateReferrersParams,
+  SearchMyHiringMentionUsersParams,
   SearchOpeningUsersParams,
   SearchRequisitionEmployeesParams,
   SearchRequisitionUsersParams,
   StageTemplateItem,
   SubmitMyApplicationBody,
+  UpdateCandidateCommand,
   UpdateOpeningCommand,
   UpdateOpeningStagesCommand,
   UpdateRecruitmentLookupCommand,
   UpdateRequisitionCommand,
   UpdateStageTemplateCommand,
+  UploadCandidateCvBody,
   WithdrawApplicationCommand,
 } from '../../model';
 
@@ -3429,6 +3442,1448 @@ export const useReopenApplication = <
 > => {
   return useMutation(getReopenApplicationMutationOptions(options), queryClient);
 };
+export const getListCandidatesUrl = (params?: ListCandidatesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/candidates?${stringifiedParams}`
+    : `/api/recruitment/candidates`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.read.
+ * @summary The candidate pool, newest first; the search covers names, profile, tags, notes and CV text
+ */
+export const listCandidates = async (
+  params?: ListCandidatesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfCandidateListItem> => {
+  return customFetch<PagedResultOfCandidateListItem>(getListCandidatesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListCandidatesQueryKey = (params?: ListCandidatesParams) => {
+  return [`/api/recruitment/candidates`, ...(params ? [params] : [])] as const;
+};
+
+export const getListCandidatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCandidates>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListCandidatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCandidates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCandidatesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCandidates>>> = ({ signal }) =>
+    listCandidates(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCandidates>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListCandidatesQueryResult = NonNullable<Awaited<ReturnType<typeof listCandidates>>>;
+export type ListCandidatesQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListCandidates<
+  TData = Awaited<ReturnType<typeof listCandidates>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListCandidatesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCandidates>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCandidates>>,
+          TError,
+          Awaited<ReturnType<typeof listCandidates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCandidates<
+  TData = Awaited<ReturnType<typeof listCandidates>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListCandidatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCandidates>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCandidates>>,
+          TError,
+          Awaited<ReturnType<typeof listCandidates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListCandidates<
+  TData = Awaited<ReturnType<typeof listCandidates>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListCandidatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCandidates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The candidate pool, newest first; the search covers names, profile, tags, notes and CV text
+ */
+
+export function useListCandidates<
+  TData = Awaited<ReturnType<typeof listCandidates>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListCandidatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listCandidates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListCandidatesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateCandidateUrl = () => {
+  return `/api/recruitment/candidates`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.manage.
+ * @summary Add a candidate to the pool; the e-mail of another candidate is refused
+ */
+export const createCandidate = async (
+  createCandidateCommand: CreateCandidateCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateCandidateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createCandidateCommand),
+  });
+};
+
+export const getCreateCandidateMutationKey = () => ['createCandidate'] as const;
+
+export const getCreateCandidateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCandidate>>,
+    TError,
+    CreateCandidateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCandidate>>,
+  TError,
+  CreateCandidateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateCandidateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCandidate>>, CreateCandidateMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return createCandidate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCandidateMutationResult = NonNullable<Awaited<ReturnType<typeof createCandidate>>>;
+export type CreateCandidateMutationBody = CreateCandidateCommand;
+export type CreateCandidateMutationError = ErrorType<HttpValidationProblemDetails>;
+export type CreateCandidateMutationVariables = { data: CreateCandidateCommand };
+
+/**
+ * @summary Add a candidate to the pool; the e-mail of another candidate is refused
+ */
+export const useCreateCandidate = <TError = ErrorType<HttpValidationProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createCandidate>>,
+      TError,
+      CreateCandidateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createCandidate>>,
+  TError,
+  CreateCandidateMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateCandidateMutationOptions(options), queryClient);
+};
+export const getGetCandidateOptionsUrl = () => {
+  return `/api/recruitment/candidates/options`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.read.
+ * @summary The active tags and candidate sources to choose from
+ */
+export const getCandidateOptions = async (options?: Parameters<typeof customFetch>[1]): Promise<CandidateOptions> => {
+  return customFetch<CandidateOptions>(getGetCandidateOptionsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetCandidateOptionsQueryKey = () => {
+  return [`/api/recruitment/candidates/options`] as const;
+};
+
+export const getGetCandidateOptionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCandidateOptions>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateOptions>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCandidateOptionsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCandidateOptions>>> = ({ signal }) =>
+    getCandidateOptions({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCandidateOptions>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetCandidateOptionsQueryResult = NonNullable<Awaited<ReturnType<typeof getCandidateOptions>>>;
+export type GetCandidateOptionsQueryError = ErrorType<unknown>;
+
+export function useGetCandidateOptions<
+  TData = Awaited<ReturnType<typeof getCandidateOptions>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateOptions>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCandidateOptions>>,
+          TError,
+          Awaited<ReturnType<typeof getCandidateOptions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCandidateOptions<
+  TData = Awaited<ReturnType<typeof getCandidateOptions>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateOptions>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCandidateOptions>>,
+          TError,
+          Awaited<ReturnType<typeof getCandidateOptions>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCandidateOptions<
+  TData = Awaited<ReturnType<typeof getCandidateOptions>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateOptions>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The active tags and candidate sources to choose from
+ */
+
+export function useGetCandidateOptions<
+  TData = Awaited<ReturnType<typeof getCandidateOptions>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidateOptions>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetCandidateOptionsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSearchCandidateReferrersUrl = (params: SearchCandidateReferrersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/candidates/referrers?${stringifiedParams}`
+    : `/api/recruitment/candidates/referrers`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.manage.
+ * @summary Employees of a company in scope by name or registry number, to pick the referrer (at most 20)
+ */
+export const searchCandidateReferrers = async (
+  params: SearchCandidateReferrersParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EmployeeSummary[]> => {
+  return customFetch<EmployeeSummary[]>(getSearchCandidateReferrersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchCandidateReferrersQueryKey = (params?: SearchCandidateReferrersParams) => {
+  return [`/api/recruitment/candidates/referrers`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchCandidateReferrersQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchCandidateReferrers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: SearchCandidateReferrersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateReferrers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchCandidateReferrersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchCandidateReferrers>>> = ({ signal }) =>
+    searchCandidateReferrers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchCandidateReferrers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchCandidateReferrersQueryResult = NonNullable<Awaited<ReturnType<typeof searchCandidateReferrers>>>;
+export type SearchCandidateReferrersQueryError = ErrorType<ProblemDetails>;
+
+export function useSearchCandidateReferrers<
+  TData = Awaited<ReturnType<typeof searchCandidateReferrers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: SearchCandidateReferrersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateReferrers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchCandidateReferrers>>,
+          TError,
+          Awaited<ReturnType<typeof searchCandidateReferrers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchCandidateReferrers<
+  TData = Awaited<ReturnType<typeof searchCandidateReferrers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: SearchCandidateReferrersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateReferrers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchCandidateReferrers>>,
+          TError,
+          Awaited<ReturnType<typeof searchCandidateReferrers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchCandidateReferrers<
+  TData = Awaited<ReturnType<typeof searchCandidateReferrers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: SearchCandidateReferrersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateReferrers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Employees of a company in scope by name or registry number, to pick the referrer (at most 20)
+ */
+
+export function useSearchCandidateReferrers<
+  TData = Awaited<ReturnType<typeof searchCandidateReferrers>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  params: SearchCandidateReferrersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateReferrers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchCandidateReferrersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSearchCandidateMentionUsersUrl = (params?: SearchCandidateMentionUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/candidates/mention-users?${stringifiedParams}`
+    : `/api/recruitment/candidates/mention-users`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.read.
+ * @summary Active users by name to mention in a note (at most 20)
+ */
+export const searchCandidateMentionUsers = async (
+  params?: SearchCandidateMentionUsersParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<RequisitionUserOption[]> => {
+  return customFetch<RequisitionUserOption[]>(getSearchCandidateMentionUsersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchCandidateMentionUsersQueryKey = (params?: SearchCandidateMentionUsersParams) => {
+  return [`/api/recruitment/candidates/mention-users`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchCandidateMentionUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchCandidateMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchCandidateMentionUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateMentionUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchCandidateMentionUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchCandidateMentionUsers>>> = ({ signal }) =>
+    searchCandidateMentionUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchCandidateMentionUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchCandidateMentionUsersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof searchCandidateMentionUsers>>
+>;
+export type SearchCandidateMentionUsersQueryError = ErrorType<unknown>;
+
+export function useSearchCandidateMentionUsers<
+  TData = Awaited<ReturnType<typeof searchCandidateMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | SearchCandidateMentionUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateMentionUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchCandidateMentionUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchCandidateMentionUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchCandidateMentionUsers<
+  TData = Awaited<ReturnType<typeof searchCandidateMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchCandidateMentionUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateMentionUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchCandidateMentionUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchCandidateMentionUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchCandidateMentionUsers<
+  TData = Awaited<ReturnType<typeof searchCandidateMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchCandidateMentionUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateMentionUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active users by name to mention in a note (at most 20)
+ */
+
+export function useSearchCandidateMentionUsers<
+  TData = Awaited<ReturnType<typeof searchCandidateMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchCandidateMentionUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchCandidateMentionUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchCandidateMentionUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetCandidateUrl = (id: string) => {
+  return `/api/recruitment/candidates/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.read.
+ * @summary A candidate's card: profile, tags, consent, applications in scope, CVs, notes, possible duplicates, timeline
+ */
+export const getCandidate = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CandidateDetails> => {
+  return customFetch<CandidateDetails>(getGetCandidateUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetCandidateQueryKey = (id: string) => {
+  return [`/api/recruitment/candidates/${id}`] as const;
+};
+
+export const getGetCandidateQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCandidate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCandidateQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCandidate>>> = ({ signal }) =>
+    getCandidate(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCandidate>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetCandidateQueryResult = NonNullable<Awaited<ReturnType<typeof getCandidate>>>;
+export type GetCandidateQueryError = ErrorType<ProblemDetails>;
+
+export function useGetCandidate<TData = Awaited<ReturnType<typeof getCandidate>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidate>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCandidate>>,
+          TError,
+          Awaited<ReturnType<typeof getCandidate>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCandidate<TData = Awaited<ReturnType<typeof getCandidate>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidate>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCandidate>>,
+          TError,
+          Awaited<ReturnType<typeof getCandidate>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetCandidate<TData = Awaited<ReturnType<typeof getCandidate>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A candidate's card: profile, tags, consent, applications in scope, CVs, notes, possible duplicates, timeline
+ */
+
+export function useGetCandidate<TData = Awaited<ReturnType<typeof getCandidate>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getCandidate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetCandidateQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateCandidateUrl = (id: string) => {
+  return `/api/recruitment/candidates/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.manage.
+ * @summary Correct a candidate's contact details, profile, source and tags
+ */
+export const updateCandidate = async (
+  id: string,
+  updateCandidateCommand: UpdateCandidateCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateCandidateUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateCandidateCommand),
+  });
+};
+
+export const getUpdateCandidateMutationKey = () => ['updateCandidate'] as const;
+
+export const getUpdateCandidateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCandidate>>,
+    TError,
+    UpdateCandidateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCandidate>>,
+  TError,
+  UpdateCandidateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateCandidateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCandidate>>, UpdateCandidateMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return updateCandidate(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCandidateMutationResult = NonNullable<Awaited<ReturnType<typeof updateCandidate>>>;
+export type UpdateCandidateMutationBody = UpdateCandidateCommand;
+export type UpdateCandidateMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateCandidateMutationVariables = { id: string; data: UpdateCandidateCommand };
+
+/**
+ * @summary Correct a candidate's contact details, profile, source and tags
+ */
+export const useUpdateCandidate = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateCandidate>>,
+      TError,
+      UpdateCandidateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateCandidate>>,
+  TError,
+  UpdateCandidateMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateCandidateMutationOptions(options), queryClient);
+};
+export const getUploadCandidateCvUrl = (id: string) => {
+  return `/api/recruitment/candidates/${id}/cvs`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.manage.
+ * @summary Upload a newer CV (PDF or DOCX, at most 5 MB); its text is searched once it is read
+ */
+export const uploadCandidateCv = async (
+  id: string,
+  uploadCandidateCvBody: UploadCandidateCvBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const formData = new FormData();
+  if (uploadCandidateCvBody.cv !== undefined) {
+    formData.append(`cv`, uploadCandidateCvBody.cv);
+  }
+
+  return customFetch<EntityCreatedResponse>(getUploadCandidateCvUrl(id), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getUploadCandidateCvMutationKey = () => ['uploadCandidateCv'] as const;
+
+export const getUploadCandidateCvMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadCandidateCv>>,
+    TError,
+    UploadCandidateCvMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadCandidateCv>>,
+  TError,
+  UploadCandidateCvMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUploadCandidateCvMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadCandidateCv>>,
+    UploadCandidateCvMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return uploadCandidateCv(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadCandidateCvMutationResult = NonNullable<Awaited<ReturnType<typeof uploadCandidateCv>>>;
+export type UploadCandidateCvMutationBody = UploadCandidateCvBody;
+export type UploadCandidateCvMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UploadCandidateCvMutationVariables = { id: string; data: UploadCandidateCvBody };
+
+/**
+ * @summary Upload a newer CV (PDF or DOCX, at most 5 MB); its text is searched once it is read
+ */
+export const useUploadCandidateCv = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof uploadCandidateCv>>,
+      TError,
+      UploadCandidateCvMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof uploadCandidateCv>>,
+  TError,
+  UploadCandidateCvMutationVariables,
+  TContext
+> => {
+  return useMutation(getUploadCandidateCvMutationOptions(options), queryClient);
+};
+export const getDownloadCandidateCvUrl = (id: string, fileId: string) => {
+  return `/api/recruitment/candidates/${id}/cvs/${fileId}`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.read.
+ * @summary A CV of the candidate
+ */
+export const downloadCandidateCv = async (
+  id: string,
+  fileId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getDownloadCandidateCvUrl(id, fileId), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getDownloadCandidateCvQueryKey = (id: string, fileId: string) => {
+  return [`/api/recruitment/candidates/${id}/cvs/${fileId}`] as const;
+};
+
+export const getDownloadCandidateCvQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadCandidateCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadCandidateCv>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getDownloadCandidateCvQueryKey(id, fileId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadCandidateCv>>> = ({ signal }) =>
+    downloadCandidateCv(id, fileId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined && fileId !== null && fileId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof downloadCandidateCv>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type DownloadCandidateCvQueryResult = NonNullable<Awaited<ReturnType<typeof downloadCandidateCv>>>;
+export type DownloadCandidateCvQueryError = ErrorType<ProblemDetails>;
+
+export function useDownloadCandidateCv<
+  TData = Awaited<ReturnType<typeof downloadCandidateCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadCandidateCv>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadCandidateCv>>,
+          TError,
+          Awaited<ReturnType<typeof downloadCandidateCv>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadCandidateCv<
+  TData = Awaited<ReturnType<typeof downloadCandidateCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadCandidateCv>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadCandidateCv>>,
+          TError,
+          Awaited<ReturnType<typeof downloadCandidateCv>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadCandidateCv<
+  TData = Awaited<ReturnType<typeof downloadCandidateCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadCandidateCv>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A CV of the candidate
+ */
+
+export function useDownloadCandidateCv<
+  TData = Awaited<ReturnType<typeof downloadCandidateCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  fileId: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadCandidateCv>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getDownloadCandidateCvQueryOptions(id, fileId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAddCandidateNoteUrl = (id: string) => {
+  return `/api/recruitment/candidates/${id}/notes`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.manage.
+ * @summary Add a note; the users mentioned are notified
+ */
+export const addCandidateNote = async (
+  id: string,
+  addCandidateNoteCommand: AddCandidateNoteCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getAddCandidateNoteUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addCandidateNoteCommand),
+  });
+};
+
+export const getAddCandidateNoteMutationKey = () => ['addCandidateNote'] as const;
+
+export const getAddCandidateNoteMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addCandidateNote>>,
+    TError,
+    AddCandidateNoteMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addCandidateNote>>,
+  TError,
+  AddCandidateNoteMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAddCandidateNoteMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addCandidateNote>>,
+    AddCandidateNoteMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return addCandidateNote(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddCandidateNoteMutationResult = NonNullable<Awaited<ReturnType<typeof addCandidateNote>>>;
+export type AddCandidateNoteMutationBody = AddCandidateNoteCommand;
+export type AddCandidateNoteMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AddCandidateNoteMutationVariables = { id: string; data: AddCandidateNoteCommand };
+
+/**
+ * @summary Add a note; the users mentioned are notified
+ */
+export const useAddCandidateNote = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addCandidateNote>>,
+      TError,
+      AddCandidateNoteMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof addCandidateNote>>,
+  TError,
+  AddCandidateNoteMutationVariables,
+  TContext
+> => {
+  return useMutation(getAddCandidateNoteMutationOptions(options), queryClient);
+};
+export const getRemoveCandidateNoteUrl = (id: string, noteId: string) => {
+  return `/api/recruitment/candidates/${id}/notes/${noteId}`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.manage.
+ * @summary Remove a note; only its author does
+ */
+export const removeCandidateNote = async (
+  id: string,
+  noteId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getRemoveCandidateNoteUrl(id, noteId), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveCandidateNoteMutationKey = () => ['removeCandidateNote'] as const;
+
+export const getRemoveCandidateNoteMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeCandidateNote>>,
+    TError,
+    RemoveCandidateNoteMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeCandidateNote>>,
+  TError,
+  RemoveCandidateNoteMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoveCandidateNoteMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeCandidateNote>>,
+    RemoveCandidateNoteMutationVariables
+  > = (props) => {
+    const { id, noteId } = props ?? {};
+
+    return removeCandidateNote(id, noteId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveCandidateNoteMutationResult = NonNullable<Awaited<ReturnType<typeof removeCandidateNote>>>;
+
+export type RemoveCandidateNoteMutationError = ErrorType<ProblemDetails>;
+export type RemoveCandidateNoteMutationVariables = { id: string; noteId: string };
+
+/**
+ * @summary Remove a note; only its author does
+ */
+export const useRemoveCandidateNote = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeCandidateNote>>,
+      TError,
+      RemoveCandidateNoteMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeCandidateNote>>,
+  TError,
+  RemoveCandidateNoteMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoveCandidateNoteMutationOptions(options), queryClient);
+};
+export const getMergeCandidatesUrl = (id: string) => {
+  return `/api/recruitment/candidates/${id}/merge`;
+};
+
+/**
+ * Requires permission: recruitment.candidates.manage.
+ * @summary Take a duplicate into this candidate: its applications, CVs and notes move, then it is removed
+ */
+export const mergeCandidates = async (
+  id: string,
+  mergeCandidatesCommand: MergeCandidatesCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getMergeCandidatesUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mergeCandidatesCommand),
+  });
+};
+
+export const getMergeCandidatesMutationKey = () => ['mergeCandidates'] as const;
+
+export const getMergeCandidatesMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof mergeCandidates>>,
+    TError,
+    MergeCandidatesMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof mergeCandidates>>,
+  TError,
+  MergeCandidatesMutationVariables,
+  TContext
+> => {
+  const mutationKey = getMergeCandidatesMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof mergeCandidates>>, MergeCandidatesMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return mergeCandidates(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MergeCandidatesMutationResult = NonNullable<Awaited<ReturnType<typeof mergeCandidates>>>;
+export type MergeCandidatesMutationBody = MergeCandidatesCommand;
+export type MergeCandidatesMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type MergeCandidatesMutationVariables = { id: string; data: MergeCandidatesCommand };
+
+/**
+ * @summary Take a duplicate into this candidate: its applications, CVs and notes move, then it is removed
+ */
+export const useMergeCandidates = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof mergeCandidates>>,
+      TError,
+      MergeCandidatesMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof mergeCandidates>>,
+  TError,
+  MergeCandidatesMutationVariables,
+  TContext
+> => {
+  return useMutation(getMergeCandidatesMutationOptions(options), queryClient);
+};
+export const getAddCandidateToOpeningUrl = (id: string) => {
+  return `/api/recruitment/candidates/${id}/applications`;
+};
+
+/**
+ * Requires permission: recruitment.applications.manage.
+ * @summary Add the candidate to an opening (published or on hold) of a company in scope
+ */
+export const addCandidateToOpening = async (
+  id: string,
+  addCandidateToOpeningCommand: AddCandidateToOpeningCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getAddCandidateToOpeningUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addCandidateToOpeningCommand),
+  });
+};
+
+export const getAddCandidateToOpeningMutationKey = () => ['addCandidateToOpening'] as const;
+
+export const getAddCandidateToOpeningMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addCandidateToOpening>>,
+    TError,
+    AddCandidateToOpeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addCandidateToOpening>>,
+  TError,
+  AddCandidateToOpeningMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAddCandidateToOpeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addCandidateToOpening>>,
+    AddCandidateToOpeningMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return addCandidateToOpening(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddCandidateToOpeningMutationResult = NonNullable<Awaited<ReturnType<typeof addCandidateToOpening>>>;
+export type AddCandidateToOpeningMutationBody = AddCandidateToOpeningCommand;
+export type AddCandidateToOpeningMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AddCandidateToOpeningMutationVariables = { id: string; data: AddCandidateToOpeningCommand };
+
+/**
+ * @summary Add the candidate to an opening (published or on hold) of a company in scope
+ */
+export const useAddCandidateToOpening = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addCandidateToOpening>>,
+      TError,
+      AddCandidateToOpeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof addCandidateToOpening>>,
+  TError,
+  AddCandidateToOpeningMutationVariables,
+  TContext
+> => {
+  return useMutation(getAddCandidateToOpeningMutationOptions(options), queryClient);
+};
 export const getListMyOpeningsUrl = () => {
   return `/api/recruitment/me/openings`;
 };
@@ -4481,6 +5936,451 @@ export function useDownloadMyHiringApplicationCv<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getDownloadMyHiringApplicationCvQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetMyHiringCandidateUrl = (id: string) => {
+  return `/api/recruitment/me/hiring/candidates/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.self.hiring.
+ * @summary A candidate of an opening of my hiring team, with the applications to the team's openings
+ */
+export const getMyHiringCandidate = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CandidateDetails> => {
+  return customFetch<CandidateDetails>(getGetMyHiringCandidateUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetMyHiringCandidateQueryKey = (id: string) => {
+  return [`/api/recruitment/me/hiring/candidates/${id}`] as const;
+};
+
+export const getGetMyHiringCandidateQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyHiringCandidate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyHiringCandidate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyHiringCandidateQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyHiringCandidate>>> = ({ signal }) =>
+    getMyHiringCandidate(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyHiringCandidate>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMyHiringCandidateQueryResult = NonNullable<Awaited<ReturnType<typeof getMyHiringCandidate>>>;
+export type GetMyHiringCandidateQueryError = ErrorType<ProblemDetails>;
+
+export function useGetMyHiringCandidate<
+  TData = Awaited<ReturnType<typeof getMyHiringCandidate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyHiringCandidate>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyHiringCandidate>>,
+          TError,
+          Awaited<ReturnType<typeof getMyHiringCandidate>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyHiringCandidate<
+  TData = Awaited<ReturnType<typeof getMyHiringCandidate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyHiringCandidate>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyHiringCandidate>>,
+          TError,
+          Awaited<ReturnType<typeof getMyHiringCandidate>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMyHiringCandidate<
+  TData = Awaited<ReturnType<typeof getMyHiringCandidate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyHiringCandidate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A candidate of an opening of my hiring team, with the applications to the team's openings
+ */
+
+export function useGetMyHiringCandidate<
+  TData = Awaited<ReturnType<typeof getMyHiringCandidate>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyHiringCandidate>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMyHiringCandidateQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getAddMyHiringCandidateNoteUrl = (id: string) => {
+  return `/api/recruitment/me/hiring/candidates/${id}/notes`;
+};
+
+/**
+ * Requires permission: recruitment.self.hiring.
+ * @summary Add a note on a candidate of an opening of my hiring team
+ */
+export const addMyHiringCandidateNote = async (
+  id: string,
+  addCandidateNoteCommand: AddCandidateNoteCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getAddMyHiringCandidateNoteUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(addCandidateNoteCommand),
+  });
+};
+
+export const getAddMyHiringCandidateNoteMutationKey = () => ['addMyHiringCandidateNote'] as const;
+
+export const getAddMyHiringCandidateNoteMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addMyHiringCandidateNote>>,
+    TError,
+    AddMyHiringCandidateNoteMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addMyHiringCandidateNote>>,
+  TError,
+  AddMyHiringCandidateNoteMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAddMyHiringCandidateNoteMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addMyHiringCandidateNote>>,
+    AddMyHiringCandidateNoteMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return addMyHiringCandidateNote(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddMyHiringCandidateNoteMutationResult = NonNullable<Awaited<ReturnType<typeof addMyHiringCandidateNote>>>;
+export type AddMyHiringCandidateNoteMutationBody = AddCandidateNoteCommand;
+export type AddMyHiringCandidateNoteMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AddMyHiringCandidateNoteMutationVariables = { id: string; data: AddCandidateNoteCommand };
+
+/**
+ * @summary Add a note on a candidate of an opening of my hiring team
+ */
+export const useAddMyHiringCandidateNote = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addMyHiringCandidateNote>>,
+      TError,
+      AddMyHiringCandidateNoteMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof addMyHiringCandidateNote>>,
+  TError,
+  AddMyHiringCandidateNoteMutationVariables,
+  TContext
+> => {
+  return useMutation(getAddMyHiringCandidateNoteMutationOptions(options), queryClient);
+};
+export const getRemoveMyHiringCandidateNoteUrl = (id: string, noteId: string) => {
+  return `/api/recruitment/me/hiring/candidates/${id}/notes/${noteId}`;
+};
+
+/**
+ * Requires permission: recruitment.self.hiring.
+ * @summary Remove my note on a candidate of an opening of my hiring team
+ */
+export const removeMyHiringCandidateNote = async (
+  id: string,
+  noteId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getRemoveMyHiringCandidateNoteUrl(id, noteId), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveMyHiringCandidateNoteMutationKey = () => ['removeMyHiringCandidateNote'] as const;
+
+export const getRemoveMyHiringCandidateNoteMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeMyHiringCandidateNote>>,
+    TError,
+    RemoveMyHiringCandidateNoteMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeMyHiringCandidateNote>>,
+  TError,
+  RemoveMyHiringCandidateNoteMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoveMyHiringCandidateNoteMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeMyHiringCandidateNote>>,
+    RemoveMyHiringCandidateNoteMutationVariables
+  > = (props) => {
+    const { id, noteId } = props ?? {};
+
+    return removeMyHiringCandidateNote(id, noteId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveMyHiringCandidateNoteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeMyHiringCandidateNote>>
+>;
+
+export type RemoveMyHiringCandidateNoteMutationError = ErrorType<ProblemDetails>;
+export type RemoveMyHiringCandidateNoteMutationVariables = { id: string; noteId: string };
+
+/**
+ * @summary Remove my note on a candidate of an opening of my hiring team
+ */
+export const useRemoveMyHiringCandidateNote = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeMyHiringCandidateNote>>,
+      TError,
+      RemoveMyHiringCandidateNoteMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeMyHiringCandidateNote>>,
+  TError,
+  RemoveMyHiringCandidateNoteMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoveMyHiringCandidateNoteMutationOptions(options), queryClient);
+};
+export const getSearchMyHiringMentionUsersUrl = (params?: SearchMyHiringMentionUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/me/hiring/mention-users?${stringifiedParams}`
+    : `/api/recruitment/me/hiring/mention-users`;
+};
+
+/**
+ * Requires permission: recruitment.self.hiring.
+ * @summary Active users by name to mention in a note (at most 20)
+ */
+export const searchMyHiringMentionUsers = async (
+  params?: SearchMyHiringMentionUsersParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<RequisitionUserOption[]> => {
+  return customFetch<RequisitionUserOption[]>(getSearchMyHiringMentionUsersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchMyHiringMentionUsersQueryKey = (params?: SearchMyHiringMentionUsersParams) => {
+  return [`/api/recruitment/me/hiring/mention-users`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchMyHiringMentionUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchMyHiringMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchMyHiringMentionUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyHiringMentionUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchMyHiringMentionUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchMyHiringMentionUsers>>> = ({ signal }) =>
+    searchMyHiringMentionUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchMyHiringMentionUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchMyHiringMentionUsersQueryResult = NonNullable<Awaited<ReturnType<typeof searchMyHiringMentionUsers>>>;
+export type SearchMyHiringMentionUsersQueryError = ErrorType<unknown>;
+
+export function useSearchMyHiringMentionUsers<
+  TData = Awaited<ReturnType<typeof searchMyHiringMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | SearchMyHiringMentionUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyHiringMentionUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchMyHiringMentionUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchMyHiringMentionUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchMyHiringMentionUsers<
+  TData = Awaited<ReturnType<typeof searchMyHiringMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchMyHiringMentionUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyHiringMentionUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchMyHiringMentionUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchMyHiringMentionUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchMyHiringMentionUsers<
+  TData = Awaited<ReturnType<typeof searchMyHiringMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchMyHiringMentionUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyHiringMentionUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active users by name to mention in a note (at most 20)
+ */
+
+export function useSearchMyHiringMentionUsers<
+  TData = Awaited<ReturnType<typeof searchMyHiringMentionUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchMyHiringMentionUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchMyHiringMentionUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchMyHiringMentionUsersQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

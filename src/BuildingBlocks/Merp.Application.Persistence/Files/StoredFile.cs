@@ -93,6 +93,9 @@ public sealed class StoredFile : IAuditable, ISoftDeletable
         };
 
     public void MarkPurged(DateTimeOffset at) => PurgedAt = at;
+
+    /// <summary>Moves the file to another record of the same type, e.g. the candidate a duplicate was merged into (D50).</summary>
+    public void MoveTo(Guid ownerId) => OwnerId = ownerId;
 }
 
 public static class StoredFilePurposes
