@@ -124,8 +124,9 @@ public sealed class PipelineTests(RequisitionFactory factory) : IClassFixture<Re
         await WithDbAsync(db => db.JobApplications.Where(a => a.RejectionEmailDueAt != null)
             .ExecuteUpdateAsync(s => s.SetProperty(a => a.RejectionEmailDueAt, DateTimeOffset.UtcNow.AddMinutes(-1)), Ct));
         (await SendDueEmailsAsync()).ShouldBe(1);
-        (await factory.OutboxAsync<ExternalEmailRequested>()).ShouldContain(e => e.To == EmailOf("sonra", opening));
-        (await factory.OutboxAsync<ExternalEmailRequested>()).ShouldNotContain(e => e.To == EmailOf("geri", opening));
+        var rejections = (await factory.OutboxAsync<ExternalEmailRequested>()).Where(e => e.Type == RecruitmentNotificationTypes.ApplicationRejected).ToList();
+        rejections.ShouldContain(e => e.To == EmailOf("sonra", opening));
+        rejections.ShouldNotContain(e => e.To == EmailOf("geri", opening));
         (await DetailsAsync(recruiter, reopened)).Application.Status.ShouldBe(ApplicationStatus.Active);
 
         // The reason must be an active rejection reason; the delay at most 14 days
