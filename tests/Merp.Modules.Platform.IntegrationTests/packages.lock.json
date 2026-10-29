@@ -782,6 +782,11 @@
           "System.Security.Cryptography.Pkcs": "10.0.0"
         }
       },
+      "NodaTime": {
+        "type": "Transitive",
+        "resolved": "3.2.2",
+        "contentHash": "dmju5W0UYC3QP/UJM0juKAZkH0HSDMp0gH91A0+mT9M0kgyM2Jm67hUZPl/WRQLq8Lijjqmdk8kyAViWFWM7dA=="
+      },
       "Npgsql": {
         "type": "Transitive",
         "resolved": "10.0.3",
@@ -1196,6 +1201,7 @@
       "merp.modules.recruitment.infrastructure": {
         "type": "Project",
         "dependencies": {
+          "Ical.Net": "[5.2.3, )",
           "Merp.Infrastructure": "[1.0.0, )",
           "Merp.Modules.Recruitment.Application": "[1.0.0, )"
         }
@@ -1392,6 +1398,15 @@
         "dependencies": {
           "AngleSharp": "1.7.2",
           "AngleSharp.Css": "1.0.2"
+        }
+      },
+      "Ical.Net": {
+        "type": "CentralTransitive",
+        "requested": "[5.2.3, )",
+        "resolved": "5.2.3",
+        "contentHash": "zROvmrRPKqND0e0Bt/wSY+d8iYtL4+sP9mORyjT/ySBiIDfik4iovTjS+L9PFg+zoXfkJ5eBTHK2lX9c7lganw==",
+        "dependencies": {
+          "NodaTime": "3.2.2"
         }
       },
       "MailKit": {

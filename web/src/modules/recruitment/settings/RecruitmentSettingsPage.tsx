@@ -6,14 +6,23 @@ import { useHasPermission } from '@/shared/auth/permissionContext';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { recruitmentPermissions } from '../permissions';
 import { ConsentTextsTab } from './ConsentTextsTab';
+import { EvaluationTemplatesTab } from './EvaluationTemplatesTab';
 import { LookupsTab } from './LookupsTab';
 import { StageTemplatesTab } from './StageTemplatesTab';
 
-const tabs = ['stages', 'lists', 'consents', 'emails'] as const;
+const tabs = ['stages', 'evaluations', 'lists', 'consents', 'emails'] as const;
 
 type Tab = (typeof tabs)[number];
 
-const emailTypes = ['application_received', 'interview_invitation', 'application_rejected', 'offer_sent'];
+const emailTypes = [
+  'application_received',
+  'interview_invitation',
+  'interview_updated',
+  'interview_cancelled',
+  'interview_reminder',
+  'application_rejected',
+  'offer_sent',
+];
 
 /** Where the e-mails candidates get and the retention are set: Platform's screens (D47). */
 const EmailsTab = () => {
@@ -45,7 +54,7 @@ const EmailsTab = () => {
 };
 
 /**
- * Recruitment settings (PLAN R1, D47): stage templates, reasons, sources and tags, the KVKK texts, and where the
+ * Recruitment settings (PLAN R1, D47): stage templates, evaluation templates (R5), reasons, sources and tags, the KVKK texts, and where the
  * candidate e-mails and the retention are set. The open tab is kept in the address (<c>?tab=</c>).
  */
 export const RecruitmentSettingsPage = () => {
@@ -66,6 +75,11 @@ export const RecruitmentSettingsPage = () => {
             key: 'stages',
             label: t('web.recruitment.settings.tabs.stages'),
             children: <StageTemplatesTab canManage={canManage} />,
+          },
+          {
+            key: 'evaluations',
+            label: t('web.recruitment.settings.tabs.evaluations'),
+            children: <EvaluationTemplatesTab canManage={canManage} />,
           },
           {
             key: 'lists',

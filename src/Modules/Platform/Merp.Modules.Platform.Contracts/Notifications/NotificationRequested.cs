@@ -15,4 +15,8 @@ public sealed record NotificationRequested(
     string Type,
     IReadOnlyList<Guid> RecipientUserIds,
     IReadOnlyDictionary<string, string> Args,
-    string? Link) : IntegrationEvent;
+    string? Link) : IntegrationEvent
+{
+    /// <summary>Files sent with the e-mail (not the bell), e.g. a calendar invitation (D52).</summary>
+    public IReadOnlyList<EmailFile> Attachments { get; init; } = [];
+}

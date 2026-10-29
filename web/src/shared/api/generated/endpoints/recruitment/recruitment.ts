@@ -27,15 +27,18 @@ import type {
   ApplicationCvAnalysisItem,
   ApplicationDetails,
   BranchSummary,
+  CancelInterviewCommand,
   CancelRequisitionCommand,
   CandidateCvPrefill,
   CandidateDetails,
   CandidateOptions,
   CareerOpeningDetails,
   CareerOpeningItem,
+  CloseInterviewCommand,
   CloseOpeningCommand,
   ConsentTextItem,
   CreateCandidateCommand,
+  CreateEvaluationTemplateCommand,
   CreateOpeningCommand,
   CreateRecruitmentLookupCommand,
   CreateRequisitionCommand,
@@ -43,12 +46,19 @@ import type {
   CvAnalysisResponse,
   EmployeeSummary,
   EntityCreatedResponse,
+  EvaluationTemplateItem,
   GetCurrentConsentTextParams,
   GetMyOpeningParams,
   HttpValidationProblemDetails,
+  InterviewConflict,
+  InterviewDetails,
+  InterviewTemplateOption,
   ListApplicationsParams,
   ListCandidatesParams,
   ListConsentTextsParams,
+  ListEvaluationTemplatesParams,
+  ListInterviewConflictsParams,
+  ListInterviewsParams,
   ListMyHiringApplicationsParams,
   ListOpeningBranchesParams,
   ListOpeningsParams,
@@ -67,6 +77,7 @@ import type {
   OrgUnitInfo,
   PagedResultOfApplicationListItem,
   PagedResultOfCandidateListItem,
+  PagedResultOfInterviewListItem,
   PagedResultOfOpeningListItem,
   PagedResultOfRequisitionListItem,
   PrefillCandidateFromCvBody,
@@ -78,15 +89,20 @@ import type {
   RequisitionDetails,
   RequisitionPositionItem,
   RequisitionUserOption,
+  ScheduleInterviewCommand,
   SearchCandidateMentionUsersParams,
   SearchCandidateReferrersParams,
+  SearchInterviewUsersParams,
   SearchMyHiringMentionUsersParams,
   SearchOpeningUsersParams,
   SearchRequisitionEmployeesParams,
   SearchRequisitionUsersParams,
   StageTemplateItem,
+  SubmitFeedbackCommand,
   SubmitMyApplicationBody,
   UpdateCandidateCommand,
+  UpdateEvaluationTemplateCommand,
+  UpdateInterviewCommand,
   UpdateOpeningCommand,
   UpdateOpeningStagesCommand,
   UpdateRecruitmentLookupCommand,
@@ -5062,6 +5078,1275 @@ export const useAddCandidateToOpening = <
 > => {
   return useMutation(getAddCandidateToOpeningMutationOptions(options), queryClient);
 };
+export const getListInterviewsUrl = (params?: ListInterviewsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/interviews?${stringifiedParams}`
+    : `/api/recruitment/interviews`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.read.
+ * @summary Interviews of the companies in scope and the ones I interview in, soonest first
+ */
+export const listInterviews = async (
+  params?: ListInterviewsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfInterviewListItem> => {
+  return customFetch<PagedResultOfInterviewListItem>(getListInterviewsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListInterviewsQueryKey = (params?: ListInterviewsParams) => {
+  return [`/api/recruitment/interviews`, ...(params ? [params] : [])] as const;
+};
+
+export const getListInterviewsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listInterviews>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListInterviewsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviews>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListInterviewsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listInterviews>>> = ({ signal }) =>
+    listInterviews(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listInterviews>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListInterviewsQueryResult = NonNullable<Awaited<ReturnType<typeof listInterviews>>>;
+export type ListInterviewsQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListInterviews<
+  TData = Awaited<ReturnType<typeof listInterviews>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListInterviewsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviews>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInterviews>>,
+          TError,
+          Awaited<ReturnType<typeof listInterviews>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListInterviews<
+  TData = Awaited<ReturnType<typeof listInterviews>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListInterviewsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviews>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInterviews>>,
+          TError,
+          Awaited<ReturnType<typeof listInterviews>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListInterviews<
+  TData = Awaited<ReturnType<typeof listInterviews>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListInterviewsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviews>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Interviews of the companies in scope and the ones I interview in, soonest first
+ */
+
+export function useListInterviews<
+  TData = Awaited<ReturnType<typeof listInterviews>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListInterviewsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviews>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListInterviewsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getScheduleInterviewUrl = () => {
+  return `/api/recruitment/interviews`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.manage.
+ * @summary Plan an interview and invite the candidate and the interviewers with a calendar file
+ */
+export const scheduleInterview = async (
+  scheduleInterviewCommand: ScheduleInterviewCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getScheduleInterviewUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(scheduleInterviewCommand),
+  });
+};
+
+export const getScheduleInterviewMutationKey = () => ['scheduleInterview'] as const;
+
+export const getScheduleInterviewMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof scheduleInterview>>,
+    TError,
+    ScheduleInterviewMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof scheduleInterview>>,
+  TError,
+  ScheduleInterviewMutationVariables,
+  TContext
+> => {
+  const mutationKey = getScheduleInterviewMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof scheduleInterview>>,
+    ScheduleInterviewMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return scheduleInterview(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ScheduleInterviewMutationResult = NonNullable<Awaited<ReturnType<typeof scheduleInterview>>>;
+export type ScheduleInterviewMutationBody = ScheduleInterviewCommand;
+export type ScheduleInterviewMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type ScheduleInterviewMutationVariables = { data: ScheduleInterviewCommand };
+
+/**
+ * @summary Plan an interview and invite the candidate and the interviewers with a calendar file
+ */
+export const useScheduleInterview = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof scheduleInterview>>,
+      TError,
+      ScheduleInterviewMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof scheduleInterview>>,
+  TError,
+  ScheduleInterviewMutationVariables,
+  TContext
+> => {
+  return useMutation(getScheduleInterviewMutationOptions(options), queryClient);
+};
+export const getListInterviewConflictsUrl = (params: ListInterviewConflictsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['interviewerUserIds'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/interviews/conflicts?${stringifiedParams}`
+    : `/api/recruitment/interviews/conflicts`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.manage.
+ * @summary The interviewers' other planned interviews in a time range
+ */
+export const listInterviewConflicts = async (
+  params: ListInterviewConflictsParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<InterviewConflict[]> => {
+  return customFetch<InterviewConflict[]>(getListInterviewConflictsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListInterviewConflictsQueryKey = (params?: ListInterviewConflictsParams) => {
+  return [`/api/recruitment/interviews/conflicts`, ...(params ? [params] : [])] as const;
+};
+
+export const getListInterviewConflictsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listInterviewConflicts>>,
+  TError = ErrorType<unknown>,
+>(
+  params: ListInterviewConflictsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewConflicts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListInterviewConflictsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listInterviewConflicts>>> = ({ signal }) =>
+    listInterviewConflicts(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listInterviewConflicts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListInterviewConflictsQueryResult = NonNullable<Awaited<ReturnType<typeof listInterviewConflicts>>>;
+export type ListInterviewConflictsQueryError = ErrorType<unknown>;
+
+export function useListInterviewConflicts<
+  TData = Awaited<ReturnType<typeof listInterviewConflicts>>,
+  TError = ErrorType<unknown>,
+>(
+  params: ListInterviewConflictsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewConflicts>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInterviewConflicts>>,
+          TError,
+          Awaited<ReturnType<typeof listInterviewConflicts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListInterviewConflicts<
+  TData = Awaited<ReturnType<typeof listInterviewConflicts>>,
+  TError = ErrorType<unknown>,
+>(
+  params: ListInterviewConflictsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewConflicts>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInterviewConflicts>>,
+          TError,
+          Awaited<ReturnType<typeof listInterviewConflicts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListInterviewConflicts<
+  TData = Awaited<ReturnType<typeof listInterviewConflicts>>,
+  TError = ErrorType<unknown>,
+>(
+  params: ListInterviewConflictsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewConflicts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The interviewers' other planned interviews in a time range
+ */
+
+export function useListInterviewConflicts<
+  TData = Awaited<ReturnType<typeof listInterviewConflicts>>,
+  TError = ErrorType<unknown>,
+>(
+  params: ListInterviewConflictsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewConflicts>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListInterviewConflictsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getSearchInterviewUsersUrl = (params?: SearchInterviewUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/interviews/users?${stringifiedParams}`
+    : `/api/recruitment/interviews/users`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.manage.
+ * @summary Active users by name to interview (at most 20)
+ */
+export const searchInterviewUsers = async (
+  params?: SearchInterviewUsersParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<RequisitionUserOption[]> => {
+  return customFetch<RequisitionUserOption[]>(getSearchInterviewUsersUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchInterviewUsersQueryKey = (params?: SearchInterviewUsersParams) => {
+  return [`/api/recruitment/interviews/users`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchInterviewUsersQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchInterviewUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchInterviewUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchInterviewUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchInterviewUsersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchInterviewUsers>>> = ({ signal }) =>
+    searchInterviewUsers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchInterviewUsers>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchInterviewUsersQueryResult = NonNullable<Awaited<ReturnType<typeof searchInterviewUsers>>>;
+export type SearchInterviewUsersQueryError = ErrorType<unknown>;
+
+export function useSearchInterviewUsers<
+  TData = Awaited<ReturnType<typeof searchInterviewUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | SearchInterviewUsersParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchInterviewUsers>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchInterviewUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchInterviewUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchInterviewUsers<
+  TData = Awaited<ReturnType<typeof searchInterviewUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchInterviewUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchInterviewUsers>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchInterviewUsers>>,
+          TError,
+          Awaited<ReturnType<typeof searchInterviewUsers>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchInterviewUsers<
+  TData = Awaited<ReturnType<typeof searchInterviewUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchInterviewUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchInterviewUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Active users by name to interview (at most 20)
+ */
+
+export function useSearchInterviewUsers<
+  TData = Awaited<ReturnType<typeof searchInterviewUsers>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: SearchInterviewUsersParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchInterviewUsers>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchInterviewUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getListInterviewTemplatesUrl = () => {
+  return `/api/recruitment/interviews/templates`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.manage.
+ * @summary The active evaluation templates to plan an interview with
+ */
+export const listInterviewTemplates = async (
+  options?: Parameters<typeof customFetch>[1],
+): Promise<InterviewTemplateOption[]> => {
+  return customFetch<InterviewTemplateOption[]>(getListInterviewTemplatesUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListInterviewTemplatesQueryKey = () => {
+  return [`/api/recruitment/interviews/templates`] as const;
+};
+
+export const getListInterviewTemplatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listInterviewTemplates>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewTemplates>>, TError, TData>>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListInterviewTemplatesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listInterviewTemplates>>> = ({ signal }) =>
+    listInterviewTemplates({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listInterviewTemplates>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListInterviewTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listInterviewTemplates>>>;
+export type ListInterviewTemplatesQueryError = ErrorType<unknown>;
+
+export function useListInterviewTemplates<
+  TData = Awaited<ReturnType<typeof listInterviewTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewTemplates>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInterviewTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listInterviewTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListInterviewTemplates<
+  TData = Awaited<ReturnType<typeof listInterviewTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewTemplates>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInterviewTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listInterviewTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListInterviewTemplates<
+  TData = Awaited<ReturnType<typeof listInterviewTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The active evaluation templates to plan an interview with
+ */
+
+export function useListInterviewTemplates<
+  TData = Awaited<ReturnType<typeof listInterviewTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listInterviewTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListInterviewTemplatesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetInterviewUrl = (id: string) => {
+  return `/api/recruitment/interviews/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.read.
+ * @summary An interview with its form and the forms I may see under the blind rule
+ */
+export const getInterview = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<InterviewDetails> => {
+  return customFetch<InterviewDetails>(getGetInterviewUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetInterviewQueryKey = (id: string) => {
+  return [`/api/recruitment/interviews/${id}`] as const;
+};
+
+export const getGetInterviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getInterview>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getInterview>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetInterviewQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getInterview>>> = ({ signal }) =>
+    getInterview(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getInterview>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetInterviewQueryResult = NonNullable<Awaited<ReturnType<typeof getInterview>>>;
+export type GetInterviewQueryError = ErrorType<ProblemDetails>;
+
+export function useGetInterview<TData = Awaited<ReturnType<typeof getInterview>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getInterview>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInterview>>,
+          TError,
+          Awaited<ReturnType<typeof getInterview>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetInterview<TData = Awaited<ReturnType<typeof getInterview>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getInterview>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInterview>>,
+          TError,
+          Awaited<ReturnType<typeof getInterview>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetInterview<TData = Awaited<ReturnType<typeof getInterview>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getInterview>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary An interview with its form and the forms I may see under the blind rule
+ */
+
+export function useGetInterview<TData = Awaited<ReturnType<typeof getInterview>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getInterview>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetInterviewQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getUpdateInterviewUrl = (id: string) => {
+  return `/api/recruitment/interviews/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.manage.
+ * @summary Change a planned interview; everyone gets the updated invitation
+ */
+export const updateInterview = async (
+  id: string,
+  updateInterviewCommand: UpdateInterviewCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateInterviewUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateInterviewCommand),
+  });
+};
+
+export const getUpdateInterviewMutationKey = () => ['updateInterview'] as const;
+
+export const getUpdateInterviewMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateInterview>>,
+    TError,
+    UpdateInterviewMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateInterview>>,
+  TError,
+  UpdateInterviewMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateInterviewMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateInterview>>, UpdateInterviewMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return updateInterview(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateInterviewMutationResult = NonNullable<Awaited<ReturnType<typeof updateInterview>>>;
+export type UpdateInterviewMutationBody = UpdateInterviewCommand;
+export type UpdateInterviewMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateInterviewMutationVariables = { id: string; data: UpdateInterviewCommand };
+
+/**
+ * @summary Change a planned interview; everyone gets the updated invitation
+ */
+export const useUpdateInterview = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateInterview>>,
+      TError,
+      UpdateInterviewMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateInterview>>,
+  TError,
+  UpdateInterviewMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateInterviewMutationOptions(options), queryClient);
+};
+export const getDownloadInterviewCvUrl = (id: string) => {
+  return `/api/recruitment/interviews/${id}/cv`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.read.
+ * @summary The candidate's CV for the interviewers
+ */
+export const downloadInterviewCv = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+  return customFetch<void>(getDownloadInterviewCvUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getDownloadInterviewCvQueryKey = (id: string) => {
+  return [`/api/recruitment/interviews/${id}/cv`] as const;
+};
+
+export const getDownloadInterviewCvQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadInterviewCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadInterviewCv>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getDownloadInterviewCvQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadInterviewCv>>> = ({ signal }) =>
+    downloadInterviewCv(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof downloadInterviewCv>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type DownloadInterviewCvQueryResult = NonNullable<Awaited<ReturnType<typeof downloadInterviewCv>>>;
+export type DownloadInterviewCvQueryError = ErrorType<ProblemDetails>;
+
+export function useDownloadInterviewCv<
+  TData = Awaited<ReturnType<typeof downloadInterviewCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadInterviewCv>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadInterviewCv>>,
+          TError,
+          Awaited<ReturnType<typeof downloadInterviewCv>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadInterviewCv<
+  TData = Awaited<ReturnType<typeof downloadInterviewCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadInterviewCv>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadInterviewCv>>,
+          TError,
+          Awaited<ReturnType<typeof downloadInterviewCv>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useDownloadInterviewCv<
+  TData = Awaited<ReturnType<typeof downloadInterviewCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadInterviewCv>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The candidate's CV for the interviewers
+ */
+
+export function useDownloadInterviewCv<
+  TData = Awaited<ReturnType<typeof downloadInterviewCv>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadInterviewCv>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getDownloadInterviewCvQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCancelInterviewUrl = (id: string) => {
+  return `/api/recruitment/interviews/${id}/cancel`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.manage.
+ * @summary Cancel a planned interview; everyone gets the cancellation
+ */
+export const cancelInterview = async (
+  id: string,
+  cancelInterviewCommand: CancelInterviewCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getCancelInterviewUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cancelInterviewCommand),
+  });
+};
+
+export const getCancelInterviewMutationKey = () => ['cancelInterview'] as const;
+
+export const getCancelInterviewMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelInterview>>,
+    TError,
+    CancelInterviewMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelInterview>>,
+  TError,
+  CancelInterviewMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCancelInterviewMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelInterview>>, CancelInterviewMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return cancelInterview(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelInterviewMutationResult = NonNullable<Awaited<ReturnType<typeof cancelInterview>>>;
+export type CancelInterviewMutationBody = CancelInterviewCommand;
+export type CancelInterviewMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CancelInterviewMutationVariables = { id: string; data: CancelInterviewCommand };
+
+/**
+ * @summary Cancel a planned interview; everyone gets the cancellation
+ */
+export const useCancelInterview = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cancelInterview>>,
+      TError,
+      CancelInterviewMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof cancelInterview>>,
+  TError,
+  CancelInterviewMutationVariables,
+  TContext
+> => {
+  return useMutation(getCancelInterviewMutationOptions(options), queryClient);
+};
+export const getCloseInterviewUrl = (id: string) => {
+  return `/api/recruitment/interviews/${id}/close`;
+};
+
+/**
+ * Requires permission: recruitment.interviews.manage.
+ * @summary Close a planned interview: it took place (Completed) or the candidate did not come (NoShow)
+ */
+export const closeInterview = async (
+  id: string,
+  closeInterviewCommand: CloseInterviewCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getCloseInterviewUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(closeInterviewCommand),
+  });
+};
+
+export const getCloseInterviewMutationKey = () => ['closeInterview'] as const;
+
+export const getCloseInterviewMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof closeInterview>>,
+    TError,
+    CloseInterviewMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof closeInterview>>,
+  TError,
+  CloseInterviewMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCloseInterviewMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeInterview>>, CloseInterviewMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return closeInterview(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CloseInterviewMutationResult = NonNullable<Awaited<ReturnType<typeof closeInterview>>>;
+export type CloseInterviewMutationBody = CloseInterviewCommand;
+export type CloseInterviewMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CloseInterviewMutationVariables = { id: string; data: CloseInterviewCommand };
+
+/**
+ * @summary Close a planned interview: it took place (Completed) or the candidate did not come (NoShow)
+ */
+export const useCloseInterview = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof closeInterview>>,
+      TError,
+      CloseInterviewMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof closeInterview>>, TError, CloseInterviewMutationVariables, TContext> => {
+  return useMutation(getCloseInterviewMutationOptions(options), queryClient);
+};
+export const getSubmitInterviewFeedbackUrl = (id: string) => {
+  return `/api/recruitment/interviews/${id}/feedback`;
+};
+
+/**
+ * Requires permission: recruitment.feedback.submit.
+ * @summary Send or correct my evaluation form for an interview I interview in
+ */
+export const submitInterviewFeedback = async (
+  id: string,
+  submitFeedbackCommand: SubmitFeedbackCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getSubmitInterviewFeedbackUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(submitFeedbackCommand),
+  });
+};
+
+export const getSubmitInterviewFeedbackMutationKey = () => ['submitInterviewFeedback'] as const;
+
+export const getSubmitInterviewFeedbackMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitInterviewFeedback>>,
+    TError,
+    SubmitInterviewFeedbackMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitInterviewFeedback>>,
+  TError,
+  SubmitInterviewFeedbackMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSubmitInterviewFeedbackMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitInterviewFeedback>>,
+    SubmitInterviewFeedbackMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return submitInterviewFeedback(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitInterviewFeedbackMutationResult = NonNullable<Awaited<ReturnType<typeof submitInterviewFeedback>>>;
+export type SubmitInterviewFeedbackMutationBody = SubmitFeedbackCommand;
+export type SubmitInterviewFeedbackMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SubmitInterviewFeedbackMutationVariables = { id: string; data: SubmitFeedbackCommand };
+
+/**
+ * @summary Send or correct my evaluation form for an interview I interview in
+ */
+export const useSubmitInterviewFeedback = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof submitInterviewFeedback>>,
+      TError,
+      SubmitInterviewFeedbackMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof submitInterviewFeedback>>,
+  TError,
+  SubmitInterviewFeedbackMutationVariables,
+  TContext
+> => {
+  return useMutation(getSubmitInterviewFeedbackMutationOptions(options), queryClient);
+};
 export const getListMyOpeningsUrl = () => {
   return `/api/recruitment/me/openings`;
 };
@@ -6905,6 +8190,345 @@ export const useUpdateStageTemplate = <
   TContext
 > => {
   return useMutation(getUpdateStageTemplateMutationOptions(options), queryClient);
+};
+export const getListEvaluationTemplatesUrl = (params?: ListEvaluationTemplatesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/settings/evaluation-templates?${stringifiedParams}`
+    : `/api/recruitment/settings/evaluation-templates`;
+};
+
+/**
+ * Requires permission: recruitment.settings.read.
+ * @summary The interview evaluation templates by name; active ones unless asked (D52)
+ */
+export const listEvaluationTemplates = async (
+  params?: ListEvaluationTemplatesParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EvaluationTemplateItem[]> => {
+  return customFetch<EvaluationTemplateItem[]>(getListEvaluationTemplatesUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListEvaluationTemplatesQueryKey = (params?: ListEvaluationTemplatesParams) => {
+  return [`/api/recruitment/settings/evaluation-templates`, ...(params ? [params] : [])] as const;
+};
+
+export const getListEvaluationTemplatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listEvaluationTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListEvaluationTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEvaluationTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListEvaluationTemplatesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listEvaluationTemplates>>> = ({ signal }) =>
+    listEvaluationTemplates(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listEvaluationTemplates>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListEvaluationTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listEvaluationTemplates>>>;
+export type ListEvaluationTemplatesQueryError = ErrorType<unknown>;
+
+export function useListEvaluationTemplates<
+  TData = Awaited<ReturnType<typeof listEvaluationTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params: undefined | ListEvaluationTemplatesParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEvaluationTemplates>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEvaluationTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listEvaluationTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListEvaluationTemplates<
+  TData = Awaited<ReturnType<typeof listEvaluationTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListEvaluationTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEvaluationTemplates>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEvaluationTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof listEvaluationTemplates>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListEvaluationTemplates<
+  TData = Awaited<ReturnType<typeof listEvaluationTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListEvaluationTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEvaluationTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The interview evaluation templates by name; active ones unless asked (D52)
+ */
+
+export function useListEvaluationTemplates<
+  TData = Awaited<ReturnType<typeof listEvaluationTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListEvaluationTemplatesParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listEvaluationTemplates>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListEvaluationTemplatesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCreateEvaluationTemplateUrl = () => {
+  return `/api/recruitment/settings/evaluation-templates`;
+};
+
+/**
+ * Requires permission: recruitment.settings.manage.
+ * @summary Add an evaluation template: sections of criteria scored 1-5 with weights and open questions (Tenant scope required)
+ */
+export const createEvaluationTemplate = async (
+  createEvaluationTemplateCommand: CreateEvaluationTemplateCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<EntityCreatedResponse>(getCreateEvaluationTemplateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(createEvaluationTemplateCommand),
+  });
+};
+
+export const getCreateEvaluationTemplateMutationKey = () => ['createEvaluationTemplate'] as const;
+
+export const getCreateEvaluationTemplateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEvaluationTemplate>>,
+    TError,
+    CreateEvaluationTemplateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createEvaluationTemplate>>,
+  TError,
+  CreateEvaluationTemplateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCreateEvaluationTemplateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createEvaluationTemplate>>,
+    CreateEvaluationTemplateMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createEvaluationTemplate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateEvaluationTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createEvaluationTemplate>>>;
+export type CreateEvaluationTemplateMutationBody = CreateEvaluationTemplateCommand;
+export type CreateEvaluationTemplateMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CreateEvaluationTemplateMutationVariables = { data: CreateEvaluationTemplateCommand };
+
+/**
+ * @summary Add an evaluation template: sections of criteria scored 1-5 with weights and open questions (Tenant scope required)
+ */
+export const useCreateEvaluationTemplate = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof createEvaluationTemplate>>,
+      TError,
+      CreateEvaluationTemplateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof createEvaluationTemplate>>,
+  TError,
+  CreateEvaluationTemplateMutationVariables,
+  TContext
+> => {
+  return useMutation(getCreateEvaluationTemplateMutationOptions(options), queryClient);
+};
+export const getUpdateEvaluationTemplateUrl = (id: string) => {
+  return `/api/recruitment/settings/evaluation-templates/${id}`;
+};
+
+/**
+ * Requires permission: recruitment.settings.manage.
+ * @summary Change an evaluation template; interviews keep the copy they took (Tenant scope required)
+ */
+export const updateEvaluationTemplate = async (
+  id: string,
+  updateEvaluationTemplateCommand: UpdateEvaluationTemplateCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getUpdateEvaluationTemplateUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateEvaluationTemplateCommand),
+  });
+};
+
+export const getUpdateEvaluationTemplateMutationKey = () => ['updateEvaluationTemplate'] as const;
+
+export const getUpdateEvaluationTemplateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateEvaluationTemplate>>,
+    TError,
+    UpdateEvaluationTemplateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateEvaluationTemplate>>,
+  TError,
+  UpdateEvaluationTemplateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getUpdateEvaluationTemplateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateEvaluationTemplate>>,
+    UpdateEvaluationTemplateMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateEvaluationTemplate(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateEvaluationTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof updateEvaluationTemplate>>>;
+export type UpdateEvaluationTemplateMutationBody = UpdateEvaluationTemplateCommand;
+export type UpdateEvaluationTemplateMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type UpdateEvaluationTemplateMutationVariables = { id: string; data: UpdateEvaluationTemplateCommand };
+
+/**
+ * @summary Change an evaluation template; interviews keep the copy they took (Tenant scope required)
+ */
+export const useUpdateEvaluationTemplate = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof updateEvaluationTemplate>>,
+      TError,
+      UpdateEvaluationTemplateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof updateEvaluationTemplate>>,
+  TError,
+  UpdateEvaluationTemplateMutationVariables,
+  TContext
+> => {
+  return useMutation(getUpdateEvaluationTemplateMutationOptions(options), queryClient);
 };
 export const getListRecruitmentLookupsUrl = (params?: ListRecruitmentLookupsParams) => {
   const normalizedParams = new URLSearchParams();

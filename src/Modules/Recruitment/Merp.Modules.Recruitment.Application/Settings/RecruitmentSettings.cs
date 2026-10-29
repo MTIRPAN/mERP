@@ -23,8 +23,20 @@ public sealed class RecruitmentSettingDefinitions : ISettingDefinitionProvider
 
     public const int DefaultRetentionMonths = 24;
 
+    /// <summary>
+    /// An interviewer sees the other forms of an application only after sending their own (D52); HR and the hiring
+    /// manager always see them. A company may keep its own.
+    /// </summary>
+    public const string BlindFeedback = "recruitment.blind_feedback";
+
     public IEnumerable<SettingDefinition> GetSettings() =>
     [
+        SettingDefinition.Boolean(
+            BlindFeedback,
+            true,
+            "recruitment.settings.blind_feedback",
+            "recruitment.settings.blind_feedback_hint",
+            companyOverridable: true),
         SettingDefinition.Number(
             RetentionMonths,
             DefaultRetentionMonths,
@@ -48,6 +60,9 @@ public sealed class RecruitmentNotificationTypes : INotificationTypeProvider
     public const string InterviewInvitation = "recruitment.interview_invitation";
     public const string ApplicationRejected = "recruitment.application_rejected";
     public const string OfferSent = "recruitment.offer_sent";
+    public const string InterviewUpdated = "recruitment.interview_updated";
+    public const string InterviewCancelled = "recruitment.interview_cancelled";
+    public const string InterviewReminder = "recruitment.interview_reminder";
 
     public IEnumerable<NotificationTypeDefinition> GetNotificationTypes() =>
     [
@@ -55,6 +70,9 @@ public sealed class RecruitmentNotificationTypes : INotificationTypeProvider
         new(InterviewInvitation, [NotificationChannel.Email], External: true),
         new(ApplicationRejected, [NotificationChannel.Email], External: true),
         new(OfferSent, [NotificationChannel.Email], External: true),
+        new(InterviewUpdated, [NotificationChannel.Email], External: true),
+        new(InterviewCancelled, [NotificationChannel.Email], External: true),
+        new(InterviewReminder, [NotificationChannel.Email], External: true),
     ];
 }
 

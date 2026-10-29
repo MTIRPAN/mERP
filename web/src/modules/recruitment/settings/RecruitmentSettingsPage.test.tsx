@@ -8,6 +8,7 @@ import { renderWithProviders } from '@/test/render';
 import { RecruitmentSettingsPage } from './RecruitmentSettingsPage';
 
 const create = vi.fn().mockResolvedValue({ id: 't2' });
+const createEvaluation = vi.fn().mockResolvedValue({ id: 'e2' });
 
 const stage = (
   id: string,
@@ -77,12 +78,25 @@ vi.mock('@/shared/api/generated/endpoints/recruitment/recruitment', () => ({
   usePublishConsentText: () => ({ mutateAsync: vi.fn() }),
   getListConsentTextsQueryKey: () => ['/api/recruitment/settings/consent-texts'],
   getGetCurrentConsentTextQueryKey: () => ['/api/recruitment/settings/consent-texts/current'],
+  useListEvaluationTemplates: () => ({ data: [], isLoading: false }),
+  useCreateEvaluationTemplate: () => ({ mutateAsync: createEvaluation }),
+  useUpdateEvaluationTemplate: () => ({ mutateAsync: vi.fn() }),
+  getListEvaluationTemplatesQueryKey: () => ['/api/recruitment/settings/evaluation-templates'],
+  getListInterviewTemplatesQueryKey: () => ['/api/recruitment/interviews/templates'],
 }));
 
 const texts: Record<string, string> = {
   'web.recruitment.settings.tabs.stages': 'Aşama şablonları',
   'web.recruitment.settings.tabs.lists': 'Listeler',
   'web.recruitment.settings.tabs.consents': 'KVKK metinleri',
+  'web.recruitment.settings.tabs.evaluations': 'Değerlendirme şablonları',
+  'web.recruitment.settings.evaluation.new': 'Yeni değerlendirme şablonu',
+  'web.recruitment.settings.evaluation.name': 'Şablon adı',
+  'web.recruitment.settings.evaluation.section_title': 'Bölüm adı',
+  'web.recruitment.settings.evaluation.criterion': 'Kriter',
+  'web.recruitment.settings.evaluation.score_description': '{score} puanın anlamı',
+  'web.recruitment.settings.evaluation.add_question': 'Soru ekle',
+  'web.recruitment.settings.evaluation.question': 'Soru',
   'web.recruitment.settings.stage_templates.new': 'Yeni şablon',
   'web.recruitment.settings.stage_templates.default': 'Varsayılan',
   'web.recruitment.settings.stage_templates.days': '{days} gün',
@@ -110,7 +124,10 @@ const render = (permissions: string[]) =>
   );
 
 describe('RecruitmentSettingsPage', () => {
-  beforeEach(() => create.mockClear());
+  beforeEach(() => {
+    create.mockClear();
+    createEvaluation.mockClear();
+  });
 
   it('shows the pipeline, the lists and the built-in KVKK text to a reader', async () => {
     render(['recruitment.settings.read']);
@@ -149,5 +166,44 @@ describe('RecruitmentSettingsPage', () => {
       'Rejected',
       'Withdrawn',
     ]);
+  });
+
+  it('creates an evaluation template of weighted criteria and open questions', async () => {
+    render(['recruitment.settings.read', 'recruitment.settings.manage']);
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Değerlendirme şablonları' }));
+    await userEvent.click(await screen.findByRole('button', { name: /Yeni değerlendirme şablonu/ }));
+    const drawer = await screen.findByRole('dialog');
+    await userEvent.type(within(drawer).getByLabelText(/Şablon adı/), 'Teknik mülakat');
+    await userEvent.type(within(drawer).getByRole('textbox', { name: 'Bölüm adı' }), 'Teknik');
+    await userEvent.type(within(drawer).getByRole('textbox', { name: 'Kriter' }), 'Problem çözme');
+    await userEvent.type(within(drawer).getByRole('textbox', { name: '5 puanın anlamı' }), 'Çok iyi');
+    await userEvent.click(within(drawer).getByRole('button', { name: /Soru ekle/ }));
+    await userEvent.type(within(drawer).getByRole('textbox', { name: 'Soru' }), 'En güçlü yanı ne?');
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Kaydet' }));
+
+    await waitFor(() =>
+      expect(createEvaluation).toHaveBeenCalledWith({
+        data: {
+          name: 'Teknik mülakat',
+          form: {
+            sections: [
+              {
+                title: 'Teknik',
+                criteria: [
+                  {
+                    id: '00000000-0000-0000-0000-000000000000',
+                    name: 'Problem çözme',
+                    weight: 1,
+                    scoreDescriptions: ['', '', '', '', 'Çok iyi'],
+                  },
+                ],
+              },
+            ],
+            questions: [{ id: '00000000-0000-0000-0000-000000000000', text: 'En güçlü yanı ne?' }],
+          },
+        },
+      }),
+    );
   });
 });

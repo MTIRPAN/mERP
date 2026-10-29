@@ -11,6 +11,7 @@ using Merp.Modules.Platform.Contracts.Notifications;
 using Merp.Modules.Platform.Contracts.Organization;
 using Merp.Modules.Platform.Contracts.Users;
 using Merp.Modules.Recruitment.Application.CvAnalysis;
+using Merp.Modules.Recruitment.Application.Interviews;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
@@ -85,7 +86,11 @@ public sealed record ApplicationStageChangeItem(
     string? UserName,
     DateTimeOffset At);
 
-/// <summary>An application with its answers, CV, consent and history (D50), and the AI analysis of its CV (D51).</summary>
+/// <summary>
+/// An application with its answers, CV, consent and history (D50), the AI analysis of its CV (D51), its interviews and
+/// every interviewer's form with the weighted score (D52): those who read the application, HR and the hiring team, see
+/// all forms; the blind rule binds interviewers only.
+/// </summary>
 public sealed record ApplicationDetails(
     ApplicationListItem Application,
     string? CoverLetter,
@@ -100,7 +105,11 @@ public sealed record ApplicationDetails(
     bool CanManage,
     uint Version,
     ApplicationCvAnalysisItem? CvAnalysis,
-    bool CanAnalyzeCv);
+    bool CanAnalyzeCv,
+    IReadOnlyList<InterviewListItem> Interviews,
+    IReadOnlyList<FeedbackItem> Feedback,
+    decimal? Score,
+    bool CanScheduleInterview);
 
 /// <summary>A file of a recruitment record to send.</summary>
 public sealed record RecruitmentFileDownload(string FileName, string ContentType, long Length, Stream Content);
@@ -545,6 +554,8 @@ internal sealed class GetApplicationQueryHandler(
     IUserDirectory users,
     IAccessScopeProvider scopes,
     ApplicationCvAnalyzer analyzer,
+    InterviewRows interviewRows,
+    InterviewAccess interviewAccess,
     ICurrentUser currentUser) : IQueryHandler<GetApplicationQuery, ApplicationDetails>
 {
     public async Task<Result<ApplicationDetails>> Handle(GetApplicationQuery request, CancellationToken cancellationToken)
@@ -574,6 +585,8 @@ internal sealed class GetApplicationQueryHandler(
                 cancellationToken))
             .ToDictionary(u => u.Id, u => u.DisplayName);
         string? StageName(Guid? stageId) => opening.Stages.FirstOrDefault(s => s.Id == stageId)?.Name.Get(culture, "tr-TR");
+        var interviews = await db.Interviews.AsNoTracking().Where(i => i.ApplicationId == id).OrderBy(i => i.StartsAt).ToListAsync(cancellationToken);
+        var forms = await db.InterviewFeedbacks.AsNoTracking().Where(f => f.ApplicationId == id).ToListAsync(cancellationToken);
         var cv = application.CvFileId is { } fileId
             ? await db.StoredFiles.AsNoTracking().Where(f => f.Id == fileId).Select(f => new ApplicationCvItem(f.FileName, f.ContentType, f.Length)).SingleOrDefaultAsync(cancellationToken)
             : null;
@@ -607,7 +620,11 @@ internal sealed class GetApplicationQueryHandler(
             !request.AsTeam
                 && application.CvFileId is not null
                 && analyzer.IsEnabled
-                && (await scopes.GetCurrentUserScopesAsync(RecruitmentPermissions.Cv.Analyze, cancellationToken)).Count > 0);
+                && (await scopes.GetCurrentUserScopesAsync(RecruitmentPermissions.Cv.Analyze, cancellationToken)).Count > 0,
+            await interviewRows.ItemsAsync(interviews, cancellationToken),
+            await interviewRows.FeedbackAsync(forms, interviews.ToDictionary(i => i.Id), cancellationToken),
+            InterviewRows.Score(forms),
+            !request.AsTeam && application.Status == ApplicationStatus.Active && await interviewAccess.ManagesAsync(application.CompanyId, cancellationToken));
     }
 
     private static ApplicationAnswerItem Answer(JobOpening opening, ApplicationAnswer answer)

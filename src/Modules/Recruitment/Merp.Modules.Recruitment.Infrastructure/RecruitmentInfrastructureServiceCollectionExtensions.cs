@@ -12,11 +12,13 @@ using Merp.Modules.Recruitment.Application.Applications;
 using Merp.Modules.Recruitment.Application.Candidates;
 using Merp.Modules.Recruitment.Application.Careers;
 using Merp.Modules.Recruitment.Application.CvAnalysis;
+using Merp.Modules.Recruitment.Application.Interviews;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Infrastructure.Applications;
 using Merp.Modules.Recruitment.Infrastructure.Candidates;
+using Merp.Modules.Recruitment.Infrastructure.Interviews;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Infrastructure.Settings;
 using Microsoft.Extensions.DependencyInjection;
@@ -72,6 +74,14 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         // CV analysis of applications in the background and on request (A3, D51)
         services.AddScoped<ApplicationCvAnalyzer>();
         services.AddSingleton(RecurringJobDefinition.For<ApplicationCvAnalysisJob>(ApplicationCvAnalysisJob.JobId, ApplicationCvAnalysisJob.Cron));
+
+        // Interviews: who reaches them, their rows, invitations with the calendar file and reminders (D52)
+        services.AddScoped<InterviewAccess>();
+        services.AddScoped<InterviewRows>();
+        services.AddScoped<InterviewInvitations>();
+        services.AddSingleton<IInterviewCalendar, IcalInterviewCalendar>();
+        services.AddSingleton<INotificationTypeProvider, InterviewNotificationTypes>();
+        services.AddSingleton(RecurringJobDefinition.For<InterviewRemindersJob>(InterviewRemindersJob.JobId, InterviewRemindersJob.Cron));
         return services;
     }
 }

@@ -8,9 +8,15 @@ internal static class RecruitmentClock
     public static DateOnly Today(TimeProvider timeProvider, string? timeZoneId)
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
+        return DateOnly.FromDateTime(Local(timeProvider.GetUtcNow(), timeZoneId));
+    }
+
+    /// <summary>The wall clock time of a moment in the company's time zone, e.g. for an interview invitation (R5).</summary>
+    public static DateTime Local(DateTimeOffset at, string? timeZoneId)
+    {
         var zone = TimeZoneInfo.TryFindSystemTimeZoneById(timeZoneId ?? DefaultTimeZoneId, out var found)
             ? found
             : TimeZoneInfo.FindSystemTimeZoneById(DefaultTimeZoneId);
-        return DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), zone).DateTime);
+        return TimeZoneInfo.ConvertTime(at, zone).DateTime;
     }
 }

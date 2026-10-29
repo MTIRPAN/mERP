@@ -1,6 +1,7 @@
 using Merp.Modules.Recruitment.Application;
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
+using Merp.Modules.Recruitment.Domain.Interviews;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
@@ -11,7 +12,7 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence;
 
 /// <summary>
 /// Schema <c>recruitment</c>: the settings of R1 (D47), the requisitions of R2 (D48) and the openings, candidates
-/// and applications of R3 (D49); the rest comes with PLAN R4–R9.
+/// and applications of R3 (D49), the pipeline and pool of R4 (D50, D51) and the interviews of R5 (D52); the rest comes with PLAN R6–R9.
 /// </summary>
 public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> options) : ModuleDbContext(options), IModuleSchema, IRecruitmentDbContext
 {
@@ -35,6 +36,12 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
 
     public DbSet<ApplicationCvAnalysis> CvAnalyses => Set<ApplicationCvAnalysis>();
 
+    public DbSet<Interview> Interviews => Set<Interview>();
+
+    public DbSet<InterviewFeedback> InterviewFeedbacks => Set<InterviewFeedback>();
+
+    public DbSet<EvaluationTemplate> EvaluationTemplates => Set<EvaluationTemplate>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
@@ -47,6 +54,12 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
         modelBuilder.Ignore<ApplicationAnswer>();
         modelBuilder.Ignore<ApplicationConsent>();
         modelBuilder.Ignore<CandidateProfile>();
+        modelBuilder.Ignore<EvaluationForm>();
+        modelBuilder.Ignore<EvaluationSection>();
+        modelBuilder.Ignore<EvaluationCriterion>();
+        modelBuilder.Ignore<EvaluationQuestion>();
+        modelBuilder.Ignore<CriterionScore>();
+        modelBuilder.Ignore<QuestionAnswer>();
         base.OnModelCreating(modelBuilder);
     }
 }

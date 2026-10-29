@@ -10,6 +10,8 @@ import type { ApplicationCvAnalysisItem } from './applicationCvAnalysisItem';
 import type { ApplicationCvItem } from './applicationCvItem';
 import type { ApplicationListItem } from './applicationListItem';
 import type { ApplicationStageChangeItem } from './applicationStageChangeItem';
+import type { FeedbackItem } from './feedbackItem';
+import type { InterviewListItem } from './interviewListItem';
 
 export interface ApplicationDetails {
   application: ApplicationListItem;
@@ -31,4 +33,9 @@ export interface ApplicationDetails {
   version: number;
   cvAnalysis: null | ApplicationCvAnalysisItem;
   canAnalyzeCv: boolean;
+  interviews: InterviewListItem[];
+  feedback: FeedbackItem[];
+  /** @nullable */
+  score: number | null;
+  canScheduleInterview: boolean;
 }

@@ -60,6 +60,9 @@ public sealed class EmailMessage : Entity<EmailMessageId>
 
     public DateTimeOffset? SentAt { get; private set; }
 
+    /// <summary>Files sent with it, e.g. a calendar invitation (D52).</summary>
+    public IReadOnlyList<EmailMessageAttachment> Attachments { get; private set; } = [];
+
     public static EmailMessage Create(
         UserId? recipientId,
         string? notificationType,
@@ -84,6 +87,8 @@ public sealed class EmailMessage : Entity<EmailMessageId>
             NextAttemptAt = now,
             CreatedAt = now,
         };
+
+    public void Attach(IReadOnlyList<EmailMessageAttachment> attachments) => Attachments = attachments ?? throw new ArgumentNullException(nameof(attachments));
 
     public void MarkSent(DateTimeOffset at)
     {
@@ -111,3 +116,6 @@ public sealed class EmailMessage : Entity<EmailMessageId>
 
     private static string Truncate(string value, int maxLength) => value.Length <= maxLength ? value : value[..maxLength];
 }
+
+/// <summary>A file of a queued e-mail.</summary>
+public sealed record EmailMessageAttachment(string FileName, string ContentType, byte[] Content);
