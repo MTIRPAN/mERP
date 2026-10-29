@@ -105,3 +105,21 @@ internal sealed class ApplicationStageChangeConfiguration : IEntityTypeConfigura
         builder.HasIndex(h => new { h.ApplicationId, h.Sequence });
     }
 }
+
+internal sealed class ApplicationCvAnalysisConfiguration : IEntityTypeConfiguration<ApplicationCvAnalysis>
+{
+    public void Configure(EntityTypeBuilder<ApplicationCvAnalysis> builder)
+    {
+        builder.ToTable("application_cv_analyses");
+        builder.HasKey(a => a.Id);
+        builder.Property(a => a.Id).ValueGeneratedNever();
+        builder.Property(a => a.Result).HasColumnType("jsonb");
+        builder.Property(a => a.ErrorCode).HasMaxLength(ApplicationCvAnalysis.ErrorCodeMaxLength);
+        builder.Property(a => a.Model).HasMaxLength(ApplicationCvAnalysis.ModelMaxLength);
+        builder.Property(a => a.PromptVersion).HasMaxLength(ApplicationCvAnalysis.PromptVersionMaxLength);
+        builder.Ignore(a => a.Succeeded);
+
+        // The analysis goes with its application (same aggregate family, same schema)
+        builder.HasOne<JobApplication>().WithOne().HasForeignKey<ApplicationCvAnalysis>(a => a.Id).OnDelete(DeleteBehavior.Cascade);
+    }
+}

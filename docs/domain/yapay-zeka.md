@@ -29,7 +29,7 @@ Modül handler'ı
 | # | Özellik | Modül | Fayda | Durum |
 |---|---|---|---|---|
 | 3.1 | **CV analizi:** özet, deneyim, eğitim, yetkinlik, dil, sertifika; gereksinim bazında eşleşme ve kanıt; mülakat soruları | İşe alım | Uzmanın ön elemede harcadığı süreyi azaltır, değerlendirmeyi gereksinimlere bağlar | ✅ Durumsuz sürüm hazır (A2) |
-| 3.2 | **Aday kartında CV analizi:** CV yüklenince analiz başvuruya kaydedilir; aday formu CV'den doldurulur | İşe alım | Elle veri girişini kaldırır | R4 ile (A3) |
+| 3.2 | **Aday kartında CV analizi:** CV yüklenince analiz başvuruya kaydedilir; aday formu CV'den doldurulur | İşe alım | Elle veri girişini kaldırır | ✅ Hazır (A3) |
 | 3.3 | **Toplu ön tarama:** bir ilanın tüm başvurularını gece toplu analiz | İşe alım | Yüksek hacimli ilanlarda hız; Batch API ile yarı maliyet | R4 sonrası (A6) |
 | 3.4 | **İlan metni taslağı ve kapsayıcı dil kontrolü:** personel talebinden ilan taslağı; ayrımcı veya dışlayıcı ifadeler için uyarı | İşe alım | Daha hızlı ve tutarlı ilan, ayrımcılık riskini azaltır | R3 ile (A4) |
 | 3.5 | **Mülakat soruları ve geri bildirim özeti:** pozisyona göre soru seti; mülakatçı notlarından ortak özet (kör geri bildirim kuralına uyarak) | İşe alım | Yapılandırılmış mülakat, hızlı karar toplantısı | R5 ile (A5) |
@@ -54,8 +54,16 @@ Modül handler'ı
   4. Metin maskelenir (§4). Kaç değerin çıkarıldığı kullanıcıya gösterilir.
   5. Talimatlar sabittir ve önbelleğe alınır (`CvAnalysisPrompt.Version`). Girdi: çıktı dili, `<job>` ve `<cv>` etiketleri.
   6. Sonuç normalize edilir: puan 0–100, deneyim 0–60 yıl; gereksinim verilmemişse eşleşme boş bırakılır.
-- **Çıktı:** `CvAnalysisResponse` (analiz, maskeleme sayıları, belgenin kesilip kesilmediği, model, talimat sürümü). Dosya ve analiz saklanmaz. R4 ile analiz başvuruya kaydedilecek.
+- **Çıktı:** `CvAnalysisResponse` (analiz, maskeleme sayıları, belgenin kesilip kesilmediği, model, talimat sürümü). Dosya ve analiz saklanmaz. Başvuruya kaydedilen analiz için bkz. §3.2.
 - **Ekran:** İşe alım → CV analizi. Sonuç "Yapay zeka önerisidir" uyarısıyla gösterilir. Ekran görüntüleri: `docs/screenshots/ai/`.
+
+### 3.2 Aday kartında CV analizi (yapıldı)
+
+- **Arka plan:** Kiracıda özellik açıksa, süreçteki ve son 30 günde gelen CV'li başvurular 2 dakikada bir, kiracı başına en fazla 5 tane analiz edilir. Eşleşme ilanın başlığı ve aranan nitelikleriyle yapılır. Sonuç başvuruya kaydedilir (model, talimat sürümü, tarih); başarısızlık hata koduyla kaydedilir.
+- **Yeniden analiz:** `POST /api/recruitment/applications/{id}/cv-analysis`. Yetki `recruitment.cv.analyze` ve başvuruyu okuma kapsamı, hız sınırı `ai`. Başarısız yeniden analiz öncekini silmez.
+- **Aday formu:** `POST /api/recruitment/candidates/cv-prefill`. Ad ve iletişim bilgileri yerelde düzenli ifadelerle okunur, sağlayıcıya gitmez. Unvan, şirket, deneyim ve eğitim analizden gelir.
+- **Görünürlük:** Başvuruyu gören herkes (işe alım ekibi dahil) analizi "yapay zeka önerisidir" uyarısıyla görür.
+- Kararlar: `docs/DECISIONS.md` D51.
 
 ## 4. Kişisel veri maskeleme
 

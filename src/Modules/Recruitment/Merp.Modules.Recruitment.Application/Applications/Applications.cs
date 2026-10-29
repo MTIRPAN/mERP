@@ -10,6 +10,7 @@ using Merp.Application.Persistence.Files;
 using Merp.Modules.Platform.Contracts.Notifications;
 using Merp.Modules.Platform.Contracts.Organization;
 using Merp.Modules.Platform.Contracts.Users;
+using Merp.Modules.Recruitment.Application.CvAnalysis;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
@@ -84,7 +85,7 @@ public sealed record ApplicationStageChangeItem(
     string? UserName,
     DateTimeOffset At);
 
-/// <summary>An application with its answers, CV, consent and history (D50).</summary>
+/// <summary>An application with its answers, CV, consent and history (D50), and the AI analysis of its CV (D51).</summary>
 public sealed record ApplicationDetails(
     ApplicationListItem Application,
     string? CoverLetter,
@@ -97,7 +98,9 @@ public sealed record ApplicationDetails(
     DateTimeOffset? RejectionEmailSentAt,
     IReadOnlyList<ApplicationStageChangeItem> History,
     bool CanManage,
-    uint Version);
+    uint Version,
+    ApplicationCvAnalysisItem? CvAnalysis,
+    bool CanAnalyzeCv);
 
 /// <summary>A file of a recruitment record to send.</summary>
 public sealed record RecruitmentFileDownload(string FileName, string ContentType, long Length, Stream Content);
@@ -540,6 +543,8 @@ internal sealed class GetApplicationQueryHandler(
     ApplicationAccess access,
     ApplicationRows rows,
     IUserDirectory users,
+    IAccessScopeProvider scopes,
+    ApplicationCvAnalyzer analyzer,
     ICurrentUser currentUser) : IQueryHandler<GetApplicationQuery, ApplicationDetails>
 {
     public async Task<Result<ApplicationDetails>> Handle(GetApplicationQuery request, CancellationToken cancellationToken)
@@ -563,7 +568,10 @@ internal sealed class GetApplicationQueryHandler(
             .ToDictionary(l => (l.Kind, l.Code), l => l.Name.Get(culture, "tr-TR"));
         string? Reason(ApplicationStatus status, string? code) =>
             code is null ? null : reasons.GetValueOrDefault((status == ApplicationStatus.Withdrawn ? LookupKind.WithdrawalReason : LookupKind.RejectionReason, code));
-        var names = (await users.GetAsync([.. history.Where(h => h.UserId is not null).Select(h => h.UserId!.Value).Distinct()], cancellationToken))
+        var cvAnalysis = await db.CvAnalyses.AsNoTracking().SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
+        var names = (await users.GetAsync(
+                [.. history.Where(h => h.UserId is not null).Select(h => h.UserId!.Value).Append(cvAnalysis?.RequestedByUserId ?? Guid.Empty).Where(u => u != Guid.Empty).Distinct()],
+                cancellationToken))
             .ToDictionary(u => u.Id, u => u.DisplayName);
         string? StageName(Guid? stageId) => opening.Stages.FirstOrDefault(s => s.Id == stageId)?.Name.Get(culture, "tr-TR");
         var cv = application.CvFileId is { } fileId
@@ -594,7 +602,12 @@ internal sealed class GetApplicationQueryHandler(
                     h.At)),
             ],
             !request.AsTeam && await access.ManagesAsync(application.CompanyId, cancellationToken),
-            version);
+            version,
+            ApplicationCvAnalyzer.Item(cvAnalysis, cvAnalysis?.RequestedByUserId is { } requester ? names.GetValueOrDefault(requester) : null),
+            !request.AsTeam
+                && application.CvFileId is not null
+                && analyzer.IsEnabled
+                && (await scopes.GetCurrentUserScopesAsync(RecruitmentPermissions.Cv.Analyze, cancellationToken)).Count > 0);
     }
 
     private static ApplicationAnswerItem Answer(JobOpening opening, ApplicationAnswer answer)

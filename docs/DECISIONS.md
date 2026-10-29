@@ -1470,3 +1470,24 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Uç noktalar (R4b):** `GET /candidates` (arama, etiket ve kaynak süzgeçli sayfalı liste), `POST /candidates`, `GET|PUT /candidates/{id}`, `POST /candidates/{id}/cvs`, `GET /candidates/{id}/cvs/{fileId}`, `POST|DELETE /candidates/{id}/notes[/{noteId}]`, `POST /candidates/{id}/merge`, `POST /candidates/{id}/applications`, `GET /candidates/options|referrers|mention-users`. İşe alım ekibi için: `GET /me/hiring/candidates/{id}`, not ekleme ve silme, `GET /me/hiring/mention-users`.
 
 **Web (R4b):** İşe alım → "Aday havuzu" (`/recruitment/candidates`): arama, etiket ve kaynak süzgeçli liste ile yeni aday formu. Aday kartında (`/recruitment/candidates/:id`) profil, başvurular, notlar (@anma), CV'ler ve zaman çizelgesi sekmeleri, düzenleme, CV yükleme, ilana ekleme ve olası tekrarlar için birleştirme vardır. Başvuru çekmecesindeki "Aday kartı" düğmesi kartı açar. İşe alım ekibi kartı `/recruitment/hiring/candidates/:id` üzerinden okur ve not yazar.
+
+## D51 — Aday kartında CV analizi
+
+**Bağlam:** A3, A2'nin durumsuz CV analizini başvuruya bağlar ve aday formunu CV'den doldurur (`docs/domain/yapay-zeka.md` §3.2). Kullanıcı kararları (2026-10-29):
+- Otomatik analiz yalnızca süreçteki ve son 30 günde gelen başvuruları kapsar. Özellik sonradan açılırsa eski birikim analiz edilmez.
+- Analizi başvuruyu gören herkes (işe alım ekibi dahil) görür. Yeniden çalıştırmak `recruitment.cv.analyze` yetkisi ve başvurunun şirketini kapsayan `recruitment.applications.read` ister.
+
+**Analiz:**
+- Başvuru başına tek kayıttır (`application_cv_analyses`, anahtarı başvuru, başvuruyla birlikte silinir). İçinde A2 yanıtının JSON'u (analiz, maskeleme sayıları, kesilme, model, talimat sürümü), analiz tarihi ve isteyen kullanıcı tutulur. Başarısız çalışmada yalnızca hata kodu tutulur.
+- Girdi başvurunun CV'sidir; eşleşme ilanın başlığı ve aranan nitelikleriyle (HTML'den düz metne çevrilerek) yapılır. Maskelemede adayın adı ve CV'nin ilk satırlarındaki ad kullanılır. Saklanan analiz, kimin çalıştırdığından bağımsız olarak kiracının varsayılan dilindedir. Özellik anahtarı A2 ile aynıdır (`recruitment.cv_analysis`); aylık bütçe her çağrıda geçerlidir.
+- **Arka plan:** `recruitment.application-cv-analysis` işi 2 dakikada bir, kiracı başına en fazla 5 başvuru analiz eder (saatte en fazla 150). Kiracıda özellik kapalıysa hiçbir şey yapmaz. Başarısızlık da kaydedilir ve iş o başvuruyu tekrar denemez; ekip karttan yeniden çalıştırır.
+- **Yeniden analiz:** `POST /api/recruitment/applications/{id}/cv-analysis` (`ai` hız sınırı). Başarısız bir yeniden analiz önceki analizi silmez.
+- **Veritabanı işlemi:** Komutlar baştan bir veritabanı işlemi açtığından 30–60 saniyelik yapay zeka çağrısı bir sorgu işleyicisinde yapılır, sonuç kısa bir komutla (`SaveApplicationCvAnalysisCommand`) kaydedilir. İş her başvuru için ayrı bir sorgu gönderir.
+- **Silme:** Başvuru silinince analiz de silinir. Adayın anonimleşmesinde (R8) analiz silinecektir; kabul kriterinin bu kısmı R8'de karşılanır.
+
+**Aday formunu doldurma:** `POST /api/recruitment/candidates/cv-prefill` (`recruitment.candidates.manage`, `ai` hız sınırı). Dosya saklanmaz.
+- Ad, e-posta, telefon, LinkedIn ve diğer web bağlantısı CV'den düzenli ifadelerle yerelde okunur ve sağlayıcıya gönderilmez (PLAN A3).
+- Özellik açıksa unvan, şirket, deneyim yılı ve eğitim maskelenmiş metnin analizinden gelir. Analiz yapılamazsa yalnızca yerel alanlar döner ve hata kodu gösterilir.
+- Web yalnızca boş alanları doldurur. CV, aday kaydedilince adaya yüklenir.
+
+**Web:** Başvuru çekmecesinde "Özgeçmiş analizi (yapay zeka)" kartı vardır. Kart A2 sonuç görünümünü "yapay zeka önerisidir" uyarısıyla gösterir, yetkililere "Analiz et / Yeniden analiz et" sunar ve başarısız çalışmanın nedenini gösterir. Yeni aday formunda "Özgeçmişten doldur" vardır.

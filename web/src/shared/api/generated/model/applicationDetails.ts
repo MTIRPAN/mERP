@@ -6,6 +6,7 @@
  */
 import type { ApplicationAnswerItem } from './applicationAnswerItem';
 import type { ApplicationConsent } from './applicationConsent';
+import type { ApplicationCvAnalysisItem } from './applicationCvAnalysisItem';
 import type { ApplicationCvItem } from './applicationCvItem';
 import type { ApplicationListItem } from './applicationListItem';
 import type { ApplicationStageChangeItem } from './applicationStageChangeItem';
@@ -28,4 +29,6 @@ export interface ApplicationDetails {
   history: ApplicationStageChangeItem[];
   canManage: boolean;
   version: number;
+  cvAnalysis: null | ApplicationCvAnalysisItem;
+  canAnalyzeCv: boolean;
 }

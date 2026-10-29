@@ -1,4 +1,5 @@
-import { Alert, Flex, Form, Input, InputNumber, Select, Typography } from 'antd';
+import { FileSearchOutlined } from '@ant-design/icons';
+import { Alert, App, Button, Flex, Form, Input, InputNumber, Select, Typography, Upload } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -6,11 +7,18 @@ import { useMe } from '@/app/me/meContext';
 import {
   createCandidate,
   listCandidates,
+  prefillCandidateFromCv,
   updateCandidate,
+  uploadCandidateCv,
   useGetCandidateOptions,
   useSearchCandidateReferrers,
 } from '@/shared/api/generated/endpoints/recruitment/recruitment';
-import type { CandidateDetails, CandidateListItem, CreateCandidateCommand } from '@/shared/api/generated/model';
+import type {
+  CandidateCvPrefill,
+  CandidateDetails,
+  CandidateListItem,
+  CreateCandidateCommand,
+} from '@/shared/api/generated/model';
 import { isApiError } from '@/shared/api/problem';
 import { FormDrawer } from '@/shared/components/FormDrawer';
 import { EMAIL_TAKEN, REFERRAL, useCandidateRefresh } from './candidates';
@@ -26,10 +34,13 @@ interface CandidateFormDrawerProps {
 
 /**
  * Adds a candidate to the pool or corrects one (D50): contact, source (with the referring employee), profile and
- * tags. An e-mail another candidate has is refused; the form then offers that candidate.
+ * tags. An e-mail another candidate has is refused; the form then offers that candidate. A new candidate's form is
+ * filled from a CV (A3, D51): contact details read locally, the profile from the AI analysis; the CV is attached once
+ * the candidate is saved.
  */
 export const CandidateFormDrawer = ({ candidate, onClose, onSaved }: CandidateFormDrawerProps) => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const me = useMe();
   const [form] = Form.useForm<CandidateValues>();
@@ -37,6 +48,9 @@ export const CandidateFormDrawer = ({ candidate, onClose, onSaved }: CandidateFo
   const options = useGetCandidateOptions();
   const [existing, setExisting] = useState<CandidateListItem>();
   const [referrerSearch, setReferrerSearch] = useState<string>();
+  const [cv, setCv] = useState<File>();
+  const [prefill, setPrefill] = useState<CandidateCvPrefill>();
+  const [reading, setReading] = useState(false);
   const source = Form.useWatch('source', form);
   const referrerCompanyId = Form.useWatch('referrerCompanyId', form);
   const referrers = useSearchCandidateReferrers(
@@ -44,6 +58,42 @@ export const CandidateFormDrawer = ({ candidate, onClose, onSaved }: CandidateFo
     { query: { enabled: source === REFERRAL && !!referrerCompanyId } },
   );
   const required = [{ required: true, message: t('web.platform.fields.required') }];
+
+  // Fills the empty fields from the CV; what the user already typed stays
+  const readCv = async (file: File) => {
+    setReading(true);
+    try {
+      const result = await prefillCandidateFromCv({ cv: file });
+      const current = form.getFieldsValue();
+      const suggested: Partial<CandidateValues> = {
+        firstName: result.firstName,
+        lastName: result.lastName,
+        email: result.email,
+        phone: result.phone,
+        linkedInUrl: result.linkedInUrl,
+        portfolioUrl: result.portfolioUrl,
+        currentTitle: result.currentTitle,
+        currentCompany: result.currentCompany,
+        experienceYears: result.experienceYears,
+        education: result.education,
+      };
+      form.setFieldsValue(
+        Object.fromEntries(
+          Object.entries(suggested).filter(([key, value]) => value != null && !current[key as keyof CandidateValues]),
+        ),
+      );
+      setCv(file);
+      setPrefill(result);
+    } catch (error) {
+      setPrefill(undefined);
+      void message.error(
+        isApiError(error) ? (error.problem?.fieldErrors?.[0]?.message ?? error.message) : String(error),
+      );
+      throw error;
+    } finally {
+      setReading(false);
+    }
+  };
 
   const submit = async (values: CandidateValues) => {
     // The company only narrows the referrer search; it is not sent
@@ -63,6 +113,10 @@ export const CandidateFormDrawer = ({ candidate, onClose, onSaved }: CandidateFo
         onSaved?.(candidate.id);
       } else {
         const { id } = await createCandidate(body);
+        if (cv) {
+          await uploadCandidateCv(id, { cv });
+        }
+
         await refresh(id);
         onSaved?.(id);
       }
@@ -100,6 +154,38 @@ export const CandidateFormDrawer = ({ candidate, onClose, onSaved }: CandidateFo
           : { source: REFERRAL, tags: [] }
       }
     >
+      {!candidate && (
+        <Flex vertical gap={8} style={{ marginBottom: 16 }}>
+          <Upload
+            accept=".pdf,.docx"
+            showUploadList={false}
+            customRequest={({ file, onSuccess, onError }) => {
+              void readCv(file as File).then(
+                () => onSuccess?.(null),
+                (error: unknown) => onError?.(error as Error),
+              );
+            }}
+          >
+            <Button icon={<FileSearchOutlined />} loading={reading}>
+              {t('web.recruitment.candidates.prefill.button')}
+            </Button>
+          </Upload>
+          {cv && (
+            <Typography.Text type="secondary">
+              {t('web.recruitment.candidates.prefill.attached', { name: cv.name })}
+            </Typography.Text>
+          )}
+          {prefill?.aiUsed && <Alert type="info" showIcon title={t('web.recruitment.candidates.prefill.ai_notice')} />}
+          {prefill?.aiErrorCode && (
+            <Alert
+              type="warning"
+              showIcon
+              title={t('web.recruitment.candidates.prefill.ai_failed')}
+              description={t(prefill.aiErrorCode)}
+            />
+          )}
+        </Flex>
+      )}
       {existing && (
         <Alert
           type="warning"
