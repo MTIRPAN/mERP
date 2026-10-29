@@ -76,6 +76,8 @@ const JobTitlesPage = page(() => import('@/modules/hr/jobTitles/JobTitlesPage'),
 const RequisitionsPage = page(() => import('@/modules/recruitment/requisitions/RequisitionsPage'), 'RequisitionsPage');
 const OpeningsPage = page(() => import('@/modules/recruitment/openings/OpeningsPage'), 'OpeningsPage');
 const MyOpeningsPage = page(() => import('@/modules/recruitment/careers/MyOpeningsPage'), 'MyOpeningsPage');
+const PipelinePage = page(() => import('@/modules/recruitment/pipeline/PipelinePage'), 'PipelinePage');
+const HiringPipelinePage = page(() => import('@/modules/recruitment/pipeline/PipelinePage'), 'HiringPipelinePage');
 const CareerPage = page(() => import('@/modules/recruitment/careers/CareerPage'), 'CareerPage');
 const CareerOpeningPage = page(() => import('@/modules/recruitment/careers/CareerOpeningPage'), 'CareerOpeningPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
@@ -409,6 +411,22 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={recruitmentPermissions.openingsRead}>
               <OpeningsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/openings/:id/pipeline"
+          element={
+            <RequirePermission permission={recruitmentPermissions.applicationsRead}>
+              <PipelinePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/hiring/:id"
+          element={
+            <RequirePermission permission={recruitmentPermissions.selfHiring}>
+              <HiringPipelinePage />
             </RequirePermission>
           }
         />

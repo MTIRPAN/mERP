@@ -347,6 +347,67 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "recruitment");
                 });
 
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Applications.ApplicationStageChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<Guid?>("FromStageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("from_stage_id");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("note");
+
+                    b.Property<string>("ReasonCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("reason_code");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("ToStageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("to_stage_id");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_application_stage_changes");
+
+                    b.HasIndex("ApplicationId", "Sequence")
+                        .HasDatabaseName("ix_application_stage_changes_application_id_sequence");
+
+                    b.ToTable("application_stage_changes", "recruitment");
+                });
+
             modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Applications.JobApplication", b =>
                 {
                     b.Property<Guid>("Id")
@@ -412,11 +473,32 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("opening_id");
 
+                    b.Property<Guid?>("PreviousStageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("previous_stage_id");
+
+                    b.Property<string>("ReasonCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("reason_code");
+
+                    b.Property<DateTimeOffset?>("RejectionEmailDueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejection_email_due_at");
+
+                    b.Property<DateTimeOffset?>("RejectionEmailSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejection_email_sent_at");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("source");
+
+                    b.Property<DateTimeOffset>("StageEnteredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("stage_entered_at");
 
                     b.Property<Guid>("StageId")
                         .HasColumnType("uuid")
@@ -436,6 +518,10 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_job_applications");
+
+                    b.HasIndex("RejectionEmailDueAt")
+                        .HasDatabaseName("ix_job_applications_rejection_email_due")
+                        .HasFilter("rejection_email_due_at IS NOT NULL");
 
                     b.HasIndex("CandidateId", "OpeningId")
                         .IsUnique()
@@ -1024,6 +1110,21 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasName("pk_stage_templates");
 
                     b.ToTable("stage_templates", "recruitment");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Applications.ApplicationStageChange", b =>
+                {
+                    b.HasOne("Merp.Modules.Recruitment.Domain.Applications.JobApplication", null)
+                        .WithMany("History")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_application_stage_changes_job_applications_application_id");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Applications.JobApplication", b =>
+                {
+                    b.Navigation("History");
                 });
 #pragma warning restore 612, 618
         }

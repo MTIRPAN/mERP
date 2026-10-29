@@ -40,10 +40,25 @@ public static class RecruitmentPermissions
         public const string Manage = "recruitment.openings.manage";
     }
 
+    public static class Applications
+    {
+        /// <summary>See the applications to the openings of the companies in scope and their pipelines (D50).</summary>
+        public const string Read = "recruitment.applications.read";
+
+        /// <summary>Move them through the pipeline, reject them, record withdrawals and reopen them.</summary>
+        public const string Manage = "recruitment.applications.manage";
+    }
+
     public static class Self
     {
         /// <summary>An employee applies to openings from self service (D49); the Employee role has it.</summary>
         public const string Apply = "recruitment.self.apply";
+
+        /// <summary>
+        /// The hiring manager and the recruiters of an opening see its applications without other permissions (D50);
+        /// the Employee role has it.
+        /// </summary>
+        public const string Hiring = "recruitment.self.hiring";
     }
 }
 
@@ -59,6 +74,9 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Requisitions.Manage),
         new(RecruitmentPermissions.Openings.Read),
         new(RecruitmentPermissions.Openings.Manage),
+        new(RecruitmentPermissions.Applications.Read),
+        new(RecruitmentPermissions.Applications.Manage),
         new(RecruitmentPermissions.Self.Apply),
+        new(RecruitmentPermissions.Self.Hiring),
     ];
 }

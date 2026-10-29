@@ -6,6 +6,10 @@ export const formatDate = (value: string, locale: string): string =>
 export const formatDateTime = (value: string, locale: string): string =>
   new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 
+/** The day of a moment (ISO 8601 with offset) in the given culture and the browser's time zone. */
+export const formatMomentDate = (value: string, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(value));
+
 const relativeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
   ['year', 365 * 24 * 3600],
   ['month', 30 * 24 * 3600],

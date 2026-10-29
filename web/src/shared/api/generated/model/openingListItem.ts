@@ -4,6 +4,7 @@
  * mERP API
  * OpenAPI spec version: v1
  */
+import type { OpeningStageCount } from './openingStageCount';
 import type { OpeningStatus } from './openingStatus';
 import type { OpeningVisibility } from './openingVisibility';
 import type { RequisitionEmploymentType } from './requisitionEmploymentType';
@@ -33,4 +34,5 @@ export interface OpeningListItem {
   /** @nullable */
   hiringManagerName: string | null;
   createdAt: string;
+  stageCounts: OpeningStageCount[];
 }

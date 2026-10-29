@@ -1,6 +1,7 @@
 using Merp.Infrastructure.Persistence.Conventions;
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
+using Merp.Modules.Recruitment.Domain.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -39,10 +40,30 @@ internal sealed class JobApplicationConfiguration : IEntityTypeConfiguration<Job
         builder.Property(a => a.Source).HasMaxLength(Candidate.SourceMaxLength);
         builder.Property(a => a.Answers).HasJson();
         builder.Property(a => a.Consent).HasJson();
+        builder.Property(a => a.ReasonCode).HasMaxLength(RecruitmentLookup.CodeMaxLength);
+        builder.HasMany(a => a.History).WithOne().HasForeignKey(h => h.ApplicationId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(a => a.History).UsePropertyAccessMode(PropertyAccessMode.Field);
 
         // A candidate applies to an opening once (D49)
         builder.HasIndex(a => new { a.CandidateId, a.OpeningId }).IsUnique();
         builder.HasIndex(a => new { a.OpeningId, a.StageId });
         builder.HasIndex(a => new { a.CompanyId, a.AppliedAt });
+
+        // The rejection e-mails job: the e-mails waiting (D50)
+        builder.HasIndex(a => a.RejectionEmailDueAt).HasFilter("rejection_email_due_at IS NOT NULL").HasDatabaseName("ix_job_applications_rejection_email_due");
+    }
+}
+
+internal sealed class ApplicationStageChangeConfiguration : IEntityTypeConfiguration<ApplicationStageChange>
+{
+    public void Configure(EntityTypeBuilder<ApplicationStageChange> builder)
+    {
+        builder.ToTable("application_stage_changes");
+        builder.HasKey(h => h.Id);
+        builder.Property(h => h.Id).ValueGeneratedNever();
+        builder.Property(h => h.Status).HasConversion<string>().HasMaxLength(20);
+        builder.Property(h => h.ReasonCode).HasMaxLength(RecruitmentLookup.CodeMaxLength);
+        builder.Property(h => h.Note).HasMaxLength(JobApplication.NoteMaxLength);
+        builder.HasIndex(h => new { h.ApplicationId, h.Sequence });
     }
 }

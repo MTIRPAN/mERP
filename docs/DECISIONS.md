@@ -218,7 +218,7 @@ Her madde kısa bir karar kaydıdır (ADR). Değişiklik gerekirse maddeyi silme
 
 ## D19 — Kütüphaneler ve lisans politikası
 
-**İzinli lisanslar:** MIT, Apache-2.0, BSD-2/3, MPL-2.0, PostgreSQL, ISC, Unlicense (kamu malı; kullanıcı onayı, P8b: `@microsoft/signalr` bağımlılığı `fetch-cookie`). LGPL sadece dinamik bağlantıyla kullanılır (Hangfire).
+**İzinli lisanslar:** MIT, Apache-2.0, BSD-2/3, MPL-2.0, PostgreSQL, ISC, Unlicense (kamu malı; kullanıcı onayı, P8b: `@microsoft/signalr` bağımlılığı `fetch-cookie`), 0BSD (kamu malına yakın; kullanıcı onayı, R4a: `@dnd-kit/core` bağımlılığı `tslib`). LGPL sadece dinamik bağlantıyla kullanılır (Hangfire).
 
 ### Backend — kullanılacaklar
 
@@ -1382,7 +1382,7 @@ Seçilen kültür `Content-Language` başlığında döner.
   - görünürlük ve yayın tarihleri (başlangıç, bitiş)
 - **Görünürlük:** İç ilan yalnızca çalışanlara görünür. Dış ilan kariyer sayfasında ve çalışanlara görünür.
 - **Talepten ilan:** Talep onaylanmış olmalı, aynı şirkette olmalı ve ilanın kadro sayısı talebin kalan kişi sayısını (`Headcount − FilledCount`) aşmamalı. Bir talepten birden çok ilan açılabilir (örn. farklı kanallar). Talep ekranındaki "İlan oluştur" formu talebin bilgileriyle doldurur.
-- **Aşamalar:** İlan, seçilen aşama şablonunun (varsayılan: kiracının varsayılanı) aşamalarını kopyalar (D47). Şablon yalnızca taslakta değiştirilebilir; yayından sonra aşamalar sabittir. Aşamaların ilan içinde düzenlenmesi R4'te ele alınacak.
+- **Aşamalar:** İlan, seçilen aşama şablonunun (varsayılan: kiracının varsayılanı) aşamalarını kopyalar (D47). Şablon yalnızca taslakta değiştirilebilir; yayından sonra aşamalar sabittir. Aşamaların ilan içinde düzenlenmesi R4a'da geldi (D50).
 - **İşe alım ekibi:** işe alan yönetici (zorunlu), işe alım uzmanları ve mülakatçılar (aktif kullanıcılar). Ekibin adaylara erişimi R4–R5'te kullanılır.
 - **Başvuru formu:**
   - Standart alanlar: ad, soyad ve e-posta her zaman istenir. Telefon ve CV'nin zorunluluğu ile ön yazı sorulup sorulmayacağı ilanda seçilir.
@@ -1424,3 +1424,31 @@ Seçilen kültür `Content-Language` başlığında döner.
   - Ad ve soyad personel kaydından gelir. E-posta kullanıcının e-postasıdır; yoksa personel kaydının birincil e-postası kullanılır. Telefon formdan, boşsa personel kaydından gelir. HR.Contracts'a `IEmployeeLookup.GetContactAsync` eklendi.
   - Kullanıcı bir personel kaydına bağlı değilse başvuru `recruitment.applications.errors.not_employee` ile reddedilir.
 - **Web:** Kariyer sayfası `/careers/:tenant` ve ilan sayfası `/careers/:tenant/openings/:id` girişsizdir ve uygulama kabuğu olmadan açılır. Çalışanlar İşe alım → "Açık pozisyonlar" (`/recruitment/my-openings`) ekranında ilanları ve kendi başvurularını görür.
+
+## D50 — Aday havuzu ve başvuru süreci
+
+**Bağlam:** R4, başvuruları ilanın aşamalarında yürütür ve aday havuzunu getirir. Kullanıcı kararları (2026-10-27):
+- R4 iki dikey PR'dır: R4a süreç (aşamalar, geçmiş, ret, geri çekilme, kanban), R4b aday ve havuz (aday profili, sürümlü CV'ler, notlar, etiketler, tam metin arama, birleştirme, başka ilana ekleme, aday kartı). A3 (CV analizi) R4b'den sonra ayrı PR'dır.
+- İşe alım ekibi kendi ilanının başvurularını yetkisi olmadan görür; aşama değiştirmek yetki ister.
+- Tekrar eden aday: aynı e-posta engellenir ve o aday önerilir; aynı telefon ya da ad soyad "olası tekrar" olarak gösterilir; birleştirmeyi kullanıcı başlatır (R4b).
+- `@dnd-kit/core`'un bağımlılığı `tslib` için 0BSD izinli lisanslara eklendi (D19).
+
+**Yetkiler (R4a):** `recruitment.applications.read` (şirket kapsamındaki ilanların başvuruları ve süreçleri) ve `recruitment.applications.manage` (taşıma, ret, geri çekilme, yeniden açma). `recruitment.*` deseniyle İK Yöneticisi ve İşe Alım Uzmanı rollerine geçer. Kapsam ilandaki gibi şirket bazındadır; kapsam dışındaki başvuru 404 döner.
+
+**İşe alım ekibi (kullanıcı kararı):** `recruitment.self.hiring`, Çalışan rolüne `recruitment.self.*` deseniyle geçer. İlanın işe alan yöneticisi ve işe alım uzmanları, bu yetkiyle yalnızca o ilanın sürecini, başvurularını ve CV'lerini okur (`/api/recruitment/me/hiring/**`). Taslak ilanlar listelenmez. Mülakatçıların erişimi R5'te gelir. Ekip jsonb kolonunda olduğundan üyelik uygulamada süzülür.
+
+**Başvuru süreci (R4a):**
+- Durum ile aşama birlikte yürür: süreçteki başvuru (Active) bir çalışma aşamasındadır. İşe alındı, Reddedildi ve Geri çekildi aşamaları aynı adlı durumlara karşılık gelir.
+- **Taşıma:** Süreçteki başvuru ilanın bir çalışma aşamasına ya da İşe alındı aşamasına taşınır. Ret ve geri çekilme ayrı işlemdir, çünkü neden ister.
+- **Ret:** Etkin bir red nedeni (D47 listesi) ve isteğe bağlı not gerekir. Ret e-postası (`recruitment.application_rejected`, D47 şablonu) hemen ya da 1–14 gün sonra gider. Gecikmeli e-postayı 15 dakikada bir çalışan iş (`recruitment.rejection-emails`) gönderir.
+- **Geri çekilme:** Etkin bir çekilme nedeni gerekir; e-posta gitmez.
+- **Yeniden açma:** Reddedilmiş ya da geri çekilmiş başvuru ayrıldığı çalışma aşamasına döner; o aşama ilandan kalkmışsa Başvuru aşamasına döner. Gönderilmemiş ret e-postası iptal olur. İşe alınmış başvuru yeniden açılmaz.
+- **Aşama geçmişi** (`application_stage_changes`, PLAN kabul kriteri): Her adım için önceki ve yeni aşama, adımdan sonraki durum, neden, not, yapan kullanıcı ve zaman tutulur. İlk kayıt başvurunun kendisidir. Aşama süresi (SLA) aşamaya giriş anından sayılır.
+- **Eşzamanlılık:** Değişiklikler okunan sürümle gönderilir; eski sürüm 409 döner. Kanbanda bırakılan kart sürüm taşımadığından web, değiştirmeden hemen önce sürümü okur.
+- Puan özeti R5'in değerlendirmeleriyle gelir.
+
+**İlanın kendi aşamaları (D49'da R4'e bırakılan):** Kapanmamış ilanın aşamaları `PUT /api/recruitment/openings/{id}/stages` ile şablon kurallarıyla değiştirilir (`recruitment.openings.manage`). Başvuruların bulunduğu ya da süreçten ayrıldığı aşama kaldırılamaz (`recruitment.openings.errors.stage_in_use`). Şablonun sonraki değişiklikleri ilanı yine etkilemez.
+
+**Uç noktalar (R4a):** `GET /openings/{id}/pipeline` (aşamalar, aşama başına başvuru sayısı, yönetene red ve çekilme nedenleri), `GET /applications` (ilan, aşama, durum, eleme ve metin süzgeçli sayfalı liste), `GET /applications/{id}` (cevaplar, CV, KVKK onayı, geçmiş), `GET /applications/{id}/cv` ve `POST /applications/{id}/move|reject|withdraw|reopen`. İlan listesi aşama başına başvuru sayılarını taşır.
+
+**Web (R4a):** İlan detayında "Başvurular" düğmesi `/recruitment/openings/:id/pipeline` sayfasını açar. Sayfada kanban (@dnd-kit; ret ve geri çekilme sütununa bırakılan kart neden modalını açar) ve liste görünümü vardır. Kanban en fazla 200 başvuru gösterir; daha fazlası liste görünümündedir. Başvuru çekmecesinde iletişim, cevaplar, CV, KVKK onayı, geçmiş ve işlemler bulunur. İlan listesinde başvuru sayısı ve aşama dağılımı görünür. İlan detayında "Aşamaları düzenle" vardır. Ekip üyeleri "Açık pozisyonlar" ekranındaki "İşe alım ekibimdeki ilanlar" sekmesinden süreci salt okunur açar (`/recruitment/hiring/:id`).

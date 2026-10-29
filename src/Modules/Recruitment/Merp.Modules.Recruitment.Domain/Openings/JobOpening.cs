@@ -272,6 +272,33 @@ public sealed class JobOpening : AuditableAggregateRoot<JobOpeningId>, ICompanyS
         return Result.Success();
     }
 
+    /// <summary>
+    /// Changes the pipeline of an opening that is not closed (D50), under the rules of a template. A stage that
+    /// applications are at, or left the pipeline from, stays.
+    /// </summary>
+    public Result ChangeStages(IReadOnlyList<Stage> stages, IReadOnlySet<Guid> stagesInUse)
+    {
+        ArgumentNullException.ThrowIfNull(stagesInUse);
+        if (Status == OpeningStatus.Closed)
+        {
+            return JobOpeningErrors.Closed;
+        }
+
+        var checkedStages = StageTemplate.CheckStages(stages);
+        if (checkedStages.IsFailure)
+        {
+            return checkedStages.Error;
+        }
+
+        if (stagesInUse.Any(id => checkedStages.Value.All(s => s.Id != id)))
+        {
+            return JobOpeningErrors.StageInUse;
+        }
+
+        Stages = checkedStages.Value;
+        return Result.Success();
+    }
+
     /// <summary>Takes applications on <paramref name="today"/>: published and within its dates.</summary>
     public bool IsOpenOn(DateOnly today) =>
         Status == OpeningStatus.Published
@@ -332,5 +359,6 @@ public static class JobOpeningErrors
     public static readonly Error NotPublished = Error.Conflict("recruitment.openings.errors.not_published");
     public static readonly Error Expired = Error.Validation([new FieldError("publishUntil", "recruitment.openings.errors.expired")]);
     public static readonly Error StagesFixed = Error.Validation([new FieldError("stageTemplateId", "recruitment.openings.errors.stages_fixed")]);
-    public static readonly Error FixedFields = Error.Validation([new FieldError("companyId", "recruitment.openings.errors.fixed_fields")]);
+    public static readonly Error StageInUse = Error.Validation([new FieldError("stages", "recruitment.openings.errors.stage_in_use")]);
+    public static readonly Error FixedFields =Error.Validation([new FieldError("companyId", "recruitment.openings.errors.fixed_fields")]);
 }
