@@ -23,6 +23,7 @@ import { useHasPermission } from '@/shared/auth/permissionContext';
 import { formatDateTime } from '@/shared/format/date';
 import { YES, NO } from '../openings/openings';
 import { recruitmentPermissions } from '../permissions';
+import { ApplicationCvAnalysisCard } from './ApplicationCvAnalysisCard';
 import { applicationStatusColors, downloadCv, needsReason, useApplicationDetails } from './pipeline';
 
 export const ApplicationStatusTag = ({ status }: { status: ApplicationStatus }) => {
@@ -202,6 +203,13 @@ export const ApplicationDrawer = ({
             >
               {t('web.recruitment.pipeline.download_cv', { name: details.cv.fileName })}
             </Button>
+          )}
+          {details.cv && (
+            <ApplicationCvAnalysisCard
+              applicationId={id}
+              analysis={details.cvAnalysis}
+              canAnalyze={details.canAnalyzeCv}
+            />
           )}
           {details.coverLetter && (
             <Card size="small" title={t('web.recruitment.pipeline.fields.cover_letter')}>

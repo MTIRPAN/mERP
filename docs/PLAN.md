@@ -1133,7 +1133,7 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 - Gereksinim verilmezse eşleşme döndürülmez.
 - Yetkisiz kullanıcı 403, kapalı kiracı 403 `ai_disabled`, sağlayıcı hatası 503 alır.
 
-### [ ] A3 Aday kartında CV analizi — M (R4 ile)
+### [x] A3 Aday kartında CV analizi — M (R4 ile)
 
 - CV yüklendiğinde analiz arka plan işinde çalışır ve başvuruya kaydedilir (model, talimat sürümü, tarih). Yeniden analiz edilebilir.
 - Aday formu CV'den doldurulur. İletişim bilgileri yerelde (regex) çıkarılır, sağlayıcıya gönderilmez.

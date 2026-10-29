@@ -35,6 +35,9 @@ public interface IRecruitmentDbContext
     /// <summary>Applications of candidates to openings (D49).</summary>
     DbSet<JobApplication> JobApplications { get; }
 
+    /// <summary>The AI analyses of the applications' CVs (D51).</summary>
+    DbSet<ApplicationCvAnalysis> CvAnalyses { get; }
+
     /// <summary>Files of recruitment records, e.g. the CVs of candidates.</summary>
     DbSet<Merp.Application.Persistence.Files.StoredFile> StoredFiles { get; }
 

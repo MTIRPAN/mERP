@@ -11,6 +11,7 @@ using Merp.Modules.Recruitment.Application;
 using Merp.Modules.Recruitment.Application.Applications;
 using Merp.Modules.Recruitment.Application.Candidates;
 using Merp.Modules.Recruitment.Application.Careers;
+using Merp.Modules.Recruitment.Application.CvAnalysis;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
@@ -67,6 +68,10 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         services.AddScoped<ICandidateSearch, CandidateSearch>();
         services.AddSingleton<INotificationTypeProvider, CandidateNotificationTypes>();
         services.AddSingleton(RecurringJobDefinition.For<CandidateCvTextJob>(CandidateCvTextJob.JobId, CandidateCvTextJob.Cron));
+
+        // CV analysis of applications in the background and on request (A3, D51)
+        services.AddScoped<ApplicationCvAnalyzer>();
+        services.AddSingleton(RecurringJobDefinition.For<ApplicationCvAnalysisJob>(ApplicationCvAnalysisJob.JobId, ApplicationCvAnalysisJob.Cron));
         return services;
     }
 }

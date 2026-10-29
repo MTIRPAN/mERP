@@ -93,6 +93,8 @@ const details: ApplicationDetails = {
   ],
   canManage: true,
   version: 7,
+  cvAnalysis: null,
+  canAnalyzeCv: false,
 };
 
 let teamDetails = false;

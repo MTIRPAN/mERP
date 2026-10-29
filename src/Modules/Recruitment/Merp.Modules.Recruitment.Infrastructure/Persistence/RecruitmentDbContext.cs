@@ -33,6 +33,8 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
 
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
 
+    public DbSet<ApplicationCvAnalysis> CvAnalyses => Set<ApplicationCvAnalysis>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);

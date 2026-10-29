@@ -24,9 +24,11 @@ import type {
   AddCandidateNoteCommand,
   AddCandidateToOpeningCommand,
   AnalyzeCvBody,
+  ApplicationCvAnalysisItem,
   ApplicationDetails,
   BranchSummary,
   CancelRequisitionCommand,
+  CandidateCvPrefill,
   CandidateDetails,
   CandidateOptions,
   CareerOpeningDetails,
@@ -67,6 +69,7 @@ import type {
   PagedResultOfCandidateListItem,
   PagedResultOfOpeningListItem,
   PagedResultOfRequisitionListItem,
+  PrefillCandidateFromCvBody,
   ProblemDetails,
   PublishConsentTextCommand,
   RecruitmentLookupItem,
@@ -190,6 +193,181 @@ export const useAnalyzeCv = <TError = ErrorType<HttpValidationProblemDetails | P
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof analyzeCv>>, TError, AnalyzeCvMutationVariables, TContext> => {
   return useMutation(getAnalyzeCvMutationOptions(options), queryClient);
+};
+export const getAnalyzeApplicationCvUrl = (id: string) => {
+  return `/api/recruitment/applications/${id}/cv-analysis`;
+};
+
+/**
+ * Needs the read permission over the application's company. A failed run leaves the previous analysis. The result is a suggestion for the team. Requires permission: recruitment.cv.analyze.
+ * @summary Analyze an application's CV against its opening with AI again and keep the result (A3, D51)
+ */
+export const analyzeApplicationCv = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApplicationCvAnalysisItem> => {
+  return customFetch<ApplicationCvAnalysisItem>(getAnalyzeApplicationCvUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getAnalyzeApplicationCvMutationKey = () => ['analyzeApplicationCv'] as const;
+
+export const getAnalyzeApplicationCvMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeApplicationCv>>,
+    TError,
+    AnalyzeApplicationCvMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof analyzeApplicationCv>>,
+  TError,
+  AnalyzeApplicationCvMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAnalyzeApplicationCvMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof analyzeApplicationCv>>,
+    AnalyzeApplicationCvMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return analyzeApplicationCv(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AnalyzeApplicationCvMutationResult = NonNullable<Awaited<ReturnType<typeof analyzeApplicationCv>>>;
+
+export type AnalyzeApplicationCvMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AnalyzeApplicationCvMutationVariables = { id: string };
+
+/**
+ * @summary Analyze an application's CV against its opening with AI again and keep the result (A3, D51)
+ */
+export const useAnalyzeApplicationCv = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof analyzeApplicationCv>>,
+      TError,
+      AnalyzeApplicationCvMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof analyzeApplicationCv>>,
+  TError,
+  AnalyzeApplicationCvMutationVariables,
+  TContext
+> => {
+  return useMutation(getAnalyzeApplicationCvMutationOptions(options), queryClient);
+};
+export const getPrefillCandidateFromCvUrl = () => {
+  return `/api/recruitment/candidates/cv-prefill`;
+};
+
+/**
+ * The file is not stored. The contact details never reach the AI provider. Requires permission: recruitment.candidates.manage.
+ * @summary Read a CV for the new candidate form: contact details locally, the profile with AI when it is on (A3, D51)
+ */
+export const prefillCandidateFromCv = async (
+  prefillCandidateFromCvBody: PrefillCandidateFromCvBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CandidateCvPrefill> => {
+  const formData = new FormData();
+  if (prefillCandidateFromCvBody.cv !== undefined) {
+    formData.append(`cv`, prefillCandidateFromCvBody.cv);
+  }
+
+  return customFetch<CandidateCvPrefill>(getPrefillCandidateFromCvUrl(), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getPrefillCandidateFromCvMutationKey = () => ['prefillCandidateFromCv'] as const;
+
+export const getPrefillCandidateFromCvMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof prefillCandidateFromCv>>,
+    TError,
+    PrefillCandidateFromCvMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof prefillCandidateFromCv>>,
+  TError,
+  PrefillCandidateFromCvMutationVariables,
+  TContext
+> => {
+  const mutationKey = getPrefillCandidateFromCvMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof prefillCandidateFromCv>>,
+    PrefillCandidateFromCvMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return prefillCandidateFromCv(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PrefillCandidateFromCvMutationResult = NonNullable<Awaited<ReturnType<typeof prefillCandidateFromCv>>>;
+export type PrefillCandidateFromCvMutationBody = PrefillCandidateFromCvBody;
+export type PrefillCandidateFromCvMutationError = ErrorType<HttpValidationProblemDetails>;
+export type PrefillCandidateFromCvMutationVariables = { data: PrefillCandidateFromCvBody };
+
+/**
+ * @summary Read a CV for the new candidate form: contact details locally, the profile with AI when it is on (A3, D51)
+ */
+export const usePrefillCandidateFromCv = <TError = ErrorType<HttpValidationProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof prefillCandidateFromCv>>,
+      TError,
+      PrefillCandidateFromCvMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof prefillCandidateFromCv>>,
+  TError,
+  PrefillCandidateFromCvMutationVariables,
+  TContext
+> => {
+  return useMutation(getPrefillCandidateFromCvMutationOptions(options), queryClient);
 };
 export const getGetOpeningPipelineUrl = (id: string) => {
   return `/api/recruitment/openings/${id}/pipeline`;
