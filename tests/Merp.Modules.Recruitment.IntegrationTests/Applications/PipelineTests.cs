@@ -114,7 +114,7 @@ public sealed class PipelineTests(RequisitionFactory factory) : IClassFixture<Re
         var email = EmailOf("simdi", opening);
         (await factory.OutboxAsync<ExternalEmailRequested>()).ShouldContain(e => e.To == email && e.Type == RecruitmentNotificationTypes.ApplicationRejected && e.Args["position"] == "Satış Uzmanı");
         await factory.DeliverMessagesAsync();
-        (await PlatformSubjectAsync(email)).ShouldBe("Satış Uzmanı başvurunuz hakkında");
+        (await PlatformSubjectsAsync(email)).ShouldBe(["Satış Uzmanı başvurunuz alındı", "Satış Uzmanı başvurunuz hakkında"], ignoreOrder: true);
 
         // Two days later: waits for the job; a reopened application drops its e-mail
         (await RejectAsync(recruiter, later, new { reasonCode = "EXPERIENCE", sendEmail = true, emailDelayDays = 2 })).StatusCode.ShouldBe(HttpStatusCode.NoContent);
@@ -344,12 +344,13 @@ public sealed class PipelineTests(RequisitionFactory factory) : IClassFixture<Re
         return (await scope.ServiceProvider.GetRequiredService<ISender>().Send(new SendDueRejectionEmailsCommand(), Ct)).Value;
     }
 
-    private async Task<string> PlatformSubjectAsync(string to)
+    /// <summary>The subjects of the e-mails queued for <paramref name="to"/>: the received e-mail and any later ones.</summary>
+    private async Task<List<string>> PlatformSubjectsAsync(string to)
     {
         var tenant = (await factory.Services.GetRequiredService<ITenantStore>().FindByCodeAsync(RequisitionFactory.Tenant, Ct))!;
         await using var scope = factory.Services.GetRequiredService<TenantScopeFactory>().CreateScope(tenant);
         var db = scope.ServiceProvider.GetRequiredService<Merp.Modules.Platform.Infrastructure.Persistence.PlatformDbContext>();
-        return await db.EmailMessages.AsNoTracking().Where(m => m.To == to).Select(m => m.Subject).SingleAsync(Ct);
+        return await db.EmailMessages.AsNoTracking().Where(m => m.To == to).Select(m => m.Subject).ToListAsync(Ct);
     }
 
 
