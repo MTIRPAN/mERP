@@ -73,7 +73,10 @@ public sealed class InterviewTests(RequisitionFactory factory) : IClassFixture<R
         invited.ShouldSatisfyAllConditions(n => n.RecipientUserIds.ShouldBe([ayse, mehmet], ignoreOrder: true), n => n.Attachments.ShouldHaveSingleItem());
 
         await factory.DeliverMessagesAsync();
-        (await PlatformAsync(db => db.EmailMessages.AsNoTracking().Where(m => m.To == email).ToListAsync(Ct))).ShouldHaveSingleItem().Attachments.ShouldHaveSingleItem().FileName.ShouldBe("interview.ics");
+        // The candidate got the application e-mail too; only the invitation carries the calendar file
+        var queued = await PlatformAsync(db => db.EmailMessages.AsNoTracking().Where(m => m.To == email).ToListAsync(Ct));
+        queued.Count.ShouldBe(2);
+        queued.SelectMany(m => m.Attachments).ShouldHaveSingleItem().FileName.ShouldBe("interview.ics");
 
         // A new time and one interviewer less: the update for all, the cancellation for the one taken off
         var details = await DetailsAsync(Recruiter(), id);
