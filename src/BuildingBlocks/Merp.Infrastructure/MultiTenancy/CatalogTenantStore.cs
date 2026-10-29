@@ -1,3 +1,4 @@
+using System.Globalization;
 using Merp.Infrastructure.MultiTenancy.Catalog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -6,7 +7,8 @@ namespace Merp.Infrastructure.MultiTenancy;
 
 /// <summary>
 /// Tenant lookups backed by the catalog database and cached in memory. Decrypted connection strings never reach
-/// the distributed cache.
+/// the distributed cache. Registered as a singleton because the cache key carries a generation that
+/// <see cref="InvalidateAsync"/> moves forward.
 /// </summary>
 public sealed class CatalogTenantStore(
     IDbContextFactory<CatalogDbContext> dbContextFactory,
@@ -23,6 +25,8 @@ public sealed class CatalogTenantStore(
     };
 
     private static readonly string[] Tags = [CacheTag];
+
+    private long _generation;
 
     public async Task<TenantRecord?> FindByCodeAsync(string code, CancellationToken cancellationToken = default)
     {
@@ -49,13 +53,18 @@ public sealed class CatalogTenantStore(
         return [.. tenants.Where(t => t.IsActive)];
     }
 
-    public async Task InvalidateAsync(CancellationToken cancellationToken = default) =>
+    public async Task InvalidateAsync(CancellationToken cancellationToken = default)
+    {
+        // A read that started before the catalog change can finish after this call and store the old list. The new
+        // generation sends later reads to another key, so they never get that list; the tag drops the older entries.
+        Interlocked.Increment(ref _generation);
         await cache.RemoveByTagAsync(CacheTag, cancellationToken);
+    }
 
     // The catalog is small (one row per customer), so the whole list is cached as one entry.
     private async Task<IReadOnlyList<TenantRecord>> GetAllAsync(CancellationToken cancellationToken) =>
         await cache.GetOrCreateAsync(
-            "catalog:tenants:all",
+            string.Create(CultureInfo.InvariantCulture, $"catalog:tenants:all:{Interlocked.Read(ref _generation)}"),
             async token =>
             {
                 await using var db = await dbContextFactory.CreateDbContextAsync(token);
