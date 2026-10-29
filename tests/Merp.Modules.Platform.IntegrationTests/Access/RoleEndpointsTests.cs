@@ -29,7 +29,7 @@ public sealed class RoleEndpointsTests(AccessFactory factory) : IClassFixture<Ac
         details.Permissions.ShouldContain(PlatformPermissions.Roles.Manage);
         details.Permissions.ShouldAllBe(p => p.StartsWith("platform.", StringComparison.Ordinal));
         var recruiter = await factory.SystemRoleAsync("recruiter");
-        (await factory.AsRoot().GetFromJsonAsync<RoleDetails>($"{Url}/{recruiter.Id}", Ct))!.Permissions.ShouldBe(["recruitment.cv.analyze", "recruitment.openings.manage", "recruitment.openings.read", "recruitment.requisitions.manage", "recruitment.requisitions.read", "recruitment.self.apply", "recruitment.settings.manage", "recruitment.settings.read"], ignoreOrder: true);
+        (await factory.AsRoot().GetFromJsonAsync<RoleDetails>($"{Url}/{recruiter.Id}", Ct))!.Permissions.ShouldBe(["recruitment.applications.manage", "recruitment.applications.read", "recruitment.cv.analyze", "recruitment.openings.manage", "recruitment.openings.read", "recruitment.requisitions.manage", "recruitment.requisitions.read", "recruitment.self.apply", "recruitment.self.hiring", "recruitment.settings.manage", "recruitment.settings.read"], ignoreOrder: true);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public sealed class RoleEndpointsTests(AccessFactory factory) : IClassFixture<Ac
 
         var reset = (await factory.AsRoot().GetFromJsonAsync<RoleDetails>($"{Url}/{recruiter.Id}", Ct))!;
         reset.Name["tr-TR"].ShouldBe("İşe Alım Uzmanı");
-        reset.Permissions.ShouldBe(["recruitment.cv.analyze", "recruitment.openings.manage", "recruitment.openings.read", "recruitment.requisitions.manage", "recruitment.requisitions.read", "recruitment.self.apply", "recruitment.settings.manage", "recruitment.settings.read"], ignoreOrder: true);
+        reset.Permissions.ShouldBe(["recruitment.applications.manage", "recruitment.applications.read", "recruitment.cv.analyze", "recruitment.openings.manage", "recruitment.openings.read", "recruitment.requisitions.manage", "recruitment.requisitions.read", "recruitment.self.apply", "recruitment.self.hiring", "recruitment.settings.manage", "recruitment.settings.read"], ignoreOrder: true);
 
         var custom = await factory.CreateRoleAsync([]);
         (await factory.AsRoot().PostAsync($"{Url}/{custom}/reset", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);

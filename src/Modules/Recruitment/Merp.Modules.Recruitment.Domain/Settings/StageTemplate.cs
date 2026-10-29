@@ -68,7 +68,7 @@ public sealed class StageTemplate : AuditableAggregateRoot<StageTemplateId>
 
     public static Result<StageTemplate> Create(LocalizedString name, IReadOnlyList<Stage> stages, bool isDefault)
     {
-        var checkedStages = Check(stages);
+        var checkedStages = CheckStages(stages);
         if (checkedStages.IsFailure)
         {
             return checkedStages.Error;
@@ -87,7 +87,7 @@ public sealed class StageTemplate : AuditableAggregateRoot<StageTemplateId>
 
     public Result Update(LocalizedString name, IReadOnlyList<Stage> stages, bool isDefault, bool isActive)
     {
-        var checkedStages = Check(stages);
+        var checkedStages = CheckStages(stages);
         if (checkedStages.IsFailure)
         {
             return checkedStages.Error;
@@ -112,7 +112,7 @@ public sealed class StageTemplate : AuditableAggregateRoot<StageTemplateId>
     /// The stages in order: Applied first, the working stages, then Hired, Rejected and Withdrawn; each stage id once.
     /// New stages (empty id) get one.
     /// </summary>
-    private static Result<IReadOnlyList<Stage>> Check(IReadOnlyList<Stage> stages)
+    public static Result<IReadOnlyList<Stage>> CheckStages(IReadOnlyList<Stage> stages)
     {
         ArgumentNullException.ThrowIfNull(stages);
         if (stages.Count == 0 || stages.Count > MaxStages)

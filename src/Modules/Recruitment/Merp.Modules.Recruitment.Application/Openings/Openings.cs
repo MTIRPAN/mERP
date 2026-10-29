@@ -75,7 +75,10 @@ public interface IOpeningFields
     IReadOnlyList<OpeningQuestionInput>? Questions { get; }
 }
 
-/// <summary>An opening in a list.</summary>
+/// <summary>The applications at a stage of an opening (D50).</summary>
+public sealed record OpeningStageCount(Guid StageId, string Name, StageType Type, int Count);
+
+/// <summary>An opening in a list, with the applications at each stage of its pipeline.</summary>
 public sealed record OpeningListItem(
     Guid Id,
     Guid CompanyId,
@@ -92,10 +95,11 @@ public sealed record OpeningListItem(
     Guid? RequisitionId,
     string? RequisitionNumber,
     string? HiringManagerName,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    IReadOnlyList<OpeningStageCount> StageCounts);
 
-/// <summary>A stage of an opening's pipeline, named in the user's language.</summary>
-public sealed record OpeningStageItem(Guid Id, string Name, StageType Type, int? SlaDays);
+/// <summary>A stage of an opening's pipeline, named in the user's language; Names in each language for the stage editor (D50).</summary>
+public sealed record OpeningStageItem(Guid Id, string Name, IReadOnlyDictionary<string, string> Names, StageType Type, int? SlaDays);
 
 /// <summary>A member of the hiring team.</summary>
 public sealed record OpeningMember(Guid UserId, string? DisplayName);
@@ -432,8 +436,8 @@ public sealed class OpeningRules(IRecruitmentDbContext db, IOrganizationLookup o
     }
 }
 
-/// <summary>Builds the list rows of openings: company, branch, requisition and hiring manager names.</summary>
-public sealed class OpeningRows(IRecruitmentDbContext db, IOrganizationLookup organization, IUserDirectory users)
+/// <summary>Builds the list rows of openings: company, branch, requisition and hiring manager names, applications per stage.</summary>
+public sealed class OpeningRows(IRecruitmentDbContext db, IOrganizationLookup organization, IUserDirectory users, ICurrentUser currentUser)
 {
     public async Task<List<OpeningListItem>> RowsAsync(IReadOnlyList<JobOpening> openings, CancellationToken cancellationToken)
     {
@@ -447,6 +451,13 @@ public sealed class OpeningRows(IRecruitmentDbContext db, IOrganizationLookup or
             .ToDictionaryAsync(r => r.Id, r => r.Number, cancellationToken);
         var managers = (await users.GetAsync([.. openings.Select(o => o.HiringManagerUserId).Distinct()], cancellationToken))
             .ToDictionary(u => u.Id, u => u.DisplayName);
+        var openingIds = openings.Select(o => o.Id).ToList();
+        var counts = (await db.JobApplications.AsNoTracking()
+                .Where(a => openingIds.Contains(a.OpeningId))
+                .GroupBy(a => new { a.OpeningId, a.StageId })
+                .Select(g => new { g.Key.OpeningId, g.Key.StageId, Count = g.Count() })
+                .ToListAsync(cancellationToken))
+            .ToDictionary(g => (g.OpeningId, g.StageId), g => g.Count);
         return
         [
             .. openings.Select(o => new OpeningListItem(
@@ -465,7 +476,8 @@ public sealed class OpeningRows(IRecruitmentDbContext db, IOrganizationLookup or
                 o.RequisitionId?.Value,
                 o.RequisitionId is { } requisitionId ? requisitions.GetValueOrDefault(requisitionId) : null,
                 managers.GetValueOrDefault(o.HiringManagerUserId),
-                o.CreatedAt)),
+                o.CreatedAt,
+                [.. o.Stages.Select(s => new OpeningStageCount(s.Id, s.Name.Get(currentUser.Culture, "tr-TR"), s.Type, counts.GetValueOrDefault((o.Id, s.Id))))])),
         ];
     }
 }
@@ -666,7 +678,7 @@ internal sealed class GetOpeningQueryHandler(
             opening.Qualifications,
             opening.BranchId,
             opening.StageTemplateId.Value,
-            [.. opening.Stages.Select(s => new OpeningStageItem(s.Id, s.Name.Get(currentUser.Culture, "tr-TR"), s.Type, s.SlaDays))],
+            [.. opening.Stages.Select(s => new OpeningStageItem(s.Id, s.Name.Get(currentUser.Culture, "tr-TR"), s.Name.Values, s.Type, s.SlaDays))],
             Member(team.HiringManagerUserId),
             [.. team.RecruiterUserIds.Select(Member)],
             [.. team.InterviewerUserIds.Select(Member)],
@@ -696,7 +708,7 @@ internal sealed class GetOpeningTemplatesQueryHandler(IRecruitmentDbContext db, 
                 t.Id.Value,
                 t.Name.Get(currentUser.Culture, "tr-TR"),
                 t.IsDefault,
-                [.. t.Stages.Select(s => new OpeningStageItem(s.Id, s.Name.Get(currentUser.Culture, "tr-TR"), s.Type, s.SlaDays))]))
+                [.. t.Stages.Select(s => new OpeningStageItem(s.Id, s.Name.Get(currentUser.Culture, "tr-TR"), s.Name.Values, s.Type, s.SlaDays))]))
             .ToList();
     }
 }

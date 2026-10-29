@@ -1003,6 +1003,10 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Ret e-postası şablonla gönderilir.
 - Aynı e-postayla ikinci aday oluşturulmaz; birleştirme önerilir.
 
+**Alt PR'lar (D50):**
+- [x] **R4a süreç:** aşama taşıma, aşama geçmişi, ret (neden, hemen ya da gecikmeli şablon e-postası), geri çekilme, yeniden açma, ilanın kendi aşamaları, işe alım ekibinin salt okunur erişimi; web: ilan sürecinde kanban (@dnd-kit) ve liste, başvuru çekmecesi, ilan listesinde aşama sayıları
+- [ ] **R4b aday ve havuz:** aday profili, sürümlü CV'ler, notlar (@anma), etiketler, rıza kayıtları, tam metin arama, tekrar eden aday önerisi ve birleştirme, başka ilana ekleme; web: aday kartı ve havuz araması
+
 ### [ ] R5 Mülakat ve değerlendirme — L
 
 **Yapılacaklar:**

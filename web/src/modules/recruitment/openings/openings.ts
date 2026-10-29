@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
+  getGetOpeningPipelineQueryKey,
   getGetOpeningQueryKey,
   getListOpeningsQueryKey,
 } from '@/shared/api/generated/endpoints/recruitment/recruitment';
@@ -43,12 +44,17 @@ export const answersOf = (question: Partial<OpeningQuestionInput>): string[] =>
       ? (question.options ?? []).map((o) => o?.trim()).filter((o): o is string => !!o)
       : [];
 
-/** Refreshes the list and an opening after a change. */
+/** Refreshes the list, and an opening and its pipeline after a change. */
 export const useOpeningRefresh = () => {
   const queryClient = useQueryClient();
   return (id?: string) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: getListOpeningsQueryKey() }),
-      ...(id ? [queryClient.invalidateQueries({ queryKey: getGetOpeningQueryKey(id) })] : []),
+      ...(id
+        ? [
+            queryClient.invalidateQueries({ queryKey: getGetOpeningQueryKey(id) }),
+            queryClient.invalidateQueries({ queryKey: getGetOpeningPipelineQueryKey(id) }),
+          ]
+        : []),
     ]);
 };

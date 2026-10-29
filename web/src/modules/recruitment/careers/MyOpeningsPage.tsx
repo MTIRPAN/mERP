@@ -1,18 +1,23 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { App, Card, Divider, Drawer, Empty, Input, List, Skeleton, Table, Tabs, Typography } from 'antd';
+import { App, Card, Divider, Drawer, Empty, Input, List, Skeleton, Space, Table, Tabs, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import {
   getListMyApplicationsQueryKey,
   submitMyApplication,
   useGetMyOpening,
   useListMyApplications,
+  useListMyHiringOpenings,
   useListMyOpenings,
 } from '@/shared/api/generated/endpoints/recruitment/recruitment';
-import type { MyApplicationItem } from '@/shared/api/generated/model';
+import type { MyApplicationItem, OpeningListItem } from '@/shared/api/generated/model';
+import { useHasPermission } from '@/shared/auth/permissionContext';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { RichTextView } from '@/shared/components/RichTextEditor';
 import { formatDateTime } from '@/shared/format/date';
+import { OpeningStatusTag } from '../openings/OpeningDetailDrawer';
+import { recruitmentPermissions } from '../permissions';
 import { ApplicationForm } from './ApplicationForm';
 import { OpeningFacts } from './careerParts';
 import { matches } from './careers';
@@ -62,14 +67,55 @@ const OpeningDrawer = ({ id, applied, onClose }: { id: string; applied: boolean;
   );
 };
 
+/** The openings whose hiring team the employee is in, with their applications by stage (D50). */
+const HiringList = ({ openings }: { openings: OpeningListItem[] }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  return (
+    <List
+      dataSource={openings}
+      renderItem={(opening) => (
+        <List.Item key={opening.id}>
+          <Card size="small" className="merp-careers-card">
+            <Space wrap>
+              <Typography.Link onClick={() => void navigate(`/recruitment/hiring/${opening.id}`)} strong>
+                {opening.title}
+              </Typography.Link>
+              <OpeningStatusTag status={opening.status} />
+              <Typography.Text type="secondary">{opening.companyName}</Typography.Text>
+            </Space>
+            <Space size={[4, 4]} wrap style={{ marginTop: 8 }}>
+              {opening.stageCounts
+                .filter((stage) => stage.count > 0)
+                .map((stage) => (
+                  <Tag key={stage.stageId}>
+                    {stage.name}: {stage.count}
+                  </Tag>
+                ))}
+              {opening.stageCounts.every((stage) => stage.count === 0) && (
+                <Typography.Text type="secondary">
+                  {t('web.recruitment.careers.no_hiring_applications')}
+                </Typography.Text>
+              )}
+            </Space>
+          </Card>
+        </List.Item>
+      )}
+    />
+  );
+};
+
 /**
  * Open positions for employees (PLAN R3b, D49): internal and public openings of the group, and the employee's own
- * applications. An application from here marks the candidate internal.
+ * applications. An application from here marks the candidate internal. The hiring manager and recruiters of an
+ * opening also find its applications here (D50).
  */
 export const MyOpeningsPage = () => {
   const { t, i18n } = useTranslation();
   const openings = useListMyOpenings();
   const applications = useListMyApplications();
+  const hires = useHasPermission(recruitmentPermissions.selfHiring);
+  const hiring = useListMyHiringOpenings({ query: { enabled: hires } });
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<string>();
   const appliedTo = useMemo(() => new Set((applications.data ?? []).map((a) => a.openingId)), [applications.data]);
@@ -141,6 +187,15 @@ export const MyOpeningsPage = () => {
               />
             ),
           },
+          ...(hires && (hiring.data ?? []).length > 0
+            ? [
+                {
+                  key: 'hiring',
+                  label: t('web.recruitment.careers.tabs.hiring'),
+                  children: <HiringList openings={hiring.data ?? []} />,
+                },
+              ]
+            : []),
         ]}
       />
       {open && <OpeningDrawer id={open} applied={appliedTo.has(open)} onClose={() => setOpen(undefined)} />}

@@ -30,6 +30,9 @@
   "permissions.recruitment.openings": "İş ilanları",
   "permissions.recruitment.openings.read": "Görüntüleme",
   "permissions.recruitment.openings.manage": "İlan açma, düzeltme, yayınlama, bekletme ve kapatma",
+  "permissions.recruitment.applications": "Başvurular",
+  "permissions.recruitment.applications.read": "Başvuruları ve aday süreçlerini görüntüleme",
+  "permissions.recruitment.applications.manage": "Başvuruları aşamalar arasında taşıma, reddetme, geri çekilmeyi kaydetme ve yeniden açma",
   "recruitment.approvals.document_types.requisition": "Personel talebi",
   "recruitment.approvals.facts.company": "Şirket",
   "recruitment.approvals.facts.org_unit": "Birim",
@@ -53,5 +56,6 @@
   "recruitment.notifications.requisition_returned.title": "Personel talebi {number} düzeltme için iade edildi",
   "recruitment.notifications.requisition_returned.body": "{number} numaralı personel talebiniz iade edildi: {comment}. Talebi düzeltip yeniden gönderin.",
   "permissions.recruitment.self": "Self servis",
-  "permissions.recruitment.self.apply": "Açık pozisyonlara iç aday olarak başvurma"
+  "permissions.recruitment.self.apply": "Açık pozisyonlara iç aday olarak başvurma",
+  "permissions.recruitment.self.hiring": "İşe alım ekibinde olduğu ilanların başvurularını görüntüleme"
 }

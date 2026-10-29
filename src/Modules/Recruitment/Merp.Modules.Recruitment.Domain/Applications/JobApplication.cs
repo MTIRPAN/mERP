@@ -15,7 +15,7 @@ public readonly record struct JobApplicationId(Guid Value) : IEntityId<JobApplic
     public static JobApplicationId From(Guid value) => new(value);
 }
 
-/// <summary>Where an application stands; R4 moves it through the pipeline.</summary>
+/// <summary>Where an application stands (D50): in the pipeline, or out of it at the final stage of the same name.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<ApplicationStatus>))]
 public enum ApplicationStatus
 {
@@ -60,14 +60,19 @@ public sealed record ApplicationTerms(
     string Source);
 
 /// <summary>
-/// An application of a candidate to an opening (başvuru, PLAN R3, D49). It starts at the opening's Applied stage,
-/// keeps the answers and whether a knockout answer missed; the candidate is registered or refreshed by
-/// <see cref="ApplicationSubmitted"/> (rule 7).
+/// An application of a candidate to an opening (başvuru, PLAN R3–R4, D49, D50). It starts at the opening's Applied
+/// stage, keeps the answers and whether a knockout answer missed; the candidate is registered or refreshed by
+/// <see cref="ApplicationSubmitted"/> (rule 7). The team moves it through the working stages, rejects it, records
+/// that the candidate withdrew, or reopens it; every change is written to <see cref="History"/>.
 /// </summary>
 [Audited]
 public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, ICompanyScoped
 {
     public const int CoverLetterMaxLength = 4000;
+    public const int NoteMaxLength = 1000;
+    public const int MaxEmailDelayDays = 14;
+
+    private readonly List<ApplicationStageChange> _history = [];
 
     private JobApplication()
     {
@@ -100,6 +105,23 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
     public string Source { get; private set; } = null!;
 
     public DateTimeOffset AppliedAt { get; private set; }
+
+    /// <summary>When the application came to its current stage; the stage's SLA counts from it.</summary>
+    public DateTimeOffset StageEnteredAt { get; private set; }
+
+    /// <summary>The working stage the application left the pipeline from; reopening returns there.</summary>
+    public Guid? PreviousStageId { get; private set; }
+
+    /// <summary>The rejection or withdrawal reason code (D47 lists) while the application is out for one.</summary>
+    public string? ReasonCode { get; private set; }
+
+    /// <summary>When the rejection e-mail goes to the candidate; null when none is waiting.</summary>
+    public DateTimeOffset? RejectionEmailDueAt { get; private set; }
+
+    public DateTimeOffset? RejectionEmailSentAt { get; private set; }
+
+    /// <summary>Every stage change, oldest first by <see cref="ApplicationStageChange.Sequence"/>.</summary>
+    public IReadOnlyCollection<ApplicationStageChange> History => _history.AsReadOnly();
 
     /// <summary>
     /// Receives an application to an opening that takes applications on <paramref name="today"/>; the answers are
@@ -150,10 +172,188 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
             IsInternal = terms.IsInternal,
             Source = Text.Required(terms.Source, Candidate.SourceMaxLength, nameof(terms.Source)),
             AppliedAt = at,
+            StageEnteredAt = at,
         };
+        application.Record(null, applied.Id, null, null, null, at);
         application.Raise(new ApplicationSubmitted(application.Id, terms.CandidateId, email, candidate, employeeId, terms.CvFileId, terms.Consent.PoolConsentRevision, terms.Source, at));
         return application;
     }
+
+    /// <summary>
+    /// Moves an application in the pipeline to a working stage of the opening, or to Hired. Rejection and withdrawal
+    /// have their own methods since they need a reason.
+    /// </summary>
+    public Result MoveTo(JobOpening opening, Guid stageId, string? note, Guid? userId, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(opening);
+        if (Status != ApplicationStatus.Active)
+        {
+            return JobApplicationErrors.NotActive;
+        }
+
+        var stage = opening.Stages.FirstOrDefault(s => s.Id == stageId);
+        if (stage is null)
+        {
+            return JobApplicationErrors.UnknownStage;
+        }
+
+        if (stage.Type is StageType.Rejected or StageType.Withdrawn)
+        {
+            return JobApplicationErrors.NeedsReason;
+        }
+
+        if (stage.Id == StageId)
+        {
+            return Result.Success();
+        }
+
+        if (stage.Type == StageType.Hired)
+        {
+            PreviousStageId = StageId;
+            Status = ApplicationStatus.Hired;
+        }
+
+        Enter(stage.Id, null, note, userId, at);
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// The company turns the candidate down for a reason. The rejection e-mail goes at <paramref name="emailDueAt"/>
+    /// (at most 14 days later); null sends none.
+    /// </summary>
+    public Result Reject(JobOpening opening, string reasonCode, string? note, DateTimeOffset? emailDueAt, Guid? userId, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(opening);
+        if (emailDueAt is { } due && (due < at || due > at.AddDays(MaxEmailDelayDays)))
+        {
+            throw new ArgumentOutOfRangeException(nameof(emailDueAt), emailDueAt, "The e-mail goes within 14 days.");
+        }
+
+        var left = Leave(opening, StageType.Rejected, ApplicationStatus.Rejected, reasonCode, note, userId, at);
+        if (left.IsSuccess)
+        {
+            RejectionEmailDueAt = emailDueAt;
+            RejectionEmailSentAt = null;
+        }
+
+        return left;
+    }
+
+    /// <summary>The candidate withdrew, for a reason.</summary>
+    public Result Withdraw(JobOpening opening, string reasonCode, string? note, Guid? userId, DateTimeOffset at) =>
+        Leave(opening, StageType.Withdrawn, ApplicationStatus.Withdrawn, reasonCode, note, userId, at);
+
+    /// <summary>
+    /// Brings a rejected or withdrawn application back to the stage it left from (the Applied stage when that stage
+    /// is gone). A rejection e-mail not sent yet is dropped.
+    /// </summary>
+    public Result Reopen(JobOpening opening, string? note, Guid? userId, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(opening);
+        if (Status is not (ApplicationStatus.Rejected or ApplicationStatus.Withdrawn))
+        {
+            return JobApplicationErrors.NotClosed;
+        }
+
+        var stage = opening.Stages.FirstOrDefault(s => s.Id == PreviousStageId && !s.IsFinal)
+            ?? opening.Stages.First(s => s.Type == StageType.Applied);
+        Status = ApplicationStatus.Active;
+        ReasonCode = null;
+        PreviousStageId = null;
+        RejectionEmailDueAt = null;
+        Enter(stage.Id, null, note, userId, at);
+        return Result.Success();
+    }
+
+    /// <summary>The rejection e-mail went out.</summary>
+    public void RejectionEmailSent(DateTimeOffset at)
+    {
+        RejectionEmailDueAt = null;
+        RejectionEmailSentAt = at;
+    }
+
+    private Result Leave(JobOpening opening, StageType type, ApplicationStatus status, string reasonCode, string? note, Guid? userId, DateTimeOffset at)
+    {
+        if (Status != ApplicationStatus.Active)
+        {
+            return JobApplicationErrors.NotActive;
+        }
+
+        var stage = opening.Stages.First(s => s.Type == type);
+        PreviousStageId = StageId;
+        Status = status;
+        ReasonCode = Text.Required(reasonCode, RecruitmentLookup.CodeMaxLength, nameof(reasonCode));
+        Enter(stage.Id, ReasonCode, note, userId, at);
+        return Result.Success();
+    }
+
+    private void Enter(Guid stageId, string? reasonCode, string? note, Guid? userId, DateTimeOffset at)
+    {
+        var from = StageId;
+        StageId = stageId;
+        StageEnteredAt = at;
+        Record(from, stageId, reasonCode, note, userId, at);
+    }
+
+    private void Record(Guid? from, Guid to, string? reasonCode, string? note, Guid? userId, DateTimeOffset at) =>
+        _history.Add(new ApplicationStageChange(Id, _history.Count + 1, from, to, Status, reasonCode, Text.Optional(note, NoteMaxLength, nameof(note)), userId, at));
+}
+
+/// <summary>
+/// A step of an application through the pipeline (D50): from which stage to which, the status after it, the reason
+/// of a rejection or withdrawal, who did it and when. The first entry is the application itself.
+/// </summary>
+public sealed class ApplicationStageChange
+{
+    private ApplicationStageChange()
+    {
+    }
+
+    internal ApplicationStageChange(
+        JobApplicationId applicationId,
+        int sequence,
+        Guid? fromStageId,
+        Guid toStageId,
+        ApplicationStatus status,
+        string? reasonCode,
+        string? note,
+        Guid? userId,
+        DateTimeOffset at)
+    {
+        Id = Guid.CreateVersion7();
+        ApplicationId = applicationId;
+        Sequence = sequence;
+        FromStageId = fromStageId;
+        ToStageId = toStageId;
+        Status = status;
+        ReasonCode = reasonCode;
+        Note = note;
+        UserId = userId;
+        At = at;
+    }
+
+    /// <summary>Own key, so two concurrent moves conflict on the application version, not on the history.</summary>
+    public Guid Id { get; private set; }
+
+    public JobApplicationId ApplicationId { get; private set; }
+
+    public int Sequence { get; private set; }
+
+    /// <summary>Null for the entry of the application.</summary>
+    public Guid? FromStageId { get; private set; }
+
+    public Guid ToStageId { get; private set; }
+
+    public ApplicationStatus Status { get; private set; }
+
+    public string? ReasonCode { get; private set; }
+
+    public string? Note { get; private set; }
+
+    /// <summary>Who moved it; null for the candidate and the system.</summary>
+    public Guid? UserId { get; private set; }
+
+    public DateTimeOffset At { get; private set; }
 }
 
 /// <summary>An application was received: the candidate is registered, or refreshed with its contact details and CV.</summary>
@@ -245,4 +445,8 @@ public static class JobApplicationErrors
     public const string InvalidAnswerCode = "recruitment.applications.errors.invalid_answer";
 
     public static readonly Error OpeningClosed = Error.Conflict("recruitment.applications.errors.opening_closed");
+    public static readonly Error NotActive = Error.Conflict("recruitment.applications.errors.not_active");
+    public static readonly Error NotClosed = Error.Conflict("recruitment.applications.errors.not_closed");
+    public static readonly Error UnknownStage = Error.Validation([new FieldError("stageId", "recruitment.applications.errors.unknown_stage")]);
+    public static readonly Error NeedsReason = Error.Validation([new FieldError("stageId", "recruitment.applications.errors.needs_reason")]);
 }

@@ -4,11 +4,13 @@
  * mERP API
  * OpenAPI spec version: v1
  */
+import type { OpeningStageItemNames } from './openingStageItemNames';
 import type { StageType } from './stageType';
 
 export interface OpeningStageItem {
   id: string;
   name: string;
+  names: OpeningStageItemNames;
   type: StageType;
   /** @nullable */
   slaDays: number | null;

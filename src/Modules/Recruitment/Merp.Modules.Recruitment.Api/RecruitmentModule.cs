@@ -11,7 +11,7 @@ namespace Merp.Modules.Recruitment.Api;
 
 /// <summary>
 /// Recruitment (PLAN Faz 4): the AI CV analysis (D24), the settings (R1, D47), the requisitions (R2, D48), the
-/// openings, the career page and applications (R3, D49); the pipeline and the rest follow with R4–R9.
+/// openings, the career page and applications (R3, D49), the pipeline (R4a, D50); the rest follows with R4b–R9.
 /// </summary>
 public sealed class RecruitmentModule : IModule
 {
@@ -30,7 +30,9 @@ public sealed class RecruitmentModule : IModule
         group.MapCvAnalysisEndpoints();
         group.MapRequisitionEndpoints();
         group.MapOpeningEndpoints();
+        group.MapApplicationEndpoints();
         group.MapSelfServiceCareerEndpoints();
+        group.MapHiringTeamEndpoints();
         group.MapSettingsEndpoints();
         endpoints.MapPublicCareerEndpoints();
     }

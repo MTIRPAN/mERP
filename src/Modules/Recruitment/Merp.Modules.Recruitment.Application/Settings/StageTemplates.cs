@@ -33,11 +33,15 @@ public sealed record StageItem(Guid Id, string Name, IReadOnlyDictionary<string,
 /// <summary>A stage as the form sends it; a new stage has no id.</summary>
 public sealed record StageInput(Guid? Id, IReadOnlyDictionary<string, string?>? Name, StageType Type, int? SlaDays);
 
-public interface IStageTemplateFields
+/// <summary>A pipeline as a form sends it: a template's, or an opening's own (D50).</summary>
+public interface IStageListFields
+{
+    IReadOnlyList<StageInput>? Stages { get; }
+}
+
+public interface IStageTemplateFields : IStageListFields
 {
     IReadOnlyDictionary<string, string?>? Name { get; }
-
-    IReadOnlyList<StageInput>? Stages { get; }
 
     bool IsDefault { get; }
 }
@@ -72,6 +76,12 @@ internal static class StageTemplateRules
         where T : IStageTemplateFields
     {
         RecruitmentSettingRules.AddNameRules(validator, t => t.Name, localization, StageTemplate.NameMaxLength);
+        AddStageRules(validator, localization);
+    }
+
+    public static void AddStageRules<T>(AbstractValidator<T> validator, ILocalizationSource localization)
+        where T : IStageListFields
+    {
         validator.RuleFor(t => t.Stages).NotEmpty().Must(s => s!.Count <= StageTemplate.MaxStages).WithErrorCode(CommonErrors.ValidationCode);
         validator.RuleForEach(t => t.Stages).ChildRules(stage =>
         {

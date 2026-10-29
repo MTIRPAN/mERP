@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Input, Select, Space, Typography } from 'antd';
+import { Button, Flex, Input, Select, Space, Tooltip, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
@@ -9,8 +9,14 @@ import {
   listOpenings,
   useGetRequisition,
 } from '@/shared/api/generated/endpoints/recruitment/recruitment';
-import type { OpeningListItem, OpeningStatus, OpeningVisibility } from '@/shared/api/generated/model';
+import type {
+  OpeningListItem,
+  OpeningStageCount,
+  OpeningStatus,
+  OpeningVisibility,
+} from '@/shared/api/generated/model';
 import type { ListParams } from '@/shared/api/paging';
+import { useHasPermission } from '@/shared/auth/permissionContext';
 import { Can } from '@/shared/components/Can';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -19,6 +25,31 @@ import { recruitmentPermissions } from '../permissions';
 import { OpeningDetailDrawer, OpeningStatusTag } from './OpeningDetailDrawer';
 import { OpeningDrawer } from './OpeningDrawer';
 import { openingStatuses, visibilities } from './openings';
+
+/** The applications of an opening, the stages with some in a tooltip; a link to the pipeline for those who read it. */
+const ApplicationCounts = ({ counts, onOpen }: { counts: OpeningStageCount[]; onOpen?: () => void }) => {
+  const total = counts.reduce((sum, stage) => sum + stage.count, 0);
+  if (total === 0) {
+    return <Typography.Text type="secondary">0</Typography.Text>;
+  }
+
+  const tip = (
+    <Flex vertical>
+      {counts
+        .filter((stage) => stage.count > 0)
+        .map((stage) => (
+          <span key={stage.stageId}>
+            {stage.name}: {stage.count}
+          </span>
+        ))}
+    </Flex>
+  );
+  return (
+    <Tooltip title={tip}>
+      {onOpen ? <Typography.Link onClick={onOpen}>{total}</Typography.Link> : <span>{total}</span>}
+    </Tooltip>
+  );
+};
 
 /**
  * Job openings (PLAN R3a, D49) of the companies in scope, with filters and a new opening.
@@ -37,6 +68,7 @@ export const OpeningsPage = () => {
   const [search, setSearch] = useState<string>();
   const [creating, setCreating] = useState(false);
   const requisition = useGetRequisition(fromRequisition ?? '', { query: { enabled: !!fromRequisition } });
+  const readsApplications = useHasPermission(recruitmentPermissions.applicationsRead);
 
   const open = useCallback(
     (openingId: string | undefined) =>
@@ -60,6 +92,16 @@ export const OpeningsPage = () => {
         render: (_, row) => t(`web.recruitment.openings.work_models.${row.workModel}`),
       },
       { key: 'headcount', dataIndex: 'headcount', title: t('web.recruitment.openings.fields.headcount') },
+      {
+        key: 'applications',
+        title: t('web.recruitment.openings.fields.applications'),
+        render: (_, row) => (
+          <ApplicationCounts
+            counts={row.stageCounts}
+            onOpen={readsApplications ? () => void navigate(`/recruitment/openings/${row.id}/pipeline`) : undefined}
+          />
+        ),
+      },
       {
         key: 'visibility',
         title: t('web.recruitment.openings.fields.visibility'),
@@ -89,7 +131,7 @@ export const OpeningsPage = () => {
         hiddenByDefault: true,
       },
     ],
-    [t, i18n.language, open],
+    [t, i18n.language, open, navigate, readsApplications],
   );
 
   const fetchPage = (list: ListParams) =>

@@ -1,4 +1,5 @@
 using Merp.Application.Abstractions.Approvals;
+using Merp.Application.Abstractions.Jobs;
 using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Numbering;
 using Merp.Application.Abstractions.Security;
@@ -7,10 +8,12 @@ using Merp.Infrastructure.Localization;
 using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Application;
+using Merp.Modules.Recruitment.Application.Applications;
 using Merp.Modules.Recruitment.Application.Careers;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
+using Merp.Modules.Recruitment.Infrastructure.Applications;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Infrastructure.Settings;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,6 +53,12 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         services.AddScoped<CareerCatalog>();
         services.AddScoped<ApplicationIntake>();
         services.AddScoped<SelfApplicant>();
+
+        // Pipeline: who reaches the applications, their rows and the rejection e-mails, now or later (D50)
+        services.AddScoped<ApplicationAccess>();
+        services.AddScoped<ApplicationRows>();
+        services.AddScoped<RejectionEmails>();
+        services.AddSingleton(RecurringJobDefinition.For<RejectionEmailsJob>(RejectionEmailsJob.JobId, RejectionEmailsJob.Cron));
         return services;
     }
 }

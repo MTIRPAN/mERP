@@ -34,6 +34,10 @@ const item: OpeningListItem = {
   requisitionNumber: null,
   hiringManagerName: 'Mehmet Kaya',
   createdAt: '2026-10-25T09:00:00Z',
+  stageCounts: [
+    { stageId: 's1', name: 'Başvuru', type: 'Applied', count: 3 },
+    { stageId: 's2', name: 'İşe alındı', type: 'Hired', count: 1 },
+  ],
 };
 
 const details: OpeningDetails = {
@@ -43,8 +47,8 @@ const details: OpeningDetails = {
   branchId: 'b1',
   stageTemplateId: 't1',
   stages: [
-    { id: 's1', name: 'Başvuru', type: 'Applied', slaDays: 3 },
-    { id: 's2', name: 'İşe alındı', type: 'Hired', slaDays: null },
+    { id: 's1', name: 'Başvuru', names: { 'tr-TR': 'Başvuru' }, type: 'Applied', slaDays: 3 },
+    { id: 's2', name: 'İşe alındı', names: { 'tr-TR': 'İşe alındı' }, type: 'Hired', slaDays: null },
   ],
   hiringManager: { userId: 'u1', displayName: 'Mehmet Kaya' },
   recruiters: [],
@@ -114,6 +118,7 @@ vi.mock('@/shared/api/generated/endpoints/recruitment/recruitment', () => ({
   updateOpening: vi.fn(),
   getListOpeningsQueryKey: () => ['/api/recruitment/openings'],
   getGetOpeningQueryKey: (id: string) => [`/api/recruitment/openings/${id}`],
+  getGetOpeningPipelineQueryKey: (id: string) => [`/api/recruitment/openings/${id}/pipeline`],
 }));
 
 const texts: Record<string, string> = {
@@ -160,7 +165,7 @@ describe('OpeningsPage', () => {
     render(['recruitment.openings.read', 'recruitment.openings.manage'], '/recruitment/openings/o1');
 
     expect(await screen.findByText('katılın')).toBeInTheDocument();
-    expect(screen.getByText('Başvuru')).toBeInTheDocument();
+    expect(screen.getByText('Başvuru · 3')).toBeInTheDocument();
     expect(screen.getByText('Eleme sorusu; kabul edilen cevaplar: Evet')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Yayınla' }));
 

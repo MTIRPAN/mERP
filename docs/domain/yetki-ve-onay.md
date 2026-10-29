@@ -67,7 +67,7 @@ Bu iki yapı tüm modüllerde ortaktır. Yeni bir modül yazarken önce bu belge
 | İK Yöneticisi | Tenant / Company | `hr.*`, `recruitment.*`, hassas veri dahil |
 | İK Uzmanı | Company / Branch | `hr.employees.*` (hassas hariç), `hr.leave.*`, `hr.org.read` |
 | Yönetici | ManagedTeam | `hr.employees.read`, `hr.leave.requests.read`, `hr.leave.calendar.read` |
-| Çalışan | Self | `hr.self.*` (kendi profili, izinleri, talepleri) |
+| Çalışan | Self | `hr.self.*` (kendi profili, izinleri, talepleri), `recruitment.self.*` (iç başvuru; işe alım ekibinde olduğu ilanların başvuruları, D49, D50) |
 | İşe Alım Uzmanı | Company | `recruitment.*` (hassas dahil) |
 | Mülakatçı | Self | `recruitment.interviews.read` (atandıklarıyla sınırlı), `recruitment.feedback.submit` |
 

@@ -16,6 +16,7 @@ import {
 } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import {
   closeOpening,
   holdOpening,
@@ -25,9 +26,13 @@ import {
 import type { OpeningStatus } from '@/shared/api/generated/model';
 import { applyApiErrorsToForm } from '@/shared/api/formErrors';
 import { isApiError } from '@/shared/api/problem';
+import { useHasPermission } from '@/shared/auth/permissionContext';
 import { RichTextView } from '@/shared/components/RichTextEditor';
 import { formatDate, formatDateTime } from '@/shared/format/date';
+import { recruitmentPermissions } from '../permissions';
 import { OpeningDrawer } from './OpeningDrawer';
+import { OpeningStagesDrawer } from './OpeningStagesDrawer';
+import { stageTypeColors } from '../settings/stages';
 import { NO, openingStatusColors, useOpeningRefresh, YES } from './openings';
 
 export const OpeningStatusTag = ({ status }: { status: OpeningStatus }) => {
@@ -88,7 +93,7 @@ interface OpeningDetailDrawerProps {
 }
 
 /**
- * A job opening (PLAN R3a, D49): what it says as candidates will read it, the pipeline, the hiring team, the
+ * A job opening (PLAN R3a, D49): what it says as candidates will read it, the pipeline with its applications (D50), the hiring team, the
  * application form and what the caller may do now: correct, publish, hold or close it.
  */
 export const OpeningDetailDrawer = ({ id, onClose }: OpeningDetailDrawerProps) => {
@@ -96,7 +101,9 @@ export const OpeningDetailDrawer = ({ id, onClose }: OpeningDetailDrawerProps) =
   const { message } = App.useApp();
   const refresh = useOpeningRefresh();
   const { data: details } = useGetOpening(id);
-  const [dialog, setDialog] = useState<'edit' | 'close'>();
+  const navigate = useNavigate();
+  const readsApplications = useHasPermission(recruitmentPermissions.applicationsRead);
+  const [dialog, setDialog] = useState<'edit' | 'stages' | 'close'>();
   const [busy, setBusy] = useState<'publish' | 'hold'>();
 
   const act = async (action: 'publish' | 'hold') => {
@@ -117,11 +124,23 @@ export const OpeningDetailDrawer = ({ id, onClose }: OpeningDetailDrawerProps) =
 
   const opening = details?.opening;
   const dash = '—';
+  const stageCount = (stageId: string) => {
+    const count = opening?.stageCounts.find((s) => s.stageId === stageId)?.count ?? 0;
+    return count > 0 ? ` · ${count}` : '';
+  };
   const names = (members: { displayName?: string | null; userId: string }[]) =>
     members.length > 0 ? members.map((m) => m.displayName ?? m.userId).join(', ') : dash;
   const footer = details && (
     <Flex justify="flex-end" gap={8} wrap>
+      {readsApplications && details.opening.status !== 'Draft' && (
+        <Button type="primary" ghost onClick={() => void navigate(`/recruitment/openings/${id}/pipeline`)}>
+          {t('web.recruitment.openings.applications')}
+        </Button>
+      )}
       {details.canEdit && <Button onClick={() => setDialog('edit')}>{t('web.common.edit')}</Button>}
+      {details.canEdit && (
+        <Button onClick={() => setDialog('stages')}>{t('web.recruitment.openings.edit_stages')}</Button>
+      )}
       {details.canHold && (
         <Button loading={busy === 'hold'} disabled={!!busy} onClick={() => void act('hold')}>
           {t('web.recruitment.openings.hold')}
@@ -235,7 +254,10 @@ export const OpeningDetailDrawer = ({ id, onClose }: OpeningDetailDrawerProps) =
           <Card size="small" title={t('web.recruitment.openings.sections.pipeline')}>
             <Space size={[4, 4]} wrap>
               {details.stages.map((stage) => (
-                <Tag key={stage.id}>{stage.name}</Tag>
+                <Tag key={stage.id} color={stageTypeColors[stage.type]}>
+                  {stage.name}
+                  {stageCount(stage.id)}
+                </Tag>
               ))}
             </Space>
           </Card>
@@ -285,6 +307,7 @@ export const OpeningDetailDrawer = ({ id, onClose }: OpeningDetailDrawerProps) =
         </Flex>
       )}
       {details && dialog === 'edit' && <OpeningDrawer details={details} onClose={() => setDialog(undefined)} />}
+      {details && dialog === 'stages' && <OpeningStagesDrawer details={details} onClose={() => setDialog(undefined)} />}
       {dialog === 'close' && (
         <CloseDialog
           onClose={() => setDialog(undefined)}
