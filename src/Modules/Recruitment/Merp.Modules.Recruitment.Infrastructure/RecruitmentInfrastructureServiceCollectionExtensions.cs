@@ -9,11 +9,13 @@ using Merp.Infrastructure.Messaging;
 using Merp.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Application;
 using Merp.Modules.Recruitment.Application.Applications;
+using Merp.Modules.Recruitment.Application.Candidates;
 using Merp.Modules.Recruitment.Application.Careers;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Infrastructure.Applications;
+using Merp.Modules.Recruitment.Infrastructure.Candidates;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Infrastructure.Settings;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,6 +61,12 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         services.AddScoped<ApplicationRows>();
         services.AddScoped<RejectionEmails>();
         services.AddSingleton(RecurringJobDefinition.For<RejectionEmailsJob>(RejectionEmailsJob.JobId, RejectionEmailsJob.Cron));
+
+        // Candidate pool: the form's checks, the full text search, mentions in notes and the CV text job (D50)
+        services.AddScoped<CandidateRules>();
+        services.AddScoped<ICandidateSearch, CandidateSearch>();
+        services.AddSingleton<INotificationTypeProvider, CandidateNotificationTypes>();
+        services.AddSingleton(RecurringJobDefinition.For<CandidateCvTextJob>(CandidateCvTextJob.JobId, CandidateCvTextJob.Cron));
         return services;
     }
 }

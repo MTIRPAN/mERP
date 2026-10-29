@@ -1,4 +1,4 @@
-import { DownloadOutlined } from '@ant-design/icons';
+import { DownloadOutlined, IdcardOutlined } from '@ant-design/icons';
 import {
   App,
   Button,
@@ -16,10 +16,13 @@ import {
   Typography,
 } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import type { ApplicationListItem, ApplicationStatus, OpeningPipeline } from '@/shared/api/generated/model';
 import { isApiError } from '@/shared/api/problem';
+import { useHasPermission } from '@/shared/auth/permissionContext';
 import { formatDateTime } from '@/shared/format/date';
 import { YES, NO } from '../openings/openings';
+import { recruitmentPermissions } from '../permissions';
 import { applicationStatusColors, downloadCv, needsReason, useApplicationDetails } from './pipeline';
 
 export const ApplicationStatusTag = ({ status }: { status: ApplicationStatus }) => {
@@ -54,6 +57,8 @@ export const ApplicationDrawer = ({
   const { t, i18n } = useTranslation();
   const { message } = App.useApp();
   const { data: details } = useApplicationDetails(id, team);
+  const navigate = useNavigate();
+  const readsCandidates = useHasPermission(recruitmentPermissions.candidatesRead);
   const application = details?.application;
   const dash = '—';
 
@@ -111,6 +116,21 @@ export const ApplicationDrawer = ({
         <Skeleton active />
       ) : (
         <Flex vertical gap={16}>
+          {(team || readsCandidates) && (
+            <Button
+              icon={<IdcardOutlined />}
+              style={{ alignSelf: 'flex-start' }}
+              onClick={() =>
+                void navigate(
+                  team
+                    ? `/recruitment/hiring/candidates/${application.candidateId}`
+                    : `/recruitment/candidates/${application.candidateId}`,
+                )
+              }
+            >
+              {t('web.recruitment.pipeline.candidate_card')}
+            </Button>
+          )}
           <Descriptions
             size="small"
             bordered
@@ -163,14 +183,14 @@ export const ApplicationDrawer = ({
               {
                 key: 'consent',
                 label: t('web.recruitment.pipeline.fields.consent'),
-                children: t(
-                  details.consent.poolConsentRevision != null
-                    ? 'web.recruitment.pipeline.consent_pool'
-                    : 'web.recruitment.pipeline.consent_disclosure',
-                  {
-                    revision: details.consent.disclosureRevision,
-                  },
-                ),
+                children: details.consent
+                  ? t(
+                      details.consent.poolConsentRevision != null
+                        ? 'web.recruitment.pipeline.consent_pool'
+                        : 'web.recruitment.pipeline.consent_disclosure',
+                      { revision: details.consent.disclosureRevision },
+                    )
+                  : t('web.recruitment.candidates.added_by_hr'),
               },
             ]}
           />

@@ -62,7 +62,7 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         var catalog = Services.GetRequiredService<TenantCatalog>();
         await catalog.EnsureTenantAsync(code, code.ToUpperInvariant(), connectionString, "tr-TR", TestContext.Current.CancellationToken);
 
-        var tenant = (await Services.GetRequiredService<ITenantStore>().FindByCodeAsync(code, TestContext.Current.CancellationToken))!;
+        var tenant = await FindNewTenantAsync(code);
         await Services.GetRequiredService<TenantDatabaseMigrator>().MigrateAsync(tenant.ToTenantInfo(), tenant.ConnectionString, TestContext.Current.CancellationToken);
 
         if (!active)
@@ -71,6 +71,28 @@ public class MerpWebApplicationFactory(PostgresFixture postgres) : WebApplicatio
         }
 
         return tenant.ToTenantInfo();
+    }
+
+    /// <summary>
+    /// The tenant just added to the catalog. Hosts with background processing read the tenant list all the time; a read
+    /// that started before the tenant was added can put the list without it back into the cache after the catalog
+    /// cleared it, so the lookup clears the cache and tries again for a short while.
+    /// </summary>
+    private async Task<TenantRecord> FindNewTenantAsync(string code)
+    {
+        var store = Services.GetRequiredService<ITenantStore>();
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            if (await store.FindByCodeAsync(code, TestContext.Current.CancellationToken) is { } tenant)
+            {
+                return tenant;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100), TestContext.Current.CancellationToken);
+            await store.InvalidateAsync(TestContext.Current.CancellationToken);
+        }
+
+        throw new InvalidOperationException($"Tenant {code} is not in the catalog.");
     }
 
     /// <summary>HTTP client authenticated as <paramref name="subject"/> with the given tenant claim and permissions.</summary>

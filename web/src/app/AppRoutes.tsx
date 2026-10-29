@@ -78,6 +78,9 @@ const OpeningsPage = page(() => import('@/modules/recruitment/openings/OpeningsP
 const MyOpeningsPage = page(() => import('@/modules/recruitment/careers/MyOpeningsPage'), 'MyOpeningsPage');
 const PipelinePage = page(() => import('@/modules/recruitment/pipeline/PipelinePage'), 'PipelinePage');
 const HiringPipelinePage = page(() => import('@/modules/recruitment/pipeline/PipelinePage'), 'HiringPipelinePage');
+const CandidatesPage = page(() => import('@/modules/recruitment/candidates/CandidatesPage'), 'CandidatesPage');
+const CandidatePage = page(() => import('@/modules/recruitment/candidates/CandidatePage'), 'CandidatePage');
+const HiringCandidatePage = page(() => import('@/modules/recruitment/candidates/CandidatePage'), 'HiringCandidatePage');
 const CareerPage = page(() => import('@/modules/recruitment/careers/CareerPage'), 'CareerPage');
 const CareerOpeningPage = page(() => import('@/modules/recruitment/careers/CareerOpeningPage'), 'CareerOpeningPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
@@ -427,6 +430,30 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={recruitmentPermissions.selfHiring}>
               <HiringPipelinePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/candidates"
+          element={
+            <RequirePermission permission={recruitmentPermissions.candidatesRead}>
+              <CandidatesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/candidates/:id"
+          element={
+            <RequirePermission permission={recruitmentPermissions.candidatesRead}>
+              <CandidatePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/hiring/candidates/:id"
+          element={
+            <RequirePermission permission={recruitmentPermissions.selfHiring}>
+              <HiringCandidatePage />
             </RequirePermission>
           }
         />
