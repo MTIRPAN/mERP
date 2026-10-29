@@ -108,6 +108,7 @@ internal sealed class ExternalEmailRequestedHandler(
             integrationEvent.ToName,
             integrationEvent.Culture,
             integrationEvent.Args,
+            Notification.SafeLink(integrationEvent.Link),
             integrationEvent.CompanyId,
             timeProvider.GetUtcNow(),
             cancellationToken);

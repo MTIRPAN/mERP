@@ -1039,7 +1039,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Planlanan mülakat için davetler gider. Tarih değişince güncelleme daveti gider.
 - Kör geri bildirim kuralı testle doğrulanır.
 
-### [ ] R6 Teklif — M
+### [x] R6 Teklif — M
 
 **Yapılacaklar:**
 - **`Offer`:**

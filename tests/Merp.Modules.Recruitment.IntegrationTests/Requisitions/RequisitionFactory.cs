@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Merp.Application.Abstractions.Documents;
 using Merp.Infrastructure.Messaging.Integration;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
@@ -39,8 +40,13 @@ public sealed class RequisitionFactory(PostgresFixture postgres) : MerpWebApplic
         ["RateLimiting:Public:PermitLimit"] = "1000",
     };
 
-    protected override void ConfigureServices(IServiceCollection services) =>
+    protected override void ConfigureServices(IServiceCollection services)
+    {
         services.Replace(ServiceDescriptor.Singleton<IIdentityAdmin>(Identity));
+
+        // Offer letters are read as HTML behind a PDF header; Platform's tests print real PDFs with Gotenberg
+        services.Replace(ServiceDescriptor.Singleton<IPdfConverter, HtmlPdfConverter>());
+    }
 
     /// <summary>Moves integration events between the modules until none is left, as the background services do outside tests.</summary>
     public async Task DeliverMessagesAsync()
@@ -107,4 +113,13 @@ public sealed class FakeIdentityAdmin : IIdentityAdmin
 
     public Task<Result> SendActionsEmailAsync(string subject, IdentityEmail email, CancellationToken cancellationToken = default) =>
         Task.FromResult(Result.Success());
+}
+
+/// <summary>Returns the page's HTML after a PDF header, so the file store takes it and tests read what a document holds.</summary>
+public sealed class HtmlPdfConverter : IPdfConverter
+{
+    public const string Header = "%PDF-1.7\n";
+
+    public Task<Result<byte[]>> ConvertHtmlAsync(string html, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success(System.Text.Encoding.UTF8.GetBytes(Header + html)));
 }

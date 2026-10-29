@@ -1,5 +1,6 @@
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
+using Merp.Modules.Recruitment.Domain.Offers;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
@@ -45,6 +46,17 @@ public sealed class ApplicationPipelineTests
             At).Value;
 
     private static Guid StageOf(JobOpening opening, StageType type) => opening.Stages.First(s => s.Type == type).Id;
+
+    /// <summary>An offer the candidate accepted (D53).</summary>
+    private static JobOffer AcceptedOffer(JobApplication application, JobOpening opening)
+    {
+        var offer = JobOffer.Draft("TKL-2026-00001", application, opening, null, Recruiter, new OfferTerms("Satış Uzmanı", null, Today.AddDays(30), 90_000m, "TRY", SalaryPeriod.Monthly, null, Today.AddDays(7))).Value;
+        offer.Submit(false, Today, At);
+        offer.Complete(true, At);
+        offer.Send(Guid.CreateVersion7(), new string('a', JobOffer.TokenHashLength), Today, At);
+        offer.Respond(true, null, OfferResponseChannel.Hr, Recruiter, Today, At).IsSuccess.ShouldBeTrue();
+        return offer;
+    }
 
     [Fact]
     public void AMove_IsWrittenToTheHistory_WithWhoAndWhen()
@@ -125,8 +137,9 @@ public sealed class ApplicationPipelineTests
         application.Withdraw(opening, "OTHER_OFFER", null, Recruiter, At).IsSuccess.ShouldBeTrue();
         application.Status.ShouldBe(ApplicationStatus.Withdrawn);
         application.Reopen(opening, null, Recruiter, At).IsSuccess.ShouldBeTrue();
-        application.MoveTo(opening, StageOf(opening, StageType.Hired), null, Recruiter, At).IsSuccess.ShouldBeTrue();
-        application.Status.ShouldBe(ApplicationStatus.Hired);
+        application.MoveTo(opening, StageOf(opening, StageType.Hired), null, Recruiter, At).Error.ShouldBe(JobApplicationErrors.OfferRequired);
+        application.Hire(opening, AcceptedOffer(application, opening), null, Recruiter, At).IsSuccess.ShouldBeTrue();
+        application.ShouldSatisfyAllConditions(a => a.Status.ShouldBe(ApplicationStatus.Hired), a => a.StageId.ShouldBe(StageOf(opening, StageType.Hired)));
         application.Reopen(opening, null, Recruiter, At).Error.ShouldBe(JobApplicationErrors.NotClosed);
         application.History.Select(h => h.Sequence).ShouldBe([1, 2, 3, 4, 5, 6, 7]);
     }

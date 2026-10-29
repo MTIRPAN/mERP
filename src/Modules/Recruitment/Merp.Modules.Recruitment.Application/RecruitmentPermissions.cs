@@ -70,6 +70,15 @@ public static class RecruitmentPermissions
         public const string Manage = "recruitment.interviews.manage";
     }
 
+    public static class Offers
+    {
+        /// <summary>See the offers of the companies in scope without their salary (D53).</summary>
+        public const string Read = "recruitment.offers.read";
+
+        /// <summary>Draft, send for approval, send to the candidate, record answers and withdraw offers; see the salary.</summary>
+        public const string Manage = "recruitment.offers.manage";
+    }
+
     public static class Feedback
     {
         /// <summary>Fill in the evaluation form of an interview the user interviews in (D52).</summary>
@@ -108,6 +117,8 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Interviews.Read),
         new(RecruitmentPermissions.Interviews.Manage),
         new(RecruitmentPermissions.Feedback.Submit),
+        new(RecruitmentPermissions.Offers.Read),
+        new(RecruitmentPermissions.Offers.Manage),
         new(RecruitmentPermissions.Self.Apply),
         new(RecruitmentPermissions.Self.Hiring),
     ];

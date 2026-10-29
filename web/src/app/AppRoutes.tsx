@@ -85,6 +85,9 @@ const CareerPage = page(() => import('@/modules/recruitment/careers/CareerPage')
 const CareerOpeningPage = page(() => import('@/modules/recruitment/careers/CareerOpeningPage'), 'CareerOpeningPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
 const MyInterviewsPage = page(() => import('@/modules/recruitment/interviews/MyInterviewsPage'), 'MyInterviewsPage');
+const OffersPage = page(() => import('@/modules/recruitment/offers/OffersPage'), 'OffersPage');
+const OfferLinkPage = page(() => import('@/modules/recruitment/offers/OffersPage'), 'OfferLinkPage');
+const OfferResponsePage = page(() => import('@/modules/recruitment/offers/OfferResponsePage'), 'OfferResponsePage');
 
 export const AppRoutes = () => (
   <Routes>
@@ -92,6 +95,7 @@ export const AppRoutes = () => (
     {/* The career page is public: no sign-in, no shell (D49) */}
     <Route path="/careers/:tenant" element={<CareerPage />} />
     <Route path="/careers/:tenant/openings/:id" element={<CareerOpeningPage />} />
+    <Route path="/careers/:tenant/offers/:token" element={<OfferResponsePage />} />
     <Route element={<ProtectedRoute />}>
       <Route
         element={
@@ -442,6 +446,16 @@ export const AppRoutes = () => (
             </RequirePermission>
           }
         />
+        <Route
+          path="recruitment/offers"
+          element={
+            <RequirePermission permission={recruitmentPermissions.offersRead}>
+              <OffersPage />
+            </RequirePermission>
+          }
+        />
+        {/* The approval inbox's link: the hiring manager opens it from self service too (D53) */}
+        <Route path="recruitment/offers/:id" element={<OfferLinkPage />} />
         <Route
           path="recruitment/my-interviews"
           element={

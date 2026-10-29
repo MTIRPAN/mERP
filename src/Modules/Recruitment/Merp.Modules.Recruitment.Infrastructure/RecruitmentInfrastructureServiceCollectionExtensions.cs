@@ -1,4 +1,5 @@
 using Merp.Application.Abstractions.Approvals;
+using Merp.Application.Abstractions.Documents;
 using Merp.Application.Abstractions.Jobs;
 using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Numbering;
@@ -13,12 +14,14 @@ using Merp.Modules.Recruitment.Application.Candidates;
 using Merp.Modules.Recruitment.Application.Careers;
 using Merp.Modules.Recruitment.Application.CvAnalysis;
 using Merp.Modules.Recruitment.Application.Interviews;
+using Merp.Modules.Recruitment.Application.Offers;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Infrastructure.Applications;
 using Merp.Modules.Recruitment.Infrastructure.Candidates;
 using Merp.Modules.Recruitment.Infrastructure.Interviews;
+using Merp.Modules.Recruitment.Infrastructure.Offers;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Infrastructure.Settings;
 using Microsoft.Extensions.DependencyInjection;
@@ -82,6 +85,16 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         services.AddSingleton<IInterviewCalendar, IcalInterviewCalendar>();
         services.AddSingleton<INotificationTypeProvider, InterviewNotificationTypes>();
         services.AddSingleton(RecurringJobDefinition.For<InterviewRemindersJob>(InterviewRemindersJob.JobId, InterviewRemindersJob.Cron));
+
+        // Offers: who reaches them, the approval flow, the letter, the notifications and the expiry job (D53)
+        services.AddScoped<OfferAccess>();
+        services.AddScoped<OfferRows>();
+        services.AddScoped<OfferLetters>();
+        services.AddSingleton<IApprovalDocumentTypeProvider, OfferApprovalDocumentTypes>();
+        services.AddSingleton<INotificationTypeProvider, OfferNotificationTypes>();
+        services.AddSingleton<IDocumentTypeProvider, OfferLetterType>();
+        services.AddScoped<IApprovalDocumentAccessPolicy, OfferAccessPolicy>();
+        services.AddSingleton(RecurringJobDefinition.For<OfferExpiryJob>(OfferExpiryJob.JobId, OfferExpiryJob.Cron));
         return services;
     }
 }

@@ -232,7 +232,7 @@ ApprovalRequestReturned → LeaveRequest.Return()
 | `hr.leave-cancellation` | `line-manager(1)` |
 | `hr.profile-change` | `role(İK Uzmanı)` |
 | `recruitment.requisition` | 1. adım `line-manager(1)`, 2. adım `role(İK Yöneticisi)` |
-| `recruitment.offer` | 1. adım `fact-user(hiringManagerUserId)`, 2. adım `role(İK Yöneticisi)` |
+| `recruitment.offer` | 1. adım `fact-user(hiringManagerUserId)`, 2. adım `role(İK Yöneticisi)`, 3. adım "isAboveBudget" koşuluyla `org-unit-manager(orgUnitId)` (D53) |
 
 ### 2.9 Test edilmesi gereken senaryolar (zorunlu)
 
