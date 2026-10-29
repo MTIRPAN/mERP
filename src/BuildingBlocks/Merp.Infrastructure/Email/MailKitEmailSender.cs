@@ -41,7 +41,13 @@ internal sealed class MailKitEmailSender(IOptions<EmailOptions> options) : IEmai
         message.From.Add(new MailboxAddress(settings.FromName, settings.FromAddress));
         message.To.Add(new MailboxAddress(email.ToName ?? string.Empty, email.To));
         message.Subject = email.Subject;
-        message.Body = new BodyBuilder { HtmlBody = email.HtmlBody, TextBody = email.TextBody }.ToMessageBody();
+        var body = new BodyBuilder { HtmlBody = email.HtmlBody, TextBody = email.TextBody };
+        foreach (var attachment in email.Attachments ?? [])
+        {
+            body.Attachments.Add(attachment.FileName, attachment.Content, ContentType.Parse(attachment.ContentType));
+        }
+
+        message.Body = body.ToMessageBody();
 
         using var client = new SmtpClient { Timeout = (int)settings.Timeout.TotalMilliseconds };
         await client.ConnectAsync(settings.Host, settings.Port, settings.Security, cancellationToken);

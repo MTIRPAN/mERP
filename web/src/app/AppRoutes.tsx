@@ -84,6 +84,7 @@ const HiringCandidatePage = page(() => import('@/modules/recruitment/candidates/
 const CareerPage = page(() => import('@/modules/recruitment/careers/CareerPage'), 'CareerPage');
 const CareerOpeningPage = page(() => import('@/modules/recruitment/careers/CareerOpeningPage'), 'CareerOpeningPage');
 const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage'), 'CvAnalysisPage');
+const MyInterviewsPage = page(() => import('@/modules/recruitment/interviews/MyInterviewsPage'), 'MyInterviewsPage');
 
 export const AppRoutes = () => (
   <Routes>
@@ -438,6 +439,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={recruitmentPermissions.candidatesRead}>
               <CandidatesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/my-interviews"
+          element={
+            <RequirePermission permission={recruitmentPermissions.interviewsRead}>
+              <MyInterviewsPage />
             </RequirePermission>
           }
         />

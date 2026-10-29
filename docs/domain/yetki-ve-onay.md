@@ -69,7 +69,7 @@ Bu iki yapı tüm modüllerde ortaktır. Yeni bir modül yazarken önce bu belge
 | Yönetici | ManagedTeam | `hr.employees.read`, `hr.leave.requests.read`, `hr.leave.calendar.read` |
 | Çalışan | Self | `hr.self.*` (kendi profili, izinleri, talepleri), `recruitment.self.*` (iç başvuru; işe alım ekibinde olduğu ilanların başvuruları, D49, D50) |
 | İşe Alım Uzmanı | Company | `recruitment.*` (hassas dahil) |
-| Mülakatçı | Self | `recruitment.interviews.read` (atandıklarıyla sınırlı), `recruitment.feedback.submit` |
+| Mülakatçı | Self | `recruitment.interviews.read` (atandıklarıyla sınırlı; CV mülakat üzerinden, ücret beklentisi ve aday kartı yok), `recruitment.feedback.submit` (kör geri bildirim, D52) |
 
 Sistem rolleri silinemez ama yetkileri düzenlenebilir. "Varsayılana dön" ile seed haline geri alınır.
 

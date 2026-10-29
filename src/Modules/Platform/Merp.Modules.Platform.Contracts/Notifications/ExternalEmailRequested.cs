@@ -17,4 +17,8 @@ public sealed record ExternalEmailRequested(
     string To,
     string? ToName,
     string? Culture,
-    IReadOnlyDictionary<string, string> Args) : IntegrationEvent;
+    IReadOnlyDictionary<string, string> Args) : IntegrationEvent
+{
+    /// <summary>Files sent with the e-mail, e.g. a calendar invitation (D52).</summary>
+    public IReadOnlyList<EmailFile> Attachments { get; init; } = [];
+}

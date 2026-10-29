@@ -44,6 +44,30 @@ internal static class SettingsEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        settings.MapGet("/evaluation-templates", async Task<Results<Ok<IReadOnlyList<EvaluationTemplateItem>>, ProblemHttpResult>> (bool? includeInactive, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new GetEvaluationTemplatesQuery(includeInactive ?? false), ct)))
+            .RequirePermission(RecruitmentPermissions.Settings.Read)
+            .WithName("ListEvaluationTemplates")
+            .WithSummary("The interview evaluation templates by name; active ones unless asked (D52)");
+
+        settings.MapPost("/evaluation-templates", (CreateEvaluationTemplateCommand command, ISender sender, CancellationToken ct) =>
+                CreatedAsync(sender.Send(command, ct), id => $"/api/recruitment/settings/evaluation-templates/{id}"))
+            .RequirePermission(RecruitmentPermissions.Settings.Manage)
+            .WithName("CreateEvaluationTemplate")
+            .WithSummary("Add an evaluation template: sections of criteria scored 1-5 with weights and open questions (Tenant scope required)")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        settings.MapPut("/evaluation-templates/{id:guid}", (Guid id, UpdateEvaluationTemplateCommand command, ISender sender, CancellationToken ct) =>
+                NoContentAsync(sender.Send(command with { Id = id }, ct)))
+            .RequirePermission(RecruitmentPermissions.Settings.Manage)
+            .WithName("UpdateEvaluationTemplate")
+            .WithSummary("Change an evaluation template; interviews keep the copy they took (Tenant scope required)")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         settings.MapGet("/lookups", async Task<Results<Ok<IReadOnlyList<RecruitmentLookupItem>>, ProblemHttpResult>> (LookupKind? kind, bool? includeInactive, ISender sender, CancellationToken ct) =>
                 OkOrProblem(await sender.Send(new GetRecruitmentLookupsQuery(kind, includeInactive ?? false), ct)))
             .RequirePermission(RecruitmentPermissions.Settings.Read)

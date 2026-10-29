@@ -14,10 +14,12 @@ using Merp.Modules.Platform.Contracts.Notifications;
 using Merp.Modules.Platform.Contracts.Users;
 using Merp.Modules.Recruitment.Application.Applications;
 using Merp.Modules.Recruitment.Application.Careers;
+using Merp.Modules.Recruitment.Application.Interviews;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
+using Merp.Modules.Recruitment.Domain.Interviews;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Settings;
 using Merp.SharedKernel.Notifications;
@@ -79,7 +81,22 @@ public enum CandidateTimelineKind
     Cv,
 }
 
-/// <summary>A candidate's card (D50): profile, tags, consent, applications, CVs, notes, possible duplicates, timeline.</summary>
+/// <summary>How many forms gave an advice.</summary>
+public sealed record RecommendationCount(Recommendation Recommendation, int Count);
+
+/// <summary>A criterion's average score across the forms of an application.</summary>
+public sealed record CriterionAverage(string Criterion, decimal Average, int Count);
+
+/// <summary>The interview forms of an application in short (D52): the weighted score, the advice and the criteria.</summary>
+public sealed record CandidateEvaluation(
+    Guid ApplicationId,
+    string OpeningTitle,
+    decimal? Score,
+    int FeedbackCount,
+    IReadOnlyList<RecommendationCount> Recommendations,
+    IReadOnlyList<CriterionAverage> Criteria);
+
+/// <summary>A candidate's card (D50): profile, tags, consent, applications, CVs, notes, possible duplicates, timeline, and the interview evaluations (D52).</summary>
 /// <remarks>The hiring team sees the applications to its openings and no CV versions; <c>CanManage</c> is false for it.</remarks>
 public sealed record CandidateDetails(
     Guid Id,
@@ -104,7 +121,8 @@ public sealed record CandidateDetails(
     IReadOnlyList<CandidateTimelineItem> Timeline,
     bool CanManage,
     bool CanAddToOpening,
-    uint Version);
+    uint Version,
+    IReadOnlyList<CandidateEvaluation> Evaluations);
 
 /// <summary>What the candidate form gives.</summary>
 public interface ICandidateFields
@@ -622,7 +640,49 @@ internal sealed class GetCandidateQueryHandler(
             [.. timeline.OrderByDescending(t => t.At)],
             manages,
             addsToOpenings,
-            await db.Candidates.AsNoTracking().Where(c => c.Id == id).Select(c => EF.Property<uint>(c, ConcurrencyVersion.PropertyName)).SingleAsync(cancellationToken));
+            await db.Candidates.AsNoTracking().Where(c => c.Id == id).Select(c => EF.Property<uint>(c, ConcurrencyVersion.PropertyName)).SingleAsync(cancellationToken),
+            await EvaluationsAsync(applicationRows, openings, cancellationToken));
+    }
+
+    /// <summary>The forms of the applications shown, by application: the weighted score, the advice and each criterion's average.</summary>
+    private async Task<List<CandidateEvaluation>> EvaluationsAsync(
+        IReadOnlyList<ApplicationRow> applicationRows,
+        Dictionary<JobOpeningId, JobOpening> openings,
+        CancellationToken cancellationToken)
+    {
+        var ids = applicationRows.Select(r => r.Id).ToList();
+        var forms = await db.InterviewFeedbacks.AsNoTracking().Where(f => ids.Contains(f.ApplicationId)).ToListAsync(cancellationToken);
+        if (forms.Count == 0)
+        {
+            return [];
+        }
+
+        var interviewIds = forms.Select(f => f.InterviewId).Distinct().ToList();
+        var criteria = (await db.Interviews.AsNoTracking().Where(i => interviewIds.Contains(i.Id)).ToListAsync(cancellationToken))
+            .SelectMany(i => i.Evaluation?.Criteria ?? [])
+            .GroupBy(c => c.Id)
+            .ToDictionary(g => g.Key, g => g.First().Name);
+        return
+        [
+            .. applicationRows
+                .Where(r => forms.Any(f => f.ApplicationId == r.Id))
+                .Select(r =>
+                {
+                    var own = forms.Where(f => f.ApplicationId == r.Id).ToList();
+                    return new CandidateEvaluation(
+                        r.Id.Value,
+                        openings[r.OpeningId].Title,
+                        InterviewRows.Score(own),
+                        own.Count,
+                        [.. own.GroupBy(f => f.Recommendation).OrderBy(g => g.Key).Select(g => new RecommendationCount(g.Key, g.Count()))],
+                        [
+                            .. own.SelectMany(f => f.Scores)
+                                .GroupBy(s => criteria.GetValueOrDefault(s.CriterionId) ?? string.Empty)
+                                .Where(g => g.Key.Length > 0)
+                                .Select(g => new CriterionAverage(g.Key, Math.Round((decimal)g.Average(s => s.Score), 2), g.Count())),
+                        ]);
+                }),
+        ];
     }
 
     /// <summary>Other candidates with the same phone, or the same first and last name (D50).</summary>

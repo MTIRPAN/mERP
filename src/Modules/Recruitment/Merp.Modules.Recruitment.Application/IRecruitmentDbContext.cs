@@ -1,5 +1,6 @@
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
+using Merp.Modules.Recruitment.Domain.Interviews;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
@@ -37,6 +38,15 @@ public interface IRecruitmentDbContext
 
     /// <summary>The AI analyses of the applications' CVs (D51).</summary>
     DbSet<ApplicationCvAnalysis> CvAnalyses { get; }
+
+    /// <summary>Interviews of applications (D52).</summary>
+    DbSet<Interview> Interviews { get; }
+
+    /// <summary>The interviewers' evaluation forms (D52).</summary>
+    DbSet<InterviewFeedback> InterviewFeedbacks { get; }
+
+    /// <summary>The tenant's evaluation templates (D52).</summary>
+    DbSet<EvaluationTemplate> EvaluationTemplates { get; }
 
     /// <summary>Files of recruitment records, e.g. the CVs of candidates.</summary>
     DbSet<Merp.Application.Persistence.Files.StoredFile> StoredFiles { get; }

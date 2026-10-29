@@ -1491,3 +1491,63 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Web yalnızca boş alanları doldurur. CV, aday kaydedilince adaya yüklenir.
 
 **Web:** Başvuru çekmecesinde "Özgeçmiş analizi (yapay zeka)" kartı vardır. Kart A2 sonuç görünümünü "yapay zeka önerisidir" uyarısıyla gösterir, yetkililere "Analiz et / Yeniden analiz et" sunar ve başarısız çalışmanın nedenini gösterir. Yeni aday formunda "Özgeçmişten doldur" vardır.
+
+## D52 — Mülakat ve değerlendirme
+
+**Bağlam:** R5 başvurulara mülakat planlamayı, davetleri, mülakatçı formlarını ve ağırlıklı puanı ekler. Kullanıcı kararı (2026-10-29): R5 tek PR olarak yapılır.
+
+**Mülakat (`interviews`):**
+- Bir başvuruya bağlıdır; şirket, ilan ve aday başvurudan kopyalanır. Yalnızca süreçteki (Active) başvuruya planlanır.
+- Tür: Telefon, Video, Yüz yüze, Teknik, İK, Yönetici, Panel. Durum: Planlandı, Tamamlandı, İptal, Gelmedi.
+- Zamanlar UTC saklanır. Mülakat en fazla 12 saat sürer. 1–10 mülakatçı seçilir. Yer serbest metindir; online bağlantı yalnızca `http(s)` olabilir.
+- Planlayan kullanıcı organizatördür. Değişiklik, iptal ve kapatma `recruitment.interviews.manage` ve mülakatın şirketini kapsayan veri kapsamı ister.
+
+**Davetler:**
+- Adaya `ExternalEmailRequested` gider: `recruitment.interview_invitation`, `_updated`, `_cancelled` ve `_reminder`.
+- Mülakatçılara `NotificationRequested` gider (zil ve e-posta): `recruitment.interviewer_invited`, `_updated`, `_cancelled` ve `_reminder`. Bağlantı "Mülakatlarım"dır.
+- Davet, güncelleme ve iptal `interview.ics` eki taşır (Ical.Net, RFC 5545, zamanlar UTC):
+  - `UID` mülakatın kimliğidir (`{id}@merp`).
+  - `SEQUENCE` her değişiklikte ve iptalde artar; takvimler eski kaydı yenisiyle değiştirir.
+  - `METHOD` davet ve güncellemede `REQUEST`, iptalde `CANCEL`'dır.
+  - Listeden çıkarılan mülakatçılar iptali alır.
+- E-postadaki tarih ve saat şirketin saat diliminde ve okuyanın dilinde yazılır.
+- **E-posta eki (Platform):** `ExternalEmailRequested` ve `NotificationRequested` isteğe bağlı `Attachments` (`EmailFile`) taşır. Ekler `email_messages` satırında JSON olarak saklanır ve MailKit ile gönderilir.
+- **Hatırlatma:** `recruitment.interview-reminders` işi 5 dakikada bir çalışır. 24 saatten az kalan mülakata bir gün, 1 saatten az kalana bir saat hatırlatması bir kez gider. Hatırlatma ek taşımaz.
+  - Saat değişince hatırlatmalar sıfırlanır.
+  - Bir saatten az kalmışsa tek hatırlatma gider ve ikisi de gönderilmiş sayılır.
+
+**Çakışma:** Planlarken mülakatçıların aynı aralıktaki diğer planlanmış mülakatları gösterilir (`GET /api/recruitment/interviews/conflicts`). Bu yalnızca uyarıdır; planlamayı engellemez.
+
+**Değerlendirme şablonu (`evaluation_templates`):**
+- Kiracı düzeyinde bir ayardır: `recruitment.settings.manage` ve Tenant kapsamı gerekir.
+- Bölümlerden ve açık uçlu sorulardan (en fazla 20) oluşur. Bölümlerin kriterleri vardır (en fazla 30). Her kriter 1–5 arası puanlanır; her puanın açıklaması ve 1–100 arası ağırlığı vardır.
+- Mülakat planlanırken formun kopyası mülakatta saklanır. Şablon değişikliği yalnızca sonradan planlananlara uygulanır.
+- Şablonsuz planlanan mülakatın formu olmaz.
+
+**Geri bildirim (`interview_feedback`):**
+- Her mülakatçı mülakat başına bir form doldurur: her kritere puan (isteğe bağlı yorumla), cevaplar, genel tavsiye (Kesin hayır / Hayır / Evet / Kesin evet) ve özet.
+- Form sonradan düzeltilebilir. İptal edilen ya da adayın gelmediği mülakat değerlendirilemez.
+- Formun ağırlıklı puanı `Σ(puan × ağırlık) / Σ ağırlık` olarak hesaplanır. Başvurunun puanı, formlarının ağırlıklı puanlarının ortalamasıdır. İkisi de iki ondalığa yuvarlanır.
+- **Kör geri bildirim:** `recruitment.blind_feedback` ayarıyla açılır (varsayılan açık, şirket bazında değiştirilebilir). Mülakatçı, o başvuruya kendi formunu göndermeden diğer formları ve puanı göremez.
+  - İK (mülakatın şirketini kapsayan `recruitment.interviews.read`) ve ilanın işe alım yöneticisi her formu ve puanı görür.
+  - Başvuru detayında (işe alım ekibi dahil) formlar ve puan gösterilir.
+
+**Mülakatçı erişimi:**
+- Self kapsamlı `recruitment.interviews.read` yalnızca mülakatçısı olunan mülakatları açar.
+- Mülakatçı adayın CV'sini mülakat üzerinden (`/interviews/{id}/cv`) indirir. Başvuru detayına, ücret beklentisine ve aday kartına erişimi yoktur.
+- Şirket kapsamı, şirketin başvurularının mülakatlarını açar.
+
+**Aday kartı:** "Değerlendirmeler" sekmesi her başvuru için puanı, tavsiye sayılarını ve kriter ortalamalarını (kriter adına göre) gösterir. Grafik ECharts ile çizilir.
+
+**Web:**
+- Başvuru çekmecesinde "Mülakatlar" kartı ve formlar vardır.
+- Planlama modalında çakışma uyarısı ve davet önizlemesi bulunur.
+- Mülakat çekmecesinde değerlendirme formu, değiştirme, iptal (nedenle), "Yapıldı" ve "Aday gelmedi" bulunur.
+- "Mülakatlarım" sayfası (`/recruitment/my-interviews`) liste ve takvim görünümü sunar (FullCalendar).
+- Ayarlarda "Değerlendirme şablonları" sekmesi vardır.
+
+**Paketler (D19):**
+- Ical.Net 5.2.3 (MIT).
+- `echarts` 6.1 (Apache-2.0) ve bağımlılığı `zrender` (BSD-3-Clause).
+- `echarts-for-react` 3.0.7 (MIT) ve bağımlılığı `size-sensor` (ISC).
+- `tslib` (0BSD) önceden onaylıdır.

@@ -29,6 +29,7 @@ import { saveFile } from '@/shared/api/download';
 import { isApiError } from '@/shared/api/problem';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { formatDateTime, formatMomentDate } from '@/shared/format/date';
+import { CandidateEvaluations } from '../interviews/CandidateEvaluations';
 import { ApplicationStatusTag } from '../pipeline/ApplicationDrawer';
 import { stageTypeColors } from '../settings/stages';
 import { AddToOpeningModal } from './AddToOpeningModal';
@@ -341,6 +342,11 @@ export const CandidatePage = ({ team = false }: { team?: boolean }) => {
                 ]}
               />
             ),
+          },
+          {
+            key: 'evaluations',
+            label: t('web.recruitment.candidates.tabs.evaluations', { count: candidate.evaluations.length }),
+            children: <CandidateEvaluations evaluations={candidate.evaluations} />,
           },
           {
             key: 'notes',

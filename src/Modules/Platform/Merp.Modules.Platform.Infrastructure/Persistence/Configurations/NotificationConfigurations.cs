@@ -36,6 +36,7 @@ internal sealed class EmailMessageConfiguration : IEntityTypeConfiguration<Email
         builder.Property(m => m.ToName).HasMaxLength(255);
         builder.Property(m => m.Subject).HasMaxLength(EmailMessage.SubjectMaxLength);
         builder.Property(m => m.LastError).HasMaxLength(EmailMessage.ErrorMaxLength);
+        builder.Property(m => m.Attachments).HasJson();
         builder.Property(m => m.Status).HasConversion<string>().HasMaxLength(20);
         builder.HasIndex(m => m.NextAttemptAt).HasFilter("status = 'Pending'").HasDatabaseName("ix_email_messages_due");
     }

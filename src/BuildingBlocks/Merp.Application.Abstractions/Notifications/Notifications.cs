@@ -45,8 +45,11 @@ public interface IRealtimeNotifier
     Task SendToUserAsync(string userSubject, string method, object payload, CancellationToken cancellationToken = default);
 }
 
-/// <summary>An e-mail ready to send.</summary>
-public sealed record EmailContent(string To, string? ToName, string Subject, string HtmlBody, string TextBody);
+/// <summary>An e-mail ready to send; attachments go with it, e.g. a calendar invitation (R5).</summary>
+public sealed record EmailContent(string To, string? ToName, string Subject, string HtmlBody, string TextBody, IReadOnlyList<EmailAttachment>? Attachments = null);
+
+/// <summary>A file attached to an e-mail. A <c>text/calendar</c> attachment is sent as an invitation clients can accept.</summary>
+public sealed record EmailAttachment(string FileName, string ContentType, byte[] Content);
 
 /// <summary>Sends e-mail over SMTP (<c>Email</c> section). Throws when the server refuses or cannot be reached.</summary>
 public interface IEmailSender

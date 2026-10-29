@@ -6,6 +6,7 @@
  */
 import type { CandidateApplicationItem } from './candidateApplicationItem';
 import type { CandidateDuplicate } from './candidateDuplicate';
+import type { CandidateEvaluation } from './candidateEvaluation';
 import type { CandidateFileItem } from './candidateFileItem';
 import type { CandidateNoteItem } from './candidateNoteItem';
 import type { CandidateProfile } from './candidateProfile';
@@ -43,4 +44,5 @@ export interface CandidateDetails {
   canManage: boolean;
   canAddToOpening: boolean;
   version: number;
+  evaluations: CandidateEvaluation[];
 }

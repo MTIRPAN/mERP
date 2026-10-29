@@ -58,6 +58,24 @@ public static class RecruitmentPermissions
         public const string Manage = "recruitment.candidates.manage";
     }
 
+    public static class Interviews
+    {
+        /// <summary>
+        /// See interviews (D52): with a company or tenant scope those of the companies, with the Self scope (the
+        /// Interviewer role) only the ones the user interviews in.
+        /// </summary>
+        public const string Read = "recruitment.interviews.read";
+
+        /// <summary>Plan, change, cancel and close interviews of the companies in scope.</summary>
+        public const string Manage = "recruitment.interviews.manage";
+    }
+
+    public static class Feedback
+    {
+        /// <summary>Fill in the evaluation form of an interview the user interviews in (D52).</summary>
+        public const string Submit = "recruitment.feedback.submit";
+    }
+
     public static class Self
     {
         /// <summary>An employee applies to openings from self service (D49); the Employee role has it.</summary>
@@ -87,6 +105,9 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Applications.Manage),
         new(RecruitmentPermissions.Candidates.Read),
         new(RecruitmentPermissions.Candidates.Manage),
+        new(RecruitmentPermissions.Interviews.Read),
+        new(RecruitmentPermissions.Interviews.Manage),
+        new(RecruitmentPermissions.Feedback.Submit),
         new(RecruitmentPermissions.Self.Apply),
         new(RecruitmentPermissions.Self.Hiring),
     ];

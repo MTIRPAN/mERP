@@ -62,7 +62,26 @@ const candidate: CandidateDetails = {
   canManage: true,
   canAddToOpening: true,
   version: 9,
+  evaluations: [
+    {
+      applicationId: 'a1',
+      openingTitle: 'Satış Temsilcisi',
+      score: 3.75,
+      feedbackCount: 2,
+      recommendations: [
+        { recommendation: 'Yes', count: 1 },
+        { recommendation: 'StrongYes', count: 1 },
+      ],
+      criteria: [{ criterion: 'İletişim', average: 4.5, count: 2 }],
+    },
+  ],
 };
+
+vi.mock('echarts-for-react/lib/core', () => ({
+  default: ({ option }: { option: { yAxis: { data: string[] } } }) => (
+    <div data-testid="chart">{option.yAxis.data.join(', ')}</div>
+  ),
+}));
 
 vi.mock('@/app/me/meContext', () => ({ useMe: () => ({ companies: [{ id: 'co1', name: 'Acme' }] }) }));
 
@@ -91,6 +110,8 @@ const texts: Record<string, string> = {
   'web.recruitment.candidates.merge_confirm': '{name} kaydı bu adaya taşınsın mı?',
   'web.recruitment.candidates.same_phone': 'Aynı telefon',
   'web.recruitment.candidates.tabs.notes': 'Notlar ({count})',
+  'web.recruitment.candidates.tabs.evaluations': 'Değerlendirmeler ({count})',
+  'web.recruitment.interviews.recommendations.Yes': 'Evet',
   'web.recruitment.candidates.add_to_opening': 'İlana ekle',
   'web.recruitment.candidates.upload_cv': 'Özgeçmiş yükle',
   'web.common.edit': 'Düzenle',
@@ -124,6 +145,17 @@ describe('CandidatePage', () => {
     await userEvent.click(await screen.findByRole('button', { name: /OK|Tamam/ }));
 
     await waitFor(() => expect(merge).toHaveBeenCalledWith('c1', { version: 9, duplicateId: 'c2' }));
+  });
+
+  it('shows the evaluations of the interviewers with the average of each criterion', async () => {
+    render('/recruitment/candidates/c1', ['recruitment.candidates.read']);
+
+    await userEvent.click(await screen.findByRole('tab', { name: 'Değerlendirmeler (1)' }));
+
+    expect(await screen.findByText('Satış Temsilcisi')).toBeInTheDocument();
+    expect(screen.getByText('3,75')).toBeInTheDocument();
+    expect(screen.getByText(/Evet: 1/)).toBeInTheDocument();
+    expect(screen.getByTestId('chart')).toHaveTextContent('İletişim');
   });
 
   it('lets the hiring team read the card without managing it', async () => {

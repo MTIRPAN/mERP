@@ -57,6 +57,7 @@ internal sealed class NotificationRequestedHandler(
             if (emailEnabled && user.Email is not null && NotificationTypeRegistry.Receives(user, type, NotificationChannel.Email))
             {
                 var email = await composer.ComposeAsync(type, user, integrationEvent.Args, link, integrationEvent.CompanyId, now, cancellationToken);
+                email.Attach(EmailQueue.Attachments(integrationEvent.Attachments));
                 db.EmailMessages.Add(email);
                 emails.Add(email.Id.Value);
             }
@@ -110,6 +111,7 @@ internal sealed class ExternalEmailRequestedHandler(
             integrationEvent.CompanyId,
             timeProvider.GetUtcNow(),
             cancellationToken);
+        email.Attach(EmailQueue.Attachments(integrationEvent.Attachments));
         db.EmailMessages.Add(email);
         afterCommit.Enqueue(ct => sender.Send(new SendQueuedEmailsCommand([email.Id.Value]), ct));
     }
@@ -151,6 +153,9 @@ internal sealed class SendDueEmailsCommandHandler(IPlatformDbContext db, IEmailS
 
 internal static class EmailQueue
 {
+    public static List<EmailMessageAttachment> Attachments(IReadOnlyList<EmailFile>? files) =>
+        [.. (files ?? []).Select(f => new EmailMessageAttachment(f.FileName, f.ContentType, f.Content))];
+
     /// <summary>Each message on its own: one refused address does not hold back the others.</summary>
     public static async Task SendAsync(IEnumerable<EmailMessage> messages, IEmailSender emailSender, TimeProvider timeProvider, CancellationToken cancellationToken)
     {
@@ -158,7 +163,15 @@ internal static class EmailQueue
         {
             try
             {
-                await emailSender.SendAsync(new EmailContent(message.To, message.ToName, message.Subject, message.HtmlBody, message.TextBody), cancellationToken);
+                await emailSender.SendAsync(
+                    new EmailContent(
+                        message.To,
+                        message.ToName,
+                        message.Subject,
+                        message.HtmlBody,
+                        message.TextBody,
+                        [.. message.Attachments.Select(a => new EmailAttachment(a.FileName, a.ContentType, a.Content))]),
+                    cancellationToken);
                 message.MarkSent(timeProvider.GetUtcNow());
             }
             catch (Exception exception) when (exception is not OperationCanceledException)

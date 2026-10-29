@@ -1,4 +1,4 @@
-import { DownloadOutlined, IdcardOutlined } from '@ant-design/icons';
+import { CalendarOutlined, DownloadOutlined, IdcardOutlined } from '@ant-design/icons';
 import {
   App,
   Button,
@@ -15,12 +15,16 @@ import {
   Timeline,
   Typography,
 } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import type { ApplicationListItem, ApplicationStatus, OpeningPipeline } from '@/shared/api/generated/model';
 import { isApiError } from '@/shared/api/problem';
 import { useHasPermission } from '@/shared/auth/permissionContext';
 import { formatDateTime } from '@/shared/format/date';
+import { FeedbackList } from '../interviews/FeedbackList';
+import { InterviewDrawer, InterviewStatusTag } from '../interviews/InterviewDrawer';
+import { InterviewModal } from '../interviews/InterviewModal';
 import { YES, NO } from '../openings/openings';
 import { recruitmentPermissions } from '../permissions';
 import { ApplicationCvAnalysisCard } from './ApplicationCvAnalysisCard';
@@ -60,6 +64,9 @@ export const ApplicationDrawer = ({
   const { data: details } = useApplicationDetails(id, team);
   const navigate = useNavigate();
   const readsCandidates = useHasPermission(recruitmentPermissions.candidatesRead);
+  const readsInterviews = useHasPermission(recruitmentPermissions.interviewsRead) && !team;
+  const [scheduling, setScheduling] = useState(false);
+  const [openInterview, setOpenInterview] = useState<string>();
   const application = details?.application;
   const dash = '—';
 
@@ -211,6 +218,43 @@ export const ApplicationDrawer = ({
               canAnalyze={details.canAnalyzeCv}
             />
           )}
+          <Card
+            size="small"
+            title={t('web.recruitment.interviews.title')}
+            extra={
+              details.canScheduleInterview && (
+                <Button size="small" icon={<CalendarOutlined />} onClick={() => setScheduling(true)}>
+                  {t('web.recruitment.interviews.schedule')}
+                </Button>
+              )
+            }
+          >
+            <List
+              size="small"
+              dataSource={details.interviews}
+              locale={{ emptyText: t('web.recruitment.interviews.none') }}
+              renderItem={(item) => (
+                <List.Item
+                  onClick={readsInterviews ? () => setOpenInterview(item.id) : undefined}
+                  style={readsInterviews ? { cursor: 'pointer' } : undefined}
+                >
+                  <Flex vertical gap={2}>
+                    <Space wrap>
+                      <Typography.Text strong>{formatDateTime(item.startsAt, i18n.language)}</Typography.Text>
+                      {t(`web.recruitment.interviews.types.${item.type}`)}
+                      <InterviewStatusTag status={item.status} />
+                    </Space>
+                    <Typography.Text type="secondary">
+                      {item.interviewers.map((p) => p.name ?? dash).join(', ')}
+                    </Typography.Text>
+                  </Flex>
+                </List.Item>
+              )}
+            />
+          </Card>
+          {(details.feedback.length > 0 || details.score != null) && (
+            <FeedbackList feedback={details.feedback} score={details.score} />
+          )}
           {details.coverLetter && (
             <Card size="small" title={t('web.recruitment.pipeline.fields.cover_letter')}>
               <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
@@ -263,6 +307,15 @@ export const ApplicationDrawer = ({
           </Card>
         </Flex>
       )}
+      {scheduling && application && (
+        <InterviewModal
+          applicationId={id}
+          candidateName={application.candidateName}
+          openingTitle={pipeline.title}
+          onClose={() => setScheduling(false)}
+        />
+      )}
+      {openInterview && <InterviewDrawer id={openInterview} onClose={() => setOpenInterview(undefined)} />}
     </Drawer>
   );
 };

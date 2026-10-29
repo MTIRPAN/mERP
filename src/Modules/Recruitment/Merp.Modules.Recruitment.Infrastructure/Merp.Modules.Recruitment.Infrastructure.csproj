@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Ical.Net" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../Merp.Modules.Recruitment.Application/Merp.Modules.Recruitment.Application.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/Merp.Infrastructure/Merp.Infrastructure.csproj" />
   </ItemGroup>

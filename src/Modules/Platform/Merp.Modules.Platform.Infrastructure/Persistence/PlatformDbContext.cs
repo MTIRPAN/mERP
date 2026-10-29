@@ -35,6 +35,7 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
         modelBuilder.Ignore<ApprovalStep>();
         modelBuilder.Ignore<ApproverRule>();
         modelBuilder.Ignore<ImportJobError>();
+        modelBuilder.Ignore<EmailMessageAttachment>();
         base.OnModelCreating(modelBuilder);
     }
 

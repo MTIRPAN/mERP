@@ -95,6 +95,10 @@ const details: ApplicationDetails = {
   version: 7,
   cvAnalysis: null,
   canAnalyzeCv: false,
+  interviews: [],
+  feedback: [],
+  score: null,
+  canScheduleInterview: true,
 };
 
 let teamDetails = false;
