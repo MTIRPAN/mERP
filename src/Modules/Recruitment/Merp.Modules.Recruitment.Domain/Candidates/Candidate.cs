@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Merp.SharedKernel.Domain;
 using Merp.SharedKernel.Identity;
 using Merp.SharedKernel.Markers;
@@ -58,6 +59,8 @@ public sealed class Candidate : AuditableAggregateRoot<CandidateId>
     public const int MaxTags = 20;
     public const int TagTextMaxLength = 2000;
     public const int CvTextMaxLength = 100_000;
+    public const int TokenHashLength = 64;
+    public const string AnonymousFirstName = "Anonim aday";
 
     private readonly List<CandidateNote> _notes = [];
 
@@ -127,6 +130,27 @@ public sealed class Candidate : AuditableAggregateRoot<CandidateId>
 
     /// <summary>The latest application; null for a candidate HR added who has not applied.</summary>
     public DateTimeOffset? LastAppliedAt { get; private set; }
+
+    /// <summary>Renewals and withdrawals of the pool consent after the applications (D55); the applications keep theirs.</summary>
+    public IReadOnlyList<CandidateConsentChange> ConsentChanges { get; private set; } = [];
+
+    /// <summary>When the e-mail asking to renew the consent before the retention ends went (D55).</summary>
+    public DateTimeOffset? ConsentRenewalRequestedAt { get; private set; }
+
+    /// <summary>SHA-256 of the token of the renewal link (hex); the token itself is only in the e-mail.</summary>
+    public string? ConsentTokenHash { get; private set; }
+
+    /// <summary>When the retention ended or the candidate asked to be erased (D55); the personal data is gone since.</summary>
+    public DateTimeOffset? AnonymizedAt { get; private set; }
+
+    public bool IsAnonymized => AnonymizedAt is not null;
+
+    /// <summary>
+    /// The day the retention counts from (D55): the latest of the registration, the last application and the last pool
+    /// consent.
+    /// </summary>
+    public DateTimeOffset RetentionStart =>
+        new[] { CreatedAt, LastAppliedAt ?? CreatedAt, PoolConsentAt ?? CreatedAt }.Max();
 
     public IReadOnlyCollection<CandidateNote> Notes => _notes.AsReadOnly();
 
@@ -236,6 +260,81 @@ public sealed class Candidate : AuditableAggregateRoot<CandidateId>
     {
         PoolConsentRevision = revision;
         PoolConsentAt = at;
+    }
+
+    /// <summary>The renewal e-mail with a new link went (D55); a renewal of this retention period is asked once.</summary>
+    public void ConsentRenewalRequested(string tokenHash, DateTimeOffset at)
+    {
+        if (tokenHash is not { Length: TokenHashLength })
+        {
+            throw new ArgumentException("The token hash is a SHA-256 in hex.", nameof(tokenHash));
+        }
+
+        ConsentTokenHash = tokenHash;
+        ConsentRenewalRequestedAt = at;
+    }
+
+    /// <summary>The candidate renewed the pool consent with the link: the retention starts again (D55).</summary>
+    public Result RenewPoolConsent(int revision, string culture, DateTimeOffset at)
+    {
+        if (IsAnonymized)
+        {
+            return CandidateErrors.Anonymized;
+        }
+
+        ConsentToPool(revision, at);
+        ConsentChanges = [.. ConsentChanges, new CandidateConsentChange(ConsentChangeKind.Renewed, revision, culture, at)];
+        ConsentTokenHash = null;
+        return Result.Success();
+    }
+
+    /// <summary>The candidate does not want to stay in the pool: the retention runs out from the earlier dates (D55).</summary>
+    public Result WithdrawPoolConsent(DateTimeOffset at)
+    {
+        if (IsAnonymized)
+        {
+            return CandidateErrors.Anonymized;
+        }
+
+        PoolConsentRevision = null;
+        PoolConsentAt = null;
+        ConsentChanges = [.. ConsentChanges, new CandidateConsentChange(ConsentChangeKind.Withdrawn, null, null, at)];
+        ConsentTokenHash = null;
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Erases the personal data (D55): the name becomes "Anonim aday #…", the contact details, the profile, the notes
+    /// and the CV text go; the source, the tags and the dates stay for the statistics. <see cref="CandidateAnonymized"/>
+    /// clears the applications and removes the files. The notes must be loaded.
+    /// </summary>
+    public Result Anonymize(DateTimeOffset at)
+    {
+        if (IsAnonymized)
+        {
+            return CandidateErrors.Anonymized;
+        }
+
+        FirstName = AnonymousFirstName;
+        LastName = "#" + Id.Value.ToString("N")[..8].ToUpperInvariant();
+        Email = $"anonim-{Id.Value:N}@anonim.invalid";
+        SetPhone(null);
+        EmployeeId = null;
+        Location = null;
+        CurrentTitle = null;
+        CurrentCompany = null;
+        Education = null;
+        LinkedInUrl = null;
+        PortfolioUrl = null;
+        _notes.Clear();
+        NotesText = null;
+        CvFileId = null;
+        CvTextFileId = null;
+        CvText = null;
+        ConsentTokenHash = null;
+        AnonymizedAt = at;
+        Raise(new CandidateAnonymized(Id));
+        return Result.Success();
     }
 
     /// <summary>A note of the team; <paramref name="mentionedUserIds"/> are told about it. The notes must be loaded.</summary>
@@ -366,8 +465,29 @@ public sealed class CandidateNote
 /// <summary>A duplicate was taken into <paramref name="TargetId"/>: its applications and files move, then it is removed.</summary>
 public sealed record CandidateMerged(CandidateId TargetId, CandidateId DuplicateId) : IDomainEvent;
 
+/// <summary>The candidate's personal data was erased (D55): the applications are cleared and the files removed.</summary>
+public sealed record CandidateAnonymized(CandidateId CandidateId) : IDomainEvent;
+
+/// <summary>What happened to the pool consent after the applications (D55).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ConsentChangeKind>))]
+public enum ConsentChangeKind
+{
+    /// <summary>Renewed with the link of the renewal e-mail.</summary>
+    Renewed,
+
+    /// <summary>Refused with the link, so the candidate leaves the pool when the retention ends.</summary>
+    Withdrawn,
+}
+
+/// <param name="Kind">Renewed or withdrawn.</param>
+/// <param name="Revision">The explicit consent text's revision accepted; null for a withdrawal.</param>
+/// <param name="Culture">The language of the text accepted.</param>
+/// <param name="At">When.</param>
+public sealed record CandidateConsentChange(ConsentChangeKind Kind, int? Revision, string? Culture, DateTimeOffset At);
+
 public static class CandidateErrors
 {
     public static readonly Error NotNoteAuthor = Error.Forbidden("recruitment.candidates.errors.not_note_author");
     public static readonly Error MergeSelf = Error.Validation([new FieldError("duplicateId", "recruitment.candidates.errors.merge_self")]);
+    public static readonly Error Anonymized = Error.Conflict("recruitment.candidates.errors.anonymized");
 }

@@ -89,6 +89,7 @@ const MyInterviewsPage = page(() => import('@/modules/recruitment/interviews/MyI
 const OffersPage = page(() => import('@/modules/recruitment/offers/OffersPage'), 'OffersPage');
 const OfferLinkPage = page(() => import('@/modules/recruitment/offers/OffersPage'), 'OfferLinkPage');
 const OfferResponsePage = page(() => import('@/modules/recruitment/offers/OfferResponsePage'), 'OfferResponsePage');
+const ConsentRenewalPage = page(() => import('@/modules/recruitment/careers/ConsentRenewalPage'), 'ConsentRenewalPage');
 
 export const AppRoutes = () => (
   <Routes>
@@ -97,6 +98,7 @@ export const AppRoutes = () => (
     <Route path="/careers/:tenant" element={<CareerPage />} />
     <Route path="/careers/:tenant/openings/:id" element={<CareerOpeningPage />} />
     <Route path="/careers/:tenant/offers/:token" element={<OfferResponsePage />} />
+    <Route path="/careers/:tenant/consents/:token" element={<ConsentRenewalPage />} />
     <Route element={<ProtectedRoute />}>
       <Route
         element={

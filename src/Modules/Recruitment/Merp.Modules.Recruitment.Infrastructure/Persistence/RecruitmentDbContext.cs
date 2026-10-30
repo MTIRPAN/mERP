@@ -57,6 +57,7 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
         modelBuilder.Ignore<ApplicationAnswer>();
         modelBuilder.Ignore<ApplicationConsent>();
         modelBuilder.Ignore<CandidateProfile>();
+        modelBuilder.Ignore<CandidateConsentChange>();
         modelBuilder.Ignore<EvaluationForm>();
         modelBuilder.Ignore<EvaluationSection>();
         modelBuilder.Ignore<EvaluationCriterion>();

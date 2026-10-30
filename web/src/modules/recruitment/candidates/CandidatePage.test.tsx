@@ -9,6 +9,7 @@ import { renderWithProviders } from '@/test/render';
 import { CandidatePage, HiringCandidatePage } from './CandidatePage';
 import { mentionedIn } from './candidates';
 
+const erase = vi.fn<(id: string, body: { version: number }) => Promise<void>>();
 const merge = vi.fn<(id: string, body: MergeCandidatesCommand) => Promise<void>>().mockResolvedValue(undefined);
 
 const candidate: CandidateDetails = {
@@ -62,6 +63,12 @@ const candidate: CandidateDetails = {
   canManage: true,
   canAddToOpening: true,
   version: 9,
+  consents: [
+    { at: '2026-10-20T09:00:00Z', kind: 'Disclosure', revision: 2, culture: 'tr-TR', openingTitle: 'Satış Temsilcisi' },
+  ],
+  anonymizedAt: null,
+  retentionEndsOn: '2028-10-20',
+  canManagePrivacy: true,
   evaluations: [
     {
       applicationId: 'a1',
@@ -87,7 +94,11 @@ vi.mock('@/app/me/meContext', () => ({ useMe: () => ({ companies: [{ id: 'co1', 
 
 vi.mock('@/shared/api/generated/endpoints/recruitment/recruitment', () => ({
   useGetCandidate: () => ({ data: candidate }),
-  useGetMyHiringCandidate: () => ({ data: { ...candidate, canManage: false, canAddToOpening: false, duplicates: [] } }),
+  useGetMyHiringCandidate: () => ({
+    data: { ...candidate, canManage: false, canAddToOpening: false, canManagePrivacy: false, duplicates: [] },
+  }),
+  eraseCandidate: (id: string, body: { version: number }) => erase(id, body),
+  exportCandidateData: vi.fn(),
   useSearchCandidateMentionUsers: () => ({ data: [] }),
   useSearchMyHiringMentionUsers: () => ({ data: [] }),
   mergeCandidates: (id: string, body: MergeCandidatesCommand) => merge(id, body),
@@ -115,6 +126,9 @@ const texts: Record<string, string> = {
   'web.recruitment.candidates.add_to_opening': 'İlana ekle',
   'web.recruitment.candidates.upload_cv': 'Özgeçmiş yükle',
   'web.common.edit': 'Düzenle',
+  'web.recruitment.candidates.privacy.erase': 'Talep üzerine sil',
+  'web.recruitment.candidates.privacy.erase_confirm': 'Aday anonimleştirilsin mi?',
+  'web.recruitment.candidates.privacy.retention_until': '{date} tarihine kadar',
 };
 
 const render = (route: string, permissions: string[]) =>
@@ -132,7 +146,10 @@ const render = (route: string, permissions: string[]) =>
   );
 
 describe('CandidatePage', () => {
-  beforeEach(() => merge.mockClear());
+  beforeEach(() => {
+    merge.mockClear();
+    erase.mockReset().mockResolvedValue(undefined);
+  });
 
   it('shows the profile and merges a possible duplicate into the candidate', async () => {
     render('/recruitment/candidates/c1', ['recruitment.candidates.read', 'recruitment.candidates.manage']);
@@ -156,6 +173,16 @@ describe('CandidatePage', () => {
     expect(screen.getByText('3,75')).toBeInTheDocument();
     expect(screen.getByText(/Evet: 1/)).toBeInTheDocument();
     expect(screen.getByTestId('chart')).toHaveTextContent('İletişim');
+  });
+
+  it('erases the candidate on request and shows the end of the retention', async () => {
+    render('/recruitment/candidates/c1', ['recruitment.candidates.read', 'recruitment.candidates.privacy']);
+
+    expect(await screen.findByText('20 Eki 2028 tarihine kadar')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Talep üzerine sil' }));
+    await userEvent.click(await screen.findByRole('button', { name: /OK|Tamam/ }));
+
+    await waitFor(() => expect(erase).toHaveBeenCalledWith('c1', { version: 9 }));
   });
 
   it('lets the hiring team read the card without managing it', async () => {

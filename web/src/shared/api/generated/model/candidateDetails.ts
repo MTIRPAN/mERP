@@ -5,6 +5,7 @@
  * OpenAPI spec version: v1
  */
 import type { CandidateApplicationItem } from './candidateApplicationItem';
+import type { CandidateConsentItem } from './candidateConsentItem';
 import type { CandidateDuplicate } from './candidateDuplicate';
 import type { CandidateEvaluation } from './candidateEvaluation';
 import type { CandidateFileItem } from './candidateFileItem';
@@ -45,4 +46,10 @@ export interface CandidateDetails {
   canAddToOpening: boolean;
   version: number;
   evaluations: CandidateEvaluation[];
+  consents: CandidateConsentItem[];
+  /** @nullable */
+  anonymizedAt: string | null;
+  /** @nullable */
+  retentionEndsOn: string | null;
+  canManagePrivacy: boolean;
 }

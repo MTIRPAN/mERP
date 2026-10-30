@@ -23,6 +23,7 @@ using Merp.Modules.Recruitment.Infrastructure.Candidates;
 using Merp.Modules.Recruitment.Infrastructure.Interviews;
 using Merp.Modules.Recruitment.Infrastructure.Offers;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
+using Merp.Modules.Recruitment.Infrastructure.Privacy;
 using Merp.Modules.Recruitment.Infrastructure.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -95,6 +96,9 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         services.AddSingleton<IDocumentTypeProvider, OfferLetterType>();
         services.AddScoped<IApprovalDocumentAccessPolicy, OfferAccessPolicy>();
         services.AddSingleton(RecurringJobDefinition.For<OfferExpiryJob>(OfferExpiryJob.JobId, OfferExpiryJob.Cron));
+
+        // KVKK: the nightly retention with the consent renewal e-mails (D55)
+        services.AddSingleton(RecurringJobDefinition.For<CandidateRetentionJob>(CandidateRetentionJob.JobId, CandidateRetentionJob.Cron));
         return services;
     }
 }

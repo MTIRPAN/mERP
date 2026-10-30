@@ -63,6 +63,7 @@ public sealed class RecruitmentNotificationTypes : INotificationTypeProvider
     public const string InterviewUpdated = "recruitment.interview_updated";
     public const string InterviewCancelled = "recruitment.interview_cancelled";
     public const string InterviewReminder = "recruitment.interview_reminder";
+    public const string ConsentRenewal = "recruitment.consent_renewal";
 
     public IEnumerable<NotificationTypeDefinition> GetNotificationTypes() =>
     [
@@ -73,6 +74,7 @@ public sealed class RecruitmentNotificationTypes : INotificationTypeProvider
         new(InterviewUpdated, [NotificationChannel.Email], External: true),
         new(InterviewCancelled, [NotificationChannel.Email], External: true),
         new(InterviewReminder, [NotificationChannel.Email], External: true),
+        new(ConsentRenewal, [NotificationChannel.Email], External: true),
     ];
 }
 
