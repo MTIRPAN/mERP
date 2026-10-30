@@ -2,6 +2,7 @@ using Merp.Modules.Recruitment.Application;
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
 using Merp.Modules.Recruitment.Domain.Interviews;
+using Merp.Modules.Recruitment.Domain.Offers;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
@@ -39,6 +40,8 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
     public DbSet<Interview> Interviews => Set<Interview>();
 
     public DbSet<InterviewFeedback> InterviewFeedbacks => Set<InterviewFeedback>();
+
+    public DbSet<JobOffer> JobOffers => Set<JobOffer>();
 
     public DbSet<EvaluationTemplate> EvaluationTemplates => Set<EvaluationTemplate>();
 

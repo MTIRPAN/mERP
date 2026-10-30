@@ -13,10 +13,12 @@ using Merp.Modules.Platform.Contracts.Users;
 using Merp.Modules.Recruitment.Application.CvAnalysis;
 using Merp.Modules.Recruitment.Application.Interviews;
 using Merp.Modules.Recruitment.Application.Openings;
+using Merp.Modules.Recruitment.Application.Offers;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
+using Merp.Modules.Recruitment.Domain.Offers;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Settings;
 using Merp.SharedKernel.Results;
@@ -109,7 +111,10 @@ public sealed record ApplicationDetails(
     IReadOnlyList<InterviewListItem> Interviews,
     IReadOnlyList<FeedbackItem> Feedback,
     decimal? Score,
-    bool CanScheduleInterview);
+    bool CanScheduleInterview,
+    IReadOnlyList<OfferListItem> Offers,
+    bool CanCreateOffer,
+    bool CanHire);
 
 /// <summary>A file of a recruitment record to send.</summary>
 public sealed record RecruitmentFileDownload(string FileName, string ContentType, long Length, Stream Content);
@@ -556,6 +561,8 @@ internal sealed class GetApplicationQueryHandler(
     ApplicationCvAnalyzer analyzer,
     InterviewRows interviewRows,
     InterviewAccess interviewAccess,
+    OfferRows offerRows,
+    OfferAccess offerAccess,
     ICurrentUser currentUser) : IQueryHandler<GetApplicationQuery, ApplicationDetails>
 {
     public async Task<Result<ApplicationDetails>> Handle(GetApplicationQuery request, CancellationToken cancellationToken)
@@ -587,6 +594,10 @@ internal sealed class GetApplicationQueryHandler(
         string? StageName(Guid? stageId) => opening.Stages.FirstOrDefault(s => s.Id == stageId)?.Name.Get(culture, "tr-TR");
         var interviews = await db.Interviews.AsNoTracking().Where(i => i.ApplicationId == id).OrderBy(i => i.StartsAt).ToListAsync(cancellationToken);
         var forms = await db.InterviewFeedbacks.AsNoTracking().Where(f => f.ApplicationId == id).ToListAsync(cancellationToken);
+        var offers = !request.AsTeam && await offerAccess.ReadsAsync(application.CompanyId, cancellationToken)
+            ? await db.JobOffers.AsNoTracking().Where(o => o.ApplicationId == id).OrderBy(o => o.CreatedAt).ToListAsync(cancellationToken)
+            : [];
+        var active = !request.AsTeam && application.Status == ApplicationStatus.Active;
         var cv = application.CvFileId is { } fileId
             ? await db.StoredFiles.AsNoTracking().Where(f => f.Id == fileId).Select(f => new ApplicationCvItem(f.FileName, f.ContentType, f.Length)).SingleOrDefaultAsync(cancellationToken)
             : null;
@@ -624,7 +635,10 @@ internal sealed class GetApplicationQueryHandler(
             await interviewRows.ItemsAsync(interviews, cancellationToken),
             await interviewRows.FeedbackAsync(forms, interviews.ToDictionary(i => i.Id), cancellationToken),
             InterviewRows.Score(forms),
-            !request.AsTeam && application.Status == ApplicationStatus.Active && await interviewAccess.ManagesAsync(application.CompanyId, cancellationToken));
+            active && await interviewAccess.ManagesAsync(application.CompanyId, cancellationToken),
+            await offerRows.ItemsAsync(offers, cancellationToken),
+            active && !offers.Any(o => o.IsOpen || o.Status == OfferStatus.Accepted) && await offerAccess.ManagesAsync(application.CompanyId, cancellationToken),
+            active && offers.Any(o => o.Status == OfferStatus.Accepted) && await access.ManagesAsync(application.CompanyId, cancellationToken));
     }
 
     private static ApplicationAnswerItem Answer(JobOpening opening, ApplicationAnswer answer)

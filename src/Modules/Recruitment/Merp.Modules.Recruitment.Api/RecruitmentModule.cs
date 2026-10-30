@@ -33,10 +33,12 @@ public sealed class RecruitmentModule : IModule
         group.MapApplicationEndpoints();
         group.MapCandidateEndpoints();
         group.MapInterviewEndpoints();
+        group.MapOfferEndpoints();
         group.MapSelfServiceCareerEndpoints();
         group.MapHiringTeamEndpoints();
         group.MapHiringTeamCandidateEndpoints();
         group.MapSettingsEndpoints();
         endpoints.MapPublicCareerEndpoints();
+        endpoints.MapPublicOfferEndpoints();
     }
 }

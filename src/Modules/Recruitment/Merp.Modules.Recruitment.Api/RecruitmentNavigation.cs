@@ -39,6 +39,13 @@ internal sealed class RecruitmentMenu : IMenuContributor
                 Permission: RecruitmentPermissions.Candidates.Read,
                 Order: 30),
             new(
+                "offers",
+                "web.shell.menu.offers",
+                Path: "/recruitment/offers",
+                Icon: "offers",
+                Permission: RecruitmentPermissions.Offers.Read,
+                Order: 35),
+            new(
                 "my-interviews",
                 "web.shell.menu.my_interviews",
                 Path: "/recruitment/my-interviews",

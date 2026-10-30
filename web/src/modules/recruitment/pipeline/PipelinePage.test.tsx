@@ -99,6 +99,9 @@ const details: ApplicationDetails = {
   feedback: [],
   score: null,
   canScheduleInterview: true,
+  offers: [],
+  canCreateOffer: false,
+  canHire: false,
 };
 
 let teamDetails = false;

@@ -8,6 +8,7 @@ import {
   getGetOpeningPipelineQueryKey,
   getListApplicationsQueryKey,
   getListOpeningsQueryKey,
+  hireApplication,
   moveApplication,
   rejectApplication,
   reopenApplication,
@@ -37,7 +38,7 @@ export const applicationStatusColors: Record<ApplicationStatus, string> = {
 /** The days the rejection e-mail may wait (0 sends it now; at most 14, D50). */
 export const emailDelays = [0, 1, 2, 3, 7, 14];
 
-/** Dropping an application here needs a reason. */
+/** Dropping an application here needs a reason; Hired needs an accepted offer (D53). */
 export const needsReason = (type: StageType | null | undefined) => type === 'Rejected' || type === 'Withdrawn';
 
 /** An active application past its stage's SLA. */
@@ -119,5 +120,6 @@ export const useApplicationActions = (openingId: string) => {
         withdrawApplication(id, { version, reasonCode: values.reasonCode, note: values.note ?? null }),
       ),
     reopen: (id: string) => change(id, (version) => reopenApplication(id, { version, note: null })),
+    hire: (id: string) => change(id, (version) => hireApplication(id, { version, note: null })),
   };
 };

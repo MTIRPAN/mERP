@@ -1551,3 +1551,54 @@ Seçilen kültür `Content-Language` başlığında döner.
 - `echarts` 6.1 (Apache-2.0) ve bağımlılığı `zrender` (BSD-3-Clause).
 - `echarts-for-react` 3.0.7 (MIT) ve bağımlılığı `size-sensor` (ISC).
 - `tslib` (0BSD) önceden onaylıdır.
+
+## D53 — İş teklifi
+
+**Bağlam:** R6 başvuruya iş teklifi, teklifin onayını, mektubunu, aday yanıtını ve işe alım adımını ekler. Kullanıcı kararları (2026-10-30):
+- Bütçe üstü teklifin ek onay adımı teklifin biriminin yöneticisine gider.
+- Aday yanıtını İK kaydeder. Ayrıca e-postada imzalı ve süreli bir yanıt bağlantısı olur.
+- İşe alındı aşamasına geçiş kabul edilmiş teklif ister.
+- Ücreti teklifleri yöneten ve onaylayıcılar görür.
+
+**Teklif (`job_offers`):**
+- Süreçteki bir başvuruya hazırlanır. Numarası P5 `recruitment.offer` (`TKL-{yyyy}-{seq:5}`) kalıbındadır.
+- Alanları: pozisyon (varsayılan ilan başlığı), kademe, işe başlama tarihi, brüt ücret, para birimi, dönem (aylık / yıllık), yan haklar ve son geçerlilik günü. Son gün işe başlama tarihinden sonra olamaz.
+- Ücret, para birimi ve dönem `[Sensitive]` olarak işaretlidir. Teklifleri yöneten (`recruitment.offers.manage`) ve onay görevi olan görür; okumalar audit'e yazılır. Yalnızca okuyanda (`recruitment.offers.read`) maskelenir.
+- Bir başvurunun aynı anda tek açık teklifi olur (taslak, onayda, iade, onaylı, gönderildi) ya da kabul edilmiş bir teklifi olur. Reddedilen, süresi dolan veya geri çekilen tekliften sonra yenisi hazırlanabilir.
+- Durumlar: Taslak → Onayda (iade ile düzeltme) → Onaylandı / Onaylanmadı → Gönderildi → Kabul / Ret / Süresi doldu. Yanıtlanmamış teklif geri çekilebilir. Onaydaki teklif geri çekilirse onay talebi de kapatılır.
+
+**Onay (`recruitment.offer`):**
+- Olgular:
+  - `salary`: aylık brüt (yıllık ücretin 12'de biri).
+  - `grade`, `companyId`, `orgUnitId` (ilanın talebinin birimi), `hiringManagerUserId`.
+  - `isAboveBudget`.
+- Bütçe kontrolü teklif onaya gönderilirken yapılır. Ölçüt, ilanın talebindeki aylık ücret üst sınırıdır:
+  - Talep veya üst sınır yoksa sınır yoktur.
+  - Farklı para birimi karşılaştırılamadığı için bütçe üstü sayılır.
+- Varsayılan akış:
+  1. `fact-user(hiringManagerUserId)`
+  2. `role(İK Yöneticisi)`
+  3. `isAboveBudget = true` koşuluyla `org-unit-manager(orgUnitId)`
+- İlanın işe alım yöneticisi Çalışan rolüyle teklif okuma iznine sahip olmayabilir. Teklifi `/api/recruitment/me/hiring/offers/{id}` üzerinden görür (D50 kalıbı); ücreti yalnızca onay görevi varsa görür. Onay kutusundaki bağlantı (`/recruitment/offers/{id}`) iki durumu da açar.
+
+**Mektup ve gönderim:**
+- Belge türü `recruitment.offer_letter`'dır (D36): yerleşik şablon, kiracı kendi şablonunu yazabilir. Mektup adayın dilinde, şirketin antetiyle basılır. Gönderilen PDF teklifin dosyası olarak saklanır.
+- Adaya `recruitment.offer_sent` e-postası PDF ekiyle ve yanıt bağlantısıyla gider. Dış e-posta olayına `Link` alanı eklendi.
+- **Yanıt bağlantısı:** `/careers/{tenant}/offers/{token}` sayfası `GET`/`POST /api/public/{tenantCode}/offers/{token}` uçlarını kullanır (D20 izin listesi, IP başına sınır).
+  - Token 256 bit rastgeledir; yalnızca e-postada bulunur. Teklifte SHA-256 özeti saklanır. "İmzalı token" bu şekilde, iptal edilebilir biçimde karşılanır.
+  - Bağlantı teklifin son gününe kadar yanıt alır. Yanıttan sonra da teklifin nasıl sonuçlandığını gösterir.
+  - Aday yanıt verince hazırlayana ve işe alım yöneticisine `recruitment.offer_answered` bildirimi gider.
+- İK yanıtı kendisi de kaydedebilir.
+
+**Süre:** `recruitment.offer-expiry` işi saatte bir çalışır. Son günü şirketin saat dilimine göre geçmiş gönderilmiş teklifleri "Süresi doldu" yapar.
+
+**İşe alım:**
+- `POST /api/recruitment/applications/{id}/hire` kabul edilmiş teklifle başvuruyu İşe alındı aşamasına taşır.
+- Taşıma menüsü ve kanban İşe alındı aşamasına doğrudan götürmez. Kanbanda bu sütuna bırakmak işe alım ucunu çağırır; teklif yoksa hata gösterilir.
+
+**Bildirimler:** Hazırlayana `recruitment.offer_completed` (onay sonucu) ve `recruitment.offer_returned` gider.
+
+**Web:**
+- "Teklifler" sayfası (`/recruitment/offers`) ve teklif çekmecesi: düzenleme, onaya ve adaya gönderme, mektup önizleme, yanıt kaydetme, geri çekme, onay zaman çizelgesi.
+- Başvuru çekmecesinde teklifler kartı ve "İşe al" düğmesi.
+- Adayın yanıt sayfası.

@@ -12,6 +12,7 @@ import type { ApplicationListItem } from './applicationListItem';
 import type { ApplicationStageChangeItem } from './applicationStageChangeItem';
 import type { FeedbackItem } from './feedbackItem';
 import type { InterviewListItem } from './interviewListItem';
+import type { OfferListItem } from './offerListItem';
 
 export interface ApplicationDetails {
   application: ApplicationListItem;
@@ -38,4 +39,7 @@ export interface ApplicationDetails {
   /** @nullable */
   score: number | null;
   canScheduleInterview: boolean;
+  offers: OfferListItem[];
+  canCreateOffer: boolean;
+  canHire: boolean;
 }

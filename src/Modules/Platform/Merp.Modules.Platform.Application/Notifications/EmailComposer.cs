@@ -65,6 +65,7 @@ public sealed class EmailComposer(
         string? toName,
         string? culture,
         IReadOnlyDictionary<string, string> args,
+        string? link,
         Guid? companyId,
         DateTimeOffset now,
         CancellationToken cancellationToken)
@@ -74,7 +75,7 @@ public sealed class EmailComposer(
             : null;
         var defaultCulture = tenant.RequiredTenant.DefaultCulture;
         var language = culture ?? company?.Culture ?? defaultCulture;
-        var model = Model(type, toName, to, args, null, company?.ShortName, language);
+        var model = Model(type, toName, to, args, link, company?.ShortName, language);
         return await RenderAsync(type, model, null, to, toName, companyId, language, defaultCulture, now, cancellationToken);
     }
 

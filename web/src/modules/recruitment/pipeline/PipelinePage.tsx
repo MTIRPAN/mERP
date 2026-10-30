@@ -60,15 +60,12 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
       return;
     }
 
-    void actions
-      .move(application.id, stage.id)
-      .then(
-        () =>
-          message.success(
-            t('web.recruitment.pipeline.moved_to', { name: application.candidateName, stage: stage.name }),
-          ),
-        report,
-      );
+    // Hired takes the accepted offer (D53); without one the API says so
+    void (stage.type === 'Hired' ? actions.hire(application.id) : actions.move(application.id, stage.id)).then(
+      () =>
+        message.success(t('web.recruitment.pipeline.moved_to', { name: application.candidateName, stage: stage.name })),
+      report,
+    );
   };
 
   const columns = useMemo<DataTableColumn<ApplicationListItem>[]>(
@@ -225,6 +222,7 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
           onClose={() => setOpen(undefined)}
           onMove={(stageId) => actions.move(open, stageId)}
           onReopen={() => actions.reopen(open)}
+          onHire={() => actions.hire(open)}
           onLeave={(kind, application) => setLeaving({ kind, application })}
         />
       )}

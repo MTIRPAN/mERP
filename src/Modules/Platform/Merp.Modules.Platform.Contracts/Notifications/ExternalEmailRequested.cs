@@ -21,4 +21,7 @@ public sealed record ExternalEmailRequested(
 {
     /// <summary>Files sent with the e-mail, e.g. a calendar invitation (D52).</summary>
     public IReadOnlyList<EmailFile> Attachments { get; init; } = [];
+
+    /// <summary>A path of the web application the e-mail links to, e.g. the answer page of a job offer (D53).</summary>
+    public string? Link { get; init; }
 }

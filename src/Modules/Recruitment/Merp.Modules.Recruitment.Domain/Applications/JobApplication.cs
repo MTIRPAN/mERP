@@ -216,8 +216,8 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
     public void MoveToCandidate(CandidateId candidateId) => CandidateId = candidateId;
 
     /// <summary>
-    /// Moves an application in the pipeline to a working stage of the opening, or to Hired. Rejection and withdrawal
-    /// have their own methods since they need a reason.
+    /// Moves an application in the pipeline to a working stage of the opening. Rejection and withdrawal have their own
+    /// methods since they need a reason; hiring needs an accepted offer (<see cref="Hire"/>, D53).
     /// </summary>
     public Result MoveTo(JobOpening opening, Guid stageId, string? note, Guid? userId, DateTimeOffset at)
     {
@@ -238,17 +238,38 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
             return JobApplicationErrors.NeedsReason;
         }
 
+        if (stage.Type == StageType.Hired)
+        {
+            return JobApplicationErrors.OfferRequired;
+        }
+
         if (stage.Id == StageId)
         {
             return Result.Success();
         }
 
-        if (stage.Type == StageType.Hired)
+        Enter(stage.Id, null, note, userId, at);
+        return Result.Success();
+    }
+
+    /// <summary>The candidate accepted the application's offer: the application moves to the Hired stage (D53).</summary>
+    public Result Hire(JobOpening opening, Offers.JobOffer offer, string? note, Guid? userId, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(opening);
+        ArgumentNullException.ThrowIfNull(offer);
+        if (Status != ApplicationStatus.Active)
         {
-            PreviousStageId = StageId;
-            Status = ApplicationStatus.Hired;
+            return JobApplicationErrors.NotActive;
         }
 
+        if (offer.ApplicationId != Id || offer.Status != Offers.OfferStatus.Accepted)
+        {
+            return JobApplicationErrors.OfferRequired;
+        }
+
+        var stage = opening.Stages.First(s => s.Type == StageType.Hired);
+        PreviousStageId = StageId;
+        Status = ApplicationStatus.Hired;
         Enter(stage.Id, null, note, userId, at);
         return Result.Success();
     }
@@ -485,4 +506,5 @@ public static class JobApplicationErrors
     public static readonly Error NotClosed = Error.Conflict("recruitment.applications.errors.not_closed");
     public static readonly Error UnknownStage = Error.Validation([new FieldError("stageId", "recruitment.applications.errors.unknown_stage")]);
     public static readonly Error NeedsReason = Error.Validation([new FieldError("stageId", "recruitment.applications.errors.needs_reason")]);
+    public static readonly Error OfferRequired = Error.Conflict("recruitment.applications.errors.offer_required");
 }

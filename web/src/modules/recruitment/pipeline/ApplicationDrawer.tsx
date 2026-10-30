@@ -1,4 +1,4 @@
-import { CalendarOutlined, DownloadOutlined, IdcardOutlined } from '@ant-design/icons';
+import { CalendarOutlined, DownloadOutlined, FileTextOutlined, IdcardOutlined } from '@ant-design/icons';
 import {
   App,
   Button,
@@ -21,10 +21,12 @@ import { useNavigate } from 'react-router';
 import type { ApplicationListItem, ApplicationStatus, OpeningPipeline } from '@/shared/api/generated/model';
 import { isApiError } from '@/shared/api/problem';
 import { useHasPermission } from '@/shared/auth/permissionContext';
-import { formatDateTime } from '@/shared/format/date';
+import { formatDate, formatDateTime } from '@/shared/format/date';
 import { FeedbackList } from '../interviews/FeedbackList';
 import { InterviewDrawer, InterviewStatusTag } from '../interviews/InterviewDrawer';
 import { InterviewModal } from '../interviews/InterviewModal';
+import { OfferDrawer, OfferStatusTag } from '../offers/OfferDrawer';
+import { OfferFormModal } from '../offers/OfferFormModal';
 import { YES, NO } from '../openings/openings';
 import { recruitmentPermissions } from '../permissions';
 import { ApplicationCvAnalysisCard } from './ApplicationCvAnalysisCard';
@@ -43,6 +45,8 @@ interface ApplicationDrawerProps {
   onMove: (stageId: string) => Promise<unknown>;
   onLeave: (kind: 'reject' | 'withdraw', application: ApplicationListItem) => void;
   onReopen: () => Promise<unknown>;
+  /** Hires the application with its accepted offer (D53). */
+  onHire: () => Promise<unknown>;
   onClose: () => void;
 }
 
@@ -57,6 +61,7 @@ export const ApplicationDrawer = ({
   onMove,
   onLeave,
   onReopen,
+  onHire,
   onClose,
 }: ApplicationDrawerProps) => {
   const { t, i18n } = useTranslation();
@@ -67,6 +72,9 @@ export const ApplicationDrawer = ({
   const readsInterviews = useHasPermission(recruitmentPermissions.interviewsRead) && !team;
   const [scheduling, setScheduling] = useState(false);
   const [openInterview, setOpenInterview] = useState<string>();
+  const readsOffers = useHasPermission(recruitmentPermissions.offersRead) && !team;
+  const [offering, setOffering] = useState(false);
+  const [openOffer, setOpenOffer] = useState<string>();
   const application = details?.application;
   const dash = '—';
 
@@ -95,13 +103,18 @@ export const ApplicationDrawer = ({
             value={null}
             onChange={(stageId: string) => void run(() => onMove(stageId))}
             options={pipeline.stages
-              .filter((s) => s.id !== application.stageId && !needsReason(s.type))
+              .filter((s) => s.id !== application.stageId && !needsReason(s.type) && s.type !== 'Hired')
               .map((s) => ({ value: s.id, label: s.name }))}
           />
           <Button onClick={() => onLeave('withdraw', application)}>{t('web.recruitment.pipeline.withdraw.ok')}</Button>
           <Button danger onClick={() => onLeave('reject', application)}>
             {t('web.recruitment.pipeline.reject.ok')}
           </Button>
+          {details.canHire && (
+            <Popconfirm title={t('web.recruitment.offers.hire_confirm')} onConfirm={() => run(onHire)}>
+              <Button type="primary">{t('web.recruitment.offers.hire')}</Button>
+            </Popconfirm>
+          )}
         </>
       )}
       {(application.status === 'Rejected' || application.status === 'Withdrawn') && (
@@ -255,6 +268,39 @@ export const ApplicationDrawer = ({
           {(details.feedback.length > 0 || details.score != null) && (
             <FeedbackList feedback={details.feedback} score={details.score} />
           )}
+          {(readsOffers || details.canCreateOffer) && (
+            <Card
+              size="small"
+              title={t('web.recruitment.offers.title')}
+              extra={
+                details.canCreateOffer && (
+                  <Button size="small" icon={<FileTextOutlined />} onClick={() => setOffering(true)}>
+                    {t('web.recruitment.offers.new')}
+                  </Button>
+                )
+              }
+            >
+              <List
+                size="small"
+                dataSource={details.offers}
+                locale={{ emptyText: t('web.recruitment.offers.none') }}
+                renderItem={(item) => (
+                  <List.Item
+                    onClick={readsOffers ? () => setOpenOffer(item.id) : undefined}
+                    style={readsOffers ? { cursor: 'pointer' } : undefined}
+                  >
+                    <Space wrap>
+                      <Typography.Text strong>{item.number}</Typography.Text>
+                      <OfferStatusTag status={item.status} />
+                      <Typography.Text type="secondary">
+                        {t('web.recruitment.offers.starts', { date: formatDate(item.startDate, i18n.language) })}
+                      </Typography.Text>
+                    </Space>
+                  </List.Item>
+                )}
+              />
+            </Card>
+          )}
           {details.coverLetter && (
             <Card size="small" title={t('web.recruitment.pipeline.fields.cover_letter')}>
               <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
@@ -316,6 +362,15 @@ export const ApplicationDrawer = ({
         />
       )}
       {openInterview && <InterviewDrawer id={openInterview} onClose={() => setOpenInterview(undefined)} />}
+      {offering && (
+        <OfferFormModal
+          applicationId={id}
+          openingTitle={pipeline.title}
+          onSaved={(offerId) => setOpenOffer(offerId)}
+          onClose={() => setOffering(false)}
+        />
+      )}
+      {openOffer && <OfferDrawer id={openOffer} onClose={() => setOpenOffer(undefined)} />}
     </Drawer>
   );
 };

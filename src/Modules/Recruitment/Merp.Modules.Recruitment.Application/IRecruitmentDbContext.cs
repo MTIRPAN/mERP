@@ -1,6 +1,7 @@
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Candidates;
 using Merp.Modules.Recruitment.Domain.Interviews;
+using Merp.Modules.Recruitment.Domain.Offers;
 using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Domain.Settings;
@@ -44,6 +45,9 @@ public interface IRecruitmentDbContext
 
     /// <summary>The interviewers' evaluation forms (D52).</summary>
     DbSet<InterviewFeedback> InterviewFeedbacks { get; }
+
+    /// <summary>Job offers of applications (D53).</summary>
+    DbSet<JobOffer> JobOffers { get; }
 
     /// <summary>The tenant's evaluation templates (D52).</summary>
     DbSet<EvaluationTemplate> EvaluationTemplates { get; }
