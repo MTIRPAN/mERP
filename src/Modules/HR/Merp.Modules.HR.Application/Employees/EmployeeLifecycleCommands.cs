@@ -8,8 +8,10 @@ using Merp.Application.Abstractions.Security;
 using Merp.Application.Abstractions.Settings;
 using Merp.Application.Abstractions.Validation;
 using Merp.Modules.HR.Application.Organization;
+using Merp.Modules.HR.Application.PreHires;
 using Merp.Modules.HR.Contracts.Employees;
 using Merp.Modules.HR.Domain.Employees;
+using Merp.Modules.HR.Domain.PreHires;
 using Merp.Modules.Platform.Contracts.Calendars;
 using Merp.Modules.Platform.Contracts.Organization;
 using Merp.SharedKernel.Results;
@@ -22,7 +24,10 @@ namespace Merp.Modules.HR.Application.Employees;
 /// Hires a new person (işe giriş, D38): the employee, their first employment in a company of the caller's scope and
 /// their first assignment from the hire date. A TCKN already registered is refused; such a person is rehired.
 /// </summary>
-/// <remarks>CustomFields holds the values of the tenant's custom fields by code (D30).</remarks>
+/// <remarks>
+/// CustomFields holds the values of the tenant's custom fields by code (D30); PreHireId completes a waiting pre-hire of
+/// the company (D54).
+/// </remarks>
 public sealed record HireEmployeeCommand(
     string? Tckn,
     string? FirstName,
@@ -47,7 +52,8 @@ public sealed record HireEmployeeCommand(
     Guid? ManagerPositionId = null,
     string? Level = null,
     string? CostCenterCode = null,
-    IReadOnlyDictionary<string, JsonElement>? CustomFields = null)
+    IReadOnlyDictionary<string, JsonElement>? CustomFields = null,
+    Guid? PreHireId = null)
     : ICommand<Guid>, IRequirePermission, IPersonFields, IEmploymentTermsFields, IAssignmentFields
 {
     [JsonIgnore]
@@ -69,7 +75,8 @@ public sealed record RehireEmployeeCommand(
     Guid? BranchId = null,
     Guid? ManagerPositionId = null,
     string? Level = null,
-    string? CostCenterCode = null) : ICommand<Guid>, IRequirePermission, IEmploymentTermsFields, IAssignmentFields
+    string? CostCenterCode = null,
+    Guid? PreHireId = null) : ICommand<Guid>, IRequirePermission, IEmploymentTermsFields, IAssignmentFields
 {
     /// <summary>From the route.</summary>
     [JsonIgnore]
@@ -91,7 +98,8 @@ public sealed record ChangeEmployeeAssignmentCommand(
     Guid? BranchId = null,
     Guid? ManagerPositionId = null,
     string? Level = null,
-    string? CostCenterCode = null) : ICommand<Guid>, IRequirePermission, IAssignmentFields
+    string? CostCenterCode = null,
+    Guid? PreHireId = null) : ICommand<Guid>, IRequirePermission, IAssignmentFields
 {
     /// <summary>From the route.</summary>
     [JsonIgnore]
@@ -240,6 +248,10 @@ internal sealed class HireEmployeeCommandHandler(
         var terms = await EmployeeRules.ResolveTermsAsync(calendar, request, request.CompanyId, request.HireDate, cancellationToken);
         var values = await customFields.ValidateAsync(HrCustomFieldEntities.Employee, request.CompanyId, request.CustomFields, CustomFieldValues.Empty, cancellationToken);
         errors.AddRange(new Result[] { assignment, terms, values }.Where(r => r.IsFailure).SelectMany(r => r.Error.Fields));
+        if (await PreHireRules.CheckAsync(db, request.PreHireId, request.CompanyId, null, cancellationToken) is { } preHireError)
+        {
+            errors.Add(preHireError);
+        }
         if (errors.Count > 0)
         {
             return Error.Validation(errors);
@@ -257,6 +269,11 @@ internal sealed class HireEmployeeCommandHandler(
         var employment = employee.Employments[0];
         var first = employment.Assignments[0];
         employee.MarkAnnounced(first.Id);
+        if (request.PreHireId is { } preHireId)
+        {
+            employee.ConfirmPreHire(PreHireId.From(preHireId), employment.Id, employment.HireDate);
+        }
+
         db.Employees.Add(employee);
         await publisher.PublishAsync(
             new EmployeeHired(employee.Id.Value, employment.Id.Value, employment.RegistryNumber, employment.HireDate, first.PositionId.Value, employee.UserId)
@@ -298,9 +315,10 @@ internal sealed class RehireEmployeeCommandHandler(
 
         var assignment = await EmployeeRules.ResolveAssignmentAsync(db, organization, request, request.CompanyId, cancellationToken);
         var terms = await EmployeeRules.ResolveTermsAsync(calendar, request, request.CompanyId, request.HireDate, cancellationToken);
-        if (assignment.IsFailure || terms.IsFailure)
+        var preHireError = await PreHireRules.CheckAsync(db, request.PreHireId, request.CompanyId, employee.Id, cancellationToken);
+        if (assignment.IsFailure || terms.IsFailure || preHireError is not null)
         {
-            return Error.Validation(new Result[] { assignment, terms }.Where(r => r.IsFailure).SelectMany(r => r.Error.Fields));
+            return Error.Validation(new Result[] { assignment, terms }.Where(r => r.IsFailure).SelectMany(r => r.Error.Fields).Concat(preHireError is null ? [] : [preHireError]));
         }
 
         var registryNumber = await numbers.NextAsync(request.CompanyId, HrNumberSequences.Employee, request.HireDate, cancellationToken);
@@ -313,6 +331,10 @@ internal sealed class RehireEmployeeCommandHandler(
         var employment = rehired.Value;
         var first = employment.Assignments[0];
         employee.MarkAnnounced(first.Id);
+        if (request.PreHireId is { } preHireId)
+        {
+            employee.ConfirmPreHire(PreHireId.From(preHireId), employment.Id, employment.HireDate);
+        }
         await publisher.PublishAsync(
             new EmployeeRehired(employee.Id.Value, employment.Id.Value, employment.RegistryNumber, employment.HireDate, first.PositionId.Value, employee.UserId)
             {
@@ -346,6 +368,11 @@ internal sealed class ChangeEmployeeAssignmentCommandHandler(
             return details.Error;
         }
 
+        if (await PreHireRules.CheckAsync(db, request.PreHireId, employment.CompanyId, employee.Id, cancellationToken) is { } preHireError)
+        {
+            return Error.Validation([preHireError]);
+        }
+
         var changed = employee.ChangeAssignment(employment.Id, details.Value, request.ValidFrom, request.Reason!.Value);
         if (changed.IsFailure)
         {
@@ -353,6 +380,10 @@ internal sealed class ChangeEmployeeAssignmentCommandHandler(
         }
 
         var assignment = changed.Value;
+        if (request.PreHireId is { } preHireId)
+        {
+            employee.ConfirmPreHire(PreHireId.From(preHireId), employment.Id, request.ValidFrom);
+        }
         await EmployeeEvents.AnnounceIfStartedAsync(db, organization, publisher, timeProvider, employee, employment, assignment, cancellationToken);
         return assignment.Id.Value;
     }

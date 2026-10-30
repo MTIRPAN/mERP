@@ -118,7 +118,9 @@ public sealed class OfferTests(RequisitionFactory factory) : IClassFixture<Requi
         var details = (await Recruiter().GetFromJsonAsync<ApplicationDetails>($"/api/recruitment/applications/{setup.Application}", Ct))!;
         details.ShouldSatisfyAllConditions(d => d.CanHire.ShouldBeTrue(), d => d.CanCreateOffer.ShouldBeFalse(), d => d.Offers.ShouldHaveSingleItem().Status.ShouldBe(OfferStatus.Accepted));
         (await Recruiter().PostAsJsonAsync($"/api/recruitment/applications/{setup.Application}/hire", new { version = details.Version }, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await Recruiter().GetFromJsonAsync<ApplicationDetails>($"/api/recruitment/applications/{setup.Application}", Ct))!.Application.Status.ShouldBe(ApplicationStatus.Hired);
+        // HR completes the hire (R7, HiringTests); until then the application waits in the pipeline
+        (await Recruiter().GetFromJsonAsync<ApplicationDetails>($"/api/recruitment/applications/{setup.Application}", Ct))!.Application
+            .ShouldSatisfyAllConditions(a => a.Status.ShouldBe(ApplicationStatus.Active), a => a.HireRequestedAt.ShouldNotBeNull());
     }
 
     [Fact]

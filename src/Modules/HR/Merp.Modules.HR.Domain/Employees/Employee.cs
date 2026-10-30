@@ -103,6 +103,13 @@ public sealed class Employee : AuditableAggregateRoot<EmployeeId>, IHasCustomFie
 
     public void UpdatePerson(PersonProfile person) => ApplyPerson(person);
 
+    /// <summary>
+    /// Records that the employment, or its assignment from <paramref name="startDate"/>, completed a pre-hire (D54); the
+    /// pre-hire follows by the domain event.
+    /// </summary>
+    public void ConfirmPreHire(PreHires.PreHireId preHireId, EmploymentId employmentId, DateOnly startDate) =>
+        Raise(new PreHires.PreHireConfirmed(preHireId, Id, employmentId, startDate));
+
     public void SetContacts(
         IEnumerable<EmployeeEmail> emails,
         IEnumerable<EmployeePhone> phones,

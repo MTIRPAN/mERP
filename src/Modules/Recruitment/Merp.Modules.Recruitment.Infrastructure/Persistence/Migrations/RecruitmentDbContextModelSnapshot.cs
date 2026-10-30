@@ -518,6 +518,10 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("cv_file_id");
 
+                    b.Property<DateTimeOffset?>("HireRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("hire_requested_at");
+
                     b.Property<bool>("IsInternal")
                         .HasColumnType("boolean")
                         .HasColumnName("is_internal");

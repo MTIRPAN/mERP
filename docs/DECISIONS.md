@@ -1602,3 +1602,56 @@ Seçilen kültür `Content-Language` başlığında döner.
 - "Teklifler" sayfası (`/recruitment/offers`) ve teklif çekmecesi: düzenleme, onaya ve adaya gönderme, mektup önizleme, yanıt kaydetme, geri çekme, onay zaman çizelgesi.
 - Başvuru çekmecesinde teklifler kartı ve "İşe al" düğmesi.
 - Adayın yanıt sayfası.
+
+## D54 — İşe alımdan personele geçiş
+
+**Bağlam:** R7 kabul edilen adayı HR'da personele dönüştürür. Kullanıcı kararları (2026-10-30):
+- Ön kayıt, HR'da personel kaydından ayrı bir kayıttır.
+- Başvuru, İK işe girişi tamamlayınca "İşe alındı" olur.
+- Aynı şirkette çalışan iç aday görev değişikliğiyle tamamlanır.
+- Toplu ret, kadrolar dolunca önerilir.
+
+**"İşe al" (Recruitment):**
+- `POST /api/recruitment/applications/{id}/hire` kabul edilmiş teklif ister.
+- Başvuruyu süreçte bırakır ve `HireRequestedAt` olarak işaretler. Ekranda "İşe giriş bekleniyor" etiketi görünür.
+- Aynı başvuru için ikinci istek reddedilir.
+- `CandidateHired` olayını yayınlar (Recruitment.Contracts). İçeriği:
+  - başvuru, aday ve teklif
+  - şirket (`IntegrationEvent.CompanyId`), talebin birimi ve pozisyonu
+  - teklifin pozisyon adı ve başlangıç tarihi
+  - ilanın istihdam tipi
+  - adayın adı, e-postası ve telefonu
+  - iç adayın HR personeli
+- Kanbanda "İşe alındı" sütununa bırakmak da bu isteği gönderir.
+
+**Ön kayıt (HR, `hr.pre_hires`):**
+- `CandidateHired` ile açılır; başvuru başına bir tanedir.
+- Kişi şöyle aranır:
+  - Önce Recruitment'ın iç aday bağlantısıyla.
+  - Sonra personelin e-posta adresleri arasında, büyük/küçük harf duyarsız. Aynı adres birden çok kişideyse eşleşme yapılmaz.
+  - Adayın TCKN'si olmadığı için TCKN ile eşleştirme yapılamaz. İK formda kayıtlı bir TCKN girerse form reddeder.
+  - E-posta kişiyi bulamadıysa İK ön kayıt sayfasında "Mevcut personel seç" ile kişiyi TCKN ya da adla arar. Ön kayıt o kişi için tekrar işe giriş ya da görev değişikliğiyle tamamlanır.
+- Durumlar: Bekliyor, Tamamlandı, İptal.
+- Yeni bir yetki tanımlanmadı. Liste, görüntüleme ve iptal `hr.employees.create` ister (işe giriş yapanlar). Kapsam şirkettir.
+- **Tamamlama:** İK mevcut formlardan birini kullanır; `preHireId` ilgili komuta eklenir. Hangi form olduğu kişiye göre değişir:
+  - **İşe giriş** (`HireEmployeeCommand`): eşleşen kişi yoksa.
+  - **Tekrar işe giriş:** eşleşen kişinin bu şirkette açık istihdamı yoksa.
+  - **Görev değişikliği:** açık istihdamı varsa; başlangıç tarihinden geçerli yeni görev.
+  - Formlar ön kaydın bilgileriyle (ad, şirket, tarih, istihdam tipi, birim, pozisyon) dolu açılır.
+  - Ön kayıt bekliyor değilse, başka şirketinse ya da başka bir kişiye aitse `preHireId` alanında hata döner.
+- **Tek aggregate kuralı:** Komut personeli değiştirir. Personel `PreHireConfirmed` domain olayını yükseltir; ön kayıt aynı işlemde bu olayla tamamlanır (CLAUDE.md kural 7). HR, `PreHireCompleted` olayını yayınlar (HR.Contracts). Yeni istihdamlar için `EmployeeHired` ve `EmployeeRehired` eskisi gibi yayınlanır.
+- **İptal:** İK ön kaydı nedeniyle iptal eder. `PreHireCancelled` olayı gider; başvurunun işareti kalkar ve "İşe al" yeniden kullanılabilir.
+
+**Kadrolar (Recruitment):**
+- `PreHireCompleted` gelince başvuru "İşe alındı" olur ve `ApplicationHired` domain olayı yükseltilir. Olay aynı işlemde iki şey yapar:
+  - Talebin dolan kadro sayısını artırır; sayı kişi sayısına ulaşınca talep "Doldu" olur.
+  - İlanın işe alınan başvuruları ilan kişi sayısına ulaşınca ilan yeni "Doldu" (`Filled`) durumuna geçer.
+- Dolan ilan başvuru almaz ve yayına alınamaz. Süreci işlenmeye devam eder ve kapatılabilir.
+- **Toplu ret:**
+  - İlan dolunca süreç ekranında "Kalan N başvuruyu reddet" önerisi çıkar.
+  - `POST /api/recruitment/openings/{id}/reject-remaining` neden, not ve ret e-postası zamanıyla süreçteki başvuruları reddeder.
+  - İşe giriş bekleyen başvurular dokunulmadan kalır.
+
+**Web:**
+- HR'da "İşe giriş ön kayıtları" sayfası (`/hr/pre-hires`): duruma göre liste ve uygun tamamlama formu.
+- Recruitment'ta etiketler, "İşe al" mesajı, ilanın "Doldu" durumu ve toplu ret önerisi.

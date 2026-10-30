@@ -31,4 +31,6 @@ export interface RehireEmployeeCommand {
   level?: string | null;
   /** @nullable */
   costCenterCode?: string | null;
+  /** @nullable */
+  preHireId?: string | null;
 }

@@ -19,4 +19,6 @@ export interface ChangeEmployeeAssignmentCommand {
   level?: string | null;
   /** @nullable */
   costCenterCode?: string | null;
+  /** @nullable */
+  preHireId?: string | null;
 }

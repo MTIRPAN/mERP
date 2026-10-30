@@ -4,6 +4,7 @@ using Merp.Modules.HR.Domain.Documents;
 using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Leave;
 using Merp.Modules.HR.Domain.Organization;
+using Merp.Modules.HR.Domain.PreHires;
 using Merp.Modules.HR.Domain.SelfService;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +25,8 @@ public sealed class HrDbContext(DbContextOptions<HrDbContext> options) : ModuleD
     public DbSet<ReportingLine> ReportingLines => Set<ReportingLine>();
 
     public DbSet<Employee> Employees => Set<Employee>();
+
+    public DbSet<PreHire> PreHires => Set<PreHire>();
 
     public DbSet<EmployeeSensitiveData> EmployeeSensitiveData => Set<EmployeeSensitiveData>();
 

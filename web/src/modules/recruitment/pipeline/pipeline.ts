@@ -10,6 +10,7 @@ import {
   getListOpeningsQueryKey,
   hireApplication,
   moveApplication,
+  rejectRemainingApplications,
   rejectApplication,
   reopenApplication,
   useGetApplication,
@@ -121,5 +122,20 @@ export const useApplicationActions = (openingId: string) => {
       ),
     reopen: (id: string) => change(id, (version) => reopenApplication(id, { version, note: null })),
     hire: (id: string) => change(id, (version) => hireApplication(id, { version, note: null })),
+    /** Rejects the applications still in the pipeline at once (D54); returns how many. */
+    rejectRemaining: async (values: LeaveValues) => {
+      const { count } = await rejectRemainingApplications(openingId, {
+        reasonCode: values.reasonCode,
+        note: values.note ?? null,
+        sendEmail: !!values.sendEmail,
+        emailDelayDays: values.sendEmail ? (values.emailDelayDays ?? 0) : 0,
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getGetOpeningPipelineQueryKey(openingId) }),
+        queryClient.invalidateQueries({ queryKey: getListApplicationsQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getListOpeningsQueryKey() }),
+      ]);
+      return count;
+    },
   };
 };

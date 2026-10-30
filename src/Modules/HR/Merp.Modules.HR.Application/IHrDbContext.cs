@@ -3,6 +3,7 @@ using Merp.Modules.HR.Domain.Documents;
 using Merp.Modules.HR.Domain.Employees;
 using Merp.Modules.HR.Domain.Leave;
 using Merp.Modules.HR.Domain.Organization;
+using Merp.Modules.HR.Domain.PreHires;
 using Merp.Modules.HR.Domain.SelfService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -26,6 +27,9 @@ public interface IHrDbContext
 
     /// <summary>People with their employments and job history (D38).</summary>
     DbSet<Employee> Employees { get; }
+
+    /// <summary>Hires Recruitment asked for, waiting for HR to complete them (D54).</summary>
+    DbSet<PreHire> PreHires { get; }
 
     /// <summary>Encrypted special category data, one row per employee (D13).</summary>
     DbSet<EmployeeSensitiveData> EmployeeSensitiveData { get; }

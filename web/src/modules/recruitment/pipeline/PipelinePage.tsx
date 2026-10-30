@@ -42,10 +42,13 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
   const [view, setView] = useState<'kanban' | 'list'>('kanban');
   const [open, setOpen] = useState<string>();
   const [leaving, setLeaving] = useState<Leaving>();
+  const [rejectingRest, setRejectingRest] = useState(false);
   const [statuses, setStatuses] = useState<ApplicationStatus[]>([]);
   const [search, setSearch] = useState<string>();
   const items = useMemo(() => applications.data?.items ?? [], [applications.data]);
   const data = pipeline.data;
+  // Once every seat is hired for, the rest may be rejected at once; those waiting for HR stay (D54)
+  const remaining = items.filter((a) => a.status === 'Active' && !a.hireRequestedAt).length;
 
   const report = (error: unknown) => {
     const fields = isApiError(error) ? (error.problem?.fieldErrors ?? []) : [];
@@ -63,7 +66,11 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
     // Hired takes the accepted offer (D53); without one the API says so
     void (stage.type === 'Hired' ? actions.hire(application.id) : actions.move(application.id, stage.id)).then(
       () =>
-        message.success(t('web.recruitment.pipeline.moved_to', { name: application.candidateName, stage: stage.name })),
+        message.success(
+          stage.type === 'Hired'
+            ? t('web.recruitment.pipeline.hire_requested', { name: application.candidateName })
+            : t('web.recruitment.pipeline.moved_to', { name: application.candidateName, stage: stage.name }),
+        ),
       report,
     );
   };
@@ -158,6 +165,19 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
           </Space>
         }
       />
+      {!team && data.canManage && data.status === 'Filled' && remaining > 0 && (
+        <Alert
+          type="success"
+          showIcon
+          title={t('web.recruitment.pipeline.filled', { count: remaining })}
+          action={
+            <Button size="small" danger onClick={() => setRejectingRest(true)}>
+              {t('web.recruitment.pipeline.reject_remaining', { count: remaining })}
+            </Button>
+          }
+          style={{ marginBottom: 16 }}
+        />
+      )}
       {team && (
         <Alert type="info" showIcon title={t('web.recruitment.pipeline.team_hint')} style={{ marginBottom: 16 }} />
       )}
@@ -222,8 +242,30 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
           onClose={() => setOpen(undefined)}
           onMove={(stageId) => actions.move(open, stageId)}
           onReopen={() => actions.reopen(open)}
-          onHire={() => actions.hire(open)}
+          onHire={() =>
+            actions.hire(open).then(() =>
+              message.success(
+                t('web.recruitment.pipeline.hire_requested', {
+                  name: items.find((a) => a.id === open)?.candidateName ?? '',
+                }),
+              ),
+            )
+          }
           onLeave={(kind, application) => setLeaving({ kind, application })}
+        />
+      )}
+      {rejectingRest && (
+        <ReasonModal
+          kind="reject"
+          candidateName=""
+          title={t('web.recruitment.pipeline.reject_remaining', { count: remaining })}
+          reasons={data.rejectionReasons}
+          onClose={() => setRejectingRest(false)}
+          onSubmit={(values) =>
+            actions
+              .rejectRemaining(values)
+              .then((count) => message.success(t('web.recruitment.pipeline.rejected_remaining', { count })))
+          }
         />
       )}
       {leaving && (

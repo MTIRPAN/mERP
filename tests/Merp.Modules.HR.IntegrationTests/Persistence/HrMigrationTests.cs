@@ -30,7 +30,7 @@ public class HrMigrationTests(PostgresFixture postgres)
         tables.ShouldBe(
             ["__ef_migrations_history", "audit_entries", "inbox_messages", "outbox_messages", "number_counters", "stored_files", "org_units", "jobs", "positions", "reporting_lines",
                 "employees", "employments", "job_assignments", "employee_sensitive_data", "sgk_exit_codes", "document_types", "employee_documents",
-                "profile_change_requests", "leave_types", "leave_policies", "leave_policy_rule_sets", "leave_accounts", "leave_ledger_entries", "leave_requests"],
+                "profile_change_requests", "leave_types", "leave_policies", "leave_policy_rule_sets", "leave_accounts", "leave_ledger_entries", "leave_requests", "pre_hires"],
             ignoreOrder: true);
         (await ListAsync(connectionString, "SELECT table_name FROM information_schema.tables WHERE table_schema = @schema", "public")).ShouldBeEmpty();
 

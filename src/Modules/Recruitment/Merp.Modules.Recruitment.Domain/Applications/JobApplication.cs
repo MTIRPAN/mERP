@@ -121,6 +121,9 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
 
     public DateTimeOffset? RejectionEmailSentAt { get; private set; }
 
+    /// <summary>When the hiring team asked HR to hire the candidate (D54); null while not asked or after HR called it off.</summary>
+    public DateTimeOffset? HireRequestedAt { get; private set; }
+
     /// <summary>Every stage change, oldest first by <see cref="ApplicationStageChange.Sequence"/>.</summary>
     public IReadOnlyCollection<ApplicationStageChange> History => _history.AsReadOnly();
 
@@ -252,26 +255,63 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
         return Result.Success();
     }
 
-    /// <summary>The candidate accepted the application's offer: the application moves to the Hired stage (D53).</summary>
+    /// <summary>
+    /// The candidate accepted the application's offer and the hiring team asks HR to hire them (D54): HR opens a
+    /// pre-hire, and the application stays in the pipeline until HR completes it.
+    /// </summary>
+    public Result RequestHire(Offers.JobOffer offer, DateTimeOffset at)
+    {
+        var checkedOffer = CheckOffer(offer);
+        if (checkedOffer.IsFailure)
+        {
+            return checkedOffer;
+        }
+
+        if (HireRequestedAt is not null)
+        {
+            return JobApplicationErrors.HireRequested;
+        }
+
+        HireRequestedAt = at;
+        return Result.Success();
+    }
+
+    /// <summary>HR called the pre-hire off; the application is in the pipeline as before.</summary>
+    public void HireRequestCancelled() => HireRequestedAt = null;
+
+    /// <summary>
+    /// HR completed the hire of the application's accepted offer (D53, D54): the application moves to the Hired stage
+    /// and the seat it fills is counted by the domain event.
+    /// </summary>
     public Result Hire(JobOpening opening, Offers.JobOffer offer, string? note, Guid? userId, DateTimeOffset at)
     {
         ArgumentNullException.ThrowIfNull(opening);
+        var checkedOffer = CheckOffer(offer);
+        if (checkedOffer.IsFailure)
+        {
+            return checkedOffer;
+        }
+
+        var stage = opening.Stages.First(s => s.Type == StageType.Hired);
+        PreviousStageId = StageId;
+        Status = ApplicationStatus.Hired;
+        HireRequestedAt = null;
+        Enter(stage.Id, null, note, userId, at);
+        Raise(new ApplicationHired(Id, OpeningId));
+        return Result.Success();
+    }
+
+    private Result CheckOffer(Offers.JobOffer offer)
+    {
         ArgumentNullException.ThrowIfNull(offer);
         if (Status != ApplicationStatus.Active)
         {
             return JobApplicationErrors.NotActive;
         }
 
-        if (offer.ApplicationId != Id || offer.Status != Offers.OfferStatus.Accepted)
-        {
-            return JobApplicationErrors.OfferRequired;
-        }
-
-        var stage = opening.Stages.First(s => s.Type == StageType.Hired);
-        PreviousStageId = StageId;
-        Status = ApplicationStatus.Hired;
-        Enter(stage.Id, null, note, userId, at);
-        return Result.Success();
+        return offer.ApplicationId != Id || offer.Status != Offers.OfferStatus.Accepted
+            ? JobApplicationErrors.OfferRequired
+            : Result.Success();
     }
 
     /// <summary>
@@ -507,4 +547,8 @@ public static class JobApplicationErrors
     public static readonly Error UnknownStage = Error.Validation([new FieldError("stageId", "recruitment.applications.errors.unknown_stage")]);
     public static readonly Error NeedsReason = Error.Validation([new FieldError("stageId", "recruitment.applications.errors.needs_reason")]);
     public static readonly Error OfferRequired = Error.Conflict("recruitment.applications.errors.offer_required");
+    public static readonly Error HireRequested = Error.Conflict("recruitment.applications.errors.hire_requested");
 }
+
+/// <summary>An application was hired (D54): the requisition counts the seat and the opening may be filled.</summary>
+public sealed record ApplicationHired(JobApplicationId ApplicationId, JobOpeningId OpeningId) : IDomainEvent;

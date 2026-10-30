@@ -183,6 +183,9 @@ export const ApplicationDrawer = ({
                     {application.source}
                     {application.isInternal && <Tag color="blue">{t('web.recruitment.pipeline.internal')}</Tag>}
                     {application.knockedOut && <Tag color="warning">{t('web.recruitment.pipeline.knocked_out')}</Tag>}
+                    {application.hireRequestedAt && (
+                      <Tag color="green">{t('web.recruitment.pipeline.hire_pending')}</Tag>
+                    )}
                   </Space>
                 ),
               },

@@ -17,6 +17,7 @@ using Merp.Modules.HR.Application.Employees;
 using Merp.Modules.HR.Application.Imports;
 using Merp.Modules.HR.Application.Leave;
 using Merp.Modules.HR.Application.Organization;
+using Merp.Modules.HR.Application.PreHires;
 using Merp.Modules.HR.Application.SelfService;
 using Merp.Modules.HR.Contracts.Employees;
 using Merp.Modules.HR.Contracts.Organization;
@@ -25,6 +26,7 @@ using Merp.Modules.HR.Infrastructure.Employees;
 using Merp.Modules.HR.Infrastructure.Leave;
 using Merp.Modules.HR.Infrastructure.Organization;
 using Merp.Modules.HR.Infrastructure.Persistence;
+using Merp.Modules.HR.Infrastructure.PreHires;
 using Merp.Modules.Platform.Contracts.Approvals;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -62,6 +64,10 @@ public static class HrInfrastructureServiceCollectionExtensions
         services.AddSingleton<ITenantDataSeeder, LeaveSeeder>();
         services.AddScoped<AssignmentsEffectiveJob>();
         services.AddSingleton(RecurringJobDefinition.For<AssignmentsEffectiveJob>(AssignmentsEffectiveJob.JobId, AssignmentsEffectiveJob.Cron));
+
+        // Pre-hires: candidates Recruitment hires, completed by a hire, a rehire or an assignment change (D54)
+        services.AddScoped<PreHireRows>();
+        services.AddScoped<IEmployeeEmailMatcher, EmployeeEmailMatcher>();
 
         // Users of employees: deactivation when nobody works any more (D39)
         services.AddSingleton<ISettingDefinitionProvider, HrSettingDefinitions>();

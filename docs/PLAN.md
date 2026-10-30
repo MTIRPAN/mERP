@@ -1055,7 +1055,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Bütçe üstü teklif ek onay adımına gider.
 - Kabul edilen teklif "İşe al" adımını açar.
 
-### [ ] R7 İşe alımdan personele geçiş 🔍 — M
+### [x] R7 İşe alımdan personele geçiş 🔍 — M
 
 **Yapılacaklar:**
 1. "İşe al" komutu `CandidateHired` olayını yayınlar. İçerik: aday, başvuru, teklif, şirket, pozisyon, birim, başlangıç tarihi, kişisel bilgiler, istihdam tipi.

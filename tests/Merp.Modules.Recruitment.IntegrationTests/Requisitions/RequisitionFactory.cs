@@ -6,6 +6,7 @@ using Merp.Application.Abstractions.Documents;
 using Merp.Infrastructure.Messaging.Integration;
 using Merp.Infrastructure.MultiTenancy;
 using Merp.Infrastructure.Persistence;
+using Merp.Modules.HR.Infrastructure.Persistence;
 using Merp.Modules.Platform.Application.Access;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.SharedKernel.Results;
@@ -76,12 +77,15 @@ public sealed class RequisitionFactory(PostgresFixture postgres) : MerpWebApplic
         }
     }
 
-    /// <summary>The integration events of type <typeparamref name="T"/> in the outbox of the Recruitment module, oldest first.</summary>
+    /// <summary>The integration events of type <typeparamref name="T"/> in the outbox of the Recruitment module, or of HR for HR's events (R7), oldest first.</summary>
     public async Task<IReadOnlyList<T>> OutboxAsync<T>()
     {
         var tenant = (await Services.GetRequiredService<ITenantStore>().FindByCodeAsync(Tenant, Ct))!;
         await using var scope = Services.GetRequiredService<TenantScopeFactory>().CreateScope(tenant);
-        var payloads = await scope.ServiceProvider.GetRequiredService<RecruitmentDbContext>().OutboxMessages.AsNoTracking()
+        ModuleDbContext db = typeof(T).Namespace!.StartsWith("Merp.Modules.HR.", StringComparison.Ordinal)
+            ? scope.ServiceProvider.GetRequiredService<HrDbContext>()
+            : scope.ServiceProvider.GetRequiredService<RecruitmentDbContext>();
+        var payloads = await db.OutboxMessages.AsNoTracking()
             .Where(m => m.Type == typeof(T).FullName)
             .OrderBy(m => m.OccurredAt)
             .Select(m => m.Payload)
