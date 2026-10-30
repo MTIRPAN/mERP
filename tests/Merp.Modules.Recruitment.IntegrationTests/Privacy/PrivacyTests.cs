@@ -17,6 +17,7 @@ using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.Modules.Recruitment.Domain.Requisitions;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.IntegrationTests.Requisitions;
+using Merp.Testing.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -152,11 +153,30 @@ public sealed class PrivacyTests(RequisitionFactory factory) : IClassFixture<Req
         return details.RootElement.GetProperty("version").GetUInt32();
     }
 
-    private async Task<Guid> OpeningAsync() => await WithDbAsync(async db =>
+    /// <summary>A published opening of a company of the tenant: the career page takes applications only for those.</summary>
+    private async Task<Guid> OpeningAsync()
+    {
+        var admin = factory.CreateClientFor("kvkk-sirket-yoneticisi", RequisitionFactory.Tenant, "platform.companies.read", "platform.companies.manage");
+        var company = await RequisitionFactory.CreatedIdAsync(await admin.PostAsJsonAsync(
+            "/api/platform/companies",
+            new
+            {
+                code = "C" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant(),
+                title = "Acme Holding Anonim Şirketi",
+                shortName = "Acme",
+                taxOffice = "Kadıköy",
+                taxNumber = TurkishData.Vkn(),
+                address = new { line1 = "Atatürk Cad. No: 1", provinceCode = 34, districtCode = 1421, postalCode = "34710" },
+            },
+            Ct));
+        return await PublishAsync(company);
+    }
+
+    private async Task<Guid> PublishAsync(Guid company) => await WithDbAsync(async db =>
     {
         var template = await db.StageTemplates.SingleAsync(t => t.IsDefault, Ct);
         var opening = JobOpening.Draft(
-            new OpeningTerms(Guid.CreateVersion7(), null, "Satış Uzmanı", null, null, null, WorkModel.OnSite, RequisitionEmploymentType.Indefinite, 1, OpeningVisibility.Public, null, null, new OpeningTeam(Guid.CreateVersion7(), [], []), new ApplicationForm(false, false, false, [])),
+            new OpeningTerms(company, null, "Satış Uzmanı", null, null, null, WorkModel.OnSite, RequisitionEmploymentType.Indefinite, 1, OpeningVisibility.Public, null, null, new OpeningTeam(Guid.CreateVersion7(), [], []), new ApplicationForm(false, false, false, [])),
             template);
         opening.Publish(DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)), DateTimeOffset.UtcNow).IsSuccess.ShouldBeTrue();
         db.JobOpenings.Add(opening);
