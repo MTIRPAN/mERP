@@ -133,18 +133,19 @@ internal static class OfferEndpoints
     /// <summary>The candidate's page of an offer under <c>/api/public/{tenantCode}/offers/{token}</c> (D20, limited per IP).</summary>
     public static void MapPublicOfferEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var offer = endpoints.MapGroup("/api/public/{tenantCode}/offers/{token}")
+        // The token is the route's last segment: a group pattern with "" would end in a slash, off the D20 list
+        var offers = endpoints.MapGroup("/api/public/{tenantCode}/offers")
             .WithTags("offers")
             .AllowAnonymous()
             .RequireRateLimiting(RateLimitingExtensions.PublicPolicy);
 
-        offer.MapGet("", async Task<Results<Ok<OfferResponsePage>, ProblemHttpResult>> ([FromRoute] string tenantCode, [FromRoute] string token, ISender sender, CancellationToken ct) =>
+        offers.MapGet("/{token}", async Task<Results<Ok<OfferResponsePage>, ProblemHttpResult>> ([FromRoute] string tenantCode, [FromRoute] string token, ISender sender, CancellationToken ct) =>
                 OkOrProblem(await sender.Send(new GetOfferResponsePageQuery(token), ct)))
             .WithName("GetOfferResponsePage")
             .WithSummary("The offer the link in the candidate's e-mail opens")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        offer.MapPost("", ([FromRoute] string tenantCode, [FromRoute] string token, RespondToOfferCommand command, ISender sender, CancellationToken ct) =>
+        offers.MapPost("/{token}", ([FromRoute] string tenantCode, [FromRoute] string token, RespondToOfferCommand command, ISender sender, CancellationToken ct) =>
                 NoContentAsync(sender.Send(command with { Token = token }, ct)))
             // Anonymous: no cookie authenticates the request, so cross-site request forgery does not apply.
             .DisableAntiforgery()
