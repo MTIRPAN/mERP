@@ -240,6 +240,21 @@ public sealed class JobRequisition : AuditableAggregateRoot<JobRequisitionId>, I
         return flowOpen;
     }
 
+    /// <summary>A hire filled one of the seats of an approved requisition (D54); it is Filled with the last one.</summary>
+    public void Fill()
+    {
+        if (Status != RequisitionStatus.Approved)
+        {
+            return;
+        }
+
+        FilledCount++;
+        if (FilledCount >= Headcount)
+        {
+            Status = RequisitionStatus.Filled;
+        }
+    }
+
     private void Set(RequisitionTerms details)
     {
         ArgumentNullException.ThrowIfNull(details);

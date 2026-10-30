@@ -46,6 +46,9 @@ public enum OpeningStatus
 
     /// <summary>Done; never changes again.</summary>
     Closed,
+
+    /// <summary>Every seat was hired for (D54): takes no applications; its pipeline is still worked on, it may be closed.</summary>
+    Filled,
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter<QuestionType>))]
@@ -270,6 +273,22 @@ public sealed class JobOpening : AuditableAggregateRoot<JobOpeningId>, ICompanyS
         CloseReason = Text.Optional(reason, ReasonMaxLength, nameof(reason));
         ClosedAt = at;
         return Result.Success();
+    }
+
+    /// <summary>
+    /// Every seat was hired for (D54): a published or paused opening stops taking applications. Returns whether it
+    /// changed.
+    /// </summary>
+    public bool MarkFilled(int hired, DateTimeOffset at)
+    {
+        if (hired < Headcount || Status is not (OpeningStatus.Published or OpeningStatus.OnHold))
+        {
+            return false;
+        }
+
+        Status = OpeningStatus.Filled;
+        ClosedAt = at;
+        return true;
     }
 
     /// <summary>

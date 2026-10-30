@@ -91,6 +91,8 @@ import type {
   RecordOfferResponseCommand,
   RecruitmentLookupItem,
   RejectApplicationCommand,
+  RejectRemainingApplicationsCommand,
+  RemainingRejected,
   ReopenApplicationCommand,
   RequisitionDetails,
   RequisitionPositionItem,
@@ -626,7 +628,7 @@ export const getHireApplicationUrl = (id: string) => {
 
 /**
  * Requires permission: recruitment.applications.manage.
- * @summary Move an application whose offer the candidate accepted to the Hired stage
+ * @summary Ask HR to hire the candidate whose offer was accepted; the application is hired when HR completes the pre-hire
  */
 export const hireApplication = async (
   id: string,
@@ -698,7 +700,7 @@ export type HireApplicationMutationError = ErrorType<HttpValidationProblemDetail
 export type HireApplicationMutationVariables = { id: string; data: HireApplicationCommand };
 
 /**
- * @summary Move an application whose offer the candidate accepted to the Hired stage
+ * @summary Ask HR to hire the candidate whose offer was accepted; the application is hired when HR completes the pre-hire
  */
 export const useHireApplication = <
   TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
@@ -721,6 +723,111 @@ export const useHireApplication = <
   TContext
 > => {
   return useMutation(getHireApplicationMutationOptions(options), queryClient);
+};
+export const getRejectRemainingApplicationsUrl = (id: string) => {
+  return `/api/recruitment/openings/${id}/reject-remaining`;
+};
+
+/**
+ * Requires permission: recruitment.applications.manage.
+ * @summary Reject the applications still in the pipeline of an opening at once; those waiting for HR to hire stay
+ */
+export const rejectRemainingApplications = async (
+  id: string,
+  rejectRemainingApplicationsCommand: RejectRemainingApplicationsCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<RemainingRejected> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<RemainingRejected>(getRejectRemainingApplicationsUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(rejectRemainingApplicationsCommand),
+  });
+};
+
+export const getRejectRemainingApplicationsMutationKey = () => ['rejectRemainingApplications'] as const;
+
+export const getRejectRemainingApplicationsMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof rejectRemainingApplications>>,
+    TError,
+    RejectRemainingApplicationsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof rejectRemainingApplications>>,
+  TError,
+  RejectRemainingApplicationsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRejectRemainingApplicationsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof rejectRemainingApplications>>,
+    RejectRemainingApplicationsMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return rejectRemainingApplications(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RejectRemainingApplicationsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof rejectRemainingApplications>>
+>;
+export type RejectRemainingApplicationsMutationBody = RejectRemainingApplicationsCommand;
+export type RejectRemainingApplicationsMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type RejectRemainingApplicationsMutationVariables = { id: string; data: RejectRemainingApplicationsCommand };
+
+/**
+ * @summary Reject the applications still in the pipeline of an opening at once; those waiting for HR to hire stay
+ */
+export const useRejectRemainingApplications = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof rejectRemainingApplications>>,
+      TError,
+      RejectRemainingApplicationsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof rejectRemainingApplications>>,
+  TError,
+  RejectRemainingApplicationsMutationVariables,
+  TContext
+> => {
+  return useMutation(getRejectRemainingApplicationsMutationOptions(options), queryClient);
 };
 export const getListRequisitionsUrl = (params?: ListRequisitionsParams) => {
   const normalizedParams = new URLSearchParams();

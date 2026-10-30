@@ -12,4 +12,5 @@ export const OpeningStatus = {
   Published: 'Published',
   OnHold: 'OnHold',
   Closed: 'Closed',
+  Filled: 'Filled',
 } as const;

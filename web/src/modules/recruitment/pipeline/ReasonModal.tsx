@@ -11,6 +11,8 @@ interface ReasonModalProps {
   candidateName: string;
   reasons: ReasonOption[];
   onSubmit: (values: LeaveValues) => Promise<unknown>;
+  /** Replaces the title, e.g. for the bulk rejection of the remaining applications (D54). */
+  title?: string;
   onClose: () => void;
 }
 
@@ -18,7 +20,7 @@ interface ReasonModalProps {
  * Asks why an application leaves the pipeline (D50); a rejection also asks whether and when the candidate gets the
  * rejection e-mail. API field errors are shown on the fields.
  */
-export const ReasonModal = ({ kind, candidateName, reasons, onSubmit, onClose }: ReasonModalProps) => {
+export const ReasonModal = ({ kind, candidateName, reasons, onSubmit, onClose, title }: ReasonModalProps) => {
   const { t } = useTranslation();
   const [form] = Form.useForm<LeaveValues>();
   const [saving, setSaving] = useState(false);
@@ -40,7 +42,7 @@ export const ReasonModal = ({ kind, candidateName, reasons, onSubmit, onClose }:
 
   return (
     <Modal
-      title={t(`web.recruitment.pipeline.${kind}.title`, { name: candidateName })}
+      title={title ?? t(`web.recruitment.pipeline.${kind}.title`, { name: candidateName })}
       open
       onCancel={onClose}
       onOk={() => form.submit()}

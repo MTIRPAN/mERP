@@ -780,5 +780,12 @@
   "web.recruitment.offer_response.status.Returned": "Bu teklif yanıtlanamaz.",
   "web.recruitment.offer_response.status.Approved": "Bu teklif yanıtlanamaz.",
   "web.recruitment.offer_response.status.Rejected": "Bu teklif yanıtlanamaz.",
-  "web.recruitment.offer_response.status.Sent": "Bu teklif yanıtlanamaz."
+  "web.recruitment.offer_response.status.Sent": "Bu teklif yanıtlanamaz.",
+  "recruitment.applications.errors.hire_requested": "Bu aday için işe giriş zaten istendi; İK ön kaydı tamamlayınca başvuru İşe alındı olur.",
+  "web.recruitment.pipeline.hire_pending": "İşe giriş bekleniyor",
+  "web.recruitment.pipeline.hire_requested": "{name} için işe giriş ön kaydı İK'ya iletildi. İK tamamlayınca başvuru İşe alındı olur.",
+  "web.recruitment.pipeline.filled": "İlanın kadroları doldu. Süreçte {count} başvuru kaldı.",
+  "web.recruitment.pipeline.reject_remaining": "Kalan {count} başvuruyu reddet",
+  "web.recruitment.pipeline.rejected_remaining": "{count} başvuru reddedildi.",
+  "web.recruitment.openings.status.Filled": "Doldu"
 }

@@ -211,17 +211,6 @@ public sealed record WithdrawOfferCommand(uint Version, string? Reason) : IComma
     public string Permission => RecruitmentPermissions.Offers.Manage;
 }
 
-/// <summary>Moves an application whose offer the candidate accepted to the Hired stage (D53).</summary>
-public sealed record HireApplicationCommand(uint Version, string? Note) : ICommand, IRequirePermission
-{
-    /// <summary>From the route.</summary>
-    [JsonIgnore]
-    public Guid Id { get; init; }
-
-    [JsonIgnore]
-    public string Permission => RecruitmentPermissions.Applications.Manage;
-}
-
 /// <summary>The candidate's page of an offer by the token of the link (anonymous).</summary>
 public sealed record GetOfferResponsePageQuery(string Token) : IQuery<OfferResponsePage>;
 
@@ -879,25 +868,6 @@ internal sealed class WithdrawOfferCommandHandler(IRecruitmentDbContext db, Offe
         }
 
         return Result.Success();
-    }
-}
-
-internal sealed class HireApplicationCommandHandler(IRecruitmentDbContext db, ApplicationAccess access, ICurrentUser currentUser, TimeProvider timeProvider)
-    : ICommandHandler<HireApplicationCommand>
-{
-    public async Task<Result> Handle(HireApplicationCommand request, CancellationToken cancellationToken)
-    {
-        var loaded = await ApplicationChanges.LoadAsync(db, access, request.Id, request.Version, cancellationToken);
-        if (loaded.IsFailure)
-        {
-            return loaded.Error;
-        }
-
-        var (application, opening) = loaded.Value;
-        var offer = await db.JobOffers.AsNoTracking().FirstOrDefaultAsync(o => o.ApplicationId == application.Id && o.Status == OfferStatus.Accepted, cancellationToken);
-        return offer is null
-            ? JobApplicationErrors.OfferRequired
-            : application.Hire(opening, offer, request.Note, currentUser.UserId, timeProvider.GetUtcNow());
     }
 }
 

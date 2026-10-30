@@ -12,7 +12,7 @@ import type {
   WorkModel,
 } from '@/shared/api/generated/model';
 
-export const openingStatuses: OpeningStatus[] = ['Draft', 'Published', 'OnHold', 'Closed'];
+export const openingStatuses: OpeningStatus[] = ['Draft', 'Published', 'OnHold', 'Filled', 'Closed'];
 
 export const workModels: WorkModel[] = ['OnSite', 'Remote', 'Hybrid'];
 
@@ -28,6 +28,7 @@ export const openingStatusColors: Record<OpeningStatus, string> = {
   Draft: 'default',
   Published: 'success',
   OnHold: 'warning',
+  Filled: 'blue',
   Closed: 'default',
 };
 

@@ -26,6 +26,7 @@ import type {
   BulkLeaveRow,
   CancelLeaveRequestCommand,
   CancelMyLeaveRequestCommand,
+  CancelPreHireCommand,
   ChangeEmployeeAssignmentCommand,
   CheckLeavePolicyRulesQuery,
   ColleagueItem,
@@ -81,6 +82,7 @@ import type {
   ListMyLeaveTypesParams,
   ListOrgUnitsParams,
   ListPositionsParams,
+  ListPreHiresParams,
   ListSgkExitCodesParams,
   MoveOrgUnitCommand,
   OrgUnitDetails,
@@ -93,7 +95,9 @@ import type {
   PagedResultOfLongTimeNoLeaveRow,
   PagedResultOfOrgUnitListItem,
   PagedResultOfPositionListItem,
+  PagedResultOfPreHireItem,
   PositionDetails,
+  PreHireItem,
   PreviewBulkLeaveQuery,
   PreviewLeaveDurationQuery,
   PreviewLeaveRecordQuery,
@@ -3818,6 +3822,343 @@ export const useGroupTransferEmployee = <
   TContext
 > => {
   return useMutation(getGroupTransferEmployeeMutationOptions(options), queryClient);
+};
+export const getListPreHiresUrl = (params?: ListPreHiresParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['status'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/hr/pre-hires?${stringifiedParams}` : `/api/hr/pre-hires`;
+};
+
+/**
+ * Requires permission: hr.employees.create.
+ * @summary Pre-hires of the companies in scope, by start date
+ */
+export const listPreHires = async (
+  params?: ListPreHiresParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfPreHireItem> => {
+  return customFetch<PagedResultOfPreHireItem>(getListPreHiresUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getListPreHiresQueryKey = (params?: ListPreHiresParams) => {
+  return [`/api/hr/pre-hires`, ...(params ? [params] : [])] as const;
+};
+
+export const getListPreHiresQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPreHires>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListPreHiresParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPreHires>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListPreHiresQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listPreHires>>> = ({ signal }) =>
+    listPreHires(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPreHires>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListPreHiresQueryResult = NonNullable<Awaited<ReturnType<typeof listPreHires>>>;
+export type ListPreHiresQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useListPreHires<
+  TData = Awaited<ReturnType<typeof listPreHires>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ListPreHiresParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPreHires>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPreHires>>,
+          TError,
+          Awaited<ReturnType<typeof listPreHires>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListPreHires<
+  TData = Awaited<ReturnType<typeof listPreHires>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListPreHiresParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPreHires>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPreHires>>,
+          TError,
+          Awaited<ReturnType<typeof listPreHires>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useListPreHires<
+  TData = Awaited<ReturnType<typeof listPreHires>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListPreHiresParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPreHires>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Pre-hires of the companies in scope, by start date
+ */
+
+export function useListPreHires<
+  TData = Awaited<ReturnType<typeof listPreHires>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ListPreHiresParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof listPreHires>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getListPreHiresQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetPreHireUrl = (id: string) => {
+  return `/api/hr/pre-hires/${id}`;
+};
+
+/**
+ * Requires permission: hr.employees.create.
+ * @summary A pre-hire with the person it may be for
+ */
+export const getPreHire = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<PreHireItem> => {
+  return customFetch<PreHireItem>(getGetPreHireUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetPreHireQueryKey = (id: string) => {
+  return [`/api/hr/pre-hires/${id}`] as const;
+};
+
+export const getGetPreHireQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPreHire>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreHire>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPreHireQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPreHire>>> = ({ signal }) =>
+    getPreHire(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPreHire>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPreHireQueryResult = NonNullable<Awaited<ReturnType<typeof getPreHire>>>;
+export type GetPreHireQueryError = ErrorType<ProblemDetails>;
+
+export function useGetPreHire<TData = Awaited<ReturnType<typeof getPreHire>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreHire>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPreHire>>,
+          TError,
+          Awaited<ReturnType<typeof getPreHire>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPreHire<TData = Awaited<ReturnType<typeof getPreHire>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreHire>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPreHire>>,
+          TError,
+          Awaited<ReturnType<typeof getPreHire>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetPreHire<TData = Awaited<ReturnType<typeof getPreHire>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreHire>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A pre-hire with the person it may be for
+ */
+
+export function useGetPreHire<TData = Awaited<ReturnType<typeof getPreHire>>, TError = ErrorType<ProblemDetails>>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getPreHire>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetPreHireQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getCancelPreHireUrl = (id: string) => {
+  return `/api/hr/pre-hires/${id}/cancel`;
+};
+
+/**
+ * Requires permission: hr.employees.create.
+ * @summary Call a waiting pre-hire off; the application goes back to the pipeline
+ */
+export const cancelPreHire = async (
+  id: string,
+  cancelPreHireCommand: CancelPreHireCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<void>(getCancelPreHireUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(cancelPreHireCommand),
+  });
+};
+
+export const getCancelPreHireMutationKey = () => ['cancelPreHire'] as const;
+
+export const getCancelPreHireMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelPreHire>>,
+    TError,
+    CancelPreHireMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof cancelPreHire>>, TError, CancelPreHireMutationVariables, TContext> => {
+  const mutationKey = getCancelPreHireMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelPreHire>>, CancelPreHireMutationVariables> = (
+    props,
+  ) => {
+    const { id, data } = props ?? {};
+
+    return cancelPreHire(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelPreHireMutationResult = NonNullable<Awaited<ReturnType<typeof cancelPreHire>>>;
+export type CancelPreHireMutationBody = CancelPreHireCommand;
+export type CancelPreHireMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CancelPreHireMutationVariables = { id: string; data: CancelPreHireCommand };
+
+/**
+ * @summary Call a waiting pre-hire off; the application goes back to the pipeline
+ */
+export const useCancelPreHire = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cancelPreHire>>,
+      TError,
+      CancelPreHireMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof cancelPreHire>>, TError, CancelPreHireMutationVariables, TContext> => {
+  return useMutation(getCancelPreHireMutationOptions(options), queryClient);
 };
 export const getListSgkExitCodesUrl = (params?: ListSgkExitCodesParams) => {
   const normalizedParams = new URLSearchParams();

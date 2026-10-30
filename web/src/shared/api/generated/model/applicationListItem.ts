@@ -29,4 +29,6 @@ export interface ApplicationListItem {
   stageEnteredAt: string;
   /** @nullable */
   slaDueAt: string | null;
+  /** @nullable */
+  hireRequestedAt: string | null;
 }

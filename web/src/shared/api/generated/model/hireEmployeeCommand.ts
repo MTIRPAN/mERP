@@ -52,4 +52,6 @@ export interface HireEmployeeCommand {
   costCenterCode?: string | null;
   /** @nullable */
   customFields?: HireEmployeeCommandCustomFields;
+  /** @nullable */
+  preHireId?: string | null;
 }

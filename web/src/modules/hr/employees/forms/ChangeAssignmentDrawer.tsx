@@ -1,8 +1,9 @@
 import { Alert, Col, DatePicker, Form, Row, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { useChangeEmployeeAssignment } from '@/shared/api/generated/endpoints/hr/hr';
-import type { AssignmentReason, EmploymentItem } from '@/shared/api/generated/model';
+import { useQueryClient } from '@tanstack/react-query';
+import { getListPreHiresQueryKey, useChangeEmployeeAssignment } from '@/shared/api/generated/endpoints/hr/hr';
+import type { AssignmentReason, EmploymentItem, PreHireItem } from '@/shared/api/generated/model';
 import { FormDrawer } from '@/shared/components/FormDrawer';
 import { AssignmentFields, type AssignmentValues } from './AssignmentFields';
 import { day } from './formValues';
@@ -16,20 +17,29 @@ interface ChangeAssignmentValues extends AssignmentValues {
 
 interface ChangeAssignmentDrawerProps {
   employeeId: string;
-  employment: EmploymentItem;
+  employment: Pick<EmploymentItem, 'id' | 'companyId' | 'companyName'>;
   open: boolean;
   onClose: () => void;
+  /** Completes this pre-hire of an employee of the company with the new assignment (D54). */
+  preHire?: PreHireItem;
 }
 
 /**
  * Görev değişikliği (D38): a new assignment from a day, which may be in the future; the previous one ends the day
  * before. A change on the latest assignment's first day corrects it.
  */
-export const ChangeAssignmentDrawer = ({ employeeId, employment, open, onClose }: ChangeAssignmentDrawerProps) => {
+export const ChangeAssignmentDrawer = ({
+  employeeId,
+  employment,
+  open,
+  onClose,
+  preHire,
+}: ChangeAssignmentDrawerProps) => {
   const { t } = useTranslation();
   const [form] = Form.useForm<ChangeAssignmentValues>();
   const change = useChangeEmployeeAssignment();
   const refresh = useEmployeeRefresh(employeeId);
+  const queryClient = useQueryClient();
   const required = [{ required: true, message: t('web.platform.fields.required') }];
 
   const submit = async (values: ChangeAssignmentValues) => {
@@ -40,9 +50,10 @@ export const ChangeAssignmentDrawer = ({ employeeId, employment, open, onClose }
         validFrom: day(values.validFrom) ?? '',
         reason: values.reason ?? null,
         ...toAssignment(values),
+        preHireId: preHire?.id ?? null,
       },
     });
-    await refresh();
+    await Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: getListPreHiresQueryKey() })]);
   };
 
   return (
@@ -53,7 +64,15 @@ export const ChangeAssignmentDrawer = ({ employeeId, employment, open, onClose }
       onSubmit={submit}
       form={form}
       width={640}
-      initialValues={{ validFrom: dayjs() }}
+      initialValues={
+        preHire
+          ? {
+              validFrom: dayjs(preHire.startDate),
+              orgUnitId: preHire.orgUnitId ?? undefined,
+              positionId: preHire.positionId ?? undefined,
+            }
+          : { validFrom: dayjs() }
+      }
     >
       <Alert
         type="info"

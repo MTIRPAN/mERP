@@ -66,7 +66,8 @@ public sealed record ApplicationListItem(
     string Source,
     DateTimeOffset AppliedAt,
     DateTimeOffset StageEnteredAt,
-    DateTimeOffset? SlaDueAt);
+    DateTimeOffset? SlaDueAt,
+    DateTimeOffset? HireRequestedAt);
 
 /// <summary>An answer with its question; <paramref name="Missed"/> marks a knockout answer outside the accepted ones.</summary>
 public sealed record ApplicationAnswerItem(Guid QuestionId, string? Question, QuestionType? Type, IReadOnlyList<string> Values, bool Missed);
@@ -346,6 +347,7 @@ public sealed class ApplicationRows(IRecruitmentDbContext db, ICurrentUser curre
             Source = a.Source,
             AppliedAt = a.AppliedAt,
             StageEnteredAt = a.StageEnteredAt,
+            HireRequestedAt = a.HireRequestedAt,
         };
 
     public async Task<List<ApplicationListItem>> ItemsAsync(IReadOnlyList<ApplicationRow> rows, CancellationToken cancellationToken)
@@ -376,7 +378,8 @@ public sealed class ApplicationRows(IRecruitmentDbContext db, ICurrentUser curre
             row.Source,
             row.AppliedAt,
             row.StageEnteredAt,
-            row.Status == ApplicationStatus.Active && stage?.SlaDays is { } days ? row.StageEnteredAt.AddDays(days) : null);
+            row.Status == ApplicationStatus.Active && stage?.SlaDays is { } days ? row.StageEnteredAt.AddDays(days) : null,
+            row.HireRequestedAt);
     }
 }
 
@@ -412,6 +415,8 @@ public sealed class ApplicationRow
     public DateTimeOffset AppliedAt { get; init; }
 
     public DateTimeOffset StageEnteredAt { get; init; }
+
+    public DateTimeOffset? HireRequestedAt { get; init; }
 }
 
 internal sealed class GetApplicationsQueryValidator : AbstractValidator<GetApplicationsQuery>
@@ -638,7 +643,7 @@ internal sealed class GetApplicationQueryHandler(
             active && await interviewAccess.ManagesAsync(application.CompanyId, cancellationToken),
             await offerRows.ItemsAsync(offers, cancellationToken),
             active && !offers.Any(o => o.IsOpen || o.Status == OfferStatus.Accepted) && await offerAccess.ManagesAsync(application.CompanyId, cancellationToken),
-            active && offers.Any(o => o.Status == OfferStatus.Accepted) && await access.ManagesAsync(application.CompanyId, cancellationToken));
+            active && application.HireRequestedAt is null && offers.Any(o => o.Status == OfferStatus.Accepted) && await access.ManagesAsync(application.CompanyId, cancellationToken));
     }
 
     private static ApplicationAnswerItem Answer(JobOpening opening, ApplicationAnswer answer)

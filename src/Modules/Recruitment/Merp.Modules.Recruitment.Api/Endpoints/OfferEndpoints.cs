@@ -2,6 +2,7 @@ using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Paging;
 using Merp.Modules.Recruitment.Application;
 using Merp.Modules.Recruitment.Application.Applications;
+using Merp.Modules.Recruitment.Application.Hiring;
 using Merp.Modules.Recruitment.Application.Offers;
 using Merp.Modules.Recruitment.Domain.Offers;
 using Merp.SharedKernel.Results;
@@ -106,10 +107,21 @@ internal static class OfferEndpoints
                 NoContentAsync(sender.Send(command with { Id = id }, ct)))
             .RequirePermission(RecruitmentPermissions.Applications.Manage)
             .WithName("HireApplication")
-            .WithSummary("Move an application whose offer the candidate accepted to the Hired stage")
+            .WithSummary("Ask HR to hire the candidate whose offer was accepted; the application is hired when HR completes the pre-hire")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapPost("/openings/{id:guid}/reject-remaining", async Task<Results<Ok<RemainingRejected>, ProblemHttpResult>> (Guid id, RejectRemainingApplicationsCommand command, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(command with { OpeningId = id }, ct);
+                return result.IsSuccess ? TypedResults.Ok(new RemainingRejected(result.Value)) : (ProblemHttpResult)result.Error.ToProblem();
+            })
+            .RequirePermission(RecruitmentPermissions.Applications.Manage)
+            .WithName("RejectRemainingApplications")
+            .WithSummary("Reject the applications still in the pipeline of an opening at once; those waiting for HR to hire stay")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         // The opening's hiring manager, usually its first approver, reads the offer from self service (D50, D53)
         var team = group.MapGroup("/me/hiring/offers");

@@ -9,10 +9,11 @@ import { useMe } from '@/app/me/meContext';
 import {
   getListEmployeesQueryKey,
   getListPositionsQueryKey,
+  getListPreHiresQueryKey,
   useHireEmployee,
 } from '@/shared/api/generated/endpoints/hr/hr';
 import { useGetCustomFieldForm } from '@/shared/api/generated/endpoints/platform/platform';
-import { EmploymentType } from '@/shared/api/generated/model';
+import { EmploymentType, type PreHireItem } from '@/shared/api/generated/model';
 import { applyApiErrorsToForm } from '@/shared/api/formErrors';
 import { isApiError } from '@/shared/api/problem';
 import { DynamicFields } from '@/shared/customFields/DynamicFields';
@@ -28,6 +29,9 @@ const TCKN_EXISTS = 'hr.employees.errors.tckn_exists';
 interface HireWizardProps {
   open: boolean;
   onClose: () => void;
+  /** Completes this pre-hire of a candidate Recruitment hires (D54); its values fill the form. */
+  preHire?: PreHireItem;
+  onHired?: () => void;
 }
 
 /**
@@ -35,7 +39,7 @@ interface HireWizardProps {
  * everything again; its errors open the step of the field. A TCKN already registered links to the person, whose
  * card offers rehiring.
  */
-export const HireWizard = ({ open, onClose }: HireWizardProps) => {
+export const HireWizard = ({ open, onClose, preHire, onHired }: HireWizardProps) => {
   const { t } = useTranslation();
   const me = useMe();
   const activeCompanyId = useActiveCompanyId();
@@ -74,15 +78,23 @@ export const HireWizard = ({ open, onClose }: HireWizardProps) => {
     setExistingTckn(undefined);
     try {
       const created = await hire.mutateAsync({
-        data: toHireCommand(values, toApiValues(customFields, values.customFields)),
+        data: {
+          ...toHireCommand(values, toApiValues(customFields, values.customFields)),
+          preHireId: preHire?.id ?? null,
+        },
       });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey() }),
         queryClient.invalidateQueries({ queryKey: getListPositionsQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getListPreHiresQueryKey() }),
       ]);
       void message.success(t('web.hr.employees.hired'));
       onClose();
-      void navigate(`/hr/employees/${created.id}`);
+      if (preHire) {
+        onHired?.();
+      } else {
+        void navigate(`/hr/employees/${created.id}`);
+      }
     } catch (error) {
       if (!applyApiErrorsToForm(form, error)) {
         throw error;
@@ -104,7 +116,11 @@ export const HireWizard = ({ open, onClose }: HireWizardProps) => {
 
   return (
     <Modal
-      title={t('web.hr.employees.hire_title')}
+      title={
+        preHire
+          ? t('web.hr.pre_hires.complete_title', { name: `${preHire.firstName} ${preHire.lastName}` })
+          : t('web.hr.employees.hire_title')
+      }
       open={open}
       onCancel={onClose}
       width={760}
@@ -152,12 +168,25 @@ export const HireWizard = ({ open, onClose }: HireWizardProps) => {
         form={form}
         layout="vertical"
         requiredMark="optional"
-        initialValues={{
-          companyId: activeCompanyId ?? (me.companies.length === 1 ? me.companies[0]?.id : undefined),
-          hireDate: dayjs(),
-          employmentType: EmploymentType.Indefinite,
-          nationality: 'TR',
-        }}
+        initialValues={
+          preHire
+            ? {
+                firstName: preHire.firstName,
+                lastName: preHire.lastName,
+                companyId: preHire.companyId,
+                hireDate: dayjs(preHire.startDate),
+                employmentType: preHire.employmentType,
+                nationality: 'TR',
+                orgUnitId: preHire.orgUnitId ?? undefined,
+                positionId: preHire.positionId ?? undefined,
+              }
+            : {
+                companyId: activeCompanyId ?? (me.companies.length === 1 ? me.companies[0]?.id : undefined),
+                hireDate: dayjs(),
+                employmentType: EmploymentType.Indefinite,
+                nationality: 'TR',
+              }
+        }
       >
         <div style={shown(0)}>
           <Row gutter={12}>

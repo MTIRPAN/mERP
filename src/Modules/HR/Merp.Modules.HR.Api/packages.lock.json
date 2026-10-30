@@ -352,7 +352,8 @@
           "Merp.Application.Persistence": "[1.0.0, )",
           "Merp.Modules.HR.Contracts": "[1.0.0, )",
           "Merp.Modules.HR.Domain": "[1.0.0, )",
-          "Merp.Modules.Platform.Contracts": "[1.0.0, )"
+          "Merp.Modules.Platform.Contracts": "[1.0.0, )",
+          "Merp.Modules.Recruitment.Contracts": "[1.0.0, )"
         }
       },
       "merp.modules.hr.contracts": {
@@ -375,6 +376,12 @@
         }
       },
       "merp.modules.platform.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )"
+        }
+      },
+      "merp.modules.recruitment.contracts": {
         "type": "Project",
         "dependencies": {
           "Merp.Application.Abstractions": "[1.0.0, )"

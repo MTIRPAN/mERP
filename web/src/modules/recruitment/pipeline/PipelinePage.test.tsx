@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
+  RejectRemainingApplicationsCommand,
   ApplicationDetails,
   ApplicationListItem,
   OpeningPipeline,
@@ -15,6 +16,8 @@ import { HiringPipelinePage, PipelinePage } from './PipelinePage';
 import { isOverdue } from './pipeline';
 
 const reject = vi.fn<(id: string, body: RejectApplicationCommand) => Promise<void>>().mockResolvedValue(undefined);
+const rejectRemaining = vi.fn<(id: string, body: RejectRemainingApplicationsCommand) => Promise<{ count: number }>>();
+let filled = false;
 
 const pipeline: OpeningPipeline = {
   openingId: 'o1',
@@ -58,6 +61,7 @@ const application = (
   appliedAt: '2026-10-20T09:00:00Z',
   stageEnteredAt: '2026-10-20T09:00:00Z',
   slaDueAt: null,
+  hireRequestedAt: null,
   ...extra,
 });
 
@@ -107,7 +111,9 @@ const details: ApplicationDetails = {
 let teamDetails = false;
 
 vi.mock('@/shared/api/generated/endpoints/recruitment/recruitment', () => ({
-  useGetOpeningPipeline: () => ({ data: pipeline }),
+  useGetOpeningPipeline: () => ({ data: filled ? { ...pipeline, status: 'Filled' } : pipeline }),
+  rejectRemainingApplications: (id: string, body: RejectRemainingApplicationsCommand) => rejectRemaining(id, body),
+  hireApplication: vi.fn(),
   useGetMyHiringOpeningPipeline: () => ({
     data: { ...pipeline, canManage: false, rejectionReasons: [], withdrawalReasons: [] },
   }),
@@ -145,6 +151,7 @@ const texts: Record<string, string> = {
   'web.recruitment.pipeline.team_hint': 'Bu ilanın işe alım ekibindesiniz.',
   'web.recruitment.pipeline.download_cv': 'Özgeçmişi indir ({name})',
   'web.recruitment.openings.answers.no': 'Hayır',
+  'web.recruitment.pipeline.reject_remaining': 'Kalan {count} başvuruyu reddet',
 };
 
 const render = (route: string) =>
@@ -162,6 +169,8 @@ const render = (route: string) =>
 describe('PipelinePage', () => {
   beforeEach(() => {
     reject.mockClear();
+    rejectRemaining.mockReset().mockResolvedValue({ count: 2 });
+    filled = false;
     teamDetails = false;
   });
 
@@ -195,6 +204,26 @@ describe('PipelinePage', () => {
         note: null,
         sendEmail: true,
         emailDelayDays: 2,
+      }),
+    );
+  });
+
+  it('offers to reject the rest once every seat is hired for', async () => {
+    filled = true;
+    render('/recruitment/openings/o1/pipeline');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Kalan 2 başvuruyu reddet' }));
+    const modal = (await screen.findAllByText('Kalan 2 başvuruyu reddet')).at(-1)!.closest('.ant-modal') as HTMLElement;
+    await userEvent.click(within(modal).getAllByRole('combobox')[0]!);
+    await userEvent.click(await screen.findByText('Yetkinlikler uyuşmuyor'));
+    await userEvent.click(within(modal).getByRole('button', { name: 'Reddet' }));
+
+    await waitFor(() =>
+      expect(rejectRemaining).toHaveBeenCalledWith('o1', {
+        reasonCode: 'SKILLS',
+        note: null,
+        sendEmail: true,
+        emailDelayDays: 0,
       }),
     );
   });

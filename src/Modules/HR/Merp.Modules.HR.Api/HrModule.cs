@@ -29,6 +29,7 @@ public sealed class HrModule : IModule
         group.MapJobEndpoints();
         group.MapPositionEndpoints();
         group.MapEmployeeEndpoints();
+        group.MapPreHireEndpoints();
         group.MapSgkExitCodeEndpoints();
         group.MapDocumentEndpoints();
         group.MapSelfServiceEndpoints();

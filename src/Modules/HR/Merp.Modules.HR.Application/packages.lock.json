@@ -109,6 +109,12 @@
           "Merp.Application.Abstractions": "[1.0.0, )"
         }
       },
+      "merp.modules.recruitment.contracts": {
+        "type": "Project",
+        "dependencies": {
+          "Merp.Application.Abstractions": "[1.0.0, )"
+        }
+      },
       "merp.sharedkernel": {
         "type": "Project"
       },

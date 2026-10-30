@@ -68,6 +68,7 @@ const RecruitmentSettingsPage = page(
 const OrgStructurePage = page(() => import('@/modules/hr/organization/OrgStructurePage'), 'OrgStructurePage');
 const PositionsPage = page(() => import('@/modules/hr/positions/PositionsPage'), 'PositionsPage');
 const EmployeesPage = page(() => import('@/modules/hr/employees/EmployeesPage'), 'EmployeesPage');
+const PreHiresPage = page(() => import('@/modules/hr/preHires/PreHiresPage'), 'PreHiresPage');
 const EmployeeCardPage = page(() => import('@/modules/hr/employees/EmployeeCardPage'), 'EmployeeCardPage');
 const MyCardPage = page(() => import('@/modules/hr/selfService/MyCardPage'), 'MyCardPage');
 const LeaveSettingsPage = page(() => import('@/modules/hr/leave/LeaveSettingsPage'), 'LeaveSettingsPage');
@@ -291,6 +292,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={hrPermissions.orgRead}>
               <OrgStructurePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="hr/pre-hires"
+          element={
+            <RequirePermission permission={hrPermissions.employeesCreate}>
+              <PreHiresPage />
             </RequirePermission>
           }
         />

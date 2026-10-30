@@ -4,6 +4,7 @@
     <ProjectReference Include="../Merp.Modules.HR.Domain/Merp.Modules.HR.Domain.csproj" />
     <ProjectReference Include="../Merp.Modules.HR.Contracts/Merp.Modules.HR.Contracts.csproj" />
     <ProjectReference Include="../../Platform/Merp.Modules.Platform.Contracts/Merp.Modules.Platform.Contracts.csproj" />
+    <ProjectReference Include="../../Recruitment/Merp.Modules.Recruitment.Contracts/Merp.Modules.Recruitment.Contracts.csproj" />
     <ProjectReference Include="../../../BuildingBlocks/Merp.Application.Persistence/Merp.Application.Persistence.csproj" />
   </ItemGroup>
 

@@ -2,8 +2,9 @@ import { Col, DatePicker, Divider, Form, Row, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useMe } from '@/app/me/meContext';
-import { useRehireEmployee } from '@/shared/api/generated/endpoints/hr/hr';
-import { EmploymentType } from '@/shared/api/generated/model';
+import { useQueryClient } from '@tanstack/react-query';
+import { getListPreHiresQueryKey, useRehireEmployee } from '@/shared/api/generated/endpoints/hr/hr';
+import { EmploymentType, type PreHireItem } from '@/shared/api/generated/model';
 import { FormDrawer } from '@/shared/components/FormDrawer';
 import { AssignmentFields, type AssignmentValues } from './AssignmentFields';
 import { day } from './formValues';
@@ -22,15 +23,18 @@ interface RehireDrawerProps {
   openCompanyIds: string[];
   open: boolean;
   onClose: () => void;
+  /** Completes this pre-hire of a former or other-company employee (D54); its values fill the form. */
+  preHire?: PreHireItem;
 }
 
 /** Tekrar işe giriş (D38): a new employment of the person, in the same or another company. */
-export const RehireDrawer = ({ employeeId, openCompanyIds, open, onClose }: RehireDrawerProps) => {
+export const RehireDrawer = ({ employeeId, openCompanyIds, open, onClose, preHire }: RehireDrawerProps) => {
   const { t } = useTranslation();
   const me = useMe();
   const [form] = Form.useForm<RehireValues>();
   const rehire = useRehireEmployee();
   const refresh = useEmployeeRefresh(employeeId);
+  const queryClient = useQueryClient();
   const companyId = Form.useWatch('companyId', form);
   const required = [{ required: true, message: t('web.platform.fields.required') }];
 
@@ -43,9 +47,10 @@ export const RehireDrawer = ({ employeeId, openCompanyIds, open, onClose }: Rehi
         hireDate: hireDate ?? '',
         ...toTerms(values, hireDate),
         ...toAssignment(values),
+        preHireId: preHire?.id ?? null,
       },
     });
-    await refresh();
+    await Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: getListPreHiresQueryKey() })]);
   };
 
   return (
@@ -56,7 +61,17 @@ export const RehireDrawer = ({ employeeId, openCompanyIds, open, onClose }: Rehi
       onSubmit={submit}
       form={form}
       width={680}
-      initialValues={{ hireDate: dayjs(), employmentType: EmploymentType.Indefinite }}
+      initialValues={
+        preHire
+          ? {
+              companyId: preHire.companyId,
+              hireDate: dayjs(preHire.startDate),
+              employmentType: preHire.employmentType,
+              orgUnitId: preHire.orgUnitId ?? undefined,
+              positionId: preHire.positionId ?? undefined,
+            }
+          : { hireDate: dayjs(), employmentType: EmploymentType.Indefinite }
+      }
     >
       <Row gutter={12}>
         <Col span={14}>
