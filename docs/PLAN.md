@@ -1073,7 +1073,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Kabul edilen aday tek tıkla personel ön kaydı olur.
 - İK tamamladıktan sonra kadro dolu görünür ve talep "Doldu" olur.
 
-### [ ] R8 KVKK ve saklama — M
+### [x] R8 KVKK ve saklama — M
 
 **Yapılacaklar:**
 - Rıza metni sürümleri ve aday bazında rıza kaydı.

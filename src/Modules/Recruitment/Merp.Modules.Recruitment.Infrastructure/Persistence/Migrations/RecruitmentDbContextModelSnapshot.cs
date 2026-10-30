@@ -611,6 +611,25 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("AnonymizedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("anonymized_at");
+
+                    b.Property<string>("ConsentChanges")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("consent_changes");
+
+                    b.Property<DateTimeOffset?>("ConsentRenewalRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consent_renewal_requested_at");
+
+                    b.Property<string>("ConsentTokenHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("consent_token_hash")
+                        .IsFixedLength();
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -761,6 +780,11 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_candidates");
+
+                    b.HasIndex("ConsentTokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_candidates_consent_token_hash")
+                        .HasFilter("consent_token_hash IS NOT NULL");
 
                     b.HasIndex("Email")
                         .IsUnique()

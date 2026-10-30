@@ -13,6 +13,7 @@ export const recruitmentPermissions = {
   applicationsManage: 'recruitment.applications.manage',
   candidatesRead: 'recruitment.candidates.read',
   candidatesManage: 'recruitment.candidates.manage',
+  candidatesPrivacy: 'recruitment.candidates.privacy',
   interviewsRead: 'recruitment.interviews.read',
   interviewsManage: 'recruitment.interviews.manage',
   feedbackSubmit: 'recruitment.feedback.submit',

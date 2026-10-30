@@ -56,6 +56,9 @@ public static class RecruitmentPermissions
 
         /// <summary>Add and correct candidates, their tags and CVs, write notes and merge duplicates.</summary>
         public const string Manage = "recruitment.candidates.manage";
+
+        /// <summary>Data subject requests (D55): export a candidate's data and erase it on request.</summary>
+        public const string Privacy = "recruitment.candidates.privacy";
     }
 
     public static class Interviews
@@ -114,6 +117,7 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Applications.Manage),
         new(RecruitmentPermissions.Candidates.Read),
         new(RecruitmentPermissions.Candidates.Manage),
+        new(RecruitmentPermissions.Candidates.Privacy),
         new(RecruitmentPermissions.Interviews.Read),
         new(RecruitmentPermissions.Interviews.Manage),
         new(RecruitmentPermissions.Feedback.Submit),

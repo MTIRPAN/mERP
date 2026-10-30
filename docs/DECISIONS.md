@@ -1334,7 +1334,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Bildirim türlerine `External` işareti eklendi: dış alıcılı türler zile düşmez, kullanıcı tercihlerinde görünmez ve kullanıcılara gönderilemez. Konu ve metin türün `{modül}.notifications.{ad}.title/body` metinlerinden gelir; kiracı Sistem → Bildirim şablonları ekranında şirket ve dil bazında kendi şablonunu yazar (D32 seçim sırası).
 - İşe alımın türleri: `recruitment.application_received`, `recruitment.interview_invitation`, `recruitment.application_rejected`, `recruitment.offer_sent`. Gönderimleri R3–R6'da gelir. Takvim daveti (R5) ve teklif PDF'i (R6) için olaya ek desteği o görevlerde eklenecek.
 
-**Saklama:** `recruitment.retention_months` ayarı (varsayılan 24, şirket ezebilir, 1–120). Anonimleştirme işi R8'de gelir.
+**Saklama:** `recruitment.retention_months` ayarı (varsayılan 24, şirket ezebilir, 1–120). Anonimleştirme işi R8 ile geldi (D55).
 
 **Yapı taşı:** jsonb kolonlarındaki çok dilli adlar (`LocalizedString`) kendi kolonlarıyla aynı biçimde (`{"tr-TR": "…"}`) yazılır.
 
@@ -1483,7 +1483,7 @@ Seçilen kültür `Content-Language` başlığında döner.
 - **Arka plan:** `recruitment.application-cv-analysis` işi 2 dakikada bir, kiracı başına en fazla 5 başvuru analiz eder (saatte en fazla 150). Kiracıda özellik kapalıysa hiçbir şey yapmaz. Başarısızlık da kaydedilir ve iş o başvuruyu tekrar denemez; ekip karttan yeniden çalıştırır.
 - **Yeniden analiz:** `POST /api/recruitment/applications/{id}/cv-analysis` (`ai` hız sınırı). Başarısız bir yeniden analiz önceki analizi silmez.
 - **Veritabanı işlemi:** Komutlar baştan bir veritabanı işlemi açtığından 30–60 saniyelik yapay zeka çağrısı bir sorgu işleyicisinde yapılır, sonuç kısa bir komutla (`SaveApplicationCvAnalysisCommand`) kaydedilir. İş her başvuru için ayrı bir sorgu gönderir.
-- **Silme:** Başvuru silinince analiz de silinir. Adayın anonimleşmesinde (R8) analiz silinecektir; kabul kriterinin bu kısmı R8'de karşılanır.
+- **Silme:** Başvuru silinince analiz de silinir. Adayın anonimleşmesinde analiz de silinir (R8, D55).
 
 **Aday formunu doldurma:** `POST /api/recruitment/candidates/cv-prefill` (`recruitment.candidates.manage`, `ai` hız sınırı). Dosya saklanmaz.
 - Ad, e-posta, telefon, LinkedIn ve diğer web bağlantısı CV'den düzenli ifadelerle yerelde okunur ve sağlayıcıya gönderilmez (PLAN A3).
@@ -1655,3 +1655,62 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Web:**
 - HR'da "İşe giriş ön kayıtları" sayfası (`/hr/pre-hires`): duruma göre liste ve uygun tamamlama formu.
 - Recruitment'ta etiketler, "İşe al" mesajı, ilanın "Doldu" durumu ve toplu ret önerisi.
+
+## D55 — KVKK: rıza kayıtları, saklama ve ilgili kişi talepleri
+
+**Bağlam:** R8 aday verisinin saklama süresini uygular. Kullanıcı kararları (2026-10-30):
+- Audit geçmişi olduğu gibi kalır: yasal iz kaydıdır ve anonimleştirmede maskelenmez.
+- Saklama süresi son etkileşimden işler; yeniden rıza e-postası süre dolmadan 30 gün önce gider.
+- İlgili kişinin silme talebi anında anonimleştirmedir.
+- Dışa aktarma ZIP'tir: JSON ve CV dosyaları.
+
+**Rıza kayıtları:**
+- Rıza metni sürümleri D47'deki gibidir.
+- Aday kartındaki "Rızalar" listesi iki kaynaktan oluşur:
+  - Her başvuru formunda kabul edilen aydınlatma metni sürümü ve havuz için verilen açık rıza.
+  - Sonrasında yeniden rıza bağlantısıyla yapılan yenileme ve geri almalar. Bunlar adayın `consent_changes` jsonb kolonunda tür, sürüm, dil ve tarihle tutulur.
+
+**Saklama:**
+- Süre, adayın kaydı, son başvurusu ve son havuz rızasının en geç olanından itibaren `recruitment.retention_months` (D47) kadardır.
+- Havuz kiracı geneli olduğu için kiracının değeri kullanılır.
+- Süreçte (Active) başvurusu olan adayın süresi işlemez.
+- **Gece işi:** `recruitment.candidate-retention` her gece 02:30'da çalışır, her çalışmada 100 aday işler.
+  - Süresi dolan adayları anonimleştirir.
+  - Süresi 30 gün içinde dolacak adaylara bu dönem için bir kez `recruitment.consent_renewal` e-postası gönderir. E-postada yeniden rıza bağlantısı vardır.
+- **Yeniden rıza bağlantısı:** `/careers/{tenant}/consents/{token}` sayfası `GET`/`POST /api/public/{tenantCode}/consents/{token}` uçlarını kullanır (D20 listesi, IP başına sınır).
+  - Token 256 bit rastgeledir; adayda SHA-256 özeti saklanır ve token bir kez kullanılır.
+  - Sayfa güncel açık rıza metnini adayın dilinde gösterir.
+  - Yenileme havuz rızasını kaydeder ve süreyi yeniden başlatır.
+  - Geri alma havuz rızasını kaldırır; süre önceki tarihlerden dolar.
+
+**Anonimleştirme (`Candidate.Anonymize`):**
+- **Aday:**
+  - Ad "Anonim aday", soyad "#" ile kimliğin ilk 8 hanesi olur.
+  - E-posta tekil kalsın diye `anonim-{id}@anonim.invalid` olur.
+  - Telefon, konum, unvan, şirket, eğitim, bağlantılar, çalışan bağlantısı, notlar, CV ve CV metni silinir.
+  - Kaynak, etiketler, deneyim yılı ve tarihler istatistik için kalır.
+- **Başvurular ve teklifler** (aynı işlemde, `CandidateAnonymized` domain olayıyla):
+  - Başvuruların ön yazısı, form cevapları ve CV bağlantısı silinir. Aşama, durum, neden, tarih ve rıza sürümleri kalır; işe alım sayıları değişmez.
+  - CV analizleri silinir.
+  - Tekliflerin yanıt notu ve mektubu silinir; teklif koşulları kalır.
+  - Adayın dosyaları ve teklif mektupları kaldırılır; içerikleri işlem sonrası silinir.
+- Anonim aday kartında yalnızca okunur. Düzenleme, not, CV, birleştirme ve ilana ekleme `recruitment.candidates.errors.anonymized` ile reddedilir.
+- Değerlendirme formları ve mülakat kayıtları istatistik olarak kalır.
+- Platform'un e-posta kuyruğu kendi saklama ayarıyla temizlenir.
+- Audit geçmişi kullanıcı kararıyla olduğu gibi kalır.
+
+**İlgili kişi talepleri:**
+- Yeni yetki `recruitment.candidates.privacy`. `recruitment.*` deseniyle İK Yöneticisi ve İşe Alım Uzmanı rollerine geçer.
+- **Dışa aktarma:** `GET /api/recruitment/candidates/{id}/export` bir ZIP döner:
+  - `aday.json`: aday, rızalar, başvurular (cevaplar ve aşama geçmişi), notlar, mülakatlar, değerlendirmeler ve teklifler.
+  - `dosyalar/`: CV'ler ve teklif mektupları.
+  - Tekliflerin ücret okuması audit'e yazılır.
+- **Silme:** `POST /api/recruitment/candidates/{id}/erase` adayı hemen anonimleştirir.
+  - Süreçteki başvurular "Diğer" (`OTHER`) nedeniyle geri çekilir.
+  - İşe girişi bekleyen (D54) aday silinemez.
+
+**Web:**
+- Aday kartında saklama bitiş tarihi (ya da "Süreçte başvurusu var") ve "Rızalar" sekmesi.
+- Yetkililere "Verileri dışa aktar" ve "Talep üzerine sil" düğmeleri.
+- Anonim aday için uyarı.
+- Adayın yeniden rıza sayfası.

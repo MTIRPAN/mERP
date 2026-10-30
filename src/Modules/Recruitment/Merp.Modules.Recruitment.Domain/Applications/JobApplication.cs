@@ -276,6 +276,17 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
         return Result.Success();
     }
 
+    /// <summary>
+    /// The candidate was anonymized (D55): the cover letter, the answers and the CV go; the stages, dates, reasons and
+    /// consent revisions stay for the statistics.
+    /// </summary>
+    public void Anonymize()
+    {
+        CoverLetter = null;
+        Answers = [];
+        CvFileId = null;
+    }
+
     /// <summary>HR called the pre-hire off; the application is in the pipeline as before.</summary>
     public void HireRequestCancelled() => HireRequestedAt = null;
 

@@ -353,6 +353,19 @@ public sealed class JobOffer : AuditableAggregateRoot<JobOfferId>, ICompanyScope
         return flowOpen;
     }
 
+    /// <summary>
+    /// The candidate was anonymized (D55): the answer note and the letter go; the terms stay for the statistics.
+    /// Returns the letter's file to remove.
+    /// </summary>
+    public Guid? Anonymize()
+    {
+        var letter = LetterFileId;
+        LetterFileId = null;
+        ResponseNote = null;
+        ResponseTokenHash = null;
+        return letter;
+    }
+
     private Result Set(OfferTerms terms)
     {
         ArgumentNullException.ThrowIfNull(terms);

@@ -33,6 +33,10 @@ internal sealed class CandidateConfiguration : IEntityTypeConfiguration<Candidat
         builder.Property(c => c.Tags).HasJson();
         builder.Property(c => c.TagText).HasMaxLength(Candidate.TagTextMaxLength);
         builder.Ignore(c => c.FullName);
+        builder.Ignore(c => c.IsAnonymized);
+        builder.Ignore(c => c.RetentionStart);
+        builder.Property(c => c.ConsentChanges).HasJson();
+        builder.Property(c => c.ConsentTokenHash).HasMaxLength(Candidate.TokenHashLength).IsFixedLength();
         builder.HasMany(c => c.Notes).WithOne().HasForeignKey(n => n.CandidateId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(c => c.Notes).UsePropertyAccessMode(PropertyAccessMode.Field);
 
@@ -50,6 +54,7 @@ internal sealed class CandidateConfiguration : IEntityTypeConfiguration<Candidat
         builder.HasIndex(c => c.EmployeeId);
         builder.HasIndex(c => c.NormalizedPhone);
         builder.HasIndex(c => new { c.LastName, c.FirstName });
+        builder.HasIndex(c => c.ConsentTokenHash).IsUnique().HasFilter("consent_token_hash IS NOT NULL");
     }
 }
 

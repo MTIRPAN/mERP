@@ -20,6 +20,7 @@ const emailTypes = [
   'interview_updated',
   'interview_cancelled',
   'interview_reminder',
+  'consent_renewal',
   'application_rejected',
   'offer_sent',
 ];

@@ -28,13 +28,14 @@ import type { CandidateApplicationItem, CandidateDetails, CandidateTimelineItem 
 import { saveFile } from '@/shared/api/download';
 import { isApiError } from '@/shared/api/problem';
 import { PageHeader } from '@/shared/components/PageHeader';
-import { formatDateTime, formatMomentDate } from '@/shared/format/date';
+import { formatDate, formatDateTime, formatMomentDate } from '@/shared/format/date';
 import { CandidateEvaluations } from '../interviews/CandidateEvaluations';
 import { ApplicationStatusTag } from '../pipeline/ApplicationDrawer';
 import { stageTypeColors } from '../settings/stages';
 import { AddToOpeningModal } from './AddToOpeningModal';
 import { CandidateFormDrawer } from './CandidateFormDrawer';
 import { CandidateNotes } from './CandidateNotes';
+import { CandidateConsents, PrivacyActions } from './CandidatePrivacy';
 import { fullName, useCandidateRefresh, useCandidateCard } from './candidates';
 
 const timelineColors: Record<CandidateTimelineItem['kind'], string> = {
@@ -148,6 +149,8 @@ export const CandidatePage = ({ team = false }: { team?: boolean }) => {
 
   const dash = '—';
   const profile = candidate.profile;
+  // An anonymized candidate keeps only what the figures need; nothing is changed any more (D55)
+  const editable = candidate.canManage && !candidate.anonymizedAt;
   const pipelineOf = (item: CandidateApplicationItem) =>
     team
       ? `/recruitment/hiring/${item.application.openingId}`
@@ -182,7 +185,8 @@ export const CandidatePage = ({ team = false }: { team?: boolean }) => {
             >
               {t(team ? 'web.recruitment.pipeline.back_to_mine' : 'web.recruitment.candidates.back')}
             </Button>
-            {candidate.canManage && (
+            {candidate.canManagePrivacy && <PrivacyActions candidate={candidate} />}
+            {editable && (
               <>
                 <Button onClick={() => setDialog('edit')}>{t('web.common.edit')}</Button>
                 <Upload
@@ -210,7 +214,7 @@ export const CandidatePage = ({ team = false }: { team?: boolean }) => {
                 </Upload>
               </>
             )}
-            {candidate.canAddToOpening && (
+            {candidate.canAddToOpening && !candidate.anonymizedAt && (
               <Button type="primary" onClick={() => setDialog('opening')}>
                 {t('web.recruitment.candidates.add_to_opening')}
               </Button>
@@ -218,7 +222,17 @@ export const CandidatePage = ({ team = false }: { team?: boolean }) => {
           </Space>
         }
       />
-      {candidate.canManage && candidate.duplicates.length > 0 && <Duplicates candidate={candidate} />}
+      {candidate.anonymizedAt && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          title={t('web.recruitment.candidates.privacy.anonymized', {
+            at: formatDateTime(candidate.anonymizedAt, i18n.language),
+          })}
+        />
+      )}
+      {editable && candidate.duplicates.length > 0 && <Duplicates candidate={candidate} />}
       <Tabs
         items={[
           {
@@ -231,6 +245,19 @@ export const CandidatePage = ({ team = false }: { team?: boolean }) => {
                 column={1}
                 items={[
                   { key: 'email', label: t('web.recruitment.candidates.fields.email'), children: candidate.email },
+                  ...(candidate.anonymizedAt
+                    ? []
+                    : [
+                        {
+                          key: 'retention',
+                          label: t('web.recruitment.candidates.fields.retention'),
+                          children: candidate.retentionEndsOn
+                            ? t('web.recruitment.candidates.privacy.retention_until', {
+                                date: formatDate(candidate.retentionEndsOn, i18n.language),
+                              })
+                            : t('web.recruitment.candidates.privacy.retention_paused'),
+                        },
+                      ]),
                   {
                     key: 'phone',
                     label: t('web.recruitment.candidates.fields.phone'),
@@ -344,6 +371,11 @@ export const CandidatePage = ({ team = false }: { team?: boolean }) => {
             ),
           },
           {
+            key: 'consents',
+            label: t('web.recruitment.candidates.tabs.consents', { count: candidate.consents.length }),
+            children: <CandidateConsents consents={candidate.consents} />,
+          },
+          {
             key: 'evaluations',
             label: t('web.recruitment.candidates.tabs.evaluations', { count: candidate.evaluations.length }),
             children: <CandidateEvaluations evaluations={candidate.evaluations} />,
@@ -356,7 +388,7 @@ export const CandidatePage = ({ team = false }: { team?: boolean }) => {
                 candidateId={candidate.id}
                 notes={candidate.notes}
                 team={team}
-                canWrite={team || candidate.canManage}
+                canWrite={!candidate.anonymizedAt && (team || candidate.canManage)}
               />
             ),
           },

@@ -7,6 +7,7 @@ using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Notifications;
 using Merp.Application.Abstractions.Paging;
 using Merp.Application.Abstractions.Security;
+using Merp.Application.Abstractions.Settings;
 using Merp.Application.Persistence;
 using Merp.Application.Persistence.Files;
 using Merp.Modules.HR.Contracts.Employees;
@@ -15,6 +16,7 @@ using Merp.Modules.Platform.Contracts.Users;
 using Merp.Modules.Recruitment.Application.Applications;
 using Merp.Modules.Recruitment.Application.Careers;
 using Merp.Modules.Recruitment.Application.Interviews;
+using Merp.Modules.Recruitment.Application.Privacy;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Domain.Applications;
@@ -122,7 +124,11 @@ public sealed record CandidateDetails(
     bool CanManage,
     bool CanAddToOpening,
     uint Version,
-    IReadOnlyList<CandidateEvaluation> Evaluations);
+    IReadOnlyList<CandidateEvaluation> Evaluations,
+    IReadOnlyList<CandidateConsentItem> Consents,
+    DateTimeOffset? AnonymizedAt,
+    DateOnly? RetentionEndsOn,
+    bool CanManagePrivacy);
 
 /// <summary>What the candidate form gives.</summary>
 public interface ICandidateFields
@@ -533,6 +539,7 @@ internal sealed class GetCandidateQueryHandler(
     ApplicationRows rows,
     IUserDirectory users,
     IEmployeeLookup employees,
+    ISettings settings,
     ICurrentUser currentUser) : IQueryHandler<GetCandidateQuery, CandidateDetails>
 {
     public async Task<Result<CandidateDetails>> Handle(GetCandidateQuery request, CancellationToken cancellationToken)
@@ -641,7 +648,14 @@ internal sealed class GetCandidateQueryHandler(
             manages,
             addsToOpenings,
             await db.Candidates.AsNoTracking().Where(c => c.Id == id).Select(c => EF.Property<uint>(c, ConcurrencyVersion.PropertyName)).SingleAsync(cancellationToken),
-            await EvaluationsAsync(applicationRows, openings, cancellationToken));
+            await EvaluationsAsync(applicationRows, openings, cancellationToken),
+            CandidateRetention.Consents(candidate, applicationRows.Select(r => (applications[r.Id], openings[r.OpeningId].Title))),
+            candidate.AnonymizedAt,
+            // The retention waits while an application is in the pipeline (D55)
+            candidate.IsAnonymized || await db.JobApplications.AnyAsync(a => a.CandidateId == id && a.Status == ApplicationStatus.Active, cancellationToken)
+                ? null
+                : CandidateRetention.EndsOn(candidate, await CandidateRetention.MonthsAsync(settings, cancellationToken)),
+            !request.AsTeam && !candidate.IsAnonymized && (await scopes.GetCurrentUserScopesAsync(RecruitmentPermissions.Candidates.Privacy, cancellationToken)).Count > 0);
     }
 
     /// <summary>The forms of the applications shown, by application: the weighted score, the advice and each criterion's average.</summary>
@@ -793,6 +807,11 @@ internal sealed class UpdateCandidateCommandHandler(IRecruitmentDbContext db, Ca
             return CommonErrors.NotFound;
         }
 
+        if (candidate.IsAnonymized)
+        {
+            return CandidateErrors.Anonymized;
+        }
+
         db.Entry(candidate).ExpectVersion(request.Version);
         if (await CandidateRules.EmailTakenAsync(db, request.Email!, candidate.Id, cancellationToken) is { } taken)
         {
@@ -820,6 +839,11 @@ internal sealed class UploadCandidateCvCommandHandler(IRecruitmentDbContext db, 
         if (candidate is null)
         {
             return CommonErrors.NotFound;
+        }
+
+        if (candidate.IsAnonymized)
+        {
+            return CandidateErrors.Anonymized;
         }
 
         var stored = await files.SaveAsync(CandidateRules.CandidateFileOwner, request.Id, StoredFilePurposes.Attachment, request.Cv!, CareerCatalog.CvRules, cancellationToken);
@@ -870,6 +894,11 @@ internal sealed class AddCandidateNoteCommandHandler(
             return CommonErrors.NotFound;
         }
 
+        if (candidate.IsAnonymized)
+        {
+            return CandidateErrors.Anonymized;
+        }
+
         // Only active users are mentioned; the author is not told about their own note
         var mentioned = (await users.GetAsync([.. (request.MentionedUserIds ?? []).Distinct()], cancellationToken))
             .Where(u => u.IsActive && u.Id != currentUser.UserId)
@@ -918,6 +947,11 @@ internal sealed class MergeCandidatesCommandHandler(IRecruitmentDbContext db) : 
             return Error.Validation([new FieldError("duplicateId", CommonErrors.NotFound.Code)]);
         }
 
+        if (target.IsAnonymized || duplicate.IsAnonymized)
+        {
+            return CandidateErrors.Anonymized;
+        }
+
         // One application per candidate and opening: both in the same opening cannot become one candidate
         var targetOpenings = db.JobApplications.Where(a => a.CandidateId == target.Id).Select(a => a.OpeningId);
         if (await db.JobApplications.AnyAsync(a => a.CandidateId == duplicate.Id && targetOpenings.Contains(a.OpeningId), cancellationToken))
@@ -962,6 +996,11 @@ internal sealed class AddCandidateToOpeningCommandHandler(IRecruitmentDbContext 
         if (candidate is null)
         {
             return CommonErrors.NotFound;
+        }
+
+        if (candidate.IsAnonymized)
+        {
+            return CandidateErrors.Anonymized;
         }
 
         var opening = await db.JobOpenings.AsNoTracking().SingleOrDefaultAsync(o => o.Id == JobOpeningId.From(request.OpeningId), cancellationToken);

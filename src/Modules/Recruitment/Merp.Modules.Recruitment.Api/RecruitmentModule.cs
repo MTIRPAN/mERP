@@ -32,6 +32,7 @@ public sealed class RecruitmentModule : IModule
         group.MapOpeningEndpoints();
         group.MapApplicationEndpoints();
         group.MapCandidateEndpoints();
+        group.MapPrivacyEndpoints();
         group.MapInterviewEndpoints();
         group.MapOfferEndpoints();
         group.MapSelfServiceCareerEndpoints();
@@ -40,5 +41,6 @@ public sealed class RecruitmentModule : IModule
         group.MapSettingsEndpoints();
         endpoints.MapPublicCareerEndpoints();
         endpoints.MapPublicOfferEndpoints();
+        endpoints.MapPublicConsentEndpoints();
     }
 }
