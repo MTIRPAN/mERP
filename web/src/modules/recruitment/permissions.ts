@@ -19,6 +19,7 @@ export const recruitmentPermissions = {
   feedbackSubmit: 'recruitment.feedback.submit',
   offersRead: 'recruitment.offers.read',
   offersManage: 'recruitment.offers.manage',
+  reportsRead: 'recruitment.reports.read',
 } as const;
 
 /** Mirrors Merp.Modules.Recruitment.Application.RecruitmentAiFeatures. */

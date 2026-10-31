@@ -71,6 +71,7 @@ const icons: Record<string, ReactNode> = {
   'leave-requests': <ProfileOutlined />,
   'leave-calendar': <CalendarOutlined />,
   'leave-reports': <BarChartOutlined />,
+  'recruitment-reports': <BarChartOutlined />,
   'document-types': <FileDoneOutlined />,
   positions: <SolutionOutlined />,
   'job-titles': <TagsOutlined />,

@@ -82,6 +82,12 @@ public static class RecruitmentPermissions
         public const string Manage = "recruitment.offers.manage";
     }
 
+    public static class Reports
+    {
+        /// <summary>See the recruitment reports and the dashboard of the companies in scope (D56).</summary>
+        public const string Read = "recruitment.reports.read";
+    }
+
     public static class Feedback
     {
         /// <summary>Fill in the evaluation form of an interview the user interviews in (D52).</summary>
@@ -123,6 +129,7 @@ public sealed class RecruitmentPermissionDefinitions : IPermissionDefinitionProv
         new(RecruitmentPermissions.Feedback.Submit),
         new(RecruitmentPermissions.Offers.Read),
         new(RecruitmentPermissions.Offers.Manage),
+        new(RecruitmentPermissions.Reports.Read),
         new(RecruitmentPermissions.Self.Apply),
         new(RecruitmentPermissions.Self.Hiring),
     ];

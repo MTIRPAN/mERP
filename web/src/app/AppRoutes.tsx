@@ -88,6 +88,10 @@ const CvAnalysisPage = page(() => import('@/modules/recruitment/CvAnalysisPage')
 const MyInterviewsPage = page(() => import('@/modules/recruitment/interviews/MyInterviewsPage'), 'MyInterviewsPage');
 const OffersPage = page(() => import('@/modules/recruitment/offers/OffersPage'), 'OffersPage');
 const OfferLinkPage = page(() => import('@/modules/recruitment/offers/OffersPage'), 'OfferLinkPage');
+const RecruitmentReportsPage = page(
+  () => import('@/modules/recruitment/reports/RecruitmentReportsPage'),
+  'RecruitmentReportsPage',
+);
 const OfferResponsePage = page(() => import('@/modules/recruitment/offers/OfferResponsePage'), 'OfferResponsePage');
 const ConsentRenewalPage = page(() => import('@/modules/recruitment/careers/ConsentRenewalPage'), 'ConsentRenewalPage');
 
@@ -467,6 +471,14 @@ export const AppRoutes = () => (
         />
         {/* The approval inbox's link: the hiring manager opens it from self service too (D53) */}
         <Route path="recruitment/offers/:id" element={<OfferLinkPage />} />
+        <Route
+          path="recruitment/reports"
+          element={
+            <RequirePermission permission={recruitmentPermissions.reportsRead}>
+              <RecruitmentReportsPage />
+            </RequirePermission>
+          }
+        />
         <Route
           path="recruitment/my-interviews"
           element={
