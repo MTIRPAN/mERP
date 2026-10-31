@@ -15,7 +15,9 @@ import { isApiError } from '@/shared/api/problem';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { formatMomentDate } from '@/shared/format/date';
+import { useRecruitmentAi } from '../interviews/interviews';
 import { OpeningStatusTag } from '../openings/OpeningDetailDrawer';
+import { recruitmentAiFeatures } from '../permissions';
 import { stageTypeColors } from '../settings/stages';
 import { ApplicationDrawer, ApplicationStatusTag } from './ApplicationDrawer';
 import { KanbanBoard } from './KanbanBoard';
@@ -39,6 +41,7 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
   const pipeline = usePipeline(id, team);
   const applications = useOpeningApplications(id, team);
   const actions = useApplicationActions(id);
+  const screeningAi = useRecruitmentAi(recruitmentAiFeatures.batchScreening);
   const [view, setView] = useState<'kanban' | 'list'>('kanban');
   const [open, setOpen] = useState<string>();
   const [leaving, setLeaving] = useState<Leaving>();
@@ -154,6 +157,11 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
             >
               {t(team ? 'web.recruitment.pipeline.back_to_mine' : 'web.recruitment.pipeline.back_to_opening')}
             </Button>
+            {!team && screeningAi && (
+              <Button onClick={() => void navigate(`/recruitment/openings/${id}/screening`)}>
+                {t('web.recruitment.screening.open')}
+              </Button>
+            )}
             <Segmented
               value={view}
               onChange={(value) => setView(value as 'kanban' | 'list')}

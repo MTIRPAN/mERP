@@ -99,6 +99,7 @@ import type {
   OpeningLanguageCheck,
   OpeningListItem,
   OpeningPipeline,
+  OpeningScreeningView,
   OpeningTemplateOption,
   OrgUnitInfo,
   PagedResultOfApplicationListItem,
@@ -2755,6 +2756,298 @@ export const usePublishOpening = <
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof publishOpening>>, TError, PublishOpeningMutationVariables, TContext> => {
   return useMutation(getPublishOpeningMutationOptions(options), queryClient);
+};
+export const getGetOpeningScreeningUrl = (id: string) => {
+  return `/api/recruitment/openings/${id}/screening`;
+};
+
+/**
+ * Applications come in the order they arrived; there is no score and no ranking. Requires permission: recruitment.applications.read.
+ * @summary The batch screening of an opening: its state and the evidence for each requirement by application (A6, D59)
+ */
+export const getOpeningScreening = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<OpeningScreeningView> => {
+  return customFetch<OpeningScreeningView>(getGetOpeningScreeningUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetOpeningScreeningQueryKey = (id: string) => {
+  return [`/api/recruitment/openings/${id}/screening`] as const;
+};
+
+export const getGetOpeningScreeningQueryOptions = <
+  TData = Awaited<ReturnType<typeof getOpeningScreening>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpeningScreening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetOpeningScreeningQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getOpeningScreening>>> = ({ signal }) =>
+    getOpeningScreening(id, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getOpeningScreening>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetOpeningScreeningQueryResult = NonNullable<Awaited<ReturnType<typeof getOpeningScreening>>>;
+export type GetOpeningScreeningQueryError = ErrorType<ProblemDetails>;
+
+export function useGetOpeningScreening<
+  TData = Awaited<ReturnType<typeof getOpeningScreening>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpeningScreening>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOpeningScreening>>,
+          TError,
+          Awaited<ReturnType<typeof getOpeningScreening>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetOpeningScreening<
+  TData = Awaited<ReturnType<typeof getOpeningScreening>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpeningScreening>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOpeningScreening>>,
+          TError,
+          Awaited<ReturnType<typeof getOpeningScreening>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetOpeningScreening<
+  TData = Awaited<ReturnType<typeof getOpeningScreening>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpeningScreening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The batch screening of an opening: its state and the evidence for each requirement by application (A6, D59)
+ */
+
+export function useGetOpeningScreening<
+  TData = Awaited<ReturnType<typeof getOpeningScreening>>,
+  TError = ErrorType<ProblemDetails>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getOpeningScreening>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetOpeningScreeningQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getRequestOpeningScreeningUrl = (id: string) => {
+  return `/api/recruitment/openings/${id}/screenings`;
+};
+
+/**
+ * The applications without a current CV analysis are sent at night at half price within the tenant's nightly limit and monthly budget; nobody is rejected automatically. Requires permission: recruitment.cv.analyze.
+ * @summary Ask to screen an opening's applications in the next night's batch (A6, D59)
+ */
+export const requestOpeningScreening = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<EntityCreatedResponse> => {
+  return customFetch<EntityCreatedResponse>(getRequestOpeningScreeningUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getRequestOpeningScreeningMutationKey = () => ['requestOpeningScreening'] as const;
+
+export const getRequestOpeningScreeningMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestOpeningScreening>>,
+    TError,
+    RequestOpeningScreeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestOpeningScreening>>,
+  TError,
+  RequestOpeningScreeningMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRequestOpeningScreeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestOpeningScreening>>,
+    RequestOpeningScreeningMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return requestOpeningScreening(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestOpeningScreeningMutationResult = NonNullable<Awaited<ReturnType<typeof requestOpeningScreening>>>;
+
+export type RequestOpeningScreeningMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type RequestOpeningScreeningMutationVariables = { id: string };
+
+/**
+ * @summary Ask to screen an opening's applications in the next night's batch (A6, D59)
+ */
+export const useRequestOpeningScreening = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof requestOpeningScreening>>,
+      TError,
+      RequestOpeningScreeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof requestOpeningScreening>>,
+  TError,
+  RequestOpeningScreeningMutationVariables,
+  TContext
+> => {
+  return useMutation(getRequestOpeningScreeningMutationOptions(options), queryClient);
+};
+export const getCancelOpeningScreeningUrl = (id: string, screeningId: string) => {
+  return `/api/recruitment/openings/${id}/screenings/${screeningId}/cancel`;
+};
+
+/**
+ * Requires permission: recruitment.cv.analyze.
+ * @summary Call off a batch screening that was not sent yet
+ */
+export const cancelOpeningScreening = async (
+  id: string,
+  screeningId: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<void> => {
+  return customFetch<void>(getCancelOpeningScreeningUrl(id, screeningId), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getCancelOpeningScreeningMutationKey = () => ['cancelOpeningScreening'] as const;
+
+export const getCancelOpeningScreeningMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelOpeningScreening>>,
+    TError,
+    CancelOpeningScreeningMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelOpeningScreening>>,
+  TError,
+  CancelOpeningScreeningMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCancelOpeningScreeningMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelOpeningScreening>>,
+    CancelOpeningScreeningMutationVariables
+  > = (props) => {
+    const { id, screeningId } = props ?? {};
+
+    return cancelOpeningScreening(id, screeningId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelOpeningScreeningMutationResult = NonNullable<Awaited<ReturnType<typeof cancelOpeningScreening>>>;
+
+export type CancelOpeningScreeningMutationError = ErrorType<ProblemDetails>;
+export type CancelOpeningScreeningMutationVariables = { id: string; screeningId: string };
+
+/**
+ * @summary Call off a batch screening that was not sent yet
+ */
+export const useCancelOpeningScreening = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof cancelOpeningScreening>>,
+      TError,
+      CancelOpeningScreeningMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof cancelOpeningScreening>>,
+  TError,
+  CancelOpeningScreeningMutationVariables,
+  TContext
+> => {
+  return useMutation(getCancelOpeningScreeningMutationOptions(options), queryClient);
 };
 export const getHoldOpeningUrl = (id: string) => {
   return `/api/recruitment/openings/${id}/hold`;

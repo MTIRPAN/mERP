@@ -31,6 +31,8 @@ public interface IRecruitmentDbContext
     /// <summary>Job openings (D49).</summary>
     DbSet<JobOpening> JobOpenings { get; }
 
+    DbSet<OpeningScreening> OpeningScreenings { get; }
+
     /// <summary>People who applied, one per e-mail address (D49).</summary>
     DbSet<Candidate> Candidates { get; }
 

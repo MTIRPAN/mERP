@@ -18,7 +18,58 @@ public interface IAiService
     /// </summary>
     Task<Result<AiResponse<T>>> GenerateAsync<T>(AiRequest request, CancellationToken cancellationToken)
         where T : class;
+
+    /// <summary>
+    /// Sends many inputs of one feature to the provider's batch processing (D59): results come within 24 hours at
+    /// about half price. The cost is estimated first; when it does not fit in what is left of the monthly budget,
+    /// nothing is sent and <see cref="AiErrors.BudgetExceeded"/> is returned.
+    /// </summary>
+    Task<Result<AiBatch>> SubmitBatchAsync<T>(AiBatchRequest request, CancellationToken cancellationToken)
+        where T : class;
+
+    /// <summary>
+    /// The results of a submitted batch, null while it runs. Once it ended every result is recorded in the usage
+    /// ledger at the batch price, so the caller keeps them and does not ask again.
+    /// </summary>
+    Task<Result<IReadOnlyList<AiBatchResult<T>>?>> GetBatchResultsAsync<T>(AiBatch batch, CancellationToken cancellationToken)
+        where T : class;
 }
+
+/// <summary>Many inputs of one feature with the same instructions, processed in a batch (D59).</summary>
+public sealed record AiBatchRequest
+{
+    /// <summary>The most inputs one batch takes.</summary>
+    public const int MaxItems = 10_000;
+
+    public required string Feature { get; init; }
+
+    public required string PromptVersion { get; init; }
+
+    public required string Instructions { get; init; }
+
+    /// <summary>One input per record; <see cref="AiBatchItem.CustomId"/> identifies its result.</summary>
+    public required IReadOnlyList<AiBatchItem> Items { get; init; }
+
+    public AiEffort Effort { get; init; } = AiEffort.Medium;
+
+    public int? MaxOutputTokens { get; init; }
+
+    /// <summary>The output tokens an input usually takes, for the cost estimate.</summary>
+    public int ExpectedOutputTokens { get; init; } = 4_000;
+
+    /// <summary>The kind of record the inputs are about; the usage ledger gets each item's id with it.</summary>
+    public string? EntityType { get; init; }
+}
+
+/// <param name="CustomId">The caller's id of the input, e.g. an application id; at most 64 letters, digits, - or _.</param>
+/// <param name="Input">The data, already minimized and redacted.</param>
+public sealed record AiBatchItem(string CustomId, string Input);
+
+/// <summary>A submitted batch: the provider's id, what it was sent for and its estimated cost.</summary>
+public sealed record AiBatch(string Id, string Feature, string PromptVersion, string? EntityType, decimal EstimatedCostUsd);
+
+/// <summary>The result of one input of a batch: its output, or why there is none.</summary>
+public sealed record AiBatchResult<T>(string CustomId, Result<AiResponse<T>> Response);
 
 /// <summary>One model call.</summary>
 public sealed record AiRequest

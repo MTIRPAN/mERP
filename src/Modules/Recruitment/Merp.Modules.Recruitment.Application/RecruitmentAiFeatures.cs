@@ -17,4 +17,7 @@ public static class RecruitmentAiFeatures
 
     /// <summary>Rejection and invitation e-mails personalized for the candidate (docs/domain/yapay-zeka.md §3.6, D58).</summary>
     public const string CandidateEmail = "recruitment.candidate_email";
+
+    /// <summary>The night's batch screening of an opening's applications (docs/domain/yapay-zeka.md §3.3, D59).</summary>
+    public const string BatchScreening = "recruitment.batch_screening";
 }

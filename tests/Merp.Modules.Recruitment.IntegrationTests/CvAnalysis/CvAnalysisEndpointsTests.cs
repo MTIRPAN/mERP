@@ -208,6 +208,7 @@ public sealed class CvAnalysisEndpointsTests : IClassFixture<RecruitmentFactory>
                 RecruitmentAiFeatures.InterviewQuestions,
                 RecruitmentAiFeatures.FeedbackSummary,
                 RecruitmentAiFeatures.CandidateEmail,
+                RecruitmentAiFeatures.BatchScreening,
             ],
             ignoreOrder: true);
         var item = enabled.Menu.Single(m => m.Key == "recruitment").Children!.ShouldHaveSingleItem();

@@ -31,6 +31,8 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
 
     public DbSet<JobOpening> JobOpenings => Set<JobOpening>();
 
+    public DbSet<OpeningScreening> OpeningScreenings => Set<OpeningScreening>();
+
     public DbSet<Candidate> Candidates => Set<Candidate>();
 
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
@@ -57,6 +59,7 @@ public sealed class RecruitmentDbContext(DbContextOptions<RecruitmentDbContext> 
         modelBuilder.Ignore<ApplicationAnswer>();
         modelBuilder.Ignore<ApplicationConsent>();
         modelBuilder.Ignore<CandidateEmailText>();
+        modelBuilder.Ignore<ScreeningItem>();
         modelBuilder.Ignore<CandidateProfile>();
         modelBuilder.Ignore<CandidateConsentChange>();
         modelBuilder.Ignore<EvaluationForm>();

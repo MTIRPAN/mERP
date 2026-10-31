@@ -12,6 +12,7 @@ public sealed class ApplicationCvAnalysis : AuditableAggregateRoot<JobApplicatio
     public const int ErrorCodeMaxLength = 100;
     public const int ModelMaxLength = 100;
     public const int PromptVersionMaxLength = 50;
+    public const int RequirementsHashLength = 64;
 
     private ApplicationCvAnalysis()
     {
@@ -35,33 +36,42 @@ public sealed class ApplicationCvAnalysis : AuditableAggregateRoot<JobApplicatio
 
     public DateTimeOffset AnalyzedAt { get; private set; }
 
+    /// <summary>
+    /// A digest of the opening's title and requirements the CV was matched against (D59); when the opening's change,
+    /// the analysis is no longer current. Null for analyses made before it was kept.
+    /// </summary>
+    public string? RequirementsHash { get; private set; }
+
     public bool Succeeded => Result is not null;
 
     public static ApplicationCvAnalysis Of(JobApplicationId applicationId) => new() { Id = applicationId };
 
-    public void Succeed(Guid fileId, string result, string model, string promptVersion, Guid? userId, DateTimeOffset at)
+    public void Succeed(Guid fileId, string result, string model, string promptVersion, Guid? userId, DateTimeOffset at, string? requirementsHash = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(result);
-        Set(fileId, userId, at);
+        Set(fileId, userId, at, requirementsHash);
         Result = result;
         ErrorCode = null;
         Model = Text.Required(model, ModelMaxLength, nameof(model));
         PromptVersion = Text.Required(promptVersion, PromptVersionMaxLength, nameof(promptVersion));
     }
 
-    public void Fail(Guid fileId, string errorCode, Guid? userId, DateTimeOffset at)
+    public void Fail(Guid fileId, string errorCode, Guid? userId, DateTimeOffset at, string? requirementsHash = null)
     {
-        Set(fileId, userId, at);
+        Set(fileId, userId, at, requirementsHash);
         Result = null;
         ErrorCode = Text.Required(errorCode, ErrorCodeMaxLength, nameof(errorCode));
         Model = null;
         PromptVersion = null;
     }
 
-    private void Set(Guid fileId, Guid? userId, DateTimeOffset at)
+    private void Set(Guid fileId, Guid? userId, DateTimeOffset at, string? requirementsHash)
     {
         FileId = fileId == Guid.Empty ? throw new ArgumentException("A CV is required.", nameof(fileId)) : fileId;
         RequestedByUserId = userId;
         AnalyzedAt = at;
+        RequirementsHash = requirementsHash is null || requirementsHash.Length == RequirementsHashLength
+            ? requirementsHash
+            : throw new ArgumentException("The digest has 64 hex digits.", nameof(requirementsHash));
     }
 }

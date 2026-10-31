@@ -29,6 +29,11 @@ public sealed class RecruitmentSettingDefinitions : ISettingDefinitionProvider
     /// </summary>
     public const string BlindFeedback = "recruitment.blind_feedback";
 
+    /// <summary>The most applications the night's batch screening sends for the tenant (D59).</summary>
+    public const string ScreeningNightlyLimit = "recruitment.screening_nightly_limit";
+
+    public const int DefaultScreeningNightlyLimit = 500;
+
     public IEnumerable<SettingDefinition> GetSettings() =>
     [
         SettingDefinition.Boolean(
@@ -45,6 +50,14 @@ public sealed class RecruitmentSettingDefinitions : ISettingDefinitionProvider
             companyOverridable: true,
             min: 1,
             max: 120,
+            wholeNumber: true),
+        SettingDefinition.Number(
+            ScreeningNightlyLimit,
+            DefaultScreeningNightlyLimit,
+            "recruitment.settings.screening_nightly_limit",
+            "recruitment.settings.screening_nightly_limit_hint",
+            min: 1,
+            max: 2000,
             wholeNumber: true),
     ];
 }

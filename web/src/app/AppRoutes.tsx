@@ -79,6 +79,7 @@ const OpeningsPage = page(() => import('@/modules/recruitment/openings/OpeningsP
 const MyOpeningsPage = page(() => import('@/modules/recruitment/careers/MyOpeningsPage'), 'MyOpeningsPage');
 const PipelinePage = page(() => import('@/modules/recruitment/pipeline/PipelinePage'), 'PipelinePage');
 const HiringPipelinePage = page(() => import('@/modules/recruitment/pipeline/PipelinePage'), 'HiringPipelinePage');
+const ScreeningPage = page(() => import('@/modules/recruitment/screening/ScreeningPage'), 'ScreeningPage');
 const CandidatesPage = page(() => import('@/modules/recruitment/candidates/CandidatesPage'), 'CandidatesPage');
 const CandidatePage = page(() => import('@/modules/recruitment/candidates/CandidatePage'), 'CandidatePage');
 const HiringCandidatePage = page(() => import('@/modules/recruitment/candidates/CandidatePage'), 'HiringCandidatePage');
@@ -442,6 +443,14 @@ export const AppRoutes = () => (
           element={
             <RequirePermission permission={recruitmentPermissions.applicationsRead}>
               <PipelinePage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="recruitment/openings/:id/screening"
+          element={
+            <RequirePermission permission={recruitmentPermissions.applicationsRead}>
+              <ScreeningPage />
             </RequirePermission>
           }
         />

@@ -23,6 +23,7 @@ using Merp.Modules.Recruitment.Infrastructure.Applications;
 using Merp.Modules.Recruitment.Infrastructure.Candidates;
 using Merp.Modules.Recruitment.Infrastructure.Interviews;
 using Merp.Modules.Recruitment.Infrastructure.Offers;
+using Merp.Modules.Recruitment.Infrastructure.Openings;
 using Merp.Modules.Recruitment.Infrastructure.Persistence;
 using Merp.Modules.Recruitment.Infrastructure.Privacy;
 using Merp.Modules.Recruitment.Infrastructure.Settings;
@@ -80,6 +81,12 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         // CV analysis of applications in the background and on request (A3, D51)
         services.AddScoped<ApplicationCvAnalyzer>();
         services.AddSingleton(RecurringJobDefinition.For<ApplicationCvAnalysisJob>(ApplicationCvAnalysisJob.JobId, ApplicationCvAnalysisJob.Cron));
+
+        // Batch screening of openings: sent at night at half price, collected when the batch ends (A6, D59)
+        services.AddScoped<ScreeningNotifier>();
+        services.AddSingleton<INotificationTypeProvider, ScreeningNotificationTypes>();
+        services.AddSingleton(RecurringJobDefinition.For<ScreeningSubmitJob>(ScreeningSubmitJob.JobId, ScreeningSubmitJob.Cron));
+        services.AddSingleton(RecurringJobDefinition.For<ScreeningCollectJob>(ScreeningCollectJob.JobId, ScreeningCollectJob.Cron));
 
         // Interviews: who reaches them, their rows, invitations with the calendar file and reminders (D52)
         services.AddScoped<InterviewAccess>();

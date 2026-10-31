@@ -7,4 +7,10 @@ internal sealed class DisabledAiModelClient : IAiModelClient
 
     public Task<AiModelResponse> CompleteAsync(AiModelRequest request, CancellationToken cancellationToken) =>
         throw new AiProviderException("No AI provider is configured.");
+
+    public Task<string> SubmitBatchAsync(IReadOnlyList<AiModelBatchItem> items, CancellationToken cancellationToken) =>
+        throw new AiProviderException("No AI provider is configured.");
+
+    public Task<IReadOnlyList<AiModelBatchResult>?> GetBatchResultsAsync(string batchId, CancellationToken cancellationToken) =>
+        throw new AiProviderException("No AI provider is configured.");
 }

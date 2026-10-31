@@ -1149,7 +1149,7 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 - Pozisyon ve değerlendirme şablonundan soru seti; mülakatçı formlarından ortak özet (kör geri bildirim kuralına uyar: özet herkes formunu gönderdikten sonra görünür).
 - Ret ve davet e-postası şablonunu adaya göre kişiselleştirme (gönderim her zaman kullanıcı onayıyla).
 
-### [ ] A6 Toplu ön tarama — M (R4 sonrası)
+### [x] A6 Toplu ön tarama — M (R4 sonrası)
 
 - Bir ilanın başvurularını Batch API ile gece analiz eder (yarı maliyet). Bütçe ve kiracı ayarı gözetilir.
 - Kabul: sonuçlar sıralama değil, gereksinim bazında kanıt olarak gösterilir; otomatik ret yoktur.

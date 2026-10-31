@@ -20,6 +20,9 @@ public sealed class AiOptions
 
     public AnthropicOptions Anthropic { get; set; } = new();
 
+    /// <summary>The share of the list price a batch request costs (D59); the provider bills batches at half price.</summary>
+    public decimal BatchPriceFactor { get; set; } = 0.5m;
+
     /// <summary>
     /// List prices in USD per million tokens by model id, used to estimate cost and enforce budgets. Entries here
     /// replace the built-in prices (<see cref="AiPricingOptions.Defaults"/>).
