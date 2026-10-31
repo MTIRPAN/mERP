@@ -1,9 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { useMe } from '@/app/me/meContext';
 import {
   getGetOpeningPipelineQueryKey,
   getGetOpeningQueryKey,
   getListOpeningsQueryKey,
 } from '@/shared/api/generated/endpoints/recruitment/recruitment';
+import { recruitmentAiFeatures } from '../permissions';
 import type {
   OpeningQuestionInput,
   OpeningStatus,
@@ -58,4 +60,10 @@ export const useOpeningRefresh = () => {
           ]
         : []),
     ]);
+};
+
+/** True when the tenant has AI on and the opening text feature enabled (D24, D57). */
+export const useOpeningTextAi = () => {
+  const me = useMe();
+  return me.ai.enabled && me.ai.features.includes(recruitmentAiFeatures.openingText);
 };

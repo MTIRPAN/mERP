@@ -201,7 +201,7 @@ public sealed class CvAnalysisEndpointsTests : IClassFixture<RecruitmentFactory>
     public async Task Me_ShowsCvAnalysis_OnlyWhenPermittedAndEnabled()
     {
         var enabled = (await Client("acme").GetFromJsonAsync<MeResponse>("/api/platform/me", Ct))!;
-        enabled.Ai.Features.ShouldBe([RecruitmentAiFeatures.CvAnalysis]);
+        enabled.Ai.Features.ShouldBe([RecruitmentAiFeatures.CvAnalysis, RecruitmentAiFeatures.OpeningText], ignoreOrder: true);
         var item = enabled.Menu.Single(m => m.Key == "recruitment").Children!.ShouldHaveSingleItem();
         item.Key.ShouldBe("cv-analysis");
         item.Ai.ShouldBeTrue();

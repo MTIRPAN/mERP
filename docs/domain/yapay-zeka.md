@@ -31,7 +31,7 @@ Modül handler'ı
 | 3.1 | **CV analizi:** özet, deneyim, eğitim, yetkinlik, dil, sertifika; gereksinim bazında eşleşme ve kanıt; mülakat soruları | İşe alım | Uzmanın ön elemede harcadığı süreyi azaltır, değerlendirmeyi gereksinimlere bağlar | ✅ Durumsuz sürüm hazır (A2) |
 | 3.2 | **Aday kartında CV analizi:** CV yüklenince analiz başvuruya kaydedilir; aday formu CV'den doldurulur | İşe alım | Elle veri girişini kaldırır | ✅ Hazır (A3) |
 | 3.3 | **Toplu ön tarama:** bir ilanın tüm başvurularını gece toplu analiz | İşe alım | Yüksek hacimli ilanlarda hız; Batch API ile yarı maliyet | R4 sonrası (A6) |
-| 3.4 | **İlan metni taslağı ve kapsayıcı dil kontrolü:** personel talebinden ilan taslağı; ayrımcı veya dışlayıcı ifadeler için uyarı | İşe alım | Daha hızlı ve tutarlı ilan, ayrımcılık riskini azaltır | R3 ile (A4) |
+| 3.4 | **İlan metni taslağı ve kapsayıcı dil kontrolü:** personel talebinden ilan taslağı; ayrımcı veya dışlayıcı ifadeler için uyarı | İşe alım | Daha hızlı ve tutarlı ilan, ayrımcılık riskini azaltır | ✅ Hazır (A4) |
 | 3.5 | **Mülakat soruları ve geri bildirim özeti:** pozisyona göre soru seti; mülakatçı notlarından ortak özet (kör geri bildirim kuralına uyarak) | İşe alım | Yapılandırılmış mülakat, hızlı karar toplantısı | R5 ile (A5) |
 | 3.6 | **Aday e-posta taslakları:** şablonu adaya göre kişiselleştirir (ret, davet) | İşe alım | Aday deneyimi | R4/R5 ile (A5) |
 | 3.7 | **Çeviri taslakları:** yeni dil eklenince eksik metinlerin taslağı | Platform | Çoklu dil maliyetini düşürür | P4 ile (A7) |
@@ -64,6 +64,13 @@ Modül handler'ı
 - **Aday formu:** `POST /api/recruitment/candidates/cv-prefill`. Ad ve iletişim bilgileri yerelde düzenli ifadelerle okunur, sağlayıcıya gitmez. Unvan, şirket, deneyim ve eğitim analizden gelir.
 - **Görünürlük:** Başvuruyu gören herkes (işe alım ekibi dahil) analizi "yapay zeka önerisidir" uyarısıyla görür.
 - Kararlar: `docs/DECISIONS.md` D51.
+
+### 3.4 İlan metni taslağı ve kapsayıcı dil kontrolü (yapıldı)
+
+- **Taslak:** `POST /api/recruitment/openings/text-draft`. Yetki `recruitment.openings.manage`, özellik `recruitment.opening_text`, hız sınırı `ai`. Girdi: başlık, çalışma modeli, istihdam türü, personel talebinin pozisyonu, seviyesi, birimi, kadro sayısı ve nedeni, maskelenmiş kısa açıklama. Talebin gerekçesi ve ücret aralığı gönderilmez. Sonuç saklanmaz, ilan formunun editörlerini doldurur.
+- **Gözden geçirme:** Taslaktan gelen ilan, kullanıcı "gözden geçirdim" onayıyla kaydedilene kadar yayınlanamaz (409 `recruitment.openings.errors.ai_draft_not_reviewed`).
+- **Dil kontrolü:** Yerel kural listesi (yaş, cinsiyet, medeni durum, askerlik, uyruk, din, sağlık, dış görünüş; Türkçe ve İngilizce) ilan her okunduğunda çalışır. `POST /api/recruitment/openings/language-check` kural listesini, `withAi` ile de maskelenmiş düz metin üzerinde yapay zeka incelemesini çalıştırır. Uyarılar yayını engellemez.
+- Kararlar: `docs/DECISIONS.md` D57.
 
 ## 4. Kişisel veri maskeleme
 

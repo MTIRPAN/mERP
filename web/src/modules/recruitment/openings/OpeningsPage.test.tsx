@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   CreateOpeningCommand,
+  DraftOpeningTextQuery,
   OpeningDetails,
   OpeningListItem,
   RequisitionDetails,
@@ -16,6 +17,16 @@ import { OpeningsPage } from './OpeningsPage';
 
 const publish = vi.fn<(id: string) => Promise<void>>().mockResolvedValue(undefined);
 const create = vi.fn<(body: CreateOpeningCommand) => Promise<{ id: string }>>().mockResolvedValue({ id: 'o2' });
+const draft = vi.fn<(body: DraftOpeningTextQuery) => Promise<unknown>>().mockResolvedValue({
+  description: '<p>Kurumsal müşterilerle çalışacak satış uzmanı.</p>',
+  qualifications: '<ul><li>En az 3 yıl B2B satış deneyimi</li></ul>',
+  warnings: [
+    { field: 'Brief', phrase: 'bayan', category: 'Gender', suggestion: 'Cinsiyet belirtmeyin.', source: 'Ai' },
+  ],
+  model: 'claude-sonnet-5-5',
+  promptVersion: '2026-10-31',
+});
+let opening: OpeningDetails;
 
 const item: OpeningListItem = {
   id: 'o1',
@@ -99,11 +110,17 @@ const requisition = {
 
 vi.mock('@/app/company/companyStore', () => ({ useActiveCompanyId: () => undefined }));
 
-vi.mock('@/app/me/meContext', () => ({ useMe: () => ({ companies: [{ id: 'c1', name: 'Acme' }] }) }));
+vi.mock('@/app/me/meContext', () => ({
+  useMe: () => ({
+    companies: [{ id: 'c1', name: 'Acme' }],
+    ai: { enabled: true, features: ['recruitment.opening_text'] },
+  }),
+}));
 
 vi.mock('@/shared/api/generated/endpoints/recruitment/recruitment', () => ({
   listOpenings: () => Promise.resolve({ items: [item], page: 1, pageSize: 20, totalCount: 1 }),
-  useGetOpening: () => ({ data: details }),
+  useGetOpening: () => ({ data: opening }),
+  draftOpeningText: (body: DraftOpeningTextQuery) => draft(body),
   useGetRequisition: (id: string) => ({ data: id ? requisition : undefined }),
   useListOpeningBranches: () => ({ data: [], isFetching: false }),
   useListOpeningStageTemplates: () => ({
@@ -131,6 +148,13 @@ const texts: Record<string, string> = {
   'web.recruitment.openings.answers.yes': 'Evet',
   'web.recruitment.openings.for_requisition': '{number} numaralı personel talebi için',
   'web.common.save': 'Kaydet',
+  'web.recruitment.openings.ai_draft.button': 'Yapay zeka ile taslak',
+  'web.recruitment.openings.ai_draft.brief': 'Kısa açıklama',
+  'web.recruitment.openings.ai_draft.generate': 'Taslak oluştur',
+  'web.recruitment.openings.ai_draft.notice': 'Yapay zeka önerisidir.',
+  'web.recruitment.openings.ai_draft.reviewed': 'Taslağı gözden geçirdim',
+  'web.recruitment.openings.ai_draft.pending': 'Yapay zeka taslağı gözden geçirilmedi',
+  'web.recruitment.openings.language.title': 'Kapsayıcı dil uyarıları',
 };
 
 const render = (permissions: string[], route = '/recruitment/openings') =>
@@ -151,6 +175,8 @@ describe('OpeningsPage', () => {
   beforeEach(() => {
     publish.mockClear();
     create.mockClear();
+    draft.mockClear();
+    opening = details;
   });
 
   it('lists the openings and offers a new one only to those who manage them', async () => {
@@ -194,6 +220,57 @@ describe('OpeningsPage', () => {
         }),
       ),
     );
+  });
+});
+
+describe('OpeningsPage AI draft', () => {
+  beforeEach(() => {
+    create.mockClear();
+    draft.mockClear();
+    opening = details;
+  });
+
+  it('fills the texts from an AI draft, shows its warnings and saves it as a draft to review', async () => {
+    render(['recruitment.openings.read', 'recruitment.openings.manage'], '/recruitment/openings?fromRequisition=r1');
+
+    await userEvent.click(await screen.findByRole('button', { name: /Yapay zeka ile taslak/ }));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Kısa açıklama' }), 'Kurumsal satış');
+    await userEvent.click(screen.getByRole('button', { name: 'Taslak oluştur' }));
+
+    await waitFor(() =>
+      expect(draft).toHaveBeenCalledWith(
+        expect.objectContaining({
+          companyId: 'c1',
+          requisitionId: 'r1',
+          title: 'Satış Uzmanı',
+          brief: 'Kurumsal satış',
+        }),
+      ),
+    );
+    expect(await screen.findByText('Kurumsal müşterilerle çalışacak satış uzmanı.')).toBeInTheDocument();
+    expect(screen.getByText('Yapay zeka önerisidir.')).toBeInTheDocument();
+    expect(screen.getByText('Kapsayıcı dil uyarıları')).toBeInTheDocument();
+    expect(screen.getByText('Cinsiyet belirtmeyin.')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Taslağı gözden geçirdim' })).not.toBeChecked();
+    await userEvent.click(screen.getByRole('button', { name: 'Kaydet' }));
+
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: '<p>Kurumsal müşterilerle çalışacak satış uzmanı.</p>',
+          aiDrafted: true,
+          aiDraftReviewed: false,
+        }),
+      ),
+    );
+  });
+
+  it('does not publish an opening whose AI draft waits for the review', async () => {
+    opening = { ...details, aiDraftPending: true };
+    render(['recruitment.openings.read', 'recruitment.openings.manage'], '/recruitment/openings/o1');
+
+    expect(await screen.findByText('Yapay zeka taslağı gözden geçirilmedi')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Yayınla' })).toBeDisabled();
   });
 });
 

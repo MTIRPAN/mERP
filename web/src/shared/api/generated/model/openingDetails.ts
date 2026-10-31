@@ -5,6 +5,7 @@
  * OpenAPI spec version: v1
  */
 import type { ApplicationForm } from './applicationForm';
+import type { OpeningLanguageWarning } from './openingLanguageWarning';
 import type { OpeningListItem } from './openingListItem';
 import type { OpeningMember } from './openingMember';
 import type { OpeningStageItem } from './openingStageItem';
@@ -35,4 +36,6 @@ export interface OpeningDetails {
   canHold: boolean;
   canClose: boolean;
   version: number;
+  aiDraftPending?: boolean;
+  languageWarnings?: OpeningLanguageWarning[];
 }

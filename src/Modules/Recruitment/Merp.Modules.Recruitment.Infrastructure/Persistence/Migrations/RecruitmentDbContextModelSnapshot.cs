@@ -1255,6 +1255,18 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("AiDraftReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ai_draft_reviewed_at");
+
+                    b.Property<Guid?>("AiDraftReviewedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_draft_reviewed_by_user_id");
+
+                    b.Property<DateTimeOffset?>("AiDraftedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ai_drafted_at");
+
                     b.Property<Guid?>("BranchId")
                         .HasColumnType("uuid")
                         .HasColumnName("branch_id");

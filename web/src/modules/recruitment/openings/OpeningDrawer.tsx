@@ -1,5 +1,6 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined, StarFilled } from '@ant-design/icons';
 import {
+  Alert,
   App,
   Button,
   Card,
@@ -34,6 +35,7 @@ import {
 import type {
   CreateOpeningCommand,
   OpeningDetails,
+  OpeningLanguageCheck,
   OpeningVisibility,
   QuestionType,
   RequisitionDetails,
@@ -44,6 +46,7 @@ import { applyApiErrorsToForm } from '@/shared/api/formErrors';
 import { isApiError } from '@/shared/api/problem';
 import { RichTextEditor } from '@/shared/components/RichTextEditor';
 import { employmentTypes, useSettled } from '../requisitions/requisitions';
+import { AiDraftModal, LanguageCheckButton, LanguageCheckResult } from './OpeningTextAssist';
 import {
   answersOf,
   canKnockOut,
@@ -51,6 +54,7 @@ import {
   NO,
   questionTypes,
   useOpeningRefresh,
+  useOpeningTextAi,
   visibilities,
   workModels,
   YES,
@@ -85,6 +89,9 @@ interface OpeningValues {
   requireCv?: boolean;
   askCoverLetter?: boolean;
   questions?: QuestionValues[];
+  /** The texts were filled from an AI draft in this edit (D57). */
+  aiDrafted?: boolean;
+  aiDraftReviewed?: boolean;
 }
 
 /** Fields the API may name in its errors; others are shown in a message. */
@@ -196,6 +203,8 @@ const toBody = (values: OpeningValues): CreateOpeningCommand => ({
   requirePhone: values.requirePhone ?? false,
   requireCv: values.requireCv ?? false,
   askCoverLetter: values.askCoverLetter ?? false,
+  aiDrafted: values.aiDrafted ?? false,
+  aiDraftReviewed: values.aiDraftReviewed ?? false,
   questions: (values.questions ?? []).map((q) => ({
     id: q.id ?? null,
     text: q.text?.trim() || null,
@@ -328,6 +337,11 @@ export const OpeningDrawer = ({ details, requisition, onClose, onSaved }: Openin
   const [form] = Form.useForm<OpeningValues>();
   const companyId = Form.useWatch('companyId', form);
   const templateId = Form.useWatch('stageTemplateId', form);
+  // No form item holds it, so the watch keeps values set from code
+  const aiDrafted = Form.useWatch('aiDrafted', { form, preserve: true });
+  const canDraft = useOpeningTextAi();
+  const [drafting, setDrafting] = useState(false);
+  const [languageCheck, setLanguageCheck] = useState<OpeningLanguageCheck>();
   const [saving, setSaving] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const settledUser = useSettled(userSearch);
@@ -424,6 +438,29 @@ export const OpeningDrawer = ({ details, requisition, onClose, onSaved }: Openin
         </Flex>
       }
     >
+      {drafting && (
+        <AiDraftModal
+          request={{
+            companyId: form.getFieldValue('companyId') as string,
+            requisitionId: (form.getFieldValue('requisitionId') as string | undefined) ?? null,
+            title: form.getFieldValue('title') as string,
+            workModel: (form.getFieldValue('workModel') as WorkModel | undefined) ?? 'OnSite',
+            employmentType:
+              (form.getFieldValue('employmentType') as RequisitionEmploymentType | undefined) ?? 'Indefinite',
+          }}
+          replaces={!!form.getFieldValue('description') || !!form.getFieldValue('qualifications')}
+          onDraft={(draft) => {
+            form.setFieldsValue({
+              description: draft.description,
+              qualifications: draft.qualifications,
+              aiDrafted: true,
+              aiDraftReviewed: false,
+            });
+            setLanguageCheck({ warnings: draft.warnings, checkedWithAi: true });
+          }}
+          onClose={() => setDrafting(false)}
+        />
+      )}
       <Form<OpeningValues>
         form={form}
         layout="vertical"
@@ -515,6 +552,49 @@ export const OpeningDrawer = ({ details, requisition, onClose, onSaved }: Openin
             </Form.Item>
           </Col>
         </Row>
+        <Flex gap={8} wrap style={{ marginBottom: 12 }}>
+          {canDraft && (
+            <Button
+              size="small"
+              icon={<StarFilled />}
+              onClick={() =>
+                void form.validateFields(['companyId', 'title']).then(
+                  () => setDrafting(true),
+                  () => undefined,
+                )
+              }
+            >
+              {t('web.recruitment.openings.ai_draft.button')}
+            </Button>
+          )}
+          <LanguageCheckButton
+            texts={() => form.getFieldsValue(['title', 'description', 'qualifications']) as OpeningValues}
+            onChecked={setLanguageCheck}
+          />
+        </Flex>
+        {languageCheck && (
+          <div style={{ marginBottom: 12 }}>
+            <LanguageCheckResult check={languageCheck} />
+          </div>
+        )}
+        {(aiDrafted || details?.aiDraftPending) && (
+          <>
+            <Alert
+              type="info"
+              showIcon
+              icon={<StarFilled />}
+              style={{ marginBottom: 8 }}
+              title={t('web.recruitment.openings.ai_draft.notice')}
+            />
+            <Form.Item
+              name="aiDraftReviewed"
+              valuePropName="checked"
+              extra={t('web.recruitment.openings.ai_draft.review_required')}
+            >
+              <Checkbox>{t('web.recruitment.openings.ai_draft.reviewed')}</Checkbox>
+            </Form.Item>
+          </>
+        )}
         <Form.Item name="description" label={t('web.recruitment.openings.fields.description')}>
           <RichTextEditor aria-label={t('web.recruitment.openings.fields.description')} />
         </Form.Item>

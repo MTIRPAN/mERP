@@ -191,6 +191,17 @@ public sealed class JobOpening : AuditableAggregateRoot<JobOpeningId>, ICompanyS
 
     public string? CloseReason { get; private set; }
 
+    /// <summary>When the texts last came from an AI draft (D57).</summary>
+    public DateTimeOffset? AiDraftedAt { get; private set; }
+
+    /// <summary>When a user last confirmed reviewing the AI draft, and who.</summary>
+    public DateTimeOffset? AiDraftReviewedAt { get; private set; }
+
+    public Guid? AiDraftReviewedByUserId { get; private set; }
+
+    /// <summary>The texts came from an AI draft no one has confirmed reviewing since; the opening cannot be published.</summary>
+    public bool AiDraftPending => AiDraftedAt is { } drafted && (AiDraftReviewedAt is not { } reviewed || reviewed < drafted);
+
     public static JobOpening Draft(OpeningTerms terms, StageTemplate template)
     {
         var opening = new JobOpening { Id = EntityId.New<JobOpeningId>(), Status = OpeningStatus.Draft };
@@ -230,12 +241,33 @@ public sealed class JobOpening : AuditableAggregateRoot<JobOpeningId>, ICompanyS
         return Result.Success();
     }
 
-    /// <summary>Publishes a draft or an opening on hold; without a first day it is shown from <paramref name="today"/>.</summary>
+    /// <summary>The description or qualifications were filled from an AI draft (D57): a user has to review them.</summary>
+    public void DraftedWithAi(DateTimeOffset at) => AiDraftedAt = at;
+
+    /// <summary>A user confirms reviewing the AI draft; nothing changes when no draft waits for review.</summary>
+    public void ConfirmAiDraftReviewed(Guid userId, DateTimeOffset at)
+    {
+        if (AiDraftPending)
+        {
+            AiDraftReviewedAt = at;
+            AiDraftReviewedByUserId = userId;
+        }
+    }
+
+    /// <summary>
+    /// Publishes a draft or an opening on hold; without a first day it is shown from <paramref name="today"/>. An AI
+    /// draft has to be reviewed first (D57).
+    /// </summary>
     public Result Publish(DateOnly today, DateTimeOffset at)
     {
         if (Status is not (OpeningStatus.Draft or OpeningStatus.OnHold))
         {
             return JobOpeningErrors.NotPublishable;
+        }
+
+        if (AiDraftPending)
+        {
+            return JobOpeningErrors.AiDraftNotReviewed;
         }
 
         if (PublishUntil is { } until && until < today)
@@ -376,6 +408,7 @@ public static class JobOpeningErrors
     public static readonly Error Closed = Error.Conflict("recruitment.openings.errors.closed");
     public static readonly Error NotPublishable = Error.Conflict("recruitment.openings.errors.not_publishable");
     public static readonly Error NotPublished = Error.Conflict("recruitment.openings.errors.not_published");
+    public static readonly Error AiDraftNotReviewed = Error.Conflict("recruitment.openings.errors.ai_draft_not_reviewed");
     public static readonly Error Expired = Error.Validation([new FieldError("publishUntil", "recruitment.openings.errors.expired")]);
     public static readonly Error StagesFixed = Error.Validation([new FieldError("stageTemplateId", "recruitment.openings.errors.stages_fixed")]);
     public static readonly Error StageInUse = Error.Validation([new FieldError("stages", "recruitment.openings.errors.stage_in_use")]);

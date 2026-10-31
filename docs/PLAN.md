@@ -1139,7 +1139,7 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 - Aday formu CV'den doldurulur. İletişim bilgileri yerelde (regex) çıkarılır, sağlayıcıya gönderilmez.
 - Kabul: analiz sonucu başvuru kartında görünür; aday anonimleşince (R8) analiz de silinir.
 
-### [ ] A4 İlan metni taslağı ve kapsayıcı dil kontrolü — S (R3 ile)
+### [x] A4 İlan metni taslağı ve kapsayıcı dil kontrolü — S (R3 ile)
 
 - Personel talebinden ve kısa açıklamadan ilan taslağı; yaş, cinsiyet ve benzeri dışlayıcı ifadeler için uyarı listesi.
 - Kabul: taslak TipTap editörüne gelir, kullanıcı düzenlemeden yayınlanamaz.

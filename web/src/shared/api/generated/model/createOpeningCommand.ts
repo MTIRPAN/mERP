@@ -41,4 +41,6 @@ export interface CreateOpeningCommand {
   askCoverLetter: boolean;
   /** @nullable */
   questions: OpeningQuestionInput[] | null;
+  aiDrafted?: boolean;
+  aiDraftReviewed?: boolean;
 }

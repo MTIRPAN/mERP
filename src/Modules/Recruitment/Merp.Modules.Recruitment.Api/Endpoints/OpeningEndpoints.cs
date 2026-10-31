@@ -8,6 +8,7 @@ using Merp.Modules.Recruitment.Domain.Openings;
 using Merp.SharedKernel.Results;
 using Merp.Web.Endpoints;
 using Merp.Web.Errors;
+using Merp.Web.RateLimiting;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -52,6 +53,34 @@ internal static class OpeningEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        openings.MapPost("/text-draft", async Task<Results<Ok<OpeningDraftResponse>, ProblemHttpResult>> (DraftOpeningTextQuery query, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(query, ct);
+                return result.IsSuccess ? TypedResults.Ok(result.Value) : (ProblemHttpResult)result.Error.ToProblem();
+            })
+            .RequirePermission(RecruitmentPermissions.Openings.Manage)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("DraftOpeningText")
+            .WithSummary("Draft an opening's description and qualifications with AI from its title, requisition and a brief (A4, D57)")
+            .WithDescription("Nothing is stored. Contact details in the brief are removed before it reaches the AI provider; the requisition's justification is not sent. An opening saved with the draft is published only after a user confirms reviewing it.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        openings.MapPost("/language-check", async Task<Results<Ok<OpeningLanguageCheck>, ProblemHttpResult>> (CheckOpeningLanguageQuery query, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(query, ct);
+                return result.IsSuccess ? TypedResults.Ok(result.Value) : (ProblemHttpResult)result.Error.ToProblem();
+            })
+            .RequirePermission(RecruitmentPermissions.Openings.Manage)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("CheckOpeningLanguage")
+            .WithSummary("Check an opening's title and texts for exclusionary phrases: the rule list, and the AI review when asked (A4, D57)")
+            .WithDescription("Warnings never block saving or publishing.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         openings.MapPost("/{id:guid}/publish", (Guid id, ISender sender, CancellationToken ct) =>
                 NoContentAsync(sender.Send(new PublishOpeningCommand(id), ct)))

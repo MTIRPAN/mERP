@@ -148,5 +148,7 @@
   "recruitment.notifications.consent_renewal.title": "{company}: bilgilerinizi saklamaya devam edelim mi?",
   "recruitment.notifications.consent_renewal.body": "Sayın {candidate}, başvurunuz ve özgeçmişiniz aday havuzumuzda {date} tarihine kadar saklanacak. Başka pozisyonlar için değerlendirilmeye devam etmek istiyorsanız aşağıdaki bağlantıdan açık rızanızı yenileyin; yenilemezseniz bilgileriniz bu tarihte anonimleştirilir.",
   "recruitment.candidates.privacy.export_file_name": "aday-verisi-{code}.zip",
-  "permissions.recruitment.reports.read": "İşe alım raporlarını ve gösterge panelini görüntüleme"
+  "permissions.recruitment.reports.read": "İşe alım raporlarını ve gösterge panelini görüntüleme",
+  "recruitment.openings.draft.responsibilities": "Sorumluluklar",
+  "recruitment.openings.draft.nice_to_have": "Tercih sebepleri"
 }
