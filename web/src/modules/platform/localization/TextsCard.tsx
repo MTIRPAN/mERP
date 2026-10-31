@@ -4,7 +4,8 @@ import { App, Button, Card, Flex, Form, Input, Modal, Select, Space, Switch, Tag
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { reloadTexts } from '@/app/i18n/i18n';
-import { platformPermissions } from '@/modules/platform/permissions';
+import { platformAiFeatures, platformPermissions } from '@/modules/platform/permissions';
+import { useAiFeature } from '@/shared/ai/useAiFeature';
 import {
   exportTexts,
   getListCulturesQueryKey,
@@ -19,7 +20,9 @@ import { applyApiErrorsToForm } from '@/shared/api/formErrors';
 import { isApiError } from '@/shared/api/problem';
 import type { ListParams } from '@/shared/api/paging';
 import { useHasPermission } from '@/shared/auth/permissionContext';
+import { AiBadge } from '@/shared/components/AiBadge';
 import { DataTable, type DataTableColumn } from '@/shared/components/DataTable';
+import { TranslationDraftModal } from './TranslationDraftModal';
 
 /** Accepted import file: the xlsx of the export. */
 const XLSX = '.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -105,7 +108,10 @@ export const TextsCard = ({ cultures }: { cultures: CultureItem[] }) => {
   const [search, setSearch] = useState<string>();
   const [missing, setMissing] = useState(false);
   const [editing, setEditing] = useState<TextItem>();
+  const [drafting, setDrafting] = useState(false);
   const importTexts = useImportTexts();
+  const draftsAi = useAiFeature(platformAiFeatures.translationDrafts);
+  const selected = cultures.find((c) => c.code === culture);
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: getListTextsQueryKey(culture) });
@@ -242,6 +248,14 @@ export const TextsCard = ({ cultures }: { cultures: CultureItem[] }) => {
             >
               {t('web.localization.export')}
             </Button>
+            {canManage && draftsAi && selected && !selected.isDefault && (
+              <Button onClick={() => setDrafting(true)}>
+                <Space size={4}>
+                  {t('web.localization.drafts.button')}
+                  <AiBadge />
+                </Space>
+              </Button>
+            )}
             {canManage && (
               <Upload
                 accept={XLSX}
@@ -260,6 +274,15 @@ export const TextsCard = ({ cultures }: { cultures: CultureItem[] }) => {
         }
       />
       <TextEditor culture={culture} item={editing} onClose={() => setEditing(undefined)} onSaved={refresh} />
+      {drafting && selected && (
+        <TranslationDraftModal
+          culture={culture}
+          cultureName={selected.name}
+          search={search}
+          onClose={() => setDrafting(false)}
+          onSaved={refresh}
+        />
+      )}
     </Card>
   );
 };

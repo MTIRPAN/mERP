@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.AI;
 using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Infrastructure;
 using Merp.Web.Modules;
@@ -16,6 +17,7 @@ public sealed class PlatformModule : IModule
     {
         services.AddPlatformInfrastructure(configuration);
         services.AddSingleton<IMenuContributor, PlatformMenu>();
+        services.AddSingleton<IAiFeatureDefinitionProvider, PlatformAiFeatureDefinitions>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)

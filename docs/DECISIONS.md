@@ -1870,3 +1870,26 @@ Seçilen kültür `Content-Language` başlığında döner.
 - "yapay zeka önerisidir, sıralama değildir, otomatik ret yoktur" uyarısı,
 - durum kartı (istek, iptal, bekletme nedeni, başarılı ve başarısız sayıları),
 - gereksinim tablosu (hücrenin üzerine gelince kanıt).
+
+## D60 — Çeviri taslakları
+
+**Bağlam:** A7 yeni bir dilin eksik metinlerini yapay zekayla taslak olarak çevirir. Kullanıcı kararı (2026-11-01): sayfa sayfa taslak; kullanıcı gözden geçirip kaydeder. Kaydedilmeyen taslak kullanıcılara görünmez, taslak durumu tutulmaz.
+
+**Taslak:**
+- `POST /api/platform/localization/texts/{culture}/drafts`. Yetki `platform.localization.manage` (Tenant kapsamı), özellik `platform.translation_drafts` (Platform'un ilk yapay zeka özelliği), hız sınırı `ai`.
+- Listenin filtresine (önek, arama) uyan eksik metinlerden en fazla 100 tanesi varsayılan dildeki metinden çevrilir. Varsayılan dil için istenirse 400 `platform.localization.errors.default_culture_draft` döner.
+- **Sağlayıcıya giden:** kaynak ve hedef dil ile anahtarıyla birlikte her metin. Anahtar metnin nerede gösterildiğini anlatır. Arayüz metinleri kişisel veri taşımadığı için maskeleme yapılmaz.
+- Talimat `{name}` yer tutucularını, HTML ve Liquid etiketlerini korumayı söyler.
+- Yanıt her taslak için kaynak metni, taslağı ve yer tutucuların aynı kalıp kalmadığını (`PlaceholdersMatch`) verir. Filtrede kalan eksik sayısı da döner. Sonuç saklanmaz.
+
+**Kaydetme:** `POST /api/platform/localization/texts/{culture}/bulk` tek seferde en fazla 200 çeviriyi kaydeder (`SetTextsCommand`, tek aggregate: `Culture`).
+- Katalogda olmayan anahtar `texts[i].key` alanında hata verir.
+- Yanıt kaç çevirinin değiştiğini döner. Önbellek commit'ten sonra temizlenir.
+
+**Web:**
+- Diller ve çeviriler sayfasında, varsayılan olmayan bir dil seçiliyken "Yapay zeka ile taslak" düğmesi görünür (özellik açıksa ve yönetme yetkisi varsa).
+- Pencerede şunlar var:
+  - "yapay zeka taslağıdır" uyarısı,
+  - her satırda anahtar, kaynak metin, düzenlenebilir taslak ve kaydetme onay kutusu,
+  - yer tutucular kaynakla aynı değilse uyarı (düzenledikçe yeniden denetlenir),
+  - "Seçilenleri kaydet" düğmesi.

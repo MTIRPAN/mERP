@@ -1154,7 +1154,7 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 - Bir ilanın başvurularını Batch API ile gece analiz eder (yarı maliyet). Bütçe ve kiracı ayarı gözetilir.
 - Kabul: sonuçlar sıralama değil, gereksinim bazında kanıt olarak gösterilir; otomatik ret yoktur.
 
-### [ ] A7 Çeviri taslakları — S (P4 ile)
+### [x] A7 Çeviri taslakları — S (P4 ile)
 ### [ ] A8 Onay özeti — S (P10 ile)
 ### [ ] A9 İçe aktarma kolon eşleştirme önerisi — S (P11 ile)
 ### [ ] A10 Belge şablonu taslağı — S (P12 ile)

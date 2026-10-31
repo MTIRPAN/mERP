@@ -30,3 +30,8 @@ export const platformPermissions = {
   documentTemplatesRead: 'platform.document_templates.read',
   documentTemplatesManage: 'platform.document_templates.manage',
 } as const;
+
+/** Mirrors Merp.Modules.Platform.Application.PlatformAiFeatures. */
+export const platformAiFeatures = {
+  translationDrafts: 'platform.translation_drafts',
+} as const;

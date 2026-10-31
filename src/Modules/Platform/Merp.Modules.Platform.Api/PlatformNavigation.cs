@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.AI;
 using Merp.Modules.Platform.Application;
 using Merp.Web.Navigation;
 
@@ -48,5 +49,13 @@ internal sealed class PlatformMenu : IMenuContributor
             new("audit", "web.shell.menu.audit", Path: "/system/audit", Icon: "audit", Permission: PlatformPermissions.Audit.Read, Order: 20),
             new("ai-usage", "web.shell.menu.ai_usage", Path: "/system/ai-usage", Icon: "ai", Permission: PlatformPermissions.AiUsage.Read, Order: 30),
         ]),
+    ];
+}
+
+internal sealed class PlatformAiFeatureDefinitions : IAiFeatureDefinitionProvider
+{
+    public IEnumerable<AiFeatureDefinition> GetFeatures() =>
+    [
+        new(PlatformAiFeatures.TranslationDrafts),
     ];
 }

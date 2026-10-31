@@ -64,6 +64,7 @@ import type {
   DocumentTemplateDetails,
   DocumentTemplateItem,
   DocumentTypeItem,
+  DraftTranslationsQuery,
   EntityCreatedResponse,
   ExportBranchesParams,
   ExportCompaniesParams,
@@ -124,12 +125,15 @@ import type {
   SearchAuditParams,
   SetCompanyLogoBody,
   SetTextCommand,
+  SetTextsCommand,
+  SetTextsResponse,
   SetUserActiveCommand,
   SettingModuleGroup,
   StartImportBody,
   SubmitTestApprovalCommand,
   SystemInfoResponse,
   TestApprovalDocumentResponse,
+  TranslationDraftResponse,
   UnreadNotificationCount,
   UpdateApprovalDefinitionCommand,
   UpdateBranchCommand,
@@ -3224,6 +3228,186 @@ export const useSetText = <TError = ErrorType<HttpValidationProblemDetails | Pro
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof setText>>, TError, SetTextMutationVariables, TContext> => {
   return useMutation(getSetTextMutationOptions(options), queryClient);
+};
+export const getSetTextsUrl = (culture: string) => {
+  return `/api/platform/localization/texts/${culture}/bulk`;
+};
+
+/**
+ * Requires permission: platform.localization.manage.
+ * @summary Translate many keys at once, e.g. reviewed AI drafts (A7, D60); returns how many changed
+ */
+export const setTexts = async (
+  culture: string,
+  setTextsCommand: SetTextsCommand,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<SetTextsResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<SetTextsResponse>(getSetTextsUrl(culture), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(setTextsCommand),
+  });
+};
+
+export const getSetTextsMutationKey = () => ['setTexts'] as const;
+
+export const getSetTextsMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<Awaited<ReturnType<typeof setTexts>>, TError, SetTextsMutationVariables, TContext>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof setTexts>>, TError, SetTextsMutationVariables, TContext> => {
+  const mutationKey = getSetTextsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof setTexts>>, SetTextsMutationVariables> = (props) => {
+    const { culture, data } = props ?? {};
+
+    return setTexts(culture, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SetTextsMutationResult = NonNullable<Awaited<ReturnType<typeof setTexts>>>;
+export type SetTextsMutationBody = SetTextsCommand;
+export type SetTextsMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SetTextsMutationVariables = { culture: string; data: SetTextsCommand };
+
+/**
+ * @summary Translate many keys at once, e.g. reviewed AI drafts (A7, D60); returns how many changed
+ */
+export const useSetTexts = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof setTexts>>, TError, SetTextsMutationVariables, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof setTexts>>, TError, SetTextsMutationVariables, TContext> => {
+  return useMutation(getSetTextsMutationOptions(options), queryClient);
+};
+export const getDraftTranslationsUrl = (culture: string) => {
+  return `/api/platform/localization/texts/${culture}/drafts`;
+};
+
+/**
+ * Nothing is stored: a user reviews the drafts and saves them with SetTexts. Requires permission: platform.localization.manage.
+ * @summary Draft up to 100 missing translations of the filter with AI from the default language (A7, D60)
+ */
+export const draftTranslations = async (
+  culture: string,
+  draftTranslationsQuery: DraftTranslationsQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<TranslationDraftResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<TranslationDraftResponse>(getDraftTranslationsUrl(culture), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(draftTranslationsQuery),
+  });
+};
+
+export const getDraftTranslationsMutationKey = () => ['draftTranslations'] as const;
+
+export const getDraftTranslationsMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof draftTranslations>>,
+    TError,
+    DraftTranslationsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof draftTranslations>>,
+  TError,
+  DraftTranslationsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDraftTranslationsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof draftTranslations>>,
+    DraftTranslationsMutationVariables
+  > = (props) => {
+    const { culture, data } = props ?? {};
+
+    return draftTranslations(culture, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DraftTranslationsMutationResult = NonNullable<Awaited<ReturnType<typeof draftTranslations>>>;
+export type DraftTranslationsMutationBody = DraftTranslationsQuery;
+export type DraftTranslationsMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type DraftTranslationsMutationVariables = { culture: string; data: DraftTranslationsQuery };
+
+/**
+ * @summary Draft up to 100 missing translations of the filter with AI from the default language (A7, D60)
+ */
+export const useDraftTranslations = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof draftTranslations>>,
+      TError,
+      DraftTranslationsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof draftTranslations>>,
+  TError,
+  DraftTranslationsMutationVariables,
+  TContext
+> => {
+  return useMutation(getDraftTranslationsMutationOptions(options), queryClient);
 };
 export const getExportTextsUrl = (culture: string) => {
   return `/api/platform/localization/texts/${culture}/export`;

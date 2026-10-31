@@ -166,6 +166,18 @@
   "web.localization.import.done_title": "Çeviriler yüklendi",
   "web.localization.import.done": "{imported} çeviri yüklendi, {unchanged} çeviri zaten aynıydı, {skipped} satır boş olduğu için atlandı.",
   "web.localization.import.unknown_keys": "Katalogda olmayan anahtarlar yüklenmedi: {keys}",
+  "web.localization.drafts.button": "Yapay zeka ile taslak",
+  "web.localization.drafts.title": "{culture} için çeviri taslakları",
+  "web.localization.drafts.notice": "Bunlar yapay zeka taslağıdır. Kaydetmeden önce okuyup düzeltin; kaydedilmeyen taslak kullanıcılara görünmez.",
+  "web.localization.drafts.scope": "Listedeki filtreye uyan eksik metinlerden en fazla {count} tanesi taslak olarak çevrilir.",
+  "web.localization.drafts.include": "Kaydet",
+  "web.localization.drafts.source": "Kaynak metin",
+  "web.localization.drafts.draft": "Taslak çeviri",
+  "web.localization.drafts.placeholders_differ": "Yer tutucular kaynak metinle aynı değil",
+  "web.localization.drafts.save": "Seçilenleri kaydet",
+  "web.localization.drafts.saved": "{count} çeviri kaydedildi.",
+  "web.localization.drafts.remaining": "Bu filtrede {count} eksik metin daha var.",
+  "web.localization.drafts.none": "Bu filtrede çevrilecek eksik metin yok.",
   "web.audit.title": "Denetim kayıtları",
   "web.audit.subtitle": "Tüm modüllerde kim, neyi, ne zaman değiştirdi. Hassas alanların değerleri saklanmaz; görüntülenmeleri de kaydedilir.",
   "web.audit.history": "Geçmiş",
@@ -791,5 +803,6 @@
   "web.ai.features.recruitment.interview_questions": "Mülakat soru önerileri",
   "web.ai.features.recruitment.feedback_summary": "Mülakat geri bildirim özeti",
   "web.ai.features.recruitment.candidate_email": "Aday e-postası kişiselleştirme",
-  "web.ai.features.recruitment.batch_screening": "Toplu ön tarama"
+  "web.ai.features.recruitment.batch_screening": "Toplu ön tarama",
+  "web.ai.features.platform.translation_drafts": "Çeviri taslakları"
 }

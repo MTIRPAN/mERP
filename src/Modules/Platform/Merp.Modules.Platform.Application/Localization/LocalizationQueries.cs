@@ -71,7 +71,34 @@ internal sealed class GetTextsQueryValidator : AbstractValidator<GetTextsQuery>
 /// <summary>The catalog of a culture with the tenant's texts, read straight from the tables (inactive cultures too).</summary>
 internal sealed class TextCatalog(IPlatformDbContext db, IEmbeddedTexts embedded)
 {
+    private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
+
     public sealed record Entry(string Key, string? DefaultText, string? Text, string? Source);
+
+    /// <summary>The entries of the list's filters: only the missing translations, a key prefix, a search term.</summary>
+    public static IEnumerable<Entry> Filter(IEnumerable<Entry> entries, bool missing, string? prefix, string? search)
+    {
+        if (missing)
+        {
+            entries = entries.Where(e => e.Text is null);
+        }
+
+        if (!string.IsNullOrWhiteSpace(prefix))
+        {
+            entries = entries.Where(e => e.Key.StartsWith(prefix.Trim(), StringComparison.Ordinal));
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            entries = entries.Where(e => Contains(e.Key, term) || Contains(e.DefaultText, term) || Contains(e.Text, term));
+        }
+
+        return entries;
+    }
+
+    private static bool Contains(string? text, string term) =>
+        text is not null && Turkish.CompareInfo.IndexOf(text, term, CompareOptions.IgnoreCase) >= 0;
 
     public async Task<(Culture Culture, string DefaultCode, IReadOnlyList<Entry> Entries)?> LoadAsync(string code, CancellationToken cancellationToken)
     {
@@ -141,8 +168,6 @@ internal sealed class GetCulturesQueryHandler(IPlatformDbContext db, IAccessScop
 internal sealed class GetTextsQueryHandler(IPlatformDbContext db, IEmbeddedTexts embedded, IAccessScopeProvider scopes)
     : IQueryHandler<GetTextsQuery, PagedResult<TextItem>>
 {
-    private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
-
     public async Task<Result<PagedResult<TextItem>>> Handle(GetTextsQuery request, CancellationToken cancellationToken)
     {
         if (!await LocalizationRules.IsAllowedAsync(scopes, request.Permission, cancellationToken))
@@ -155,33 +180,13 @@ internal sealed class GetTextsQueryHandler(IPlatformDbContext db, IEmbeddedTexts
             return CommonErrors.NotFound;
         }
 
-        IEnumerable<TextCatalog.Entry> entries = loaded.Entries;
-        if (request.Missing)
-        {
-            entries = entries.Where(e => e.Text is null);
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Prefix))
-        {
-            entries = entries.Where(e => e.Key.StartsWith(request.Prefix.Trim(), StringComparison.Ordinal));
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Search))
-        {
-            var term = request.Search.Trim();
-            entries = entries.Where(e => Contains(e.Key, term) || Contains(e.DefaultText, term) || Contains(e.Text, term));
-        }
-
-        var list = entries.ToList();
+        var list = TextCatalog.Filter(loaded.Entries, request.Missing, request.Prefix, request.Search).ToList();
         return new PagedResult<TextItem>(
             [.. list.Skip(request.Paging.Skip).Take(request.Paging.Size).Select(e => new TextItem(e.Key, e.DefaultText, e.Text, e.Source))],
             request.Paging.PageNumber,
             request.Paging.Size,
             list.Count);
     }
-
-    private static bool Contains(string? text, string term) =>
-        text is not null && Turkish.CompareInfo.IndexOf(text, term, CompareOptions.IgnoreCase) >= 0;
 }
 
 internal sealed class ExportTextsQueryHandler(IPlatformDbContext db, IEmbeddedTexts embedded, IAccessScopeProvider scopes, ISpreadsheet spreadsheet)
