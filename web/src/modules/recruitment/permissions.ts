@@ -25,4 +25,5 @@ export const recruitmentPermissions = {
 /** Mirrors Merp.Modules.Recruitment.Application.RecruitmentAiFeatures. */
 export const recruitmentAiFeatures = {
   cvAnalysis: 'recruitment.cv_analysis',
+  openingText: 'recruitment.opening_text',
 } as const;

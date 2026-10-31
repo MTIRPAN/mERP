@@ -1,4 +1,5 @@
 import {
+  Alert,
   App,
   Button,
   Card,
@@ -12,6 +13,7 @@ import {
   Skeleton,
   Space,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { useState } from 'react';
@@ -34,6 +36,7 @@ import { OpeningDrawer } from './OpeningDrawer';
 import { OpeningStagesDrawer } from './OpeningStagesDrawer';
 import { stageTypeColors } from '../settings/stages';
 import { NO, openingStatusColors, useOpeningRefresh, YES } from './openings';
+import { LanguageCheckResult } from './OpeningTextAssist';
 
 export const OpeningStatusTag = ({ status }: { status: OpeningStatus }) => {
   const { t } = useTranslation();
@@ -147,9 +150,16 @@ export const OpeningDetailDrawer = ({ id, onClose }: OpeningDetailDrawerProps) =
         </Button>
       )}
       {details.canPublish && (
-        <Button type="primary" loading={busy === 'publish'} disabled={!!busy} onClick={() => void act('publish')}>
-          {t('web.recruitment.openings.publish')}
-        </Button>
+        <Tooltip title={details.aiDraftPending ? t('web.recruitment.openings.ai_draft.review_required') : undefined}>
+          <Button
+            type="primary"
+            loading={busy === 'publish'}
+            disabled={!!busy || details.aiDraftPending}
+            onClick={() => void act('publish')}
+          >
+            {t('web.recruitment.openings.publish')}
+          </Button>
+        </Tooltip>
       )}
       {details.canClose && (
         <Button danger onClick={() => setDialog('close')}>
@@ -261,6 +271,17 @@ export const OpeningDetailDrawer = ({ id, onClose }: OpeningDetailDrawerProps) =
               ))}
             </Space>
           </Card>
+          {details.aiDraftPending && (
+            <Alert
+              type="info"
+              showIcon
+              title={t('web.recruitment.openings.ai_draft.pending')}
+              description={t('web.recruitment.openings.ai_draft.pending_hint')}
+            />
+          )}
+          {details.canEdit && (details.languageWarnings?.length ?? 0) > 0 && (
+            <LanguageCheckResult check={{ warnings: details.languageWarnings ?? [], checkedWithAi: false }} />
+          )}
           <Card size="small" title={t('web.recruitment.openings.fields.description')}>
             {details.description ? <RichTextView html={details.description} /> : dash}
           </Card>

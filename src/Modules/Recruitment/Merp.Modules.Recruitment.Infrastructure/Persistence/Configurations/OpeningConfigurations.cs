@@ -23,6 +23,7 @@ internal sealed class JobOpeningConfiguration : IEntityTypeConfiguration<JobOpen
         builder.Property(o => o.Team).HasJson();
         builder.Property(o => o.Form).HasJson();
         builder.Property(o => o.Stages).HasJson();
+        builder.Ignore(o => o.AiDraftPending);
         builder.HasIndex(o => new { o.CompanyId, o.CreatedAt });
         builder.HasIndex(o => o.RequisitionId);
 

@@ -82,5 +82,6 @@ internal sealed class RecruitmentAiFeatureDefinitions : IAiFeatureDefinitionProv
     public IEnumerable<AiFeatureDefinition> GetFeatures() =>
     [
         new(RecruitmentAiFeatures.CvAnalysis),
+        new(RecruitmentAiFeatures.OpeningText),
     ];
 }

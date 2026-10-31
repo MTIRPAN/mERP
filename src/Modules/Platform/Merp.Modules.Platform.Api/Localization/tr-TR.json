@@ -786,5 +786,6 @@
   "web.imports.commit_valid": "Hatasız satırları aktar",
   "web.imports.commit_valid_count": "Hatasız {rows} satırı aktar",
   "web.imports.commit_valid_confirm": "{rows} satır içe aktarılacak, hatalı {skipped} satır atlanacak. Devam edilsin mi?",
-  "web.settings.not_set": "Ayarlanmadı"
+  "web.settings.not_set": "Ayarlanmadı",
+  "web.ai.features.recruitment.opening_text": "İlan metni taslağı ve dil kontrolü"
 }

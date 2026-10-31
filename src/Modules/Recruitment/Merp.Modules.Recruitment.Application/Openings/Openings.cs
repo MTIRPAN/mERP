@@ -124,7 +124,14 @@ public sealed record OpeningDetails(
     bool CanPublish,
     bool CanHold,
     bool CanClose,
-    uint Version);
+    uint Version)
+{
+    /// <summary>The texts came from an AI draft no one has confirmed reviewing; publishing waits for it (D57).</summary>
+    public bool AiDraftPending { get; init; }
+
+    /// <summary>Exclusionary phrases the rule list finds in the title and texts (D57).</summary>
+    public IReadOnlyList<OpeningLanguageWarning> LanguageWarnings { get; init; } = [];
+}
 
 /// <summary>The openings of the companies in the caller's scope, newest first unless sorted.</summary>
 public sealed record GetOpeningsQuery(
@@ -175,6 +182,12 @@ public sealed record CreateOpeningCommand(
     bool AskCoverLetter,
     IReadOnlyList<OpeningQuestionInput>? Questions) : ICommand<Guid>, IRequirePermission, IOpeningFields
 {
+    /// <summary>The description or qualifications come from an AI draft (D57).</summary>
+    public bool AiDrafted { get; init; }
+
+    /// <summary>The user confirms reviewing the AI draft.</summary>
+    public bool AiDraftReviewed { get; init; }
+
     [JsonIgnore]
     public string Permission => RecruitmentPermissions.Openings.Manage;
 }
@@ -206,6 +219,12 @@ public sealed record UpdateOpeningCommand(
     /// <summary>From the route.</summary>
     [JsonIgnore]
     public Guid Id { get; init; }
+
+    /// <summary>The description or qualifications come from an AI draft (D57).</summary>
+    public bool AiDrafted { get; init; }
+
+    /// <summary>The user confirms reviewing the AI draft.</summary>
+    public bool AiDraftReviewed { get; init; }
 
     [JsonIgnore]
     public string Permission => RecruitmentPermissions.Openings.Manage;
@@ -409,6 +428,21 @@ public sealed class OpeningRules(IRecruitmentDbContext db, IOrganizationLookup o
 
     private static Error Field(string field, string code) => Error.Validation([new FieldError(field, code)]);
 
+    /// <summary>Records an AI draft in the texts and the user's confirmation of reviewing it (D57).</summary>
+    internal static void Review(JobOpening opening, bool aiDrafted, bool reviewed, ICurrentUser currentUser, TimeProvider timeProvider)
+    {
+        var now = timeProvider.GetUtcNow();
+        if (aiDrafted)
+        {
+            opening.DraftedWithAi(now);
+        }
+
+        if (reviewed && currentUser.UserId is { } userId)
+        {
+            opening.ConfirmAiDraftReviewed(userId, now);
+        }
+    }
+
     public static void AddFieldRules<T>(AbstractValidator<T> validator)
         where T : IOpeningFields
     {
@@ -507,8 +541,13 @@ internal sealed class GetOpeningsQueryValidator : AbstractValidator<GetOpeningsQ
     }
 }
 
-internal sealed class CreateOpeningCommandHandler(IRecruitmentDbContext db, IAccessScopeProvider scopes, IOrganizationLookup organization, OpeningRules rules)
-    : ICommandHandler<CreateOpeningCommand, Guid>
+internal sealed class CreateOpeningCommandHandler(
+    IRecruitmentDbContext db,
+    IAccessScopeProvider scopes,
+    IOrganizationLookup organization,
+    OpeningRules rules,
+    ICurrentUser currentUser,
+    TimeProvider timeProvider) : ICommandHandler<CreateOpeningCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(CreateOpeningCommand request, CancellationToken cancellationToken)
     {
@@ -529,12 +568,18 @@ internal sealed class CreateOpeningCommandHandler(IRecruitmentDbContext db, IAcc
         }
 
         var opening = JobOpening.Draft(checkedTerms.Value.Terms, checkedTerms.Value.Template!);
+        OpeningRules.Review(opening, request.AiDrafted, request.AiDraftReviewed, currentUser, timeProvider);
         db.JobOpenings.Add(opening);
         return opening.Id.Value;
     }
 }
 
-internal sealed class UpdateOpeningCommandHandler(IRecruitmentDbContext db, IAccessScopeProvider scopes, OpeningRules rules) : ICommandHandler<UpdateOpeningCommand>
+internal sealed class UpdateOpeningCommandHandler(
+    IRecruitmentDbContext db,
+    IAccessScopeProvider scopes,
+    OpeningRules rules,
+    ICurrentUser currentUser,
+    TimeProvider timeProvider) : ICommandHandler<UpdateOpeningCommand>
 {
     public async Task<Result> Handle(UpdateOpeningCommand request, CancellationToken cancellationToken)
     {
@@ -546,7 +591,18 @@ internal sealed class UpdateOpeningCommandHandler(IRecruitmentDbContext db, IAcc
 
         db.Entry(opening).ExpectVersion(request.Version);
         var checkedTerms = await rules.CheckAsync(request, isNew: false, cancellationToken);
-        return checkedTerms.IsFailure ? checkedTerms.Error : opening.Update(checkedTerms.Value.Terms, checkedTerms.Value.Template);
+        if (checkedTerms.IsFailure)
+        {
+            return checkedTerms.Error;
+        }
+
+        var updated = opening.Update(checkedTerms.Value.Terms, checkedTerms.Value.Template);
+        if (updated.IsSuccess)
+        {
+            OpeningRules.Review(opening, request.AiDrafted, request.AiDraftReviewed, currentUser, timeProvider);
+        }
+
+        return updated;
     }
 }
 
@@ -691,7 +747,11 @@ internal sealed class GetOpeningQueryHandler(
             manages && opening.Status is OpeningStatus.Draft or OpeningStatus.OnHold,
             manages && opening.Status == OpeningStatus.Published,
             manages && opening.Status != OpeningStatus.Closed,
-            found.Version);
+            found.Version)
+        {
+            AiDraftPending = opening.AiDraftPending,
+            LanguageWarnings = InclusiveLanguage.Check(opening.Title, opening.Description, opening.Qualifications),
+        };
     }
 }
 

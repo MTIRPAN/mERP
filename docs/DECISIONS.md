@@ -1743,3 +1743,29 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Her raporun `/export` ucu D35'teki gibi seçilen sütunlarla Excel üretir ve dışa aktarımı audit'e yazar.
 
 **Web:** `/recruitment/reports` sayfası: dönem ve şirket filtresi, özet kartları, sekmelerde ECharts grafikleri (seçilen ilanın hunisi, kaynaklar, yaş aralıkları, teklif sonuçları) ve Excel'e aktarılabilir tablolar.
+
+## D57 — İlan metni taslağı ve kapsayıcı dil kontrolü
+
+**Bağlam:** A4 ilan metnini yapay zekayla taslak olarak hazırlar ve dışlayıcı ifadeleri uyarır. Kullanıcı kararları (2026-10-31):
+- Yayın kuralı gözden geçirme onayıdır: taslaktan gelen ilan, kullanıcı "gözden geçirdim" onayıyla kaydedilene kadar yayınlanamaz.
+- Dil kontrolü kural listesi ve yapay zekadır; uyarılar yayını engellemez.
+
+**Taslak:**
+- `POST /api/recruitment/openings/text-draft`. Yetki `recruitment.openings.manage` ve şirket kapsamı, özellik `recruitment.opening_text`, hız sınırı `ai`. Sonuç saklanmaz; formdaki editörleri doldurur.
+- **Sağlayıcıya giden:** başlık, çalışma modeli, istihdam türü, personel talebinin pozisyonu, seviyesi, birimi, kadro sayısı ve nedeni, kullanıcının kısa açıklaması (en fazla 2000 karakter, `PersonalDataRedactor` ile maskelenir).
+- Talebin gerekçe metni kişi adı içerebileceği için gönderilmez. Ücret aralığı da gönderilmez.
+- Çıktı tiplidir (`OpeningDraftResult`: giriş, sorumluluklar, gerekli ve tercih edilen nitelikler, kısa açıklamadaki dışlayıcı istekler). HTML sunucuda kurulur, metinler kodlanır ve temizleyiciden geçer. Başlıklar yerelleştirme anahtarıdır.
+- Talimatlar uydurma bilgi (ücret, yan hak, şirket bilgisi) yazmamayı, korunan özellikleri istememeyi ve kısa açıklamadaki bu tür istekleri dışarıda bırakıp uyarı olarak bildirmeyi söyler.
+
+**Gözden geçirme:**
+- İlan `ai_drafted_at`, `ai_draft_reviewed_at`, `ai_draft_reviewed_by_user_id` alanlarını tutar. Oluşturma ve güncelleme komutlarında `aiDrafted` (metin taslaktan geldi) ve `aiDraftReviewed` (kullanıcı onayladı) bayrakları vardır.
+- Son taslaktan sonra onay yoksa `Publish` `recruitment.openings.errors.ai_draft_not_reviewed` (409) döner. Aynı kayıtta taslak ve onay birlikte gelebilir: kullanıcı editördeki taslağı okuyup onay kutusunu işaretleyerek kaydeder.
+- `aiDrafted` bayrağı istemciden gelir; amaç kullanıcıyı korumaktır, taslağın kendisi saklanmaz.
+
+**Kapsayıcı dil kontrolü:**
+- **Kural listesi** (`InclusiveLanguage`): Türkçe ve İngilizce düzenli ifadeler; yaş sınırı ve aralığı, "genç ve dinamik", cinsiyet, medeni durum, askerlik, uyruk, din, sağlık ve engellilik, dış görünüş. Metin Türkçe küçük harfe çevrilip ı/i eşitlenerek aranır; bulunan ifade metinde yazıldığı gibi gösterilir.
+- Kural listesi ilan her okunduğunda çalışır (`OpeningDetails.LanguageWarnings`) ve yapay zeka gerektirmez.
+- **Yapay zeka incelemesi:** `POST /api/recruitment/openings/language-check` `withAi` ile metnin düz hâlini (maskelenmiş) gönderir. İşin gerektirdiği şartları (örn. sürücü için ehliyet) bildirmemesi istenir. Kuralların bulduğu ifade tekrar listelenmez.
+- Uyarılar yayını engellemez (öneri, karar değil). Her uyarıda kategori, metin, ifade ve öneri (yapay zekadan ya da kategorinin yerelleştirilmiş ipucu) vardır.
+
+**Web:** İlan formunda "Yapay zeka ile taslak" (özellik açıksa) ve "Dil kontrolü" düğmeleri, yapay zeka önerisi uyarısı ve "gözden geçirdim" onay kutusu. İlan detayında gözden geçirilmemiş taslak uyarısı, kural uyarıları ve onaya kadar pasif "Yayınla" düğmesi.

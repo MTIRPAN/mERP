@@ -34,6 +34,7 @@ import type {
   CandidateOptions,
   CareerOpeningDetails,
   CareerOpeningItem,
+  CheckOpeningLanguageQuery,
   CloseInterviewCommand,
   CloseOpeningCommand,
   ConsentTextItem,
@@ -45,6 +46,7 @@ import type {
   CreateRequisitionCommand,
   CreateStageTemplateCommand,
   CvAnalysisResponse,
+  DraftOpeningTextQuery,
   EmployeeSummary,
   EntityCreatedResponse,
   EraseCandidateCommand,
@@ -89,6 +91,8 @@ import type {
   MyApplicationItem,
   OfferDetails,
   OpeningDetails,
+  OpeningDraftResponse,
+  OpeningLanguageCheck,
   OpeningListItem,
   OpeningPipeline,
   OpeningTemplateOption,
@@ -2466,6 +2470,210 @@ export const useUpdateOpening = <TError = ErrorType<HttpValidationProblemDetails
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof updateOpening>>, TError, UpdateOpeningMutationVariables, TContext> => {
   return useMutation(getUpdateOpeningMutationOptions(options), queryClient);
+};
+export const getDraftOpeningTextUrl = () => {
+  return `/api/recruitment/openings/text-draft`;
+};
+
+/**
+ * Nothing is stored. Contact details in the brief are removed before it reaches the AI provider; the requisition's justification is not sent. An opening saved with the draft is published only after a user confirms reviewing it. Requires permission: recruitment.openings.manage.
+ * @summary Draft an opening's description and qualifications with AI from its title, requisition and a brief (A4, D57)
+ */
+export const draftOpeningText = async (
+  draftOpeningTextQuery: DraftOpeningTextQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<OpeningDraftResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<OpeningDraftResponse>(getDraftOpeningTextUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(draftOpeningTextQuery),
+  });
+};
+
+export const getDraftOpeningTextMutationKey = () => ['draftOpeningText'] as const;
+
+export const getDraftOpeningTextMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof draftOpeningText>>,
+    TError,
+    DraftOpeningTextMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof draftOpeningText>>,
+  TError,
+  DraftOpeningTextMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDraftOpeningTextMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof draftOpeningText>>,
+    DraftOpeningTextMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return draftOpeningText(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DraftOpeningTextMutationResult = NonNullable<Awaited<ReturnType<typeof draftOpeningText>>>;
+export type DraftOpeningTextMutationBody = DraftOpeningTextQuery;
+export type DraftOpeningTextMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type DraftOpeningTextMutationVariables = { data: DraftOpeningTextQuery };
+
+/**
+ * @summary Draft an opening's description and qualifications with AI from its title, requisition and a brief (A4, D57)
+ */
+export const useDraftOpeningText = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof draftOpeningText>>,
+      TError,
+      DraftOpeningTextMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof draftOpeningText>>,
+  TError,
+  DraftOpeningTextMutationVariables,
+  TContext
+> => {
+  return useMutation(getDraftOpeningTextMutationOptions(options), queryClient);
+};
+export const getCheckOpeningLanguageUrl = () => {
+  return `/api/recruitment/openings/language-check`;
+};
+
+/**
+ * Warnings never block saving or publishing. Requires permission: recruitment.openings.manage.
+ * @summary Check an opening's title and texts for exclusionary phrases: the rule list, and the AI review when asked (A4, D57)
+ */
+export const checkOpeningLanguage = async (
+  checkOpeningLanguageQuery: CheckOpeningLanguageQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<OpeningLanguageCheck> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<OpeningLanguageCheck>(getCheckOpeningLanguageUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(checkOpeningLanguageQuery),
+  });
+};
+
+export const getCheckOpeningLanguageMutationKey = () => ['checkOpeningLanguage'] as const;
+
+export const getCheckOpeningLanguageMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkOpeningLanguage>>,
+    TError,
+    CheckOpeningLanguageMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof checkOpeningLanguage>>,
+  TError,
+  CheckOpeningLanguageMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCheckOpeningLanguageMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof checkOpeningLanguage>>,
+    CheckOpeningLanguageMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return checkOpeningLanguage(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CheckOpeningLanguageMutationResult = NonNullable<Awaited<ReturnType<typeof checkOpeningLanguage>>>;
+export type CheckOpeningLanguageMutationBody = CheckOpeningLanguageQuery;
+export type CheckOpeningLanguageMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type CheckOpeningLanguageMutationVariables = { data: CheckOpeningLanguageQuery };
+
+/**
+ * @summary Check an opening's title and texts for exclusionary phrases: the rule list, and the AI review when asked (A4, D57)
+ */
+export const useCheckOpeningLanguage = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof checkOpeningLanguage>>,
+      TError,
+      CheckOpeningLanguageMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof checkOpeningLanguage>>,
+  TError,
+  CheckOpeningLanguageMutationVariables,
+  TContext
+> => {
+  return useMutation(getCheckOpeningLanguageMutationOptions(options), queryClient);
 };
 export const getPublishOpeningUrl = (id: string) => {
   return `/api/recruitment/openings/${id}/publish`;
