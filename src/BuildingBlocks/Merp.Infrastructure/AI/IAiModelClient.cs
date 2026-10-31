@@ -11,7 +11,20 @@ public interface IAiModelClient
 
     /// <exception cref="AiProviderException">The provider failed, timed out or rejected the request.</exception>
     Task<AiModelResponse> CompleteAsync(AiModelRequest request, CancellationToken cancellationToken);
+
+    /// <summary>Sends the requests to the provider's batch processing and returns the batch id (D59).</summary>
+    /// <exception cref="AiProviderException">The provider failed or rejected the batch.</exception>
+    Task<string> SubmitBatchAsync(IReadOnlyList<AiModelBatchItem> items, CancellationToken cancellationToken);
+
+    /// <summary>The results of a batch once it ended; null while it runs.</summary>
+    /// <exception cref="AiProviderException">The provider failed or does not know the batch.</exception>
+    Task<IReadOnlyList<AiModelBatchResult>?> GetBatchResultsAsync(string batchId, CancellationToken cancellationToken);
 }
+
+public sealed record AiModelBatchItem(string CustomId, AiModelRequest Request);
+
+/// <summary>One result of a batch; <c>Response</c> is null when the request errored, expired or was canceled.</summary>
+public sealed record AiModelBatchResult(string CustomId, AiModelResponse? Response);
 
 /// <summary>One provider call; <c>OutputSchema</c> is the JSON schema the output must follow (structured outputs).</summary>
 public sealed record AiModelRequest(

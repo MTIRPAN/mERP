@@ -91,6 +91,33 @@ internal static class OpeningEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        openings.MapGet("/{id:guid}/screening", async Task<Results<Ok<OpeningScreeningView>, ProblemHttpResult>> (Guid id, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new GetOpeningScreeningQuery(id), ct)))
+            .RequirePermission(RecruitmentPermissions.Applications.Read)
+            .WithName("GetOpeningScreening")
+            .WithSummary("The batch screening of an opening: its state and the evidence for each requirement by application (A6, D59)")
+            .WithDescription("Applications come in the order they arrived; there is no score and no ranking.")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        openings.MapPost("/{id:guid}/screenings", (Guid id, ISender sender, CancellationToken ct) =>
+                CreatedAsync(sender.Send(new RequestOpeningScreeningCommand(id), ct), _ => $"/api/recruitment/openings/{id}/screening"))
+            .RequirePermission(RecruitmentPermissions.Cv.Analyze)
+            .WithName("RequestOpeningScreening")
+            .WithSummary("Ask to screen an opening's applications in the next night's batch (A6, D59)")
+            .WithDescription("The applications without a current CV analysis are sent at night at half price within the tenant's nightly limit and monthly budget; nobody is rejected automatically.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        openings.MapPost("/{id:guid}/screenings/{screeningId:guid}/cancel", (Guid id, Guid screeningId, ISender sender, CancellationToken ct) =>
+                NoContentAsync(sender.Send(new CancelOpeningScreeningCommand(id, screeningId), ct)))
+            .RequirePermission(RecruitmentPermissions.Cv.Analyze)
+            .WithName("CancelOpeningScreening")
+            .WithSummary("Call off a batch screening that was not sent yet")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         openings.MapPost("/{id:guid}/hold", (Guid id, ISender sender, CancellationToken ct) =>
                 NoContentAsync(sender.Send(new HoldOpeningCommand(id), ct)))
             .RequirePermission(RecruitmentPermissions.Openings.Manage)

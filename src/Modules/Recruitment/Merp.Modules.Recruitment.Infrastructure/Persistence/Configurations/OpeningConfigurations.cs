@@ -31,3 +31,25 @@ internal sealed class JobOpeningConfiguration : IEntityTypeConfiguration<JobOpen
         builder.HasIndex(o => new { o.Status, o.Visibility });
     }
 }
+
+internal sealed class OpeningScreeningConfiguration : IEntityTypeConfiguration<OpeningScreening>
+{
+    public void Configure(EntityTypeBuilder<OpeningScreening> builder)
+    {
+        builder.ToTable("opening_screenings");
+        builder.HasKey(s => s.Id);
+        builder.Property(s => s.Id).ValueGeneratedNever();
+        builder.Property(s => s.Status).HasConversion<string>().HasMaxLength(20);
+        builder.Property(s => s.BatchId).HasMaxLength(OpeningScreening.BatchIdMaxLength);
+        builder.Property(s => s.RequirementsHash).HasMaxLength(OpeningScreening.RequirementsHashLength).IsFixedLength();
+        builder.Property(s => s.HoldReason).HasMaxLength(OpeningScreening.ReasonMaxLength);
+        builder.Property(s => s.EstimatedCostUsd).HasPrecision(12, 4);
+        builder.Property(s => s.Items).HasJson();
+        builder.Ignore(s => s.IsOpen);
+
+        builder.HasIndex(s => new { s.OpeningId, s.RequestedAt });
+
+        // An opening has at most one screening waiting, running or held
+        builder.HasIndex(s => s.OpeningId).IsUnique().HasFilter("status IN ('Queued', 'Submitted', 'Held')").HasDatabaseName("ux_opening_screenings_open");
+    }
+}

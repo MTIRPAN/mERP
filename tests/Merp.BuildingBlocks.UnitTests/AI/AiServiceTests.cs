@@ -166,6 +166,77 @@ public sealed class AiServiceTests
         await _ledger.Received(1).RecordAsync(Arg.Is<AiUsageEntry>(e => e.Outcome == AiUsageOutcome.Failed && e.CostUsd == 0), Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task ABatch_IsSentWithTheSchema_WhenItsEstimateFitsTheBudget()
+    {
+        // Two inputs of 2 990 characters with 10 characters of instructions: 1 000 input tokens each at 2 USD per million,
+        // 4 000 expected output tokens each at 10 USD per million, at half price: (2 × 0.042) / 2 = 0.042 USD
+        _options.Defaults.MonthlyBudgetUsd = 5;
+        _ledger.GetCostSinceAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>()).Returns(4.95m);
+        _client.SubmitBatchAsync(Arg.Any<IReadOnlyList<AiModelBatchItem>>(), Arg.Any<CancellationToken>()).Returns("msgbatch_1");
+
+        var batch = await CreateService().SubmitBatchAsync<Output>(BatchRequest(), Ct);
+
+        batch.Value.ShouldBe(new AiBatch("msgbatch_1", Feature, "v1", "application", 0.042m));
+        await _client.Received(1).SubmitBatchAsync(
+            Arg.Is<IReadOnlyList<AiModelBatchItem>>(items => items.Count == 2
+                && items[0].CustomId == "a1"
+                && items[1].Request.Input.Length == 2_990
+                && items[0].Request.OutputSchema == AiSchema.For(typeof(Output))
+                && items[0].Request.Instructions == "instructns"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ABatch_IsHeld_WhenItsEstimateDoesNotFitTheBudget()
+    {
+        _options.Defaults.MonthlyBudgetUsd = 5;
+        _ledger.GetCostSinceAsync(Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>()).Returns(4.97m);
+
+        (await CreateService().SubmitBatchAsync<Output>(BatchRequest(), Ct)).Error.ShouldBe(AiErrors.BudgetExceeded);
+        await _client.DidNotReceive().SubmitBatchAsync(Arg.Any<IReadOnlyList<AiModelBatchItem>>(), Arg.Any<CancellationToken>());
+
+        _options.Defaults.Features = ["hr.*"];
+        (await CreateService().SubmitBatchAsync<Output>(BatchRequest(), Ct)).Error.ShouldBe(AiErrors.Disabled);
+    }
+
+    [Fact]
+    public async Task BatchResults_AreReadOnceEnded_AndRecordedAtTheBatchPrice()
+    {
+        var batch = new AiBatch("msgbatch_1", Feature, "v1", "application", 0.042m);
+        _client.GetBatchResultsAsync("msgbatch_1", Arg.Any<CancellationToken>()).Returns((IReadOnlyList<AiModelBatchResult>?)null);
+        (await CreateService().GetBatchResultsAsync<Output>(batch, Ct)).Value.ShouldBeNull();
+
+        _client.GetBatchResultsAsync("msgbatch_1", Arg.Any<CancellationToken>()).Returns(
+        [
+            new AiModelBatchResult("a1", new AiModelResponse("claude-sonnet-5-5", AiStopReason.Completed, """{"summary":"Uygun","score":70}""", 10_000, 2_000, 0, 0)),
+            new AiModelBatchResult("a2", null),
+        ]);
+
+        var results = (await CreateService().GetBatchResultsAsync<Output>(batch, Ct)).Value!;
+
+        results[0].ShouldSatisfyAllConditions(
+            r => r.CustomId.ShouldBe("a1"),
+            r => r.Response.Value.Value.ShouldBe(new Output("Uygun", 70)),
+            r => r.Response.Value.Usage.CostUsd.ShouldBe(0.02m));
+        results[1].Response.Error.ShouldBe(AiErrors.Unavailable);
+        await _ledger.Received(1).RecordAsync(
+            Arg.Is<AiUsageEntry>(e => e.Outcome == AiUsageOutcome.Succeeded && e.CostUsd == 0.02m && e.EntityType == "application" && e.EntityId == "a1"),
+            Arg.Any<CancellationToken>());
+        await _ledger.Received(1).RecordAsync(
+            Arg.Is<AiUsageEntry>(e => e.Outcome == AiUsageOutcome.Failed && e.CostUsd == 0 && e.EntityId == "a2"),
+            Arg.Any<CancellationToken>());
+    }
+
+    private static AiBatchRequest BatchRequest() => new()
+    {
+        Feature = Feature,
+        PromptVersion = "v1",
+        Instructions = "instructns",
+        Items = [new AiBatchItem("a1", new string('x', 2_990)), new AiBatchItem("a2", new string('y', 2_990))],
+        EntityType = "application",
+    };
+
     private void Respond(AiStopReason stopReason, string text, long input = 1_000, long output = 100, long cacheRead = 0) =>
         _client.CompleteAsync(Arg.Any<AiModelRequest>(), Arg.Any<CancellationToken>())
             .Returns(new AiModelResponse("claude-sonnet-5-5", stopReason, text, input, output, cacheRead, 0));

@@ -123,6 +123,7 @@ internal sealed class ApplicationCvAnalysisConfiguration : IEntityTypeConfigurat
         builder.Property(a => a.ErrorCode).HasMaxLength(ApplicationCvAnalysis.ErrorCodeMaxLength);
         builder.Property(a => a.Model).HasMaxLength(ApplicationCvAnalysis.ModelMaxLength);
         builder.Property(a => a.PromptVersion).HasMaxLength(ApplicationCvAnalysis.PromptVersionMaxLength);
+        builder.Property(a => a.RequirementsHash).HasMaxLength(ApplicationCvAnalysis.RequirementsHashLength).IsFixedLength();
         builder.Ignore(a => a.Succeeded);
 
         // The analysis goes with its application (same aggregate family, same schema)

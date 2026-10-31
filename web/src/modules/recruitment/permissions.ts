@@ -29,4 +29,5 @@ export const recruitmentAiFeatures = {
   interviewQuestions: 'recruitment.interview_questions',
   feedbackSummary: 'recruitment.feedback_summary',
   candidateEmail: 'recruitment.candidate_email',
+  batchScreening: 'recruitment.batch_screening',
 } as const;

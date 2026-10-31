@@ -1818,3 +1818,55 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Mülakat çekmecesinde "Soru öner" kartı (planlanmış mülakatta) ve geri bildirim özeti kartı. Özet kartı başvuru çekmecesinde de vardır. Eksik form varken "Özet hazırla" pasiftir ve eksik sayısı gösterilir.
 - Tek başvuru reddederken ve yeni mülakat planlarken "E-postayı kişiselleştir" seçeneği: talimat, taslak, düzenlenebilir konu ve metin, kullanılabilir yer tutucular.
 - Hepsinde "yapay zeka önerisi" uyarısı vardır; özellik kapalıyken hiçbiri görünmez.
+
+## D59 — Toplu ön tarama (Batch API)
+
+**Bağlam:** A6 bir ilanın başvurularını gece toplu ve yarı maliyetle analiz eder. Sonuçlar sıralama değil, gereksinim bazında kanıttır; otomatik ret yoktur. Kullanıcı kararları (2026-10-31):
+- Tarama ilan bazında istenir ve gece çalışır.
+- Taramaya güncel analizi olmayan başvurular girer.
+- Sonuç başvurunun CV analizine yazılır; ilanda gereksinim tablosu gösterilir.
+- Bütçe için gönderimden önce tahmin yapılır ve gece sınırı uygulanır.
+
+**Altyapı (`IAiService`):**
+- `SubmitBatchAsync<T>` aynı talimatla en fazla 10.000 girdiyi sağlayıcının batch işlemine gönderir (Anthropic Message Batches API).
+  - Önce maliyet tahmin edilir: (talimat + girdi karakteri / 3) giriş tokenı, girdi başına beklenen çıktı tokenı, liste fiyatı × `Ai:BatchPriceFactor` (varsayılan 0,5).
+  - Ay içindeki harcama + tahmin aylık bütçeyi aşarsa hiçbir şey gönderilmez ve `common.errors.ai_budget_exceeded` döner.
+- `GetBatchResultsAsync<T>` batch bitmediyse `null` döner. Bitince her sonucu tipli çıktıya çevirir ve kullanım kaydına batch fiyatıyla yazar. Hatalı, süresi dolan ya da iptal edilen istek ücretsiz ve "başarısız" olarak kaydedilir.
+- Batch isteklerinde sunucu tarafı yedek model kullanılmaz. Talimat önbelleği ve çıkarım bölgesi (`InferenceGeo`) anlık çağrıdaki gibidir.
+- Sahte sağlayıcı (`FakeAiModelClient`) gönderilen batch'leri tutar; testler `EndsBatch` ile sonuç verir.
+
+**Tarama (`opening_screenings`):**
+- Durumlar: Kuyrukta, Gönderildi, Bekletildi, Tamamlandı, İptal. Bir ilanda aynı anda en fazla bir açık tarama olur (kısmi benzersiz indeks).
+- **İstek:** `POST /api/recruitment/openings/{id}/screenings`.
+  - Yetki `recruitment.cv.analyze` ve şirketi kapsayan `recruitment.applications.read` gerekir.
+  - Özellik `recruitment.batch_screening` açık olmalı.
+  - İlanda aranan nitelikler yazılı olmalı; değilse 400 `recruitment.screenings.errors.no_requirements` döner.
+  - Gönderilmemiş tarama `.../screenings/{screeningId}/cancel` ile iptal edilir.
+- **Kapsam (güncel analizi olmayanlar):** süreçteki, CV'li başvurulardan şunlar girer:
+  - analizi hiç olmayanlar,
+  - analizi başarısız olanlar,
+  - başka bir CV ile analiz edilmiş olanlar,
+  - ilanın başlığı ya da aranan nitelikleri analizden sonra değişmiş olanlar.
+- **Gereksinim özeti:** `application_cv_analyses.requirements_hash` analizin yapıldığı andaki başlık ve niteliklerin (düz metin) SHA-256 özetidir. A3'ün analizleri de bu özeti yazar. Özeti olmayan eski analizler güncel sayılır, yani yeniden ücretlendirilmez.
+- **Gece gönderimi:** `recruitment.screening-submit` işi her gece 00:00 UTC'de (İstanbul 03:00) çalışır.
+  - Kiracının kuyruktaki ve bekletilmiş taramalarını en eski istekten başlayarak işler; kiracı ayarı `recruitment.screening_nightly_limit` (varsayılan 500, en fazla 2000) gece başına başvuru sınırıdır.
+  - Girdi, A3'ün analiziyle aynıdır: maskelenmiş CV ve ilanın nitelikleri (talimat sürümü `CvAnalysisPrompt.Version`). Okunamayan CV hemen başarısız analiz olarak kaydedilir ve gönderilmez.
+  - Bir batch'in girdileri toplam 100 milyon karakteri geçmez.
+  - Bütçe yetmez, özellik kapalıdır ya da sağlayıcıya ulaşılamazsa tarama nedeniyle birlikte bekletilir ve sonraki gece yeniden denenir.
+  - Gönderilenlerin dosyası, maskeleme sayıları ve tahmini maliyet taramada tutulur.
+- **Sonuç toplama:** `recruitment.screening-collect` işi 10 dakikada bir çalışır.
+  - Biten batch'in her sonucu başvurunun CV analizine yazılır (`SaveApplicationCvAnalysisCommand`, gereksinim özetiyle). Bu arada silinmiş ya da anonimleşmiş başvuru atlanır.
+  - Gece sınırı yüzünden kalan başvurular varsa tarama kuyruğa döner ve sonraki gece devam eder; yoksa tamamlanır.
+  - Taramada denenmiş başvuru (istekten sonra analiz kaydı olan) aynı taramada tekrar gönderilmez, böylece okunamayan bir CV her gece gönderilmez.
+  - Tamamlanınca isteyene zil bildirimi gider: `recruitment.screening_completed`, bağlantı tarama sayfası.
+- **Görünüm:** `GET /api/recruitment/openings/{id}/screening` (`recruitment.applications.read`) şunları döner:
+  - son tarama ve analiz bekleyen başvuru sayısı,
+  - süreçteki başvurular geliş sırasıyla, analiz durumuyla (CV yok, analiz yok, güncel, eski, başarısız),
+  - her gereksinim için durum (karşılıyor, kısmen, karşılamıyor, belirsiz) ve kanıt.
+  - Puan ve öneri gösterilmez (başvuru kartında kalır), sıralama yapılmaz, ret düğmesi yoktur.
+  - Sütunlar analizlerin bulduğu gereksinim metinleridir (ilk görülme sırasıyla). Tablo sayfalanmaz; bir ilanın süreçteki başvurularını gösterir.
+
+**Web:** Pipeline sayfasında "Ön tarama" düğmesi (özellik açıksa) tarama sayfasına gider. Sayfada şunlar var:
+- "yapay zeka önerisidir, sıralama değildir, otomatik ret yoktur" uyarısı,
+- durum kartı (istek, iptal, bekletme nedeni, başarılı ve başarısız sayıları),
+- gereksinim tablosu (hücrenin üzerine gelince kanıt).

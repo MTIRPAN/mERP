@@ -30,7 +30,7 @@ Modül handler'ı
 |---|---|---|---|---|
 | 3.1 | **CV analizi:** özet, deneyim, eğitim, yetkinlik, dil, sertifika; gereksinim bazında eşleşme ve kanıt; mülakat soruları | İşe alım | Uzmanın ön elemede harcadığı süreyi azaltır, değerlendirmeyi gereksinimlere bağlar | ✅ Durumsuz sürüm hazır (A2) |
 | 3.2 | **Aday kartında CV analizi:** CV yüklenince analiz başvuruya kaydedilir; aday formu CV'den doldurulur | İşe alım | Elle veri girişini kaldırır | ✅ Hazır (A3) |
-| 3.3 | **Toplu ön tarama:** bir ilanın tüm başvurularını gece toplu analiz | İşe alım | Yüksek hacimli ilanlarda hız; Batch API ile yarı maliyet | R4 sonrası (A6) |
+| 3.3 | **Toplu ön tarama:** bir ilanın tüm başvurularını gece toplu analiz | İşe alım | Yüksek hacimli ilanlarda hız; Batch API ile yarı maliyet | ✅ Hazır (A6) |
 | 3.4 | **İlan metni taslağı ve kapsayıcı dil kontrolü:** personel talebinden ilan taslağı; ayrımcı veya dışlayıcı ifadeler için uyarı | İşe alım | Daha hızlı ve tutarlı ilan, ayrımcılık riskini azaltır | ✅ Hazır (A4) |
 | 3.5 | **Mülakat soruları ve geri bildirim özeti:** pozisyona göre soru seti; mülakatçı notlarından ortak özet (kör geri bildirim kuralına uyarak) | İşe alım | Yapılandırılmış mülakat, hızlı karar toplantısı | ✅ Hazır (A5) |
 | 3.6 | **Aday e-posta taslakları:** şablonu adaya göre kişiselleştirir (ret, davet) | İşe alım | Aday deneyimi | ✅ Hazır (A5) |
@@ -64,6 +64,15 @@ Modül handler'ı
 - **Aday formu:** `POST /api/recruitment/candidates/cv-prefill`. Ad ve iletişim bilgileri yerelde düzenli ifadelerle okunur, sağlayıcıya gitmez. Unvan, şirket, deneyim ve eğitim analizden gelir.
 - **Görünürlük:** Başvuruyu gören herkes (işe alım ekibi dahil) analizi "yapay zeka önerisidir" uyarısıyla görür.
 - Kararlar: `docs/DECISIONS.md` D51.
+
+### 3.3 Toplu ön tarama (yapıldı)
+
+- **İstek:** İK ilanın tarama sayfasından ister (`POST /api/recruitment/openings/{id}/screenings`, yetki `recruitment.cv.analyze`, özellik `recruitment.batch_screening`). İlanda aranan nitelikler yazılı olmalıdır.
+- **Gece:** Güncel analizi olmayan süreçteki CV'li başvurular her gece İstanbul saatiyle 03:00'te Batch API'ye gönderilir. Girdi A3'ün analiziyle aynıdır: maskelenmiş CV ve nitelikler.
+  - Kiracı ayarı `recruitment.screening_nightly_limit` (varsayılan 500) gece başına sınırdır; kalanlar sonraki gece gider.
+  - Gönderimden önce maliyet tahmin edilir; kalan aylık bütçe yetmezse tarama bekletilir.
+- **Sonuç:** Sonuçlar başvurunun CV analizine yazılır ve kullanım kaydına yarım fiyatla girer. İlan sayfasındaki tablo başvuruları geliş sırasıyla, her gereksinim için kanıtla gösterir. Puan, sıralama ve otomatik ret yoktur.
+- Kararlar: `docs/DECISIONS.md` D59.
 
 ### 3.4 İlan metni taslağı ve kapsayıcı dil kontrolü (yapıldı)
 

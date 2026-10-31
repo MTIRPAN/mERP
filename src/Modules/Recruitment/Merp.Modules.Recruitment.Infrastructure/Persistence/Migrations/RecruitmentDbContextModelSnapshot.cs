@@ -397,6 +397,12 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("requested_by_user_id");
 
+                    b.Property<string>("RequirementsHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("requirements_hash")
+                        .IsFixedLength();
+
                     b.Property<string>("Result")
                         .HasColumnType("jsonb")
                         .HasColumnName("result");
@@ -1406,6 +1412,120 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_job_openings_status_visibility");
 
                     b.ToTable("job_openings", "recruitment");
+                });
+
+            modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Openings.OpeningScreening", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BatchId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("batch_id");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<Guid?>("CancelledByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelled_by_user_id");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<decimal?>("EstimatedCostUsd")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("estimated_cost_usd");
+
+                    b.Property<int>("FailedCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("failed_count");
+
+                    b.Property<string>("HoldReason")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("hold_reason");
+
+                    b.Property<string>("Items")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("items");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_at");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("modified_by");
+
+                    b.Property<Guid>("OpeningId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("opening_id");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_by_user_id");
+
+                    b.Property<string>("RequirementsHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("requirements_hash")
+                        .IsFixedLength();
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<int>("SucceededCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("succeeded_count");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_opening_screenings");
+
+                    b.HasIndex("OpeningId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_opening_screenings_open")
+                        .HasFilter("status IN ('Queued', 'Submitted', 'Held')");
+
+                    b.HasIndex("OpeningId", "RequestedAt")
+                        .HasDatabaseName("ix_opening_screenings_opening_id_requested_at");
+
+                    b.ToTable("opening_screenings", "recruitment");
                 });
 
             modelBuilder.Entity("Merp.Modules.Recruitment.Domain.Requisitions.JobRequisition", b =>

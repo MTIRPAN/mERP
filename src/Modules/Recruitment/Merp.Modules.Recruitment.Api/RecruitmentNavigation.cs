@@ -86,5 +86,6 @@ internal sealed class RecruitmentAiFeatureDefinitions : IAiFeatureDefinitionProv
         new(RecruitmentAiFeatures.InterviewQuestions),
         new(RecruitmentAiFeatures.FeedbackSummary),
         new(RecruitmentAiFeatures.CandidateEmail),
+        new(RecruitmentAiFeatures.BatchScreening),
     ];
 }
