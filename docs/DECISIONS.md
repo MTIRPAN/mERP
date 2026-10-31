@@ -1769,3 +1769,52 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Uyarılar yayını engellemez (öneri, karar değil). Her uyarıda kategori, metin, ifade ve öneri (yapay zekadan ya da kategorinin yerelleştirilmiş ipucu) vardır.
 
 **Web:** İlan formunda "Yapay zeka ile taslak" (özellik açıksa) ve "Dil kontrolü" düğmeleri, yapay zeka önerisi uyarısı ve "gözden geçirdim" onay kutusu. İlan detayında gözden geçirilmemiş taslak uyarısı, kural uyarıları ve onaya kadar pasif "Yayınla" düğmesi.
+
+## D58 — Mülakat soruları, geri bildirim özeti ve aday e-posta taslakları
+
+**Bağlam:** A5 mülakat için soru önerir, mülakatçı formlarını özetler ve adaya giden ret ile davet e-postasını kişiselleştirir. Kullanıcı kararları (2026-10-31):
+- Üç özellik tek PR'da yapılır.
+- Soru seti mülakat detayında üretilir.
+- Özet, başvurunun tüm mülakatçıları formunu gönderince görünür.
+- Kişiselleştirilmiş metin o e-posta için şablon metninin yerine geçer.
+
+**Özellikler:** Kiracı her birini ayrı açar: `recruitment.interview_questions`, `recruitment.feedback_summary`, `recruitment.candidate_email`. Hepsinde hız sınırı `ai` vardır ve sonuç saklanmaz.
+
+**Soru önerileri:**
+- `POST /api/recruitment/interviews/{id}/question-suggestions`. Yetki `recruitment.interviews.read`; mülakatı gören (şirket kapsamı ya da mülakatçı) çağırır.
+- **Sağlayıcıya giden:** ilanın başlığı, açıklaması ve aranan nitelikleri (düz metin, maskelenmiş), mülakat türü, formun kriterleri (`C1`, `C2`… anahtarlarıyla, puan açıklamaları dahil) ve açık soruları. Aday bilgisi gönderilmez.
+- Çıktı kriter başına iki üç soru, neye dikkat edileceği ve en fazla iki ek sorudur. Kriter anahtarı formdaki kritere eşlenir; genel sorular sona gelir.
+- Talimat korunan özellikler hakkında soru sormamayı söyler.
+
+**Geri bildirim özeti (kör kural):**
+- Özet başvurunun formlarını kapsar. Şu üç rotadan istenir:
+  - `POST /api/recruitment/applications/{id}/feedback-summary`: `recruitment.applications.read` ile İK.
+  - `POST /api/recruitment/me/hiring/applications/{id}/feedback-summary`: işe alım ekibi.
+  - `POST /api/recruitment/interviews/{id}/feedback-summary`: `recruitment.interviews.read` ile İK ve mülakatçılar. Kör kural nedeniyle henüz göremeyen 403 alır.
+- **Hazır olma:** iptal edilmemiş ve adayın geldiği, formlu her mülakatın her mülakatçısı formunu göndermiş olmalı. Eksik form varsa 409 `recruitment.interviews.errors.feedback_pending` döner. Eksik sayısı `InterviewDetails.FeedbackPending` ve `ApplicationDetails.FeedbackPending` ile ekrana gelir.
+- **Sağlayıcıya giden:** pozisyon, formlar (mülakat türü, tavsiye, ağırlıklı puan, kriter puanları ve yorumları, açık soru yanıtları, özet).
+  - Mülakatçılar `I1`, `I2`… anahtarlarıyla geçer; yanıtta anahtarlar adlara çevrilir.
+  - Adayın ve mülakatçıların adları ile iletişim bilgileri metinlerden maskelenir.
+- Çıktı: genel değerlendirme, güçlü yönler ve endişeler (destekleyen mülakatçılarla), görüş ayrılıkları, açık sorular.
+- Talimat karar ya da sıralama önermemeyi ve formlarda geçse de korunan özellikleri dışarıda bırakmayı söyler.
+
+**Aday e-posta taslakları:**
+- İki rota vardır: `POST /api/recruitment/applications/{id}/rejection-email-draft` (`recruitment.applications.manage`) ve `.../invitation-email-draft` (`recruitment.interviews.manage`, mülakat türü zorunlu). Ayrı rota, uç nokta başına tek yetki kuralından gelir.
+- **Sağlayıcıya giden:**
+  - Bildirim türünün başlık ve metni, adayın dilinde ve yer tutucularıyla (`{candidate}`, `{position}`, `{company}`; davette ayrıca `{date}`, `{time}`, `{location}`).
+  - Pozisyon, iç aday olup olmadığı, ulaştığı aşama, yapılan mülakat sayısı, davette mülakat türü.
+  - Kullanıcının maskelenmiş talimatı.
+  - Adayın adı, e-postası, ret nedeni ve puanlar gönderilmez; tarih ve yer de yer tutucu olarak kalır.
+- **Gönderim:** taslak hiçbir şey göndermez. Kullanıcı metni düzenler; metin ret komutunun `emailSubject`/`emailBody` ya da planlama komutunun `invitationSubject`/`invitationBody` alanlarıyla gider.
+  - Konu en fazla 200, metin en fazla 5000 karakterdir.
+  - Yalnızca o e-postanın yer tutucuları kullanılabilir; başkası varsa 400 `recruitment.applications.errors.unknown_placeholder` döner.
+- **Ertelenmiş ret e-postası:** metin başvuruda `rejection_email_text` (jsonb) olarak saklanır. E-posta gidince, başvuru yeniden açılınca ya da aday anonimleşince silinir.
+- **Platform:** `ExternalEmailRequested` olayına `Subject` ve `Body` eklendi. `EmailComposer` bunları türün başlığı ve metni yerine koyar, yer tutucuları `Args` ile doldurur (`MessagePlaceholders`).
+  - Türe özel şablon metni göstermeyebileceği için kişiselleştirilmiş e-posta genel düzen şablonuyla gider.
+  - Varsayılan düzen metni `white-space:pre-line` ile paragraflarıyla gösterir.
+  - Güncelleme, iptal ve hatırlatma e-postaları şablonla gider.
+
+**Web:**
+- Mülakat çekmecesinde "Soru öner" kartı (planlanmış mülakatta) ve geri bildirim özeti kartı. Özet kartı başvuru çekmecesinde de vardır. Eksik form varken "Özet hazırla" pasiftir ve eksik sayısı gösterilir.
+- Tek başvuru reddederken ve yeni mülakat planlarken "E-postayı kişiselleştir" seçeneği: talimat, taslak, düzenlenebilir konu ve metin, kullanılabilir yer tutucular.
+- Hepsinde "yapay zeka önerisi" uyarısı vardır; özellik kapalıyken hiçbiri görünmez.

@@ -6,6 +6,7 @@ using Merp.Modules.Platform.Contracts.Notifications;
 using Merp.Modules.Platform.Contracts.Organization;
 using Merp.Modules.Platform.Contracts.Users;
 using Merp.Modules.Recruitment.Application.Settings;
+using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.Modules.Recruitment.Domain.Interviews;
 using Merp.SharedKernel.Notifications;
 using Microsoft.EntityFrameworkCore;
@@ -79,8 +80,9 @@ public sealed class InterviewInvitations(
     /// <param name="interview">The interview as it is now.</param>
     /// <param name="kind">What happened.</param>
     /// <param name="removedInterviewers">Interviewers taken off an updated interview; they get the cancellation.</param>
+    /// <param name="candidateText">The candidate's e-mail as the user personalized it (D58); null sends the template.</param>
     /// <param name="cancellationToken">Request aborted.</param>
-    public async Task SendAsync(Interview interview, InvitationKind kind, IReadOnlyList<Guid>? removedInterviewers, CancellationToken cancellationToken)
+    public async Task SendAsync(Interview interview, InvitationKind kind, IReadOnlyList<Guid>? removedInterviewers, CandidateEmailText? candidateText, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(interview);
         var candidate = await db.Candidates.AsNoTracking().SingleAsync(c => c.Id == interview.CandidateId, cancellationToken);
@@ -151,6 +153,8 @@ public sealed class InterviewInvitations(
             {
                 CompanyId = interview.CompanyId,
                 Attachments = Invitation(candidateCulture, kind == InvitationKind.Cancel),
+                Subject = candidateText?.Subject,
+                Body = candidateText?.Body,
             },
             cancellationToken);
 

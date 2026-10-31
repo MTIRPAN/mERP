@@ -559,6 +559,10 @@ namespace Merp.Modules.Recruitment.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("rejection_email_sent_at");
 
+                    b.Property<string>("RejectionEmailText")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("rejection_email_text");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(50)

@@ -26,4 +26,7 @@ export const recruitmentPermissions = {
 export const recruitmentAiFeatures = {
   cvAnalysis: 'recruitment.cv_analysis',
   openingText: 'recruitment.opening_text',
+  interviewQuestions: 'recruitment.interview_questions',
+  feedbackSummary: 'recruitment.feedback_summary',
+  candidateEmail: 'recruitment.candidate_email',
 } as const;

@@ -27,4 +27,5 @@ export interface InterviewDetails {
   canManage: boolean;
   canSubmitFeedback: boolean;
   version: number;
+  feedbackPending?: number;
 }

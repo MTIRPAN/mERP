@@ -111,6 +111,7 @@ internal sealed class ExternalEmailRequestedHandler(
             Notification.SafeLink(integrationEvent.Link),
             integrationEvent.CompanyId,
             timeProvider.GetUtcNow(),
+            integrationEvent.Subject is { } subject && integrationEvent.Body is { } body ? new WrittenText(subject, body) : null,
             cancellationToken);
         email.Attach(EmailQueue.Attachments(integrationEvent.Attachments));
         db.EmailMessages.Add(email);

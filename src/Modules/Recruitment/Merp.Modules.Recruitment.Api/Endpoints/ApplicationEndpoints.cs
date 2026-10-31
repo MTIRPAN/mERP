@@ -2,11 +2,13 @@ using Merp.Application.Abstractions.Messaging;
 using Merp.Application.Abstractions.Paging;
 using Merp.Modules.Recruitment.Application;
 using Merp.Modules.Recruitment.Application.Applications;
+using Merp.Modules.Recruitment.Application.Interviews;
 using Merp.Modules.Recruitment.Application.Openings;
 using Merp.Modules.Recruitment.Domain.Applications;
 using Merp.SharedKernel.Results;
 using Merp.Web.Errors;
 using Merp.Web.Files;
+using Merp.Web.RateLimiting;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -97,6 +99,42 @@ internal static class ApplicationEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        applications.MapPost("/{id:guid}/feedback-summary", async Task<Results<Ok<FeedbackSummaryResponse>, ProblemHttpResult>> (Guid id, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new SummarizeFeedbackQuery(id), ct)))
+            .RequirePermission(RecruitmentPermissions.Applications.Read)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("SummarizeApplicationFeedback")
+            .WithSummary("Summarize the interviewers' forms of an application with AI once every form is in (A5, D58)")
+            .WithDescription("Nothing is stored. The candidate's and the interviewers' names are replaced before the forms reach the AI provider. 409 while forms are missing (the blind rule).")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        applications.MapPost("/{id:guid}/rejection-email-draft", async Task<Results<Ok<CandidateEmailDraft>, ProblemHttpResult>> (Guid id, DraftCandidateEmailQuery query, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(query with { ApplicationId = id, Kind = CandidateEmailKind.Rejection }, ct)))
+            .RequirePermission(RecruitmentPermissions.Applications.Manage)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("DraftRejectionEmail")
+            .WithSummary("Personalize the rejection e-mail of an application with AI (A5, D58)")
+            .WithDescription("Nothing is sent: the edited text goes with the rejection. The candidate's name and contact details are not sent to the AI provider; the text keeps the template's placeholders.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        applications.MapPost("/{id:guid}/invitation-email-draft", async Task<Results<Ok<CandidateEmailDraft>, ProblemHttpResult>> (Guid id, DraftCandidateEmailQuery query, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(query with { ApplicationId = id, Kind = CandidateEmailKind.InterviewInvitation }, ct)))
+            .RequirePermission(RecruitmentPermissions.Interviews.Manage)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("DraftInterviewInvitationEmail")
+            .WithSummary("Personalize the interview invitation e-mail of an application with AI (A5, D58)")
+            .WithDescription("Nothing is sent: the edited text goes with the interview being planned. The date, time and place stay placeholders.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
     }
 
     /// <summary>The hiring manager and the recruiters of an opening read its applications (D50).</summary>
@@ -138,6 +176,17 @@ internal static class ApplicationEndpoints
             .WithSummary("The CV sent with an application to an opening of my hiring team")
             .Produces(StatusCodes.Status200OK, contentType: "application/octet-stream")
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        hiring.MapPost("/applications/{id:guid}/feedback-summary", async Task<Results<Ok<FeedbackSummaryResponse>, ProblemHttpResult>> (Guid id, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new SummarizeFeedbackQuery(id) { AsTeam = true }, ct)))
+            .RequirePermission(RecruitmentPermissions.Self.Hiring)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("SummarizeMyHiringApplicationFeedback")
+            .WithSummary("Summarize the interviewers' forms of an application to an opening of my hiring team with AI (A5, D58)")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
     }
 
     /// <param name="page">1-based page.</param>

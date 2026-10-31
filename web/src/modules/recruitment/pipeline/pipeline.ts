@@ -81,6 +81,9 @@ export interface LeaveValues {
   note?: string;
   sendEmail?: boolean;
   emailDelayDays?: number;
+  /** A personalized rejection e-mail (D58); unset sends the template. */
+  emailSubject?: string;
+  emailBody?: string;
 }
 
 /**
@@ -114,6 +117,8 @@ export const useApplicationActions = (openingId: string) => {
           note: values.note ?? null,
           sendEmail: !!values.sendEmail,
           emailDelayDays: values.sendEmail ? (values.emailDelayDays ?? 0) : 0,
+          emailSubject: (values.sendEmail && values.emailSubject?.trim()) || null,
+          emailBody: (values.sendEmail && values.emailBody?.trim()) || null,
         }),
       ),
     withdraw: (id: string, values: LeaveValues) =>

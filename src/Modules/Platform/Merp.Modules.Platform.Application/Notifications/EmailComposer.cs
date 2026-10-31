@@ -4,6 +4,7 @@ using Merp.Application.Abstractions.Notifications;
 using Merp.Modules.Platform.Domain.Companies;
 using Merp.Modules.Platform.Domain.Notifications;
 using Merp.Modules.Platform.Domain.Users;
+using Merp.SharedKernel.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace Merp.Modules.Platform.Application.Notifications;
@@ -30,7 +31,7 @@ public sealed class EmailComposer(
         <tr><td style="padding:24px">
         {% if company %}<p style="font-size:12px;color:#8c8c8c;margin:0 0 16px">{{ company.name }}</p>{% endif %}
         <h1 style="font-size:18px;margin:0 0 12px">{{ title }}</h1>
-        {% if body %}<p style="font-size:14px;line-height:1.5;margin:0 0 16px">{{ body }}</p>{% endif %}
+        {% if body %}<p style="font-size:14px;line-height:1.5;margin:0 0 16px;white-space:pre-line">{{ body }}</p>{% endif %}
         {% if link %}<p style="margin:0 0 16px"><a href="{{ link }}" style="display:inline-block;padding:8px 16px;background:#1677ff;color:#ffffff;border-radius:6px;text-decoration:none">{{ texts.open }}</a></p>{% endif %}
         <p style="font-size:12px;color:#8c8c8c;margin:16px 0 0">{{ texts.footer }}</p>
         </td></tr>
@@ -55,10 +56,14 @@ public sealed class EmailComposer(
         var culture = user.Culture ?? company?.Culture ?? defaultCulture;
 
         var model = Model(type, user.DisplayName, user.Email, args, link, company?.ShortName, culture);
-        return await RenderAsync(type, model, user.Id, user.Email!, user.DisplayName, companyId, culture, defaultCulture, now, cancellationToken);
+        return await RenderAsync(type, model, user.Id, user.Email!, user.DisplayName, companyId, culture, defaultCulture, now, generalLayout: false, cancellationToken);
     }
 
-    /// <summary>An e-mail to an address outside the platform (D47), in the given culture or the company's or tenant's.</summary>
+    /// <summary>
+    /// An e-mail to an address outside the platform (D47), in the given culture or the company's or tenant's. A text
+    /// the sender wrote (D58) replaces the type's title and body and goes in a general layout: a template of the type
+    /// may not show the body.
+    /// </summary>
     public async Task<EmailMessage> ComposeExternalAsync(
         NotificationTypeDefinition type,
         string to,
@@ -68,6 +73,7 @@ public sealed class EmailComposer(
         string? link,
         Guid? companyId,
         DateTimeOffset now,
+        WrittenText? text,
         CancellationToken cancellationToken)
     {
         var company = companyId is { } id
@@ -76,7 +82,13 @@ public sealed class EmailComposer(
         var defaultCulture = tenant.RequiredTenant.DefaultCulture;
         var language = culture ?? company?.Culture ?? defaultCulture;
         var model = Model(type, toName, to, args, link, company?.ShortName, language);
-        return await RenderAsync(type, model, null, to, toName, companyId, language, defaultCulture, now, cancellationToken);
+        if (text is not null)
+        {
+            model["title"] = MessagePlaceholders.Fill(text.Subject, args);
+            model["body"] = MessagePlaceholders.Fill(text.Body, args);
+        }
+
+        return await RenderAsync(type, model, null, to, toName, companyId, language, defaultCulture, now, generalLayout: text is not null, cancellationToken);
     }
 
     private async Task<EmailMessage> RenderAsync(
@@ -89,9 +101,10 @@ public sealed class EmailComposer(
         string culture,
         string defaultCulture,
         DateTimeOffset now,
+        bool generalLayout,
         CancellationToken cancellationToken)
     {
-        var template = await FindTemplateAsync(type.Type, companyId, culture, defaultCulture, cancellationToken);
+        var template = await FindTemplateAsync(type.Type, companyId, culture, defaultCulture, generalLayout, cancellationToken);
         var subject = renderer.Render(template?.Subject ?? DefaultSubject, model, html: false);
         var body = renderer.Render(template?.Body ?? DefaultBody, model, html: true);
         if (subject.IsFailure || body.IsFailure)
@@ -146,10 +159,11 @@ public sealed class EmailComposer(
         Guid? companyId,
         string culture,
         string defaultCulture,
+        bool generalLayout,
         CancellationToken cancellationToken)
     {
         var candidates = await db.NotificationTemplates.AsNoTracking()
-            .Where(t => (t.NotificationType == type || t.NotificationType == null)
+            .Where(t => ((t.NotificationType == type && !generalLayout) || t.NotificationType == null)
                 && (t.CompanyId == companyId || t.CompanyId == null)
                 && (t.Culture == culture || t.Culture == defaultCulture))
             .ToListAsync(cancellationToken);
@@ -162,3 +176,6 @@ public sealed class EmailComposer(
             .FirstOrDefault();
     }
 }
+
+/// <summary>A subject and a plain text body a sender wrote for one e-mail, with <c>{name}</c> placeholders (D58).</summary>
+public sealed record WrittenText(string Subject, string Body);

@@ -24,4 +24,13 @@ public sealed record ExternalEmailRequested(
 
     /// <summary>A path of the web application the e-mail links to, e.g. the answer page of a job offer (D53).</summary>
     public string? Link { get; init; }
+
+    /// <summary>
+    /// A subject the sender wrote for this e-mail, e.g. a personalized candidate e-mail (D58). It replaces the type's
+    /// title, and its <c>{name}</c> placeholders are filled from <see cref="Args"/>; null keeps the type's title.
+    /// </summary>
+    public string? Subject { get; init; }
+
+    /// <summary>A plain text body the sender wrote, replacing the type's body like <see cref="Subject"/>.</summary>
+    public string? Body { get; init; }
 }

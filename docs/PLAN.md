@@ -1144,7 +1144,7 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 - Personel talebinden ve kısa açıklamadan ilan taslağı; yaş, cinsiyet ve benzeri dışlayıcı ifadeler için uyarı listesi.
 - Kabul: taslak TipTap editörüne gelir, kullanıcı düzenlemeden yayınlanamaz.
 
-### [ ] A5 Mülakat soruları, geri bildirim özeti, aday e-posta taslakları — M (R5 ile)
+### [x] A5 Mülakat soruları, geri bildirim özeti, aday e-posta taslakları — M (R5 ile)
 
 - Pozisyon ve değerlendirme şablonundan soru seti; mülakatçı formlarından ortak özet (kör geri bildirim kuralına uyar: özet herkes formunu gönderdikten sonra görünür).
 - Ret ve davet e-postası şablonunu adaya göre kişiselleştirme (gönderim her zaman kullanıcı onayıyla).

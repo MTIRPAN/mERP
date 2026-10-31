@@ -272,6 +272,7 @@ export const PipelinePage = ({ team = false }: { team?: boolean }) => {
         <ReasonModal
           kind={leaving.kind}
           candidateName={leaving.application.candidateName}
+          applicationId={leaving.application.id}
           reasons={leaving.kind === 'reject' ? data.rejectionReasons : data.withdrawalReasons}
           onClose={() => setLeaving(undefined)}
           onSubmit={(values) =>

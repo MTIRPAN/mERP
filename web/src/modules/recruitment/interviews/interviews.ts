@@ -1,5 +1,7 @@
 import type { EventInput } from '@fullcalendar/core';
 import { useQueryClient } from '@tanstack/react-query';
+import { useContext } from 'react';
+import { MeContext } from '@/app/me/meContext';
 import {
   getGetApplicationQueryKey,
   getGetInterviewQueryKey,
@@ -57,6 +59,15 @@ export const toCalendarEvents = (interviews: InterviewListItem[]): EventInput[] 
     end: interview.endsAt,
     color: calendarColors[interview.status],
   }));
+
+/**
+ * True when the tenant has AI on and the recruitment AI feature enabled (D24, D58). The drawers using it also open
+ * where no profile is loaded (e.g. in isolation), so it reads the context without requiring it.
+ */
+export const useRecruitmentAi = (feature: string) => {
+  const me = useContext(MeContext);
+  return !!me?.ai.enabled && me.ai.features.includes(feature);
+};
 
 /** Refreshes the interview lists, an interview and its application after a change. */
 export const useInterviewRefresh = () => {

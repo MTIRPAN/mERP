@@ -83,6 +83,7 @@ internal sealed class JobApplicationConfiguration : IEntityTypeConfiguration<Job
         builder.Property(a => a.Source).HasMaxLength(Candidate.SourceMaxLength);
         builder.Property(a => a.Answers).HasJson();
         builder.Property(a => a.Consent).HasJson();
+        builder.Property(a => a.RejectionEmailText).HasJson();
         builder.Property(a => a.ReasonCode).HasMaxLength(RecruitmentLookup.CodeMaxLength);
         builder.HasMany(a => a.History).WithOne().HasForeignKey(h => h.ApplicationId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(a => a.History).UsePropertyAccessMode(PropertyAccessMode.Field);
