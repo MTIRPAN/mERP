@@ -49,8 +49,21 @@ import type {
   EntityCreatedResponse,
   EraseCandidateCommand,
   EvaluationTemplateItem,
+  ExportRecruitmentFunnelReportParams,
+  ExportRecruitmentHireReportParams,
+  ExportRecruitmentInterviewerReportParams,
+  ExportRecruitmentOfferReportParams,
+  ExportRecruitmentSourceReportParams,
+  ExportRequisitionAgingReportParams,
   GetCurrentConsentTextParams,
   GetMyOpeningParams,
+  GetRecruitmentFunnelReportParams,
+  GetRecruitmentHireReportParams,
+  GetRecruitmentInterviewerReportParams,
+  GetRecruitmentOfferReportParams,
+  GetRecruitmentSourceReportParams,
+  GetRecruitmentSummaryParams,
+  GetRequisitionAgingReportParams,
   HireApplicationCommand,
   HttpValidationProblemDetails,
   InterviewConflict,
@@ -82,15 +95,22 @@ import type {
   OrgUnitInfo,
   PagedResultOfApplicationListItem,
   PagedResultOfCandidateListItem,
+  PagedResultOfFunnelRow,
+  PagedResultOfHireRow,
   PagedResultOfInterviewListItem,
+  PagedResultOfInterviewerRow,
   PagedResultOfOfferListItem,
+  PagedResultOfOfferReportRow,
   PagedResultOfOpeningListItem,
+  PagedResultOfRequisitionAgingRow,
   PagedResultOfRequisitionListItem,
+  PagedResultOfSourceRow,
   PrefillCandidateFromCvBody,
   ProblemDetails,
   PublishConsentTextCommand,
   RecordOfferResponseCommand,
   RecruitmentLookupItem,
+  RecruitmentSummary,
   RejectApplicationCommand,
   RejectRemainingApplicationsCommand,
   RemainingRejected,
@@ -7909,6 +7929,1762 @@ export function useDownloadMyHiringOfferLetter<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getDownloadMyHiringOfferLetterQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetRecruitmentSummaryUrl = (params: GetRecruitmentSummaryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/summary?${stringifiedParams}`
+    : `/api/recruitment/reports/summary`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The headline figures of a period: applications, hires, days to hire and fill, offer acceptance, open requisitions, missing forms
+ */
+export const getRecruitmentSummary = async (
+  params: GetRecruitmentSummaryParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<RecruitmentSummary> => {
+  return customFetch<RecruitmentSummary>(getGetRecruitmentSummaryUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetRecruitmentSummaryQueryKey = (params?: GetRecruitmentSummaryParams) => {
+  return [`/api/recruitment/reports/summary`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecruitmentSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecruitmentSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSummaryParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRecruitmentSummaryQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecruitmentSummary>>> = ({ signal }) =>
+    getRecruitmentSummary(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecruitmentSummary>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRecruitmentSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof getRecruitmentSummary>>>;
+export type GetRecruitmentSummaryQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetRecruitmentSummary<
+  TData = Awaited<ReturnType<typeof getRecruitmentSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSummaryParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSummary>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentSummary<
+  TData = Awaited<ReturnType<typeof getRecruitmentSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSummaryParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSummary>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentSummary>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentSummary>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentSummary<
+  TData = Awaited<ReturnType<typeof getRecruitmentSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSummaryParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The headline figures of a period: applications, hires, days to hire and fill, offer acceptance, open requisitions, missing forms
+ */
+
+export function useGetRecruitmentSummary<
+  TData = Awaited<ReturnType<typeof getRecruitmentSummary>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSummaryParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSummary>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRecruitmentSummaryQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetRecruitmentFunnelReportUrl = (params: GetRecruitmentFunnelReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/funnel?${stringifiedParams}`
+    : `/api/recruitment/reports/funnel`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The funnel of each opening for the applications of a period: stage by stage, reached, conversion and now
+ */
+export const getRecruitmentFunnelReport = async (
+  params: GetRecruitmentFunnelReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfFunnelRow> => {
+  return customFetch<PagedResultOfFunnelRow>(getGetRecruitmentFunnelReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetRecruitmentFunnelReportQueryKey = (params?: GetRecruitmentFunnelReportParams) => {
+  return [`/api/recruitment/reports/funnel`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecruitmentFunnelReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentFunnelReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentFunnelReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRecruitmentFunnelReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecruitmentFunnelReport>>> = ({ signal }) =>
+    getRecruitmentFunnelReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecruitmentFunnelReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRecruitmentFunnelReportQueryResult = NonNullable<Awaited<ReturnType<typeof getRecruitmentFunnelReport>>>;
+export type GetRecruitmentFunnelReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetRecruitmentFunnelReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentFunnelReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentFunnelReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentFunnelReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentFunnelReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentFunnelReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentFunnelReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentFunnelReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentFunnelReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentFunnelReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentFunnelReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentFunnelReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentFunnelReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The funnel of each opening for the applications of a period: stage by stage, reached, conversion and now
+ */
+
+export function useGetRecruitmentFunnelReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentFunnelReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentFunnelReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRecruitmentFunnelReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportRecruitmentFunnelReportUrl = (params: ExportRecruitmentFunnelReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/funnel/export?${stringifiedParams}`
+    : `/api/recruitment/reports/funnel/export`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The funnel report as Excel, with its filters and chosen columns
+ */
+export const exportRecruitmentFunnelReport = async (
+  params: ExportRecruitmentFunnelReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportRecruitmentFunnelReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportRecruitmentFunnelReportQueryKey = (params?: ExportRecruitmentFunnelReportParams) => {
+  return [`/api/recruitment/reports/funnel/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportRecruitmentFunnelReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentFunnelReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportRecruitmentFunnelReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>> = ({ signal }) =>
+    exportRecruitmentFunnelReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportRecruitmentFunnelReportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>
+>;
+export type ExportRecruitmentFunnelReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportRecruitmentFunnelReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentFunnelReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentFunnelReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentFunnelReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentFunnelReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentFunnelReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The funnel report as Excel, with its filters and chosen columns
+ */
+
+export function useExportRecruitmentFunnelReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentFunnelReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentFunnelReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportRecruitmentFunnelReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetRecruitmentHireReportUrl = (params: GetRecruitmentHireReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/hires?${stringifiedParams}`
+    : `/api/recruitment/reports/hires`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The hires of a period with the days from the application (time to hire) and from the publication (time to fill)
+ */
+export const getRecruitmentHireReport = async (
+  params: GetRecruitmentHireReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfHireRow> => {
+  return customFetch<PagedResultOfHireRow>(getGetRecruitmentHireReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetRecruitmentHireReportQueryKey = (params?: GetRecruitmentHireReportParams) => {
+  return [`/api/recruitment/reports/hires`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecruitmentHireReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentHireReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentHireReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRecruitmentHireReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecruitmentHireReport>>> = ({ signal }) =>
+    getRecruitmentHireReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecruitmentHireReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRecruitmentHireReportQueryResult = NonNullable<Awaited<ReturnType<typeof getRecruitmentHireReport>>>;
+export type GetRecruitmentHireReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetRecruitmentHireReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentHireReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentHireReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentHireReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentHireReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentHireReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentHireReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentHireReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentHireReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentHireReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentHireReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentHireReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentHireReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The hires of a period with the days from the application (time to hire) and from the publication (time to fill)
+ */
+
+export function useGetRecruitmentHireReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentHireReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentHireReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRecruitmentHireReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportRecruitmentHireReportUrl = (params: ExportRecruitmentHireReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/hires/export?${stringifiedParams}`
+    : `/api/recruitment/reports/hires/export`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The hire report as Excel, with its filters and chosen columns
+ */
+export const exportRecruitmentHireReport = async (
+  params: ExportRecruitmentHireReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportRecruitmentHireReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportRecruitmentHireReportQueryKey = (params?: ExportRecruitmentHireReportParams) => {
+  return [`/api/recruitment/reports/hires/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportRecruitmentHireReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentHireReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentHireReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportRecruitmentHireReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportRecruitmentHireReport>>> = ({ signal }) =>
+    exportRecruitmentHireReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportRecruitmentHireReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportRecruitmentHireReportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportRecruitmentHireReport>>
+>;
+export type ExportRecruitmentHireReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportRecruitmentHireReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentHireReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentHireReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentHireReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentHireReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentHireReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentHireReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentHireReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentHireReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentHireReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentHireReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentHireReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentHireReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The hire report as Excel, with its filters and chosen columns
+ */
+
+export function useExportRecruitmentHireReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentHireReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentHireReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentHireReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportRecruitmentHireReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetRecruitmentSourceReportUrl = (params: GetRecruitmentSourceReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/sources?${stringifiedParams}`
+    : `/api/recruitment/reports/sources`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The applications of a period by source: interviewed, offered, hired and the hire rate
+ */
+export const getRecruitmentSourceReport = async (
+  params: GetRecruitmentSourceReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfSourceRow> => {
+  return customFetch<PagedResultOfSourceRow>(getGetRecruitmentSourceReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetRecruitmentSourceReportQueryKey = (params?: GetRecruitmentSourceReportParams) => {
+  return [`/api/recruitment/reports/sources`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecruitmentSourceReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSourceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSourceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRecruitmentSourceReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecruitmentSourceReport>>> = ({ signal }) =>
+    getRecruitmentSourceReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecruitmentSourceReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRecruitmentSourceReportQueryResult = NonNullable<Awaited<ReturnType<typeof getRecruitmentSourceReport>>>;
+export type GetRecruitmentSourceReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetRecruitmentSourceReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSourceReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSourceReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentSourceReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentSourceReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentSourceReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSourceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSourceReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentSourceReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentSourceReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentSourceReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSourceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSourceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The applications of a period by source: interviewed, offered, hired and the hire rate
+ */
+
+export function useGetRecruitmentSourceReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentSourceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentSourceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRecruitmentSourceReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportRecruitmentSourceReportUrl = (params: ExportRecruitmentSourceReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/sources/export?${stringifiedParams}`
+    : `/api/recruitment/reports/sources/export`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The source report as Excel, with its filters and chosen columns
+ */
+export const exportRecruitmentSourceReport = async (
+  params: ExportRecruitmentSourceReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportRecruitmentSourceReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportRecruitmentSourceReportQueryKey = (params?: ExportRecruitmentSourceReportParams) => {
+  return [`/api/recruitment/reports/sources/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportRecruitmentSourceReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentSourceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentSourceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportRecruitmentSourceReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportRecruitmentSourceReport>>> = ({ signal }) =>
+    exportRecruitmentSourceReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportRecruitmentSourceReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportRecruitmentSourceReportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportRecruitmentSourceReport>>
+>;
+export type ExportRecruitmentSourceReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportRecruitmentSourceReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentSourceReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentSourceReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentSourceReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentSourceReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentSourceReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentSourceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentSourceReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentSourceReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentSourceReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentSourceReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentSourceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentSourceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The source report as Excel, with its filters and chosen columns
+ */
+
+export function useExportRecruitmentSourceReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentSourceReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentSourceReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentSourceReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportRecruitmentSourceReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetRecruitmentInterviewerReportUrl = (params: GetRecruitmentInterviewerReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/interviewers?${stringifiedParams}`
+    : `/api/recruitment/reports/interviewers`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The interviews of a period by interviewer: completed, forms sent and missing, hours to the form
+ */
+export const getRecruitmentInterviewerReport = async (
+  params: GetRecruitmentInterviewerReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfInterviewerRow> => {
+  return customFetch<PagedResultOfInterviewerRow>(getGetRecruitmentInterviewerReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetRecruitmentInterviewerReportQueryKey = (params?: GetRecruitmentInterviewerReportParams) => {
+  return [`/api/recruitment/reports/interviewers`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecruitmentInterviewerReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentInterviewerReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRecruitmentInterviewerReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>> = ({ signal }) =>
+    getRecruitmentInterviewerReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRecruitmentInterviewerReportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>
+>;
+export type GetRecruitmentInterviewerReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetRecruitmentInterviewerReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentInterviewerReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentInterviewerReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentInterviewerReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentInterviewerReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentInterviewerReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The interviews of a period by interviewer: completed, forms sent and missing, hours to the form
+ */
+
+export function useGetRecruitmentInterviewerReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentInterviewerReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentInterviewerReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRecruitmentInterviewerReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportRecruitmentInterviewerReportUrl = (params: ExportRecruitmentInterviewerReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/interviewers/export?${stringifiedParams}`
+    : `/api/recruitment/reports/interviewers/export`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The interviewer report as Excel, with its filters and chosen columns
+ */
+export const exportRecruitmentInterviewerReport = async (
+  params: ExportRecruitmentInterviewerReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportRecruitmentInterviewerReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportRecruitmentInterviewerReportQueryKey = (params?: ExportRecruitmentInterviewerReportParams) => {
+  return [`/api/recruitment/reports/interviewers/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportRecruitmentInterviewerReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentInterviewerReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportRecruitmentInterviewerReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>> = ({ signal }) =>
+    exportRecruitmentInterviewerReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportRecruitmentInterviewerReportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>
+>;
+export type ExportRecruitmentInterviewerReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportRecruitmentInterviewerReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentInterviewerReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentInterviewerReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentInterviewerReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentInterviewerReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentInterviewerReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The interviewer report as Excel, with its filters and chosen columns
+ */
+
+export function useExportRecruitmentInterviewerReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentInterviewerReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentInterviewerReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportRecruitmentInterviewerReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetRequisitionAgingReportUrl = (params?: GetRequisitionAgingReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/requisition-aging?${stringifiedParams}`
+    : `/api/recruitment/reports/requisition-aging`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The requisitions waiting for approval or open now, oldest first, with their age since they were sent
+ */
+export const getRequisitionAgingReport = async (
+  params?: GetRequisitionAgingReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfRequisitionAgingRow> => {
+  return customFetch<PagedResultOfRequisitionAgingRow>(getGetRequisitionAgingReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetRequisitionAgingReportQueryKey = (params?: GetRequisitionAgingReportParams) => {
+  return [`/api/recruitment/reports/requisition-aging`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRequisitionAgingReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetRequisitionAgingReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRequisitionAgingReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRequisitionAgingReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRequisitionAgingReport>>> = ({ signal }) =>
+    getRequisitionAgingReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRequisitionAgingReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRequisitionAgingReportQueryResult = NonNullable<Awaited<ReturnType<typeof getRequisitionAgingReport>>>;
+export type GetRequisitionAgingReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetRequisitionAgingReport<
+  TData = Awaited<ReturnType<typeof getRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | GetRequisitionAgingReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRequisitionAgingReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRequisitionAgingReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRequisitionAgingReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRequisitionAgingReport<
+  TData = Awaited<ReturnType<typeof getRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetRequisitionAgingReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRequisitionAgingReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRequisitionAgingReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRequisitionAgingReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRequisitionAgingReport<
+  TData = Awaited<ReturnType<typeof getRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetRequisitionAgingReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRequisitionAgingReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The requisitions waiting for approval or open now, oldest first, with their age since they were sent
+ */
+
+export function useGetRequisitionAgingReport<
+  TData = Awaited<ReturnType<typeof getRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: GetRequisitionAgingReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRequisitionAgingReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRequisitionAgingReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportRequisitionAgingReportUrl = (params?: ExportRequisitionAgingReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/requisition-aging/export?${stringifiedParams}`
+    : `/api/recruitment/reports/requisition-aging/export`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The requisition aging report as Excel, with its filter and chosen columns
+ */
+export const exportRequisitionAgingReport = async (
+  params?: ExportRequisitionAgingReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportRequisitionAgingReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportRequisitionAgingReportQueryKey = (params?: ExportRequisitionAgingReportParams) => {
+  return [`/api/recruitment/reports/requisition-aging/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportRequisitionAgingReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportRequisitionAgingReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRequisitionAgingReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportRequisitionAgingReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportRequisitionAgingReport>>> = ({ signal }) =>
+    exportRequisitionAgingReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportRequisitionAgingReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportRequisitionAgingReportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportRequisitionAgingReport>>
+>;
+export type ExportRequisitionAgingReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportRequisitionAgingReport<
+  TData = Awaited<ReturnType<typeof exportRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: undefined | ExportRequisitionAgingReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRequisitionAgingReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRequisitionAgingReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRequisitionAgingReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRequisitionAgingReport<
+  TData = Awaited<ReturnType<typeof exportRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportRequisitionAgingReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRequisitionAgingReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRequisitionAgingReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRequisitionAgingReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRequisitionAgingReport<
+  TData = Awaited<ReturnType<typeof exportRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportRequisitionAgingReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRequisitionAgingReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The requisition aging report as Excel, with its filter and chosen columns
+ */
+
+export function useExportRequisitionAgingReport<
+  TData = Awaited<ReturnType<typeof exportRequisitionAgingReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params?: ExportRequisitionAgingReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRequisitionAgingReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportRequisitionAgingReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getGetRecruitmentOfferReportUrl = (params: GetRecruitmentOfferReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/offers?${stringifiedParams}`
+    : `/api/recruitment/reports/offers`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The offers sent in a period by opening: accepted, declined, expired, waiting and the acceptance rate
+ */
+export const getRecruitmentOfferReport = async (
+  params: GetRecruitmentOfferReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<PagedResultOfOfferReportRow> => {
+  return customFetch<PagedResultOfOfferReportRow>(getGetRecruitmentOfferReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetRecruitmentOfferReportQueryKey = (params?: GetRecruitmentOfferReportParams) => {
+  return [`/api/recruitment/reports/offers`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetRecruitmentOfferReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentOfferReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentOfferReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRecruitmentOfferReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecruitmentOfferReport>>> = ({ signal }) =>
+    getRecruitmentOfferReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRecruitmentOfferReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetRecruitmentOfferReportQueryResult = NonNullable<Awaited<ReturnType<typeof getRecruitmentOfferReport>>>;
+export type GetRecruitmentOfferReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useGetRecruitmentOfferReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentOfferReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentOfferReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentOfferReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentOfferReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentOfferReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentOfferReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentOfferReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRecruitmentOfferReport>>,
+          TError,
+          Awaited<ReturnType<typeof getRecruitmentOfferReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetRecruitmentOfferReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentOfferReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentOfferReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The offers sent in a period by opening: accepted, declined, expired, waiting and the acceptance rate
+ */
+
+export function useGetRecruitmentOfferReport<
+  TData = Awaited<ReturnType<typeof getRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: GetRecruitmentOfferReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentOfferReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetRecruitmentOfferReportQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export const getExportRecruitmentOfferReportUrl = (params: ExportRecruitmentOfferReportParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recruitment/reports/offers/export?${stringifiedParams}`
+    : `/api/recruitment/reports/offers/export`;
+};
+
+/**
+ * Requires permission: recruitment.reports.read.
+ * @summary The offer report as Excel, with its filters and chosen columns
+ */
+export const exportRecruitmentOfferReport = async (
+  params: ExportRecruitmentOfferReportParams,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<unknown> => {
+  return customFetch<unknown>(getExportRecruitmentOfferReportUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getExportRecruitmentOfferReportQueryKey = (params?: ExportRecruitmentOfferReportParams) => {
+  return [`/api/recruitment/reports/offers/export`, ...(params ? [params] : [])] as const;
+};
+
+export const getExportRecruitmentOfferReportQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentOfferReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentOfferReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportRecruitmentOfferReportQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportRecruitmentOfferReport>>> = ({ signal }) =>
+    exportRecruitmentOfferReport(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportRecruitmentOfferReport>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ExportRecruitmentOfferReportQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportRecruitmentOfferReport>>
+>;
+export type ExportRecruitmentOfferReportQueryError = ErrorType<HttpValidationProblemDetails>;
+
+export function useExportRecruitmentOfferReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentOfferReportParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentOfferReport>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentOfferReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentOfferReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentOfferReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentOfferReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentOfferReport>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportRecruitmentOfferReport>>,
+          TError,
+          Awaited<ReturnType<typeof exportRecruitmentOfferReport>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useExportRecruitmentOfferReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentOfferReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentOfferReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary The offer report as Excel, with its filters and chosen columns
+ */
+
+export function useExportRecruitmentOfferReport<
+  TData = Awaited<ReturnType<typeof exportRecruitmentOfferReport>>,
+  TError = ErrorType<HttpValidationProblemDetails>,
+>(
+  params: ExportRecruitmentOfferReportParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof exportRecruitmentOfferReport>>, TError, TData>>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getExportRecruitmentOfferReportQueryOptions(params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

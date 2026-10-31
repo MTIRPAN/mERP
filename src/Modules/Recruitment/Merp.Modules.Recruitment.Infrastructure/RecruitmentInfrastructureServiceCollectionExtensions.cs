@@ -16,6 +16,7 @@ using Merp.Modules.Recruitment.Application.CvAnalysis;
 using Merp.Modules.Recruitment.Application.Interviews;
 using Merp.Modules.Recruitment.Application.Offers;
 using Merp.Modules.Recruitment.Application.Openings;
+using Merp.Modules.Recruitment.Application.Reports;
 using Merp.Modules.Recruitment.Application.Requisitions;
 using Merp.Modules.Recruitment.Application.Settings;
 using Merp.Modules.Recruitment.Infrastructure.Applications;
@@ -49,6 +50,7 @@ public static class RecruitmentInfrastructureServiceCollectionExtensions
         // Requisitions: the vacancy checks and the approval flow (D48)
         services.AddScoped<RequisitionRules>();
         services.AddScoped<RequisitionService>();
+        services.AddScoped<RecruitmentReportData>();
         services.AddSingleton<IApprovalDocumentTypeProvider, RecruitmentApprovalDocumentTypes>();
         services.AddSingleton<INotificationTypeProvider, RequisitionNotificationTypes>();
         services.AddScoped<IApprovalDocumentAccessPolicy, RequisitionAccessPolicy>();

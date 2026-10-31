@@ -1714,3 +1714,32 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Yetkililere "Verileri dışa aktar" ve "Talep üzerine sil" düğmeleri.
 - Anonim aday için uyarı.
 - Adayın yeniden rıza sayfası.
+
+## D56 — İşe alım raporları
+
+**Bağlam:** R9 işe alım raporlarını, Excel dosyalarını ve dashboard'u getirir. Ölçülerin tanımları sektördeki yaygın kullanıma göre seçildi; kullanıcı itiraz ederse değiştirilir.
+
+**Kapsam ve filtreler:**
+- Yeni yetki `recruitment.reports.read`. `recruitment.*` deseniyle İK Yöneticisi ve İşe Alım Uzmanı rollerine geçer.
+- Raporlar yetkinin veri kapsamındaki şirketleri sayar (Company kapsamı o şirketler, Tenant kapsamı hepsi).
+- Filtreler: dönem (UTC gün sınırları, en fazla 731 gün), şirket ve huni ile işe alım süreleri için ilan.
+- Satırlar bellekte hesaplanır: bir kiracının işe alım verisi küçüktür ve filtreler SQL'de uygulanır. Sıralama sabittir, `sort` alınmaz.
+
+**Ölçüler:**
+- **İlan hunisi:** Dönemde yapılan başvurular, ilanın aşamaları sırasıyla.
+  - "Ulaşan": başvurunun girdiği en ileri çalışma aşamasına kadar her aşama sayılır; atlanan aşamalar da ulaşılmış kabul edilir. Çalışma aşamaları son olmayan aşamalar ve en sonda "İşe alındı"dır.
+  - "Dönüşüm": aşamaya ulaşan / bir önceki çalışma aşamasına ulaşan, yüzde.
+  - "Reddedildi" ve "Geri çekildi" o aşamaya giren başvuruları sayar, dönüşümleri yoktur.
+  - "Şu an": başvuruların bugün bulunduğu aşama.
+- **İşe alım süresi:** Başvurudan işe alıma (aşama geçmişindeki Hired kaydı) gün. **Kadro doldurma süresi:** ilanın ilk yayınından işe alıma gün. Dönem işe alım tarihine göredir.
+- **Kaynak etkinliği:** Dönemdeki başvurular kaynağa göre: mülakat yapılan (iptal edilmemiş mülakatı olan), teklif gönderilen, işe alınan ve işe alım oranı.
+- **Mülakatçı yükü:** Dönemde başlayan, iptal edilmemiş mülakatlar mülakatçıya göre: tamamlanan, gönderilen form, eksik form (formu olan tamamlanmış mülakatta formu gelmeyen) ve formun mülakat bitişinden sonra ortalama kaç saatte geldiği (negatifse 0).
+- **Açık talep yaşlandırması:** Onay bekleyen, iade edilmiş ve onaylanmış (dolmamış) talepler; onaya gönderildiği günden bugüne gün; 0–30, 31–60, 61–90, 90+ aralıkları.
+- **Teklif kabul oranı:** Dönemde adaya gönderilen teklifler ilana göre; kabul / (kabul + ret + süresi dolan), yanıt bekleyenler oranı etkilemez.
+- **Özet:** Başvuru, işe alım, ortalama işe alım ve kadro doldurma süresi, teklif kabul oranı, açık talep ve eksik form sayısı.
+
+**API:**
+- `GET /api/recruitment/reports/summary` ve `funnel`, `hires`, `sources`, `interviewers`, `requisition-aging`, `offers` (sayfalı).
+- Her raporun `/export` ucu D35'teki gibi seçilen sütunlarla Excel üretir ve dışa aktarımı audit'e yazar.
+
+**Web:** `/recruitment/reports` sayfası: dönem ve şirket filtresi, özet kartları, sekmelerde ECharts grafikleri (seçilen ilanın hunisi, kaynaklar, yaş aralıkları, teklif sonuçları) ve Excel'e aktarılabilir tablolar.

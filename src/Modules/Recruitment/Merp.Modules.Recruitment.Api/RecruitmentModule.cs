@@ -35,6 +35,7 @@ public sealed class RecruitmentModule : IModule
         group.MapPrivacyEndpoints();
         group.MapInterviewEndpoints();
         group.MapOfferEndpoints();
+        group.MapReportEndpoints();
         group.MapSelfServiceCareerEndpoints();
         group.MapHiringTeamEndpoints();
         group.MapHiringTeamCandidateEndpoints();

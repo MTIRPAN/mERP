@@ -1089,7 +1089,7 @@ Kurallar: `docs/domain/izin-kurallari.md`. Bu belgeyi birebir uygula. §8'deki h
 - Süresi dolan aday gece işinde anonimleşir, dosyaları silinir.
 - İşe alım raporlarındaki sayılar değişmez.
 
-### [ ] R9 İşe alım raporları — S
+### [x] R9 İşe alım raporları — S
 
 **Yapılacaklar:**
 - Raporlar:
