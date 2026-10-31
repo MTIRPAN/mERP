@@ -34,7 +34,7 @@ Modül handler'ı
 | 3.4 | **İlan metni taslağı ve kapsayıcı dil kontrolü:** personel talebinden ilan taslağı; ayrımcı veya dışlayıcı ifadeler için uyarı | İşe alım | Daha hızlı ve tutarlı ilan, ayrımcılık riskini azaltır | ✅ Hazır (A4) |
 | 3.5 | **Mülakat soruları ve geri bildirim özeti:** pozisyona göre soru seti; mülakatçı notlarından ortak özet (kör geri bildirim kuralına uyarak) | İşe alım | Yapılandırılmış mülakat, hızlı karar toplantısı | ✅ Hazır (A5) |
 | 3.6 | **Aday e-posta taslakları:** şablonu adaya göre kişiselleştirir (ret, davet) | İşe alım | Aday deneyimi | ✅ Hazır (A5) |
-| 3.7 | **Çeviri taslakları:** yeni dil eklenince eksik metinlerin taslağı | Platform | Çoklu dil maliyetini düşürür | P4 ile (A7) |
+| 3.7 | **Çeviri taslakları:** yeni dil eklenince eksik metinlerin taslağı | Platform | Çoklu dil maliyetini düşürür | ✅ Hazır (A7) |
 | 3.8 | **Onay özeti:** onaycıya talebin bir paragraflık özeti ve dikkat noktaları | Platform | Onay süresini kısaltır | P10 ile (A8) |
 | 3.9 | **İçe aktarma kolon eşleştirme:** Excel başlıklarını alanlara eşleştirme önerisi | Platform | İlk kurulumu hızlandırır | P11 ile (A9) |
 | 3.10 | **Belge şablonu taslağı:** açıklamadan Fluid şablonu taslağı | Platform | Şablon hazırlama süresi | P12 ile (A10) |
@@ -97,6 +97,14 @@ Modül handler'ı
   - Adayın adı ve iletişim bilgileri gönderilmez.
 - **Gönderim her zaman kullanıcı onayıyla:** taslak bir şey göndermez. Düzenlenen metin ret ya da mülakat planlama komutuyla gider, yer tutucuları Platform doldurur. Ertelenmiş ret e-postasının metni gidene kadar başvuruda saklanır.
 - Kararlar: `docs/DECISIONS.md` D58.
+
+### 3.7 Çeviri taslakları (yapıldı)
+
+- **Taslak:** `POST /api/platform/localization/texts/{culture}/drafts`. Yetki `platform.localization.manage` (Tenant kapsamı), özellik `platform.translation_drafts`, hız sınırı `ai`.
+  - Listenin filtresine uyan eksik metinlerden en fazla 100 tanesi varsayılan dilden çevrilir. Anahtar bağlam olarak gider.
+  - Yer tutucular ve etiketler korunur; yer tutucusu değişen taslak işaretlenir.
+- **Kaydetme her zaman kullanıcıyla:** Taslak saklanmaz. Kullanıcı gözden geçirdiği satırları `POST .../texts/{culture}/bulk` ile kaydeder.
+- Kararlar: `docs/DECISIONS.md` D60.
 
 ## 4. Kişisel veri maskeleme
 

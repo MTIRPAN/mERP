@@ -136,6 +136,7 @@
   "platform.localization.errors.self_fallback": "Bir dil kendisinin yedek dili olamaz.",
   "platform.localization.errors.unknown_culture": "Dil bulunamadı.",
   "platform.localization.errors.unknown_key": "Bu anahtar metin kataloğunda yok.",
+  "platform.localization.errors.default_culture_draft": "Varsayılan dil taslakların kaynağıdır; taslak başka bir dil için istenir.",
   "platform.localization.errors.invalid_file": "Dosya okunamadı. Dışa aktarılan Excel dosyasını (en fazla 5 MB) yükleyin.",
   "platform.localization.errors.wrong_culture": "Dosya başka bir dil için. C sütununun başlığı {culture} olmalı.",
   "platform.entities.Culture": "Dil",

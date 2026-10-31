@@ -7,6 +7,7 @@ using Merp.Modules.Platform.Application;
 using Merp.Modules.Platform.Application.Localization;
 using Merp.SharedKernel.Results;
 using Merp.Web.Errors;
+using Merp.Web.RateLimiting;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -75,6 +76,24 @@ internal static class LocalizationEndpoints
             .WithSummary("Translate one key; an empty value removes the translation")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        texts.MapPost("/bulk", SetTextsAsync)
+            .RequirePermission(PlatformPermissions.Localization.Manage)
+            .WithName("SetTexts")
+            .WithSummary("Translate many keys at once, e.g. reviewed AI drafts (A7, D60); returns how many changed")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        texts.MapPost("/drafts", DraftAsync)
+            .RequirePermission(PlatformPermissions.Localization.Manage)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("DraftTranslations")
+            .WithSummary("Draft up to 100 missing translations of the filter with AI from the default language (A7, D60)")
+            .WithDescription("Nothing is stored: a user reviews the drafts and saves them with SetTexts.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         texts.MapGet("/export", ExportAsync)
             .RequirePermission(PlatformPermissions.Localization.Read)
@@ -174,6 +193,23 @@ internal static class LocalizationEndpoints
         CancellationToken cancellationToken) =>
         NoContent(await sender.Send(command with { Culture = culture }, cancellationToken));
 
+    private static async Task<Results<Ok<SetTextsResponse>, ProblemHttpResult>> SetTextsAsync(
+        string culture,
+        SetTextsCommand command,
+        ISender sender,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command with { Culture = culture }, cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(new SetTextsResponse(result.Value)) : (ProblemHttpResult)result.Error.ToProblem();
+    }
+
+    private static async Task<Results<Ok<TranslationDraftResponse>, ProblemHttpResult>> DraftAsync(
+        string culture,
+        DraftTranslationsQuery query,
+        ISender sender,
+        CancellationToken cancellationToken) =>
+        Respond(await sender.Send(query with { Culture = culture }, cancellationToken));
+
     private static async Task<Results<FileContentHttpResult, ProblemHttpResult>> ExportAsync(string culture, ISender sender, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new ExportTextsQuery(culture), cancellationToken);
@@ -211,3 +247,6 @@ internal static class LocalizationEndpoints
 }
 
 public sealed record CultureCreatedResponse(string Code);
+
+/// <summary>How many translations changed.</summary>
+public sealed record SetTextsResponse(int Changed);
