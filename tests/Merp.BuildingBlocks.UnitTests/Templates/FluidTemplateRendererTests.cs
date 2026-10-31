@@ -29,6 +29,15 @@ public sealed class FluidTemplateRendererTests
     }
 
     [Fact]
+    public void Html_WritesLineBreaksAsCharacterReferences()
+    {
+        // A written e-mail body keeps its paragraphs under white-space:pre-line (D58)
+        var model = new Dictionary<string, object?>(StringComparer.Ordinal) { ["body"] = "Sayın Ayşe,\n\nTeşekkürler." };
+
+        _renderer.Render("<p>{{ body }}</p>", model, html: true).Value.ShouldBe("<p>Sayın Ayşe,&#xA;&#xA;Teşekkürler.</p>");
+    }
+
+    [Fact]
     public void PlainText_IsNotEncoded()
     {
         _renderer.Render("{{ title }}: {{ body }}", Model, html: false).Value.ShouldBe("İzin onaylandı: <b>Ayşe</b> & Çağrı");

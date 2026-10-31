@@ -54,10 +54,11 @@ public sealed class ExternalEmailTests(NotificationFactory factory) : IClassFixt
         var email = await QueryAsync(db => db.EmailMessages.AsNoTracking().SingleAsync(m => m.To == address, Ct));
         email.ShouldSatisfyAllConditions(
             m => m.Subject.ShouldBe("Satış Uzmanı başvurunuz"),
-            m => m.HtmlBody.ShouldContain("Sayın Ayşe Yılmaz,\n\nTeknik mülakattaki sunumunuz için Acme olarak teşekkür ederiz."),
+            // The encoder writes the line breaks as &#xA;; pre-line shows them as paragraphs
+            m => m.HtmlBody.ShouldContain("Sayın Ayşe Yılmaz,&#xA;&#xA;Teknik mülakattaki sunumunuz için Acme olarak teşekkür ederiz."),
             m => m.HtmlBody.ShouldContain("white-space:pre-line"),
             m => m.HtmlBody.ShouldNotContain("başka adaylarla"),
-            m => m.TextBody.ShouldContain("Sayın Ayşe Yılmaz,"));
+            m => m.TextBody.ShouldContain("Sayın Ayşe Yılmaz,\n\nTeknik mülakattaki sunumunuz için Acme olarak teşekkür ederiz."));
     }
 
     [Fact]
