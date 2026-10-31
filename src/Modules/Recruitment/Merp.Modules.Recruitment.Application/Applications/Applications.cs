@@ -115,7 +115,14 @@ public sealed record ApplicationDetails(
     bool CanScheduleInterview,
     IReadOnlyList<OfferListItem> Offers,
     bool CanCreateOffer,
-    bool CanHire);
+    bool CanHire)
+{
+    /// <summary>The forms still missing before the summary of the forms can be asked for (D58).</summary>
+    public int FeedbackPending { get; init; }
+
+    /// <summary>The rejection e-mail waiting to go was personalized (D58).</summary>
+    public bool RejectionEmailPersonalized { get; init; }
+}
 
 /// <summary>A file of a recruitment record to send.</summary>
 public sealed record RecruitmentFileDownload(string FileName, string ContentType, long Length, Stream Content);
@@ -201,6 +208,12 @@ public sealed record RejectApplicationCommand(uint Version, string? ReasonCode, 
     /// <summary>From the route.</summary>
     [JsonIgnore]
     public Guid Id { get; init; }
+
+    /// <summary>A personalized subject (D58); with <see cref="EmailBody"/> it replaces the template's text.</summary>
+    public string? EmailSubject { get; init; }
+
+    /// <summary>A personalized plain text body with the placeholders of the rejection e-mail.</summary>
+    public string? EmailBody { get; init; }
 
     [JsonIgnore]
     public string Permission => RecruitmentPermissions.Applications.Manage;
@@ -316,6 +329,8 @@ public sealed class RejectionEmails(
                     })
                 {
                     CompanyId = application.CompanyId,
+                    Subject = application.RejectionEmailText?.Subject,
+                    Body = application.RejectionEmailText?.Body,
                 },
                 cancellationToken);
             application.RejectionEmailSent(now);
@@ -445,6 +460,7 @@ internal sealed class RejectApplicationCommandValidator : AbstractValidator<Reje
         RuleFor(c => c.ReasonCode).NotEmpty().MaximumLength(RecruitmentLookup.CodeMaxLength);
         RuleFor(c => c.Note).MaximumLength(JobApplication.NoteMaxLength);
         RuleFor(c => c.EmailDelayDays).InclusiveBetween(0, JobApplication.MaxEmailDelayDays);
+        CandidateEmails.AddTextRules(this, c => c.EmailSubject, c => c.EmailBody, CandidateEmailKind.Rejection);
     }
 }
 
@@ -643,7 +659,11 @@ internal sealed class GetApplicationQueryHandler(
             active && await interviewAccess.ManagesAsync(application.CompanyId, cancellationToken),
             await offerRows.ItemsAsync(offers, cancellationToken),
             active && !offers.Any(o => o.IsOpen || o.Status == OfferStatus.Accepted) && await offerAccess.ManagesAsync(application.CompanyId, cancellationToken),
-            active && application.HireRequestedAt is null && offers.Any(o => o.Status == OfferStatus.Accepted) && await access.ManagesAsync(application.CompanyId, cancellationToken));
+            active && application.HireRequestedAt is null && offers.Any(o => o.Status == OfferStatus.Accepted) && await access.ManagesAsync(application.CompanyId, cancellationToken))
+        {
+            FeedbackPending = FeedbackCompletion.Pending(interviews, forms),
+            RejectionEmailPersonalized = application.RejectionEmailText is not null,
+        };
     }
 
     private static ApplicationAnswerItem Answer(JobOpening opening, ApplicationAnswer answer)
@@ -747,7 +767,14 @@ internal sealed class RejectApplicationCommandHandler(
 
         var (application, opening) = loaded.Value;
         var now = timeProvider.GetUtcNow();
-        var rejected = application.Reject(opening, reason, request.Note, request.SendEmail ? now.AddDays(request.EmailDelayDays) : null, currentUser.UserId, now);
+        var rejected = application.Reject(
+            opening,
+            reason,
+            request.Note,
+            request.SendEmail ? now.AddDays(request.EmailDelayDays) : null,
+            currentUser.UserId,
+            now,
+            CandidateEmails.Text(request.EmailSubject, request.EmailBody));
         if (rejected.IsSuccess && request.SendEmail && request.EmailDelayDays == 0)
         {
             await emails.SendAsync([application], cancellationToken);

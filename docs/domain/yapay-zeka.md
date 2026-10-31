@@ -32,8 +32,8 @@ Modül handler'ı
 | 3.2 | **Aday kartında CV analizi:** CV yüklenince analiz başvuruya kaydedilir; aday formu CV'den doldurulur | İşe alım | Elle veri girişini kaldırır | ✅ Hazır (A3) |
 | 3.3 | **Toplu ön tarama:** bir ilanın tüm başvurularını gece toplu analiz | İşe alım | Yüksek hacimli ilanlarda hız; Batch API ile yarı maliyet | R4 sonrası (A6) |
 | 3.4 | **İlan metni taslağı ve kapsayıcı dil kontrolü:** personel talebinden ilan taslağı; ayrımcı veya dışlayıcı ifadeler için uyarı | İşe alım | Daha hızlı ve tutarlı ilan, ayrımcılık riskini azaltır | ✅ Hazır (A4) |
-| 3.5 | **Mülakat soruları ve geri bildirim özeti:** pozisyona göre soru seti; mülakatçı notlarından ortak özet (kör geri bildirim kuralına uyarak) | İşe alım | Yapılandırılmış mülakat, hızlı karar toplantısı | R5 ile (A5) |
-| 3.6 | **Aday e-posta taslakları:** şablonu adaya göre kişiselleştirir (ret, davet) | İşe alım | Aday deneyimi | R4/R5 ile (A5) |
+| 3.5 | **Mülakat soruları ve geri bildirim özeti:** pozisyona göre soru seti; mülakatçı notlarından ortak özet (kör geri bildirim kuralına uyarak) | İşe alım | Yapılandırılmış mülakat, hızlı karar toplantısı | ✅ Hazır (A5) |
+| 3.6 | **Aday e-posta taslakları:** şablonu adaya göre kişiselleştirir (ret, davet) | İşe alım | Aday deneyimi | ✅ Hazır (A5) |
 | 3.7 | **Çeviri taslakları:** yeni dil eklenince eksik metinlerin taslağı | Platform | Çoklu dil maliyetini düşürür | P4 ile (A7) |
 | 3.8 | **Onay özeti:** onaycıya talebin bir paragraflık özeti ve dikkat noktaları | Platform | Onay süresini kısaltır | P10 ile (A8) |
 | 3.9 | **İçe aktarma kolon eşleştirme:** Excel başlıklarını alanlara eşleştirme önerisi | Platform | İlk kurulumu hızlandırır | P11 ile (A9) |
@@ -71,6 +71,23 @@ Modül handler'ı
 - **Gözden geçirme:** Taslaktan gelen ilan, kullanıcı "gözden geçirdim" onayıyla kaydedilene kadar yayınlanamaz (409 `recruitment.openings.errors.ai_draft_not_reviewed`).
 - **Dil kontrolü:** Yerel kural listesi (yaş, cinsiyet, medeni durum, askerlik, uyruk, din, sağlık, dış görünüş; Türkçe ve İngilizce) ilan her okunduğunda çalışır. `POST /api/recruitment/openings/language-check` kural listesini, `withAi` ile de maskelenmiş düz metin üzerinde yapay zeka incelemesini çalıştırır. Uyarılar yayını engellemez.
 - Kararlar: `docs/DECISIONS.md` D57.
+
+### 3.5 Mülakat soruları ve geri bildirim özeti (yapıldı)
+
+- **Soru önerileri:** `POST /api/recruitment/interviews/{id}/question-suggestions`. Yetki `recruitment.interviews.read`, özellik `recruitment.interview_questions`, hız sınırı `ai`. Girdi: ilanın başlığı, açıklaması ve nitelikleri (maskelenmiş düz metin), mülakat türü, formun kriterleri ve puan açıklamaları. Aday bilgisi gönderilmez. Kriter başına soru, neye dikkat edileceği ve ek sorular döner; saklanmaz.
+- **Geri bildirim özeti:** `POST /api/recruitment/applications/{id}/feedback-summary` (İK), `/me/hiring/applications/{id}/feedback-summary` (işe alım ekibi) ve `/interviews/{id}/feedback-summary` (mülakatçılar). Özellik `recruitment.feedback_summary`.
+  - Kör kural: başvurunun iptal edilmemiş, formlu mülakatlarındaki herkes formunu gönderene kadar 409 `recruitment.interviews.errors.feedback_pending` döner.
+  - Mülakatçılar `I1`, `I2`… olarak gider. Aday ve mülakatçı adları maskelenir.
+  - Özet karar önermez; güçlü yönler, endişeler, görüş ayrılıkları ve açık sorular döner.
+- Kararlar: `docs/DECISIONS.md` D58.
+
+### 3.6 Aday e-posta taslakları (yapıldı)
+
+- **Taslak:** `POST /api/recruitment/applications/{id}/rejection-email-draft` ve `.../invitation-email-draft`. Özellik `recruitment.candidate_email`.
+  - Bildirim türünün metni adayın dilinde ve yer tutucularıyla (`{candidate}`, `{position}`…) gider; pozisyon, aşama ve kullanıcının maskelenmiş talimatı da eklenir.
+  - Adayın adı ve iletişim bilgileri gönderilmez.
+- **Gönderim her zaman kullanıcı onayıyla:** taslak bir şey göndermez. Düzenlenen metin ret ya da mülakat planlama komutuyla gider, yer tutucuları Platform doldurur. Ertelenmiş ret e-postasının metni gidene kadar başvuruda saklanır.
+- Kararlar: `docs/DECISIONS.md` D58.
 
 ## 4. Kişisel veri maskeleme
 

@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ReasonOption } from '@/shared/api/generated/model';
 import { applyApiErrorsToForm } from '@/shared/api/formErrors';
+import { useRecruitmentAi } from '../interviews/interviews';
+import { recruitmentAiFeatures } from '../permissions';
+import { CandidateEmailFields } from './CandidateEmailFields';
 import { emailDelays, type LeaveValues } from './pipeline';
 
 interface ReasonModalProps {
@@ -13,6 +16,8 @@ interface ReasonModalProps {
   onSubmit: (values: LeaveValues) => Promise<unknown>;
   /** Replaces the title, e.g. for the bulk rejection of the remaining applications (D54). */
   title?: string;
+  /** The application rejected alone: its e-mail may be personalized (D58). */
+  applicationId?: string;
   onClose: () => void;
 }
 
@@ -20,11 +25,20 @@ interface ReasonModalProps {
  * Asks why an application leaves the pipeline (D50); a rejection also asks whether and when the candidate gets the
  * rejection e-mail. API field errors are shown on the fields.
  */
-export const ReasonModal = ({ kind, candidateName, reasons, onSubmit, onClose, title }: ReasonModalProps) => {
+export const ReasonModal = ({
+  kind,
+  candidateName,
+  reasons,
+  onSubmit,
+  onClose,
+  title,
+  applicationId,
+}: ReasonModalProps) => {
   const { t } = useTranslation();
   const [form] = Form.useForm<LeaveValues>();
   const [saving, setSaving] = useState(false);
   const sendEmail = Form.useWatch('sendEmail', form);
+  const emailAi = useRecruitmentAi(recruitmentAiFeatures.candidateEmail);
 
   const submit = async (values: LeaveValues) => {
     setSaving(true);
@@ -84,6 +98,15 @@ export const ReasonModal = ({ kind, candidateName, reasons, onSubmit, onClose, t
                   }))}
                 />
               </Form.Item>
+            )}
+            {sendEmail && emailAi && applicationId && (
+              <CandidateEmailFields
+                kind="rejection"
+                applicationId={applicationId}
+                form={form}
+                subjectName="emailSubject"
+                bodyName="emailBody"
+              />
             )}
             <Typography.Paragraph type="secondary">{t('web.recruitment.pipeline.reject.hint')}</Typography.Paragraph>
           </>

@@ -13,8 +13,10 @@ import type { InterviewDetails, InterviewType } from '@/shared/api/generated/mod
 import { applyApiErrorsToForm } from '@/shared/api/formErrors';
 import { isApiError } from '@/shared/api/problem';
 import { formatDateTime } from '@/shared/format/date';
+import { recruitmentAiFeatures } from '../permissions';
+import { CandidateEmailFields } from '../pipeline/CandidateEmailFields';
 import { useSettled } from '../requisitions/requisitions';
-import { interviewTypes, useInterviewRefresh } from './interviews';
+import { interviewTypes, useInterviewRefresh, useRecruitmentAi } from './interviews';
 
 interface InterviewValues {
   type?: InterviewType;
@@ -24,6 +26,9 @@ interface InterviewValues {
   interviewerUserIds?: string[];
   evaluationTemplateId?: string;
   notes?: string;
+  /** The candidate's invitation as the user personalized it (D58). */
+  invitationSubject?: string;
+  invitationBody?: string;
 }
 
 /** The API names the times; the form keeps them in one range. */
@@ -60,6 +65,7 @@ export const InterviewModal = ({
   const settledUser = useSettled(userSearch);
   const users = useSearchInterviewUsers({ search: settledUser || undefined });
   const templates = useListInterviewTemplates({ query: { enabled: !interview } });
+  const emailAi = useRecruitmentAi(recruitmentAiFeatures.candidateEmail);
   const values = Form.useWatch((all: InterviewValues) => all, { form, preserve: true }) ?? {};
   const [start, end] = values.when ?? [];
   const interviewers = values.interviewerUserIds ?? [];
@@ -113,6 +119,8 @@ export const InterviewModal = ({
             ...body,
             applicationId,
             evaluationTemplateId: checked.evaluationTemplateId ?? null,
+            invitationSubject: checked.invitationSubject?.trim() || null,
+            invitationBody: checked.invitationBody?.trim() || null,
           })
         ).id;
       }
@@ -235,6 +243,16 @@ export const InterviewModal = ({
         <Form.Item name="notes" label={t('web.recruitment.interviews.fields.notes')}>
           <Input.TextArea rows={2} maxLength={2000} />
         </Form.Item>
+        {!interview && emailAi && (
+          <CandidateEmailFields
+            kind="invitation"
+            applicationId={applicationId}
+            form={form}
+            subjectName="invitationSubject"
+            bodyName="invitationBody"
+            interviewType={values.type}
+          />
+        )}
       </Form>
       <Flex vertical gap={12}>
         {(conflicts.data ?? []).length > 0 && (

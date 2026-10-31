@@ -83,5 +83,8 @@ internal sealed class RecruitmentAiFeatureDefinitions : IAiFeatureDefinitionProv
     [
         new(RecruitmentAiFeatures.CvAnalysis),
         new(RecruitmentAiFeatures.OpeningText),
+        new(RecruitmentAiFeatures.InterviewQuestions),
+        new(RecruitmentAiFeatures.FeedbackSummary),
+        new(RecruitmentAiFeatures.CandidateEmail),
     ];
 }

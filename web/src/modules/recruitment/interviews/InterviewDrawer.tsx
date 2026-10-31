@@ -19,6 +19,7 @@ import {
   cancelInterview,
   closeInterview,
   downloadInterviewCv,
+  summarizeInterviewFeedback,
   useGetInterview,
 } from '@/shared/api/generated/endpoints/recruitment/recruitment';
 import type { InterviewStatus } from '@/shared/api/generated/model';
@@ -27,8 +28,10 @@ import { isApiError } from '@/shared/api/problem';
 import { formatDateTime } from '@/shared/format/date';
 import { FeedbackForm } from './FeedbackForm';
 import { FeedbackList } from './FeedbackList';
+import { FeedbackSummaryPanel, InterviewQuestionsPanel } from './InterviewAi';
 import { InterviewModal } from './InterviewModal';
-import { interviewStatusColors, useInterviewRefresh } from './interviews';
+import { recruitmentAiFeatures } from '../permissions';
+import { interviewStatusColors, useInterviewRefresh, useRecruitmentAi } from './interviews';
 
 export const InterviewStatusTag = ({ status }: { status: InterviewStatus }) => {
   const { t } = useTranslation();
@@ -54,6 +57,8 @@ export const InterviewDrawer = ({ id, onClose }: { id: string; onClose: () => vo
   const { message } = App.useApp();
   const { data: details, refetch } = useGetInterview(id);
   const refresh = useInterviewRefresh();
+  const questionsAi = useRecruitmentAi(recruitmentAiFeatures.interviewQuestions);
+  const summaryAi = useRecruitmentAi(recruitmentAiFeatures.feedbackSummary);
   const [editing, setEditing] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [reason, setReason] = useState('');
@@ -190,6 +195,7 @@ export const InterviewDrawer = ({ id, onClose }: { id: string; onClose: () => vo
               {t('web.recruitment.interviews.download_cv', { name: details.cvFileName })}
             </Button>
           )}
+          {questionsAi && interview.status === 'Scheduled' && <InterviewQuestionsPanel interviewId={id} />}
           {interview.myFeedbackSent && (
             <Typography.Text>
               <CheckCircleTwoTone twoToneColor="#52c41a" /> {t('web.recruitment.interviews.feedback.mine_sent')}
@@ -206,6 +212,13 @@ export const InterviewDrawer = ({ id, onClose }: { id: string; onClose: () => vo
           )}
           {!details.evaluation && (
             <Typography.Text type="secondary">{t('web.recruitment.interviews.no_form')}</Typography.Text>
+          )}
+          {summaryAi && !details.feedbackHidden && details.feedback.length > 0 && (
+            <FeedbackSummaryPanel
+              key={id}
+              pending={details.feedbackPending ?? 0}
+              summarize={() => summarizeInterviewFeedback(id)}
+            />
           )}
           <FeedbackList feedback={details.feedback} score={details.applicationScore} hidden={details.feedbackHidden} />
         </Flex>

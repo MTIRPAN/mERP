@@ -31,6 +31,7 @@ import type {
   CancelRequisitionCommand,
   CandidateCvPrefill,
   CandidateDetails,
+  CandidateEmailDraft,
   CandidateOptions,
   CareerOpeningDetails,
   CareerOpeningItem,
@@ -46,6 +47,7 @@ import type {
   CreateRequisitionCommand,
   CreateStageTemplateCommand,
   CvAnalysisResponse,
+  DraftCandidateEmailQuery,
   DraftOpeningTextQuery,
   EmployeeSummary,
   EntityCreatedResponse,
@@ -57,6 +59,7 @@ import type {
   ExportRecruitmentOfferReportParams,
   ExportRecruitmentSourceReportParams,
   ExportRequisitionAgingReportParams,
+  FeedbackSummaryResponse,
   GetCurrentConsentTextParams,
   GetMyOpeningParams,
   GetRecruitmentFunnelReportParams,
@@ -70,6 +73,7 @@ import type {
   HttpValidationProblemDetails,
   InterviewConflict,
   InterviewDetails,
+  InterviewQuestionsResponse,
   InterviewTemplateOption,
   ListApplicationsParams,
   ListCandidatesParams,
@@ -4084,6 +4088,299 @@ export const useReopenApplication = <
 > => {
   return useMutation(getReopenApplicationMutationOptions(options), queryClient);
 };
+export const getSummarizeApplicationFeedbackUrl = (id: string) => {
+  return `/api/recruitment/applications/${id}/feedback-summary`;
+};
+
+/**
+ * Nothing is stored. The candidate's and the interviewers' names are replaced before the forms reach the AI provider. 409 while forms are missing (the blind rule). Requires permission: recruitment.applications.read.
+ * @summary Summarize the interviewers' forms of an application with AI once every form is in (A5, D58)
+ */
+export const summarizeApplicationFeedback = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<FeedbackSummaryResponse> => {
+  return customFetch<FeedbackSummaryResponse>(getSummarizeApplicationFeedbackUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getSummarizeApplicationFeedbackMutationKey = () => ['summarizeApplicationFeedback'] as const;
+
+export const getSummarizeApplicationFeedbackMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof summarizeApplicationFeedback>>,
+    TError,
+    SummarizeApplicationFeedbackMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof summarizeApplicationFeedback>>,
+  TError,
+  SummarizeApplicationFeedbackMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSummarizeApplicationFeedbackMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof summarizeApplicationFeedback>>,
+    SummarizeApplicationFeedbackMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return summarizeApplicationFeedback(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SummarizeApplicationFeedbackMutationResult = NonNullable<
+  Awaited<ReturnType<typeof summarizeApplicationFeedback>>
+>;
+
+export type SummarizeApplicationFeedbackMutationError = ErrorType<ProblemDetails>;
+export type SummarizeApplicationFeedbackMutationVariables = { id: string };
+
+/**
+ * @summary Summarize the interviewers' forms of an application with AI once every form is in (A5, D58)
+ */
+export const useSummarizeApplicationFeedback = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof summarizeApplicationFeedback>>,
+      TError,
+      SummarizeApplicationFeedbackMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof summarizeApplicationFeedback>>,
+  TError,
+  SummarizeApplicationFeedbackMutationVariables,
+  TContext
+> => {
+  return useMutation(getSummarizeApplicationFeedbackMutationOptions(options), queryClient);
+};
+export const getDraftRejectionEmailUrl = (id: string) => {
+  return `/api/recruitment/applications/${id}/rejection-email-draft`;
+};
+
+/**
+ * Nothing is sent: the edited text goes with the rejection. The candidate's name and contact details are not sent to the AI provider; the text keeps the template's placeholders. Requires permission: recruitment.applications.manage.
+ * @summary Personalize the rejection e-mail of an application with AI (A5, D58)
+ */
+export const draftRejectionEmail = async (
+  id: string,
+  draftCandidateEmailQuery: DraftCandidateEmailQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CandidateEmailDraft> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<CandidateEmailDraft>(getDraftRejectionEmailUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(draftCandidateEmailQuery),
+  });
+};
+
+export const getDraftRejectionEmailMutationKey = () => ['draftRejectionEmail'] as const;
+
+export const getDraftRejectionEmailMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof draftRejectionEmail>>,
+    TError,
+    DraftRejectionEmailMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof draftRejectionEmail>>,
+  TError,
+  DraftRejectionEmailMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDraftRejectionEmailMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof draftRejectionEmail>>,
+    DraftRejectionEmailMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return draftRejectionEmail(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DraftRejectionEmailMutationResult = NonNullable<Awaited<ReturnType<typeof draftRejectionEmail>>>;
+export type DraftRejectionEmailMutationBody = DraftCandidateEmailQuery;
+export type DraftRejectionEmailMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type DraftRejectionEmailMutationVariables = { id: string; data: DraftCandidateEmailQuery };
+
+/**
+ * @summary Personalize the rejection e-mail of an application with AI (A5, D58)
+ */
+export const useDraftRejectionEmail = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof draftRejectionEmail>>,
+      TError,
+      DraftRejectionEmailMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof draftRejectionEmail>>,
+  TError,
+  DraftRejectionEmailMutationVariables,
+  TContext
+> => {
+  return useMutation(getDraftRejectionEmailMutationOptions(options), queryClient);
+};
+export const getDraftInterviewInvitationEmailUrl = (id: string) => {
+  return `/api/recruitment/applications/${id}/invitation-email-draft`;
+};
+
+/**
+ * Nothing is sent: the edited text goes with the interview being planned. The date, time and place stay placeholders. Requires permission: recruitment.interviews.manage.
+ * @summary Personalize the interview invitation e-mail of an application with AI (A5, D58)
+ */
+export const draftInterviewInvitationEmail = async (
+  id: string,
+  draftCandidateEmailQuery: DraftCandidateEmailQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<CandidateEmailDraft> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<CandidateEmailDraft>(getDraftInterviewInvitationEmailUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(draftCandidateEmailQuery),
+  });
+};
+
+export const getDraftInterviewInvitationEmailMutationKey = () => ['draftInterviewInvitationEmail'] as const;
+
+export const getDraftInterviewInvitationEmailMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof draftInterviewInvitationEmail>>,
+    TError,
+    DraftInterviewInvitationEmailMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof draftInterviewInvitationEmail>>,
+  TError,
+  DraftInterviewInvitationEmailMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDraftInterviewInvitationEmailMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof draftInterviewInvitationEmail>>,
+    DraftInterviewInvitationEmailMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return draftInterviewInvitationEmail(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DraftInterviewInvitationEmailMutationResult = NonNullable<
+  Awaited<ReturnType<typeof draftInterviewInvitationEmail>>
+>;
+export type DraftInterviewInvitationEmailMutationBody = DraftCandidateEmailQuery;
+export type DraftInterviewInvitationEmailMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type DraftInterviewInvitationEmailMutationVariables = { id: string; data: DraftCandidateEmailQuery };
+
+/**
+ * @summary Personalize the interview invitation e-mail of an application with AI (A5, D58)
+ */
+export const useDraftInterviewInvitationEmail = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof draftInterviewInvitationEmail>>,
+      TError,
+      DraftInterviewInvitationEmailMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof draftInterviewInvitationEmail>>,
+  TError,
+  DraftInterviewInvitationEmailMutationVariables,
+  TContext
+> => {
+  return useMutation(getDraftInterviewInvitationEmailMutationOptions(options), queryClient);
+};
 export const getListCandidatesUrl = (params?: ListCandidatesParams) => {
   const normalizedParams = new URLSearchParams();
 
@@ -7004,6 +7301,176 @@ export const useSubmitInterviewFeedback = <
   TContext
 > => {
   return useMutation(getSubmitInterviewFeedbackMutationOptions(options), queryClient);
+};
+export const getSuggestInterviewQuestionsUrl = (id: string) => {
+  return `/api/recruitment/interviews/${id}/question-suggestions`;
+};
+
+/**
+ * Nothing is stored and nothing about the candidate is sent. Requires permission: recruitment.interviews.read.
+ * @summary Suggest questions for an interview from its opening and its form's criteria with AI (A5, D58)
+ */
+export const suggestInterviewQuestions = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<InterviewQuestionsResponse> => {
+  return customFetch<InterviewQuestionsResponse>(getSuggestInterviewQuestionsUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getSuggestInterviewQuestionsMutationKey = () => ['suggestInterviewQuestions'] as const;
+
+export const getSuggestInterviewQuestionsMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof suggestInterviewQuestions>>,
+    TError,
+    SuggestInterviewQuestionsMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof suggestInterviewQuestions>>,
+  TError,
+  SuggestInterviewQuestionsMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSuggestInterviewQuestionsMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof suggestInterviewQuestions>>,
+    SuggestInterviewQuestionsMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return suggestInterviewQuestions(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SuggestInterviewQuestionsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof suggestInterviewQuestions>>
+>;
+
+export type SuggestInterviewQuestionsMutationError = ErrorType<ProblemDetails>;
+export type SuggestInterviewQuestionsMutationVariables = { id: string };
+
+/**
+ * @summary Suggest questions for an interview from its opening and its form's criteria with AI (A5, D58)
+ */
+export const useSuggestInterviewQuestions = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof suggestInterviewQuestions>>,
+      TError,
+      SuggestInterviewQuestionsMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof suggestInterviewQuestions>>,
+  TError,
+  SuggestInterviewQuestionsMutationVariables,
+  TContext
+> => {
+  return useMutation(getSuggestInterviewQuestionsMutationOptions(options), queryClient);
+};
+export const getSummarizeInterviewFeedbackUrl = (id: string) => {
+  return `/api/recruitment/interviews/${id}/feedback-summary`;
+};
+
+/**
+ * For those who see every form of the application: HR, the hiring manager, and its interviewers past the blind rule. Requires permission: recruitment.interviews.read.
+ * @summary Summarize the interviewers' forms of the interview's application with AI once every form is in (A5, D58)
+ */
+export const summarizeInterviewFeedback = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<FeedbackSummaryResponse> => {
+  return customFetch<FeedbackSummaryResponse>(getSummarizeInterviewFeedbackUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getSummarizeInterviewFeedbackMutationKey = () => ['summarizeInterviewFeedback'] as const;
+
+export const getSummarizeInterviewFeedbackMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof summarizeInterviewFeedback>>,
+    TError,
+    SummarizeInterviewFeedbackMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof summarizeInterviewFeedback>>,
+  TError,
+  SummarizeInterviewFeedbackMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSummarizeInterviewFeedbackMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof summarizeInterviewFeedback>>,
+    SummarizeInterviewFeedbackMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return summarizeInterviewFeedback(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SummarizeInterviewFeedbackMutationResult = NonNullable<
+  Awaited<ReturnType<typeof summarizeInterviewFeedback>>
+>;
+
+export type SummarizeInterviewFeedbackMutationError = ErrorType<ProblemDetails>;
+export type SummarizeInterviewFeedbackMutationVariables = { id: string };
+
+/**
+ * @summary Summarize the interviewers' forms of the interview's application with AI once every form is in (A5, D58)
+ */
+export const useSummarizeInterviewFeedback = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof summarizeInterviewFeedback>>,
+      TError,
+      SummarizeInterviewFeedbackMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof summarizeInterviewFeedback>>,
+  TError,
+  SummarizeInterviewFeedbackMutationVariables,
+  TContext
+> => {
+  return useMutation(getSummarizeInterviewFeedbackMutationOptions(options), queryClient);
 };
 export const getListOffersUrl = (params?: ListOffersParams) => {
   const normalizedParams = new URLSearchParams();
@@ -10961,6 +11428,92 @@ export function useDownloadMyHiringApplicationCv<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getSummarizeMyHiringApplicationFeedbackUrl = (id: string) => {
+  return `/api/recruitment/me/hiring/applications/${id}/feedback-summary`;
+};
+
+/**
+ * Requires permission: recruitment.self.hiring.
+ * @summary Summarize the interviewers' forms of an application to an opening of my hiring team with AI (A5, D58)
+ */
+export const summarizeMyHiringApplicationFeedback = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<FeedbackSummaryResponse> => {
+  return customFetch<FeedbackSummaryResponse>(getSummarizeMyHiringApplicationFeedbackUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getSummarizeMyHiringApplicationFeedbackMutationKey = () =>
+  ['summarizeMyHiringApplicationFeedback'] as const;
+
+export const getSummarizeMyHiringApplicationFeedbackMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof summarizeMyHiringApplicationFeedback>>,
+    TError,
+    SummarizeMyHiringApplicationFeedbackMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof summarizeMyHiringApplicationFeedback>>,
+  TError,
+  SummarizeMyHiringApplicationFeedbackMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSummarizeMyHiringApplicationFeedbackMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof summarizeMyHiringApplicationFeedback>>,
+    SummarizeMyHiringApplicationFeedbackMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return summarizeMyHiringApplicationFeedback(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SummarizeMyHiringApplicationFeedbackMutationResult = NonNullable<
+  Awaited<ReturnType<typeof summarizeMyHiringApplicationFeedback>>
+>;
+
+export type SummarizeMyHiringApplicationFeedbackMutationError = ErrorType<ProblemDetails>;
+export type SummarizeMyHiringApplicationFeedbackMutationVariables = { id: string };
+
+/**
+ * @summary Summarize the interviewers' forms of an application to an opening of my hiring team with AI (A5, D58)
+ */
+export const useSummarizeMyHiringApplicationFeedback = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof summarizeMyHiringApplicationFeedback>>,
+      TError,
+      SummarizeMyHiringApplicationFeedbackMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof summarizeMyHiringApplicationFeedback>>,
+  TError,
+  SummarizeMyHiringApplicationFeedbackMutationVariables,
+  TContext
+> => {
+  return useMutation(getSummarizeMyHiringApplicationFeedbackMutationOptions(options), queryClient);
+};
 export const getGetMyHiringCandidateUrl = (id: string) => {
   return `/api/recruitment/me/hiring/candidates/${id}`;
 };

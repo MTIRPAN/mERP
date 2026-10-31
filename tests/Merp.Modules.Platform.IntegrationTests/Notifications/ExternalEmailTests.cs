@@ -35,6 +35,33 @@ public sealed class ExternalEmailTests(NotificationFactory factory) : IClassFixt
     }
 
     [Fact]
+    public async Task AWrittenText_ReplacesTheTypesText_WithThePlaceholdersFilled()
+    {
+        // A candidate e-mail personalized by the user (D58)
+        var address = $"aday.{Guid.NewGuid().ToString("N")[..8]}@ornek.test";
+
+        await DeliverAsync(new ExternalEmailRequested(
+            "recruitment.application_rejected",
+            address,
+            "Ayşe Yılmaz",
+            "tr-TR",
+            new Dictionary<string, string> { ["candidate"] = "Ayşe Yılmaz", ["position"] = "Satış Uzmanı", ["company"] = "Acme" })
+        {
+            Subject = "{position} başvurunuz",
+            Body = "Sayın {candidate},\n\nTeknik mülakattaki sunumunuz için {company} olarak teşekkür ederiz.",
+        });
+
+        var email = await QueryAsync(db => db.EmailMessages.AsNoTracking().SingleAsync(m => m.To == address, Ct));
+        email.ShouldSatisfyAllConditions(
+            m => m.Subject.ShouldBe("Satış Uzmanı başvurunuz"),
+            // The encoder writes the line breaks as &#xA;; pre-line shows them as paragraphs
+            m => m.HtmlBody.ShouldContain("Sayın Ayşe Yılmaz,&#xA;&#xA;Teknik mülakattaki sunumunuz için Acme olarak teşekkür ederiz."),
+            m => m.HtmlBody.ShouldContain("white-space:pre-line"),
+            m => m.HtmlBody.ShouldNotContain("başka adaylarla"),
+            m => m.TextBody.ShouldContain("Sayın Ayşe Yılmaz,\n\nTeknik mülakattaki sunumunuz için Acme olarak teşekkür ederiz."));
+    }
+
+    [Fact]
     public async Task AUserNotificationType_CannotGoToAnAddress()
     {
         var sending = DeliverAsync(new ExternalEmailRequested("platform.test", "biri@ornek.test", null, null, new Dictionary<string, string>()));

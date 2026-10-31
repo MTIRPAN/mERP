@@ -13,4 +13,8 @@ export interface RejectApplicationCommand {
   note: string | null;
   sendEmail: boolean;
   emailDelayDays: number;
+  /** @nullable */
+  emailSubject?: string | null;
+  /** @nullable */
+  emailBody?: string | null;
 }

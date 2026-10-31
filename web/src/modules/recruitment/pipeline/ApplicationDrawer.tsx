@@ -18,17 +18,23 @@ import {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import {
+  summarizeApplicationFeedback,
+  summarizeMyHiringApplicationFeedback,
+} from '@/shared/api/generated/endpoints/recruitment/recruitment';
 import type { ApplicationListItem, ApplicationStatus, OpeningPipeline } from '@/shared/api/generated/model';
 import { isApiError } from '@/shared/api/problem';
 import { useHasPermission } from '@/shared/auth/permissionContext';
 import { formatDate, formatDateTime } from '@/shared/format/date';
 import { FeedbackList } from '../interviews/FeedbackList';
+import { FeedbackSummaryPanel } from '../interviews/InterviewAi';
 import { InterviewDrawer, InterviewStatusTag } from '../interviews/InterviewDrawer';
 import { InterviewModal } from '../interviews/InterviewModal';
 import { OfferDrawer, OfferStatusTag } from '../offers/OfferDrawer';
 import { OfferFormModal } from '../offers/OfferFormModal';
 import { YES, NO } from '../openings/openings';
-import { recruitmentPermissions } from '../permissions';
+import { useRecruitmentAi } from '../interviews/interviews';
+import { recruitmentAiFeatures, recruitmentPermissions } from '../permissions';
 import { ApplicationCvAnalysisCard } from './ApplicationCvAnalysisCard';
 import { applicationStatusColors, downloadCv, needsReason, useApplicationDetails } from './pipeline';
 
@@ -73,6 +79,7 @@ export const ApplicationDrawer = ({
   const [scheduling, setScheduling] = useState(false);
   const [openInterview, setOpenInterview] = useState<string>();
   const readsOffers = useHasPermission(recruitmentPermissions.offersRead) && !team;
+  const summaryAi = useRecruitmentAi(recruitmentAiFeatures.feedbackSummary);
   const [offering, setOffering] = useState(false);
   const [openOffer, setOpenOffer] = useState<string>();
   const application = details?.application;
@@ -198,9 +205,14 @@ export const ApplicationDrawer = ({
                         ? t('web.recruitment.pipeline.email_sent', {
                             at: formatDateTime(details.rejectionEmailSentAt, i18n.language),
                           })
-                        : t('web.recruitment.pipeline.email_due', {
-                            at: formatDateTime(details.rejectionEmailDueAt!, i18n.language),
-                          }),
+                        : [
+                            t('web.recruitment.pipeline.email_due', {
+                              at: formatDateTime(details.rejectionEmailDueAt!, i18n.language),
+                            }),
+                            details.rejectionEmailPersonalized && t('web.recruitment.pipeline.email_personalized'),
+                          ]
+                            .filter(Boolean)
+                            .join(' · '),
                     },
                   ]
                 : []),
@@ -268,6 +280,13 @@ export const ApplicationDrawer = ({
               )}
             />
           </Card>
+          {summaryAi && details.feedback.length > 0 && (
+            <FeedbackSummaryPanel
+              key={id}
+              pending={details.feedbackPending ?? 0}
+              summarize={() => (team ? summarizeMyHiringApplicationFeedback(id) : summarizeApplicationFeedback(id))}
+            />
+          )}
           {(details.feedback.length > 0 || details.score != null) && (
             <FeedbackList feedback={details.feedback} score={details.score} />
           )}

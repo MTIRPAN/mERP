@@ -80,7 +80,11 @@ public sealed record InterviewDetails(
     string? CvFileName,
     bool CanManage,
     bool CanSubmitFeedback,
-    uint Version);
+    uint Version)
+{
+    /// <summary>The forms of the application still missing before their summary can be asked for (D58).</summary>
+    public int FeedbackPending { get; init; }
+}
 
 /// <summary>Another interview of an interviewer at the same time.</summary>
 public sealed record InterviewConflict(Guid UserId, string? Name, Guid InterviewId, DateTimeOffset StartsAt, DateTimeOffset EndsAt);
@@ -170,6 +174,12 @@ public sealed record ScheduleInterviewCommand(
     string? Notes,
     Guid? EvaluationTemplateId) : ICommand<Guid>, IRequirePermission, IInterviewFields
 {
+    /// <summary>A personalized subject of the candidate's invitation (D58); with <see cref="InvitationBody"/> it replaces the template's text.</summary>
+    public string? InvitationSubject { get; init; }
+
+    /// <summary>A personalized plain text body with the placeholders of the invitation e-mail.</summary>
+    public string? InvitationBody { get; init; }
+
     [JsonIgnore]
     public string Permission => RecruitmentPermissions.Interviews.Manage;
 }
@@ -389,6 +399,7 @@ internal sealed class ScheduleInterviewCommandValidator : AbstractValidator<Sche
     {
         RuleFor(c => c.ApplicationId).NotEmpty();
         InterviewRules.AddFieldRules(this);
+        CandidateEmails.AddTextRules(this, c => c.InvitationSubject, c => c.InvitationBody, CandidateEmailKind.InterviewInvitation);
     }
 }
 
@@ -528,7 +539,10 @@ internal sealed class GetInterviewQueryHandler(
             await access.ManagesAsync(interview.CompanyId, cancellationToken),
             submits && interview.IsInterviewer(currentUser.UserId) && interview.Evaluation is not null
                 && interview.Status is InterviewStatus.Scheduled or InterviewStatus.Completed,
-            version);
+            version)
+        {
+            FeedbackPending = FeedbackCompletion.Pending(interviews.Values, forms),
+        };
     }
 }
 
@@ -632,7 +646,7 @@ internal sealed class ScheduleInterviewCommandHandler(
         }
 
         db.Interviews.Add(interview.Value);
-        await invitations.SendAsync(interview.Value, InvitationKind.Invite, null, cancellationToken);
+        await invitations.SendAsync(interview.Value, InvitationKind.Invite, null, CandidateEmails.Text(request.InvitationSubject, request.InvitationBody), cancellationToken);
         return interview.Value.Id.Value;
     }
 }
@@ -681,7 +695,7 @@ internal sealed class UpdateInterviewCommandHandler(
             return changed;
         }
 
-        await invitations.SendAsync(interview, InvitationKind.Update, [.. before.Except(interview.InterviewerUserIds)], cancellationToken);
+        await invitations.SendAsync(interview, InvitationKind.Update, [.. before.Except(interview.InterviewerUserIds)], null, cancellationToken);
         return Result.Success();
     }
 }
@@ -700,7 +714,7 @@ internal sealed class CancelInterviewCommandHandler(IRecruitmentDbContext db, In
         var cancelled = interview.Cancel(request.Reason);
         if (cancelled.IsSuccess)
         {
-            await invitations.SendAsync(interview, InvitationKind.Cancel, null, cancellationToken);
+            await invitations.SendAsync(interview, InvitationKind.Cancel, null, null, cancellationToken);
         }
 
         return cancelled;
@@ -779,7 +793,7 @@ internal sealed class SendInterviewRemindersCommandHandler(IRecruitmentDbContext
                 interview.DayReminderSent(now);
             }
 
-            await invitations.SendAsync(interview, InvitationKind.Reminder, null, cancellationToken);
+            await invitations.SendAsync(interview, InvitationKind.Reminder, null, null, cancellationToken);
         }
 
         return due.Count;

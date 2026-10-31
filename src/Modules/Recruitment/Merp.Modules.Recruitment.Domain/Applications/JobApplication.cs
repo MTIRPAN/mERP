@@ -121,6 +121,9 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
 
     public DateTimeOffset? RejectionEmailSentAt { get; private set; }
 
+    /// <summary>The personalized rejection e-mail waiting to go (D58); null sends the template.</summary>
+    public CandidateEmailText? RejectionEmailText { get; private set; }
+
     /// <summary>When the hiring team asked HR to hire the candidate (D54); null while not asked or after HR called it off.</summary>
     public DateTimeOffset? HireRequestedAt { get; private set; }
 
@@ -285,6 +288,7 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
         CoverLetter = null;
         Answers = [];
         CvFileId = null;
+        RejectionEmailText = null;
     }
 
     /// <summary>HR called the pre-hire off; the application is in the pipeline as before.</summary>
@@ -327,9 +331,9 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
 
     /// <summary>
     /// The company turns the candidate down for a reason. The rejection e-mail goes at <paramref name="emailDueAt"/>
-    /// (at most 14 days later); null sends none.
+    /// (at most 14 days later); null sends none. <paramref name="emailText"/> replaces the template's text (D58).
     /// </summary>
-    public Result Reject(JobOpening opening, string reasonCode, string? note, DateTimeOffset? emailDueAt, Guid? userId, DateTimeOffset at)
+    public Result Reject(JobOpening opening, string reasonCode, string? note, DateTimeOffset? emailDueAt, Guid? userId, DateTimeOffset at, CandidateEmailText? emailText = null)
     {
         ArgumentNullException.ThrowIfNull(opening);
         if (emailDueAt is { } due && (due < at || due > at.AddDays(MaxEmailDelayDays)))
@@ -342,6 +346,7 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
         {
             RejectionEmailDueAt = emailDueAt;
             RejectionEmailSentAt = null;
+            RejectionEmailText = emailDueAt is null ? null : emailText;
         }
 
         return left;
@@ -369,15 +374,17 @@ public sealed class JobApplication : AuditableAggregateRoot<JobApplicationId>, I
         ReasonCode = null;
         PreviousStageId = null;
         RejectionEmailDueAt = null;
+        RejectionEmailText = null;
         Enter(stage.Id, null, note, userId, at);
         return Result.Success();
     }
 
-    /// <summary>The rejection e-mail went out.</summary>
+    /// <summary>The rejection e-mail went out; its text is not kept.</summary>
     public void RejectionEmailSent(DateTimeOffset at)
     {
         RejectionEmailDueAt = null;
         RejectionEmailSentAt = at;
+        RejectionEmailText = null;
     }
 
     private Result Leave(JobOpening opening, StageType type, ApplicationStatus status, string reasonCode, string? note, Guid? userId, DateTimeOffset at)

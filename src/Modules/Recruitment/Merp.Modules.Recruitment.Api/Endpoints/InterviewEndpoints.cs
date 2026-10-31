@@ -9,6 +9,7 @@ using Merp.SharedKernel.Results;
 using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Files;
+using Merp.Web.RateLimiting;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -112,6 +113,29 @@ internal static class InterviewEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        interviews.MapPost("/{id:guid}/question-suggestions", async Task<Results<Ok<InterviewQuestionsResponse>, ProblemHttpResult>> (Guid id, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new SuggestInterviewQuestionsQuery(id), ct)))
+            .RequirePermission(RecruitmentPermissions.Interviews.Read)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("SuggestInterviewQuestions")
+            .WithSummary("Suggest questions for an interview from its opening and its form's criteria with AI (A5, D58)")
+            .WithDescription("Nothing is stored and nothing about the candidate is sent.")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        interviews.MapPost("/{id:guid}/feedback-summary", async Task<Results<Ok<FeedbackSummaryResponse>, ProblemHttpResult>> (Guid id, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(new SummarizeFeedbackQuery(id) { ByInterview = true }, ct)))
+            .RequirePermission(RecruitmentPermissions.Interviews.Read)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("SummarizeInterviewFeedback")
+            .WithSummary("Summarize the interviewers' forms of the interview's application with AI once every form is in (A5, D58)")
+            .WithDescription("For those who see every form of the application: HR, the hiring manager, and its interviewers past the blind rule.")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
     }
 
     /// <param name="page">1-based page.</param>

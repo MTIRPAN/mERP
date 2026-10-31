@@ -148,7 +148,7 @@ internal static class OpeningTextPrompt
         var input = new StringBuilder();
         void Line(string text = "") => input.Append(text).Append('\n');
 
-        Line(OutputLanguage(culture));
+        Line(AiPrompts.OutputLanguage(culture));
         Line();
         Line($"<title>{title.Trim()}</title>");
         Line($"<work_model>{workModel}</work_model>");
@@ -183,7 +183,7 @@ internal static class OpeningTextPrompt
         var input = new StringBuilder();
         void Line(string text = "") => input.Append(text).Append('\n');
 
-        Line(OutputLanguage(culture));
+        Line(AiPrompts.OutputLanguage(culture));
         Line();
         Line($"<title>{title?.Trim()}</title>");
         Line("<description>");
@@ -192,12 +192,6 @@ internal static class OpeningTextPrompt
         Line("<qualifications>");
         Line(qualifications ?? string.Empty);
         return input.Append("</qualifications>").ToString();
-    }
-
-    private static string OutputLanguage(string culture)
-    {
-        var language = CultureInfo.GetCultureInfo(culture);
-        return $"Output language: {language.EnglishName}, {language.Name}";
     }
 }
 

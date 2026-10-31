@@ -21,4 +21,8 @@ export interface ScheduleInterviewCommand {
   notes: string | null;
   /** @nullable */
   evaluationTemplateId: string | null;
+  /** @nullable */
+  invitationSubject?: string | null;
+  /** @nullable */
+  invitationBody?: string | null;
 }

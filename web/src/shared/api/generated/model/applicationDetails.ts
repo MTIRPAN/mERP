@@ -42,4 +42,6 @@ export interface ApplicationDetails {
   offers: OfferListItem[];
   canCreateOffer: boolean;
   canHire: boolean;
+  feedbackPending?: number;
+  rejectionEmailPersonalized?: boolean;
 }

@@ -787,5 +787,8 @@
   "web.imports.commit_valid_count": "Hatasız {rows} satırı aktar",
   "web.imports.commit_valid_confirm": "{rows} satır içe aktarılacak, hatalı {skipped} satır atlanacak. Devam edilsin mi?",
   "web.settings.not_set": "Ayarlanmadı",
-  "web.ai.features.recruitment.opening_text": "İlan metni taslağı ve dil kontrolü"
+  "web.ai.features.recruitment.opening_text": "İlan metni taslağı ve dil kontrolü",
+  "web.ai.features.recruitment.interview_questions": "Mülakat soru önerileri",
+  "web.ai.features.recruitment.feedback_summary": "Mülakat geri bildirim özeti",
+  "web.ai.features.recruitment.candidate_email": "Aday e-postası kişiselleştirme"
 }

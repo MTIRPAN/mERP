@@ -4,10 +4,14 @@ import userEvent from '@testing-library/user-event';
 import dayjs from 'dayjs';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MeContext } from '@/app/me/meContext';
 import type {
   RejectRemainingApplicationsCommand,
   ApplicationDetails,
   ApplicationListItem,
+  CandidateEmailDraft,
+  DraftCandidateEmailQuery,
+  MeResponse,
   OpeningPipeline,
   RejectApplicationCommand,
 } from '@/shared/api/generated/model';
@@ -17,6 +21,13 @@ import { isOverdue } from './pipeline';
 
 const reject = vi.fn<(id: string, body: RejectApplicationCommand) => Promise<void>>().mockResolvedValue(undefined);
 const rejectRemaining = vi.fn<(id: string, body: RejectRemainingApplicationsCommand) => Promise<{ count: number }>>();
+const draft = vi.fn<(id: string, body: DraftCandidateEmailQuery) => Promise<CandidateEmailDraft>>().mockResolvedValue({
+  subject: '{position} başvurunuz',
+  body: 'Sayın {candidate}, teşekkür ederiz.',
+  placeholders: ['candidate', 'position', 'company'],
+  model: 'claude-sonnet-5-5',
+  promptVersion: '2026-10-31',
+});
 let filled = false;
 
 const pipeline: OpeningPipeline = {
@@ -123,6 +134,9 @@ vi.mock('@/shared/api/generated/endpoints/recruitment/recruitment', () => ({
   useGetMyHiringApplication: () => ({ data: teamDetails ? { ...details, canManage: false } : undefined }),
   getApplication: () => Promise.resolve(details),
   rejectApplication: (id: string, body: RejectApplicationCommand) => reject(id, body),
+  draftRejectionEmail: (id: string, body: DraftCandidateEmailQuery) => draft(id, body),
+  summarizeApplicationFeedback: vi.fn(),
+  summarizeMyHiringApplicationFeedback: vi.fn(),
   moveApplication: vi.fn(),
   withdrawApplication: vi.fn(),
   reopenApplication: vi.fn(),
@@ -152,15 +166,25 @@ const texts: Record<string, string> = {
   'web.recruitment.pipeline.download_cv': 'Özgeçmişi indir ({name})',
   'web.recruitment.openings.answers.no': 'Hayır',
   'web.recruitment.pipeline.reject_remaining': 'Kalan {count} başvuruyu reddet',
+  'web.recruitment.candidate_email.personalize': 'E-postayı kişiselleştir',
+  'web.recruitment.candidate_email.instructions': 'Neyi vurgulayalım?',
+  'web.recruitment.candidate_email.draft': 'Taslak oluştur',
+  'web.recruitment.candidate_email.subject': 'Konu',
+  'web.recruitment.candidate_email.body': 'Metin',
 };
 
-const render = (route: string) =>
+/** A profile with the candidate e-mail AI feature on. */
+const withAi = { ai: { enabled: true, features: ['recruitment.candidate_email'] } } as unknown as MeResponse;
+
+const render = (route: string, me?: MeResponse) =>
   renderWithProviders(
     <QueryClientProvider client={new QueryClient()}>
-      <Routes>
-        <Route path="/recruitment/openings/:id/pipeline" element={<PipelinePage />} />
-        <Route path="/recruitment/hiring/:id" element={<HiringPipelinePage />} />
-      </Routes>
+      <MeContext.Provider value={me}>
+        <Routes>
+          <Route path="/recruitment/openings/:id/pipeline" element={<PipelinePage />} />
+          <Route path="/recruitment/hiring/:id" element={<HiringPipelinePage />} />
+        </Routes>
+      </MeContext.Provider>
     </QueryClientProvider>,
     texts,
     route,
@@ -204,6 +228,40 @@ describe('PipelinePage', () => {
         note: null,
         sendEmail: true,
         emailDelayDays: 2,
+        emailSubject: null,
+        emailBody: null,
+      }),
+    );
+  });
+
+  it('sends a rejection e-mail personalized with AI after the user edits it', async () => {
+    render('/recruitment/openings/o1/pipeline', withAi);
+
+    await userEvent.click(await screen.findByText('Ayşe Yılmaz'));
+    const drawer = await screen.findByRole('dialog');
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Reddet' }));
+    const modal = (await screen.findByText('Ayşe Yılmaz başvurusunu reddet')).closest('.ant-modal') as HTMLElement;
+    await userEvent.click(within(modal).getAllByRole('combobox')[0]!);
+    await userEvent.click(await screen.findByText('Yetkinlikler uyuşmuyor'));
+    await userEvent.click(within(modal).getByRole('checkbox', { name: /E-postayı kişiselleştir/ }));
+    await userEvent.type(within(modal).getByRole('textbox', { name: 'Neyi vurgulayalım?' }), 'Sunumu çok iyiydi');
+    await userEvent.click(within(modal).getByRole('button', { name: 'Taslak oluştur' }));
+
+    const body = within(modal).getByRole('textbox', { name: 'Metin' });
+    await waitFor(() => expect(body).toHaveValue('Sayın {candidate}, teşekkür ederiz.'));
+    expect(draft).toHaveBeenCalledWith('a1', { instructions: 'Sunumu çok iyiydi', interviewType: null });
+    await userEvent.type(body, ' Başarılar.');
+    await userEvent.click(within(modal).getByRole('button', { name: 'Reddet' }));
+
+    await waitFor(() =>
+      expect(reject).toHaveBeenCalledWith('a1', {
+        version: 7,
+        reasonCode: 'SKILLS',
+        note: null,
+        sendEmail: true,
+        emailDelayDays: 0,
+        emailSubject: '{position} başvurunuz',
+        emailBody: 'Sayın {candidate}, teşekkür ederiz. Başarılar.',
       }),
     );
   });
