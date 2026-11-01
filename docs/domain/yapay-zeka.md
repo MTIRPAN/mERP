@@ -38,7 +38,7 @@ Modül handler'ı
 | 3.8 | **Onay özeti:** onaycıya talebin bir paragraflık özeti ve dikkat noktaları | Platform | Onay süresini kısaltır | ✅ Hazır (A8) |
 | 3.9 | **İçe aktarma kolon eşleştirme:** Excel başlıklarını alanlara eşleştirme önerisi | Platform | İlk kurulumu hızlandırır | ✅ Hazır (A9) |
 | 3.10 | **Belge şablonu taslağı:** açıklamadan Fluid şablonu taslağı | Platform | Şablon hazırlama süresi | ✅ Hazır (A10) |
-| 3.11 | **Doğal dille izin talebi:** "Gelecek cuma ve pazartesi yıllık izin" → form taslağı | İzin | Self serviste kolaylık | L4 ile (A11) |
+| 3.11 | **Doğal dille izin talebi:** "Gelecek cuma ve pazartesi yıllık izin" → form taslağı | İzin | Self serviste kolaylık | ✅ Hazır (A11) |
 | 3.12 | **Asistan (Ctrl+K):** doğal dille arama ve gezinme; yalnızca kullanıcının yetki ve veri kapsamındaki salt okunur sorgular | Platform | Tek giriş noktası | X fazında (A12) |
 
 **Yapay zekaya bırakılmayacaklar:** otomatik ret veya sıralama, ücret belirleme, performans puanı, izin onayı, işten çıkarma kararı, sağlık raporu veya engellilik belgesi gibi özel nitelikli belgelerin işlenmesi.
@@ -127,6 +127,14 @@ Modül handler'ı
 - **Denetim:** Taslak örnek modelle render edilir; olmazsa hatayla bir kez daha istenir.
 - **Kaydetme kullanıcıda:** Taslak editörü doldurur; yönetici önizleyip kaydeder.
 - Kararlar: `docs/DECISIONS.md` D63.
+
+### 3.11 Doğal dille izin talebi (yapıldı)
+
+- **Taslak:** `POST /api/hr/me/leave-requests/draft`. Yetki `hr.self.leave.request`, özellik `hr.leave_request_draft`.
+- **Girdi:** Bugün ve sonraki 70 günün haftanın günüyle takvimi, çalışanın talep edebileceği izin türleri (kod, ad, birim, sabit süre), maskelenmiş metin. Çalışanın adı ve iletişim bilgileri gitmez.
+- **Denetim:** Yalnızca çalışanın kendi türleri ve geçerli tarihler forma gelir; saat yalnızca saatlik türde, olay günü yalnızca sabit süreli türde, yarım gün yalnızca yarım gün birimli türde kalır. Belirsiz kalanlar boş bırakılır ve "kontrol edin" soruları olarak döner.
+- **Gönderme kullanıcıda:** Taslak formu doldurur, hiçbir şey saklanmaz; form her zamanki önizleme (süre, bakiye, onaycılar) ile kontrol edilip gönderilir.
+- Kararlar: `docs/DECISIONS.md` D64.
 
 ## 4. Kişisel veri maskeleme
 
