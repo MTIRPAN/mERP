@@ -795,6 +795,7 @@
   "web.notification_templates.field.texts_open": "\"Görüntüle\" düğmesinin metni",
   "web.notification_templates.field.texts_footer": "E-postanın alt bilgi metni",
   "platform.imports.errors.update_not_supported": "Bu içe aktarma mevcut kayıtları güncellemeyi desteklemiyor.",
+  "platform.imports.errors.invalid_mapping": "Sütun eşleştirmesi geçersiz: her alan dosyanın farklı bir sütununa ve içe aktarmanın bilinen bir alanına eşlenmeli.",
   "web.imports.mode.label": "Kayıtlı kayıtlar",
   "web.imports.mode.create": "Yalnız yeni kayıt ekle",
   "web.imports.mode.create_or_update": "Kayıtlı olanları güncelle",
@@ -804,6 +805,16 @@
   "web.imports.commit_valid": "Hatasız satırları aktar",
   "web.imports.commit_valid_count": "Hatasız {rows} satırı aktar",
   "web.imports.commit_valid_confirm": "{rows} satır içe aktarılacak, hatalı {skipped} satır atlanacak. Devam edilsin mi?",
+  "web.imports.mapping.title": "Sütunları eşleştirin",
+  "web.imports.mapping.hint": "Dosyanın başlıkları şablonla birebir uymuyor. Her alanın dosyadaki sütununu seçin; şablonla aynı adı taşıyanlar seçili gelir.",
+  "web.imports.mapping.column": "Alan",
+  "web.imports.mapping.header": "Dosyadaki sütun",
+  "web.imports.mapping.none": "Yok",
+  "web.imports.mapping.suggested": "Yapay zeka önerisi",
+  "web.imports.mapping.suggest": "Yapay zeka ile öner",
+  "web.imports.mapping.notice": "Yapay zekaya yalnızca başlıklar ve değerlerin türü gider, hücreler gitmez. Önerileri kontrol edin.",
+  "web.imports.mapping.required_missing": "Zorunlu alanların hepsi için bir sütun seçin.",
+  "web.imports.mapping.confirm": "Eşleştirmeyle yükle",
   "web.settings.not_set": "Ayarlanmadı",
   "web.ai.features.recruitment.opening_text": "İlan metni taslağı ve dil kontrolü",
   "web.ai.features.recruitment.interview_questions": "Mülakat soru önerileri",
@@ -811,5 +822,6 @@
   "web.ai.features.recruitment.candidate_email": "Aday e-postası kişiselleştirme",
   "web.ai.features.recruitment.batch_screening": "Toplu ön tarama",
   "web.ai.features.platform.translation_drafts": "Çeviri taslakları",
-  "web.ai.features.platform.approval_summary": "Onay özeti"
+  "web.ai.features.platform.approval_summary": "Onay özeti",
+  "web.ai.features.platform.import_mapping": "İçe aktarma sütun eşleştirme"
 }

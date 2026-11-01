@@ -84,6 +84,37 @@ public sealed class ImportReaderTests
         _reader.Read([], Columns, "tr-TR").Errors.ShouldHaveSingleItem().Message.ShouldBe("platform.imports.errors.empty");
     }
 
+    [Fact]
+    public void Read_UsesTheUsersMapping_WhenTheHeadersAreNotTheTemplates()
+    {
+        // D62: the user mapped the columns of their own file; unmapped ones are not read by their header either
+        var mapping = new Dictionary<string, int> { ["code"] = 2, ["amount"] = 0 };
+        var sheet = _reader.Read([["Toplam", "Kod", "Şube no"], ["12,5", "X", "A1"]], Columns, "tr-TR", mapping);
+
+        sheet.Errors.ShouldBeEmpty();
+        var row = sheet.Rows.ShouldHaveSingleItem();
+        row.Text("code").ShouldBe("A1");
+        row.AsDecimal("amount").ShouldBe(12.5m);
+        _reader.Positions(["Toplam", "Kod", "Şube no"], Columns, "tr-TR", mapping).ShouldBe(mapping);
+        _reader.Positions(["Toplam", "Kod *"], Columns, "tr-TR").ShouldBe(new Dictionary<string, int> { ["code"] = 1 });
+
+        // A required column left unmapped is missing
+        _reader.Read([["Toplam"], ["5"]], Columns, "tr-TR", new Dictionary<string, int> { ["amount"] = 0 })
+            .Errors.ShouldHaveSingleItem().Column.ShouldBe("code");
+    }
+
+    [Theory]
+    [InlineData(new[] { "12345678901", "10987654321" }, "11-digit number")]
+    [InlineData(new[] { "3", "15" }, "whole number")]
+    [InlineData(new[] { "12,5", "7.25" }, "decimal number")]
+    [InlineData(new[] { "2026-10-13", "13.10.2026" }, "date")]
+    [InlineData(new[] { "Evet", "hayır" }, "yes/no")]
+    [InlineData(new[] { "a@ornek.test", "b@ornek.test" }, "e-mail address")]
+    [InlineData(new[] { "Gebze", "Kadıköy" }, "text up to 7 characters")]
+    [InlineData(new string[0], "empty")]
+    public void Hints_DescribeTheValues_WithoutRepeatingThem(string[] values, string hint) =>
+        ImportHints.Describe(values).ShouldBe(hint);
+
     /// <summary>Turkish labels for the test columns; messages come back as their keys.</summary>
     private static ITextLocalizer Localizer()
     {

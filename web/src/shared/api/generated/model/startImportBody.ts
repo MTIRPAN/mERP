@@ -11,4 +11,6 @@ export type StartImportBody = {
   file?: IFormFile;
 } & {
   mode?: ImportMode;
+} & {
+  mapping?: string;
 };

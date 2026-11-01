@@ -16,17 +16,37 @@ import {
 } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAiFeature } from '@/shared/ai/useAiFeature';
 import {
   getImportReport,
   getImportTemplate,
+  inspectImportFile,
+  suggestImportMapping,
   useCommitImport,
   useGetImportJob,
   useStartImport,
 } from '@/shared/api/generated/endpoints/platform/platform';
-import { ImportMode, ImportStatus, type ImportJobDetails } from '@/shared/api/generated/model';
+import {
+  ImportMode,
+  ImportStatus,
+  type ImportFileInspection,
+  type ImportJobDetails,
+} from '@/shared/api/generated/model';
 import { saveFile } from '@/shared/api/download';
 import { isApiError } from '@/shared/api/problem';
+import { ImportMapping, type ColumnMapping } from './ImportMapping';
 import { hasImported, isImportRunning, toErrorRows, type ImportErrorRow } from './importStatus';
+
+/** The AI feature that suggests column mappings (PlatformAiFeatures.ImportMapping). */
+const MAPPING_FEATURE = 'platform.import_mapping';
+
+/** A file whose headers are not the template's, waiting for the user's mapping (D62). */
+interface PendingFile {
+  file: File;
+  inspection: ImportFileInspection;
+  mapping: ColumnMapping;
+  suggested: string[];
+}
 
 /** Accepted file: the filled template. */
 const XLSX = '.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -84,13 +104,18 @@ const ErrorTable = ({ job }: { job: ImportJobDetails }) => {
 /**
  * Excel import of any module (D35, D40): download the template, upload the filled file, see the errors with their row
  * and column, then commit a file without errors or only its rows without errors. Imports that support updates ask
- * whether known records are updated. Large files are processed in the background; the drawer polls the job.
+ * whether known records are updated. Large files are processed in the background; the drawer polls the job. A file
+ * whose headers are not the template's is mapped to the columns first, with AI suggestions when enabled (D62).
  */
 export const ImportDrawer = ({ importKey, name, open, onClose, onImported, supportsUpdate }: ImportDrawerProps) => {
   const { t } = useTranslation();
   const { message } = App.useApp();
   const [jobId, setJobId] = useState<string>();
   const [mode, setMode] = useState<ImportMode>(ImportMode.Create);
+  const [pending, setPending] = useState<PendingFile>();
+  const [inspecting, setInspecting] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const mappingAi = useAiFeature(MAPPING_FEATURE);
   const start = useStartImport();
   const commit = useCommitImport();
   const { data: job, refetch } = useGetImportJob(jobId ?? '', {
@@ -111,24 +136,105 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported, suppo
 
   const close = () => {
     setJobId(undefined);
+    setPending(undefined);
     onClose();
   };
 
-  const upload = async (file: File) => {
+  // Field errors (not an xlsx file, too many rows) are not shown by ApiErrorNotifier
+  const report = (error: unknown) => {
+    const detail = isApiError(error) ? error.problem?.fieldErrors?.[0]?.message : undefined;
+    if (detail) {
+      void message.error(detail);
+    }
+  };
+
+  const send = async (file: File, mapping?: ColumnMapping) => {
     try {
       const created = await start.mutateAsync({
         key: importKey,
-        data: supportsUpdate ? { file, mode } : { file },
+        data: {
+          file,
+          ...(supportsUpdate ? { mode } : {}),
+          ...(mapping ? { mapping: JSON.stringify(mapping) } : {}),
+        },
       });
+      setPending(undefined);
       setJobId(created.id);
     } catch (error) {
-      // Field errors (not an xlsx file, too many rows) are not shown by ApiErrorNotifier
-      const detail = isApiError(error) ? error.problem?.fieldErrors?.[0]?.message : undefined;
-      if (detail) {
-        void message.error(detail);
-      }
+      report(error);
     }
   };
+
+  const suggest = async (target: PendingFile) => {
+    setSuggesting(true);
+    try {
+      const suggestion = await suggestImportMapping(importKey, { headers: target.inspection.headers });
+      setPending((current) => {
+        if (!current || current.file !== target.file) {
+          return current;
+        }
+
+        // The user's choices stay; a suggestion fills only an empty column with a header nobody uses yet
+        const mapping = { ...current.mapping };
+        const suggested: string[] = [];
+        for (const key of suggestion.suggested) {
+          const index = suggestion.mapping[key];
+          if (index !== undefined && mapping[key] === undefined && !Object.values(mapping).includes(index)) {
+            mapping[key] = index;
+            suggested.push(key);
+          }
+        }
+
+        return { ...current, mapping, suggested };
+      });
+    } catch (error) {
+      if (!isApiError(error)) {
+        throw error;
+      }
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const upload = async (file: File) => {
+    setInspecting(true);
+    try {
+      const inspection = await inspectImportFile(importKey, { file });
+      if (inspection.complete) {
+        await send(file);
+        return;
+      }
+
+      const next: PendingFile = { file, inspection, mapping: { ...inspection.mapping }, suggested: [] };
+      setPending(next);
+      if (mappingAi) {
+        void suggest(next);
+      }
+    } catch (error) {
+      report(error);
+    } finally {
+      setInspecting(false);
+    }
+  };
+
+  const remap = (key: string, index: number | undefined) =>
+    setPending((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const mapping = { ...current.mapping };
+      if (index === undefined) {
+        delete mapping[key];
+      } else {
+        mapping[key] = index;
+      }
+
+      return { ...current, mapping, suggested: current.suggested.filter((k) => k !== key) };
+    });
+
+  const mappingComplete =
+    !!pending && pending.inspection.columns.every((c) => !c.required || pending.mapping[c.key] !== undefined);
 
   const confirm = async (skipInvalidRows = false) => {
     if (!job) {
@@ -264,6 +370,19 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported, suppo
               {t('web.imports.another')}
             </Button>
           )}
+          {pending && (
+            <>
+              <Button onClick={() => setPending(undefined)}>{t('web.common.cancel')}</Button>
+              <Button
+                type="primary"
+                disabled={!mappingComplete}
+                loading={start.isPending}
+                onClick={() => void send(pending.file, pending.mapping)}
+              >
+                {t('web.imports.mapping.confirm')}
+              </Button>
+            </>
+          )}
           <Button onClick={close}>{t('web.common.close')}</Button>
         </Flex>
       }
@@ -278,7 +397,22 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported, suppo
             { title: t('web.imports.steps.done') },
           ]}
         />
-        {!job ? (
+        {pending ? (
+          <Flex vertical gap={12}>
+            <Typography.Title level={5} style={{ margin: 0 }}>
+              {t('web.imports.mapping.title')}
+            </Typography.Title>
+            <Typography.Text type="secondary">{pending.file.name}</Typography.Text>
+            <ImportMapping
+              inspection={pending.inspection}
+              mapping={pending.mapping}
+              suggested={pending.suggested}
+              onChange={remap}
+              onSuggest={mappingAi ? () => void suggest(pending) : undefined}
+              suggesting={suggesting}
+            />
+          </Flex>
+        ) : !job ? (
           <Flex vertical gap={16}>
             <Typography.Paragraph style={{ marginBottom: 0 }}>{t('web.imports.intro')}</Typography.Paragraph>
             {supportsUpdate && (
@@ -306,7 +440,7 @@ export const ImportDrawer = ({ importKey, name, open, onClose, onImported, suppo
                 {t('web.imports.template')}
               </Button>
             </div>
-            <Spin spinning={start.isPending || (!!jobId && !job)}>
+            <Spin spinning={inspecting || start.isPending || (!!jobId && !job)}>
               <Upload.Dragger
                 accept={XLSX}
                 showUploadList={false}

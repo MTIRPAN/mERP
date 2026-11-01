@@ -47,6 +47,7 @@ public static class ImportErrors
     public const string NotSpreadsheetCode = "platform.imports.errors.not_spreadsheet";
     public const string TooManyRowsCode = "platform.imports.errors.too_many_rows";
     public const string UpdateNotSupportedCode = "platform.imports.errors.update_not_supported";
+    public const string InvalidMappingCode = "platform.imports.errors.invalid_mapping";
     public static readonly Error NotReady = Error.Conflict("platform.imports.errors.not_ready");
 }
 
@@ -69,7 +70,14 @@ public sealed record GetImportTemplateQuery(string Key) : IQuery<ImportFile>;
 /// Uploads a file to import; it is validated at once, or in the background when large. Returns the job id. With
 /// <see cref="ImportMode.CreateOrUpdate"/> rows of existing records update them (D40).
 /// </summary>
-public sealed record StartImportCommand(string Key, FileUpload? File, ImportMode Mode = ImportMode.Create) : ICommand<Guid>;
+public sealed record StartImportCommand(string Key, FileUpload? File, ImportMode Mode = ImportMode.Create) : ICommand<Guid>
+{
+    /// <summary>
+    /// Where each column is in the file (column key → header index), as the user mapped it when the headers are not
+    /// the template's (D62); null finds the columns by their headers.
+    /// </summary>
+    public IReadOnlyDictionary<string, int>? Mapping { get; init; }
+}
 
 /// <summary>
 /// Writes a validated file without errors, or with <paramref name="SkipInvalidRows"/> the rows of a file without
@@ -217,6 +225,10 @@ internal sealed class StartImportCommandValidator : AbstractValidator<StartImpor
     {
         RuleFor(c => c.File).NotNull().OverridePropertyName(FileErrors.Field);
         RuleFor(c => c.Mode).IsInEnum();
+        RuleFor(c => c.Mapping)
+            .Must(m => m!.Values.All(i => i is >= 0 and < SuggestImportMappingQuery.MaxHeaders) && m.Values.Distinct().Count() == m.Count)
+            .WithErrorCode(ImportErrors.InvalidMappingCode)
+            .When(c => c.Mapping is not null);
     }
 }
 
@@ -247,6 +259,11 @@ internal sealed class StartImportCommandHandler(
         if (request.Mode == ImportMode.CreateOrUpdate && !definition.SupportsUpdate)
         {
             return Error.Validation([new FieldError("mode", ImportErrors.UpdateNotSupportedCode)]);
+        }
+
+        if (request.Mapping is { } mapping && mapping.Keys.Any(k => !definition.Columns.Any(c => string.Equals(c.Key, k, StringComparison.Ordinal))))
+        {
+            return Error.Validation([new FieldError("mapping", ImportErrors.InvalidMappingCode)]);
         }
 
         var jobId = Guid.CreateVersion7();
@@ -285,7 +302,8 @@ internal sealed class StartImportCommandHandler(
             stored.Value.FileName,
             rows,
             queued,
-            request.Mode == ImportMode.CreateOrUpdate);
+            request.Mode == ImportMode.CreateOrUpdate,
+            request.Mapping);
         db.ImportJobs.Add(job);
         db.StoredFiles.Add(stored.Value);
 
@@ -370,7 +388,8 @@ internal sealed class GetImportReportQueryHandler(
     ImportRegistry registry,
     IFileStore files,
     ISpreadsheet spreadsheet,
-    ITextLocalizer localizer) : IQueryHandler<GetImportReportQuery, ImportFile>
+    ITextLocalizer localizer,
+    ImportReader reader) : IQueryHandler<GetImportReportQuery, ImportFile>
 {
     public async Task<Result<ImportFile>> Handle(GetImportReportQuery request, CancellationToken cancellationToken)
     {
@@ -390,12 +409,7 @@ internal sealed class GetImportReportQueryHandler(
         columns.Add(new SpreadsheetColumn(errorsHeader));
 
         // Where each column of the definition is in the file, to put a cell's error on its cell
-        var positions = definition.Columns.ToDictionary(
-            c => c.Key,
-            c => headers.ToList().FindIndex(h => string.Equals(h?.Trim().TrimEnd('*').Trim(), localizer.Get(c.HeaderKey, culture: job.Culture), StringComparison.OrdinalIgnoreCase)
-                || string.Equals(h?.Trim().TrimEnd('*').Trim(), localizer.Get(c.HeaderKey, culture: ImportReader.DefaultCulture), StringComparison.OrdinalIgnoreCase)
-                || string.Equals(h?.Trim(), c.Key, StringComparison.OrdinalIgnoreCase)),
-            StringComparer.Ordinal);
+        var positions = reader.Positions(headers, definition.Columns, job.Culture, job.ColumnMapping);
 
         var byRow = job.Errors.Where(e => e.Row > 1).GroupBy(e => e.Row).ToDictionary(g => g.Key, g => g.ToList());
         var rows = new List<IReadOnlyList<string?>>();
@@ -408,7 +422,7 @@ internal sealed class GetImportReportQueryHandler(
             rows.Add(line);
             foreach (var error in errors)
             {
-                var column = error.Column is not null && positions.TryGetValue(error.Column, out var at) && at >= 0 ? at : headers.Count;
+                var column = error.Column is not null && positions.TryGetValue(error.Column, out var at) ? at : headers.Count;
                 notes.Add(new SpreadsheetNote(r - 1, column, error.Message));
             }
         }

@@ -51,7 +51,7 @@ public sealed class ImportFactory(PostgresFixture postgres) : AccessFactory(post
     public static string?[] BranchRow(string company, string code, string type = "Fabrika", string province = "Kocaeli", string district = "Gebze") =>
         [company, code, "Şube " + code, type, province, district, "OSB 3. Cad. No: 5", "41400", "0262 123 45 67", null];
 
-    public static Task<HttpResponseMessage> UploadAsync(HttpClient client, byte[] content, string url = BranchesUrl, string fileName = "subeler.xlsx", string? mode = null)
+    public static Task<HttpResponseMessage> UploadAsync(HttpClient client, byte[] content, string url = BranchesUrl, string fileName = "subeler.xlsx", string? mode = null, string? mapping = null)
     {
         var file = new ByteArrayContent(content);
         file.Headers.ContentType = new("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -59,6 +59,11 @@ public sealed class ImportFactory(PostgresFixture postgres) : AccessFactory(post
         if (mode is not null)
         {
             form.Add(new StringContent(mode), "mode");
+        }
+
+        if (mapping is not null)
+        {
+            form.Add(new StringContent(mapping), "mapping");
         }
 
         return client.PostAsync(url, form, TestContext.Current.CancellationToken);

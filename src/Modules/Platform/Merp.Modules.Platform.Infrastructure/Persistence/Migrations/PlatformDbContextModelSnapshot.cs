@@ -1329,6 +1329,10 @@ namespace Merp.Modules.Platform.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("ColumnMapping")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("column_mapping");
+
                     b.Property<int>("CommittedRows")
                         .HasColumnType("integer")
                         .HasColumnName("committed_rows");

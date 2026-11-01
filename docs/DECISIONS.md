@@ -309,7 +309,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/api/platform/approvals/requests/{id}`, `/api/platform/approvals/timeline` | Oturum zorunlu; talep eden, onaylayıcılar ve vekilleri, `platform.approvals.admin` (Tenant) ya da belgenin modülündeki `IApprovalDocumentAccessPolicy` erişim verir | Onay geçmişi belgenin kendisini görenlere açıktır; diğerleri 404 alır (P10b, D34). |
 | `/api/platform/approvals/requests/{id}/summary` | Oturum zorunlu; talebi şu anda karara bağlayacak onaycı ya da vekili ve `platform.approvals.admin` (Tenant). Talebi gören diğerleri 403, görmeyenler 404 alır | Onaycının yapay zeka özeti (A8, D61). Onaylayıcı olmak bir yetki değil, görevdir; bu yüzden yetki istenmez. |
 | `/api/platform/approvals/document-types`, `/api/platform/approvals/users` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Vekalet formunda belge türü adları ve vekil seçimi için aktif kullanıcıların adı (en fazla 20). Hassas alan (e-posta, telefon) dönmez (P10b, D34). |
-| `/api/platform/imports`, `/api/platform/imports/{key}`, `/api/platform/imports/{key}/template`, `/api/platform/imports/jobs`, `/api/platform/imports/jobs/{id}`, `/api/platform/imports/jobs/{id}/report`, `/api/platform/imports/jobs/{id}/commit` | Oturum zorunlu; şablon ve yükleme içe aktarma tanımının yetkisini ister (şubeler için `platform.branches.manage`), liste yalnızca yetkili tanımları döner | İçe aktarma tüm modüllerin ortak altyapısıdır, yetkiyi tanım verir. Kullanıcı yalnızca kendi işlerini görür; başkasının işi 404 (P11b, D35). |
+| `/api/platform/imports`, `/api/platform/imports/{key}`, `/api/platform/imports/{key}/template`, `/api/platform/imports/{key}/inspect`, `/api/platform/imports/{key}/mapping-suggestion` (A9, D62), `/api/platform/imports/jobs`, `/api/platform/imports/jobs/{id}`, `/api/platform/imports/jobs/{id}/report`, `/api/platform/imports/jobs/{id}/commit` | Oturum zorunlu; şablon ve yükleme içe aktarma tanımının yetkisini ister (şubeler için `platform.branches.manage`), liste yalnızca yetkili tanımları döner | İçe aktarma tüm modüllerin ortak altyapısıdır, yetkiyi tanım verir. Kullanıcı yalnızca kendi işlerini görür; başkasının işi 404 (P11b, D35). |
 
 **Karar — Hangfire paneli (kullanıcı, 2026-10-05):** Panel, şirketlerdeki yaygın uygulamaya uygun olarak sadece bilgi işlem / sistem yöneticilerine açıktır.
 - `platform.jobs.view` yetkisi sadece "Sistem Yöneticisi" sistem rolüne seed edilir (P2). İK ve diğer iş kullanıcıları paneli görmez.
@@ -1915,3 +1915,32 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Kullanım kaydı talebe bağlanır (`platform.approval-request`).
 
 **Web:** Onay talebi görünümünde (Onay Kutum ve talep sayfası) talep beklerken ve kullanıcı karar veriyorsa ya da yöneticiyse "Talep özeti" kartı vardır. Kartta "Özetle" düğmesi, "yapay zeka önerisidir, karar sizindir" uyarısı, özet ve dikkat noktaları bulunur.
+
+## D62 — İçe aktarmada sütun eşleştirme
+
+**Bağlam:** A9 kullanıcının kendi Excel başlıklarını içe aktarmanın sütunlarıyla eşleştirir; yapay zeka öneri verir. Kullanıcı kararları (2026-11-01):
+- Eşleştirme adımı yalnızca başlıklar uymazsa görünür.
+- Yapay zekaya yalnızca başlıklar ve yerelde hesaplanan değer türü ipuçları gider; hücre değerleri gitmez.
+
+**İnceleme:** `POST /api/platform/imports/{key}/inspect` (dosya, tanımın yetkisi).
+- Dosyanın başlıklarını ve her başlığın değer türü ipucunu döner. İpucu ilk 50 dolu hücreden yerelde hesaplanır: boş, evet/hayır, N haneli sayı, tam sayı, ondalıklı sayı, tarih, e-posta, az sayıda farklı değerli metin, en fazla N karakterli metin.
+- Ayrıca tanımın sütunlarını ve şablonla aynı adı taşıyan başlıkların eşleştirmesini döner.
+- `Complete` değeri, zorunlu sütunların hepsi bulunduysa ve dosyanın her başlığı bir sütuna eşlendiyse doğrudur; o zaman dosya bugünkü gibi yüklenir.
+- Hiçbir şey saklanmaz, hücre değerleri dönmez.
+
+**Öneri:** `POST /api/platform/imports/{key}/mapping-suggestion`. Özellik `platform.import_mapping`, hız sınırı `ai`, tanımın yetkisi.
+- Girdi incelemenin başlıkları ve ipuçlarıdır (en fazla 200; başlıklar yine de maskeleyiciden geçer). Tanımın sütunları anahtar, tür, zorunluluk ve kullanıcının dilindeki başlıklarıyla gider.
+- Ada göre eşleşenler kalır. Yapay zekanın önerisi yalnızca eşleşmemiş sütunlara, kullanılmamış başlıklarla ve her başlık bir kez olmak üzere eklenir. Bilinmeyen anahtar ve dizinler atlanır.
+- Yanıt tam eşleştirmeyi ve yapay zekanın doldurduğu sütunları (`Suggested`) verir.
+
+**Yükleme:** `POST /api/platform/imports/{key}` isteğe bağlı `mapping` form alanı alır (JSON: sütun anahtarı → başlık dizini).
+- Dizinler 0–199 arasında ve birbirinden farklı olmalıdır; anahtarlar tanımın sütunları olmalıdır. Değilse 400 `platform.imports.errors.invalid_mapping` döner.
+- Eşleştirme `import_jobs.column_mapping` (jsonb) olarak saklanır.
+- Okuyucu (`ImportReader.Positions`) eşleştirme varken sütunları yalnızca ona göre bulur; eşlenmemiş zorunlu sütun "eksik sütun" hatasıdır. Hata raporu da hücre notlarını aynı konumlara koyar.
+
+**D22:** `inspect` ve `mapping-suggestion` rotaları diğer içe aktarma rotaları gibi oturuma bağlıdır; yetkiyi tanım verir.
+
+**Web:** İçe aktarma çekmecesinde dosya seçilince önce başlıklar incelenir. Başlıklar şablonunkiyse dosya doğrudan yüklenir. Değilse "Sütunları eşleştirin" tablosu açılır:
+- Her alan için dosyanın sütunları arasından seçim yapılır; başka bir alana verilmiş sütunlar seçilemez.
+- Özellik açıksa yapay zeka önerisi otomatik istenir ve "Yapay zeka önerisi" etiketiyle gösterilir. "Yapay zeka ile öner" düğmesiyle yeniden istenebilir.
+- Zorunlu alanların hepsine sütun seçilmeden "Eşleştirmeyle yükle" düğmesi pasif kalır.

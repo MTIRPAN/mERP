@@ -9,7 +9,7 @@ public sealed record ImportSheet(IReadOnlyList<ImportRow> Rows, IReadOnlyList<Im
 
 /// <summary>
 /// Reads an import sheet (D35): finds the columns by their header in the user's language, the default language or
-/// the column key, and turns cells into typed values by the column type.
+/// the column key, or where the user mapped them (D62), and turns cells into typed values by the column type.
 /// </summary>
 public sealed class ImportReader(ITextLocalizer localizer)
 {
@@ -29,7 +29,43 @@ public sealed class ImportReader(ITextLocalizer localizer)
 
     public string Message(string key, string culture, IReadOnlyDictionary<string, object?>? args = null) => localizer.Get(key, args, culture);
 
-    public ImportSheet Read(IReadOnlyList<IReadOnlyList<string?>> cells, IReadOnlyList<ImportColumn> columns, string culture)
+    /// <summary>A header as the template writes it, without the asterisk of a required column.</summary>
+    public static string Clean(string? header) => (header ?? string.Empty).Trim().TrimEnd('*').Trim();
+
+    /// <summary>
+    /// Where each column is in the file: as mapped by the user (D62), otherwise by its header in the user's language,
+    /// the default language or its key. Columns not found are left out.
+    /// </summary>
+    public Dictionary<string, int> Positions(IReadOnlyList<string?> headers, IReadOnlyList<ImportColumn> columns, string culture, IReadOnlyDictionary<string, int>? mapping = null)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        ArgumentNullException.ThrowIfNull(columns);
+        var positions = new Dictionary<string, int>(StringComparer.Ordinal);
+        var cleaned = headers.Select(Clean).ToList();
+        foreach (var column in columns)
+        {
+            if (mapping is not null)
+            {
+                if (mapping.TryGetValue(column.Key, out var mapped) && mapped >= 0 && mapped < cleaned.Count)
+                {
+                    positions[column.Key] = mapped;
+                }
+
+                continue;
+            }
+
+            string[] names = [Header(column, culture), Header(column, DefaultCulture), column.Key];
+            var index = cleaned.FindIndex(h => names.Any(n => string.Equals(n, h, StringComparison.OrdinalIgnoreCase)));
+            if (index >= 0)
+            {
+                positions[column.Key] = index;
+            }
+        }
+
+        return positions;
+    }
+
+    public ImportSheet Read(IReadOnlyList<IReadOnlyList<string?>> cells, IReadOnlyList<ImportColumn> columns, string culture, IReadOnlyDictionary<string, int>? mapping = null)
     {
         ArgumentNullException.ThrowIfNull(cells);
         ArgumentNullException.ThrowIfNull(columns);
@@ -40,20 +76,11 @@ public sealed class ImportReader(ITextLocalizer localizer)
         }
 
         // The template marks required columns with an asterisk
-        var headers = cells[0].Select(h => (h ?? string.Empty).Trim().TrimEnd('*').Trim()).ToList();
-        var positions = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var column in columns)
+        var headers = cells[0].Select(Clean).ToList();
+        var positions = Positions(cells[0], columns, culture, mapping);
+        foreach (var column in columns.Where(c => c.Required && !positions.ContainsKey(c.Key)))
         {
-            string[] names = [Header(column, culture), Header(column, DefaultCulture), column.Key];
-            var index = headers.FindIndex(h => names.Any(n => string.Equals(n, h, StringComparison.OrdinalIgnoreCase)));
-            if (index >= 0)
-            {
-                positions[column.Key] = index;
-            }
-            else if (column.Required)
-            {
-                errors.Add(new ImportError(1, column.Key, Message("platform.imports.errors.missing_column", culture, new Dictionary<string, object?> { ["column"] = Header(column, culture) })));
-            }
+            errors.Add(new ImportError(1, column.Key, Message("platform.imports.errors.missing_column", culture, new Dictionary<string, object?> { ["column"] = Header(column, culture) })));
         }
 
         if (errors.Count > 0)

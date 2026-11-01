@@ -36,7 +36,7 @@ Modül handler'ı
 | 3.6 | **Aday e-posta taslakları:** şablonu adaya göre kişiselleştirir (ret, davet) | İşe alım | Aday deneyimi | ✅ Hazır (A5) |
 | 3.7 | **Çeviri taslakları:** yeni dil eklenince eksik metinlerin taslağı | Platform | Çoklu dil maliyetini düşürür | ✅ Hazır (A7) |
 | 3.8 | **Onay özeti:** onaycıya talebin bir paragraflık özeti ve dikkat noktaları | Platform | Onay süresini kısaltır | ✅ Hazır (A8) |
-| 3.9 | **İçe aktarma kolon eşleştirme:** Excel başlıklarını alanlara eşleştirme önerisi | Platform | İlk kurulumu hızlandırır | P11 ile (A9) |
+| 3.9 | **İçe aktarma kolon eşleştirme:** Excel başlıklarını alanlara eşleştirme önerisi | Platform | İlk kurulumu hızlandırır | ✅ Hazır (A9) |
 | 3.10 | **Belge şablonu taslağı:** açıklamadan Fluid şablonu taslağı | Platform | Şablon hazırlama süresi | P12 ile (A10) |
 | 3.11 | **Doğal dille izin talebi:** "Gelecek cuma ve pazartesi yıllık izin" → form taslağı | İzin | Self serviste kolaylık | L4 ile (A11) |
 | 3.12 | **Asistan (Ctrl+K):** doğal dille arama ve gezinme; yalnızca kullanıcının yetki ve veri kapsamındaki salt okunur sorgular | Platform | Tek giriş noktası | X fazında (A12) |
@@ -112,6 +112,13 @@ Modül handler'ı
 - **Girdi:** Belge türü, kısa özet, olgular (kimlik olguları hariç, etiketleriyle) ve akışın geçmişi. Adlar maskelenir, kişiler rolleriyle anılır.
 - **Çıktı:** Bir paragraf özet ve dikkat noktaları. Karar önermez ve saklanmaz.
 - Kararlar: `docs/DECISIONS.md` D61.
+
+### 3.9 İçe aktarma sütun eşleştirme (yapıldı)
+
+- **İnceleme:** `POST /api/platform/imports/{key}/inspect` dosyanın başlıklarını ve yerelde hesaplanan değer türü ipuçlarını döner. Başlıklar şablonunkiyse dosya doğrudan yüklenir.
+- **Öneri:** `POST /api/platform/imports/{key}/mapping-suggestion`. Özellik `platform.import_mapping`. Yapay zekaya yalnızca başlıklar ve ipuçları gider, hiçbir hücre değeri gitmez. Ada göre eşleşenler kalır; öneri yalnızca kalanları doldurur.
+- **Onay kullanıcıda:** Kullanıcı eşleştirme tablosunda önerileri kontrol eder; içe aktarma iş onun onayladığı eşleştirmeyle okunur.
+- Kararlar: `docs/DECISIONS.md` D62.
 
 ## 4. Kişisel veri maskeleme
 
