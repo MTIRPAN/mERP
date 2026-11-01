@@ -64,6 +64,7 @@ public static class EndpointRules
         "/api/platform/imports/jobs/{id:guid}",
         "/api/platform/imports/jobs/{id:guid}/report",
         "/api/platform/imports/jobs/{id:guid}/commit",
+        "/api/platform/assistant/ask",
     ];
 
     public static IReadOnlyList<string> Violations(IEnumerable<EndpointInfo> endpoints) =>

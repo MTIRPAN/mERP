@@ -14,4 +14,7 @@ public static class PlatformAiFeatures
 
     /// <summary>A document template drafted from a description (docs/domain/yapay-zeka.md §3.10, D63).</summary>
     public const string DocumentTemplateDraft = "platform.document_template_draft";
+
+    /// <summary>The Ctrl+K assistant: read-only questions and navigation in natural language (docs/domain/yapay-zeka.md §3.12, D65).</summary>
+    public const string Assistant = "platform.assistant";
 }

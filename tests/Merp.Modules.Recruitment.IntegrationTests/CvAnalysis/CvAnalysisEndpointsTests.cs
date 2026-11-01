@@ -214,6 +214,7 @@ public sealed class CvAnalysisEndpointsTests : IClassFixture<RecruitmentFactory>
                 PlatformAiFeatures.ApprovalSummary,
                 PlatformAiFeatures.ImportMapping,
                 PlatformAiFeatures.DocumentTemplateDraft,
+                PlatformAiFeatures.Assistant,
                 HrAiFeatures.LeaveRequestDraft,
             ],
             ignoreOrder: true);

@@ -42,6 +42,7 @@ const texts: Record<string, string> = {
 const me = {
   user: { displayName: 'Ayşe Yılmaz', userName: 'ayse' },
   tenant: { code: 'acme', name: 'Acme' },
+  ai: { enabled: false, features: [] },
   menu: [
     {
       key: 'organization',

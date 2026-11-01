@@ -42,5 +42,6 @@ public sealed class PlatformModule : IModule
         group.MapSettingsEndpoints();
         group.MapImportEndpoints();
         group.MapDocumentTemplateEndpoints();
+        group.MapAssistantEndpoints();
     }
 }

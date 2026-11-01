@@ -1,5 +1,6 @@
 using System.Reflection;
 using FluentValidation;
+using Merp.Application.Abstractions.AI;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Infrastructure.Messaging.Behaviors;
 using Merp.Infrastructure.Messaging.Integration;
@@ -29,8 +30,8 @@ public static class MediatorServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers request handlers, domain event handlers, integration event handlers and validators found in a
-    /// module assembly (optionally only in one namespace).
+    /// Registers request handlers, domain event handlers, integration event handlers, validators and assistant actions
+    /// (D65) found in a module assembly (optionally only in one namespace).
     /// </summary>
     public static IServiceCollection AddRequestHandlersFromAssembly(this IServiceCollection services, Assembly assembly, string? namespacePrefix = null)
     {
@@ -48,6 +49,9 @@ public static class MediatorServiceCollectionExtensions
             .WithScopedLifetime()
             .AddClasses(classes => classes.AssignableTo(typeof(IValidator<>)).Where(scope.Contains), publicOnly: false)
             .AsImplementedInterfaces()
+            .WithScopedLifetime()
+            .AddClasses(classes => classes.AssignableTo<IAssistantAction>().Where(scope.Contains), publicOnly: false)
+            .As<IAssistantAction>()
             .WithScopedLifetime());
 
         // Integration event handlers are resolved by concrete type: the inbox stores which handler a message is for.

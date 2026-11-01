@@ -222,6 +222,14 @@
   "web.shell.command.placeholder": "Sayfa adı yazın…",
   "web.shell.command.empty": "Eşleşen sayfa yok",
   "web.shell.command.title": "Hızlı geçiş",
+  "web.shell.assistant.placeholder": "Sayfa adı yazın veya bir soru sorun…",
+  "web.shell.assistant.ask": "Asistana sor: “{question}”",
+  "web.shell.assistant.title": "Asistan",
+  "web.shell.assistant.total": "{count} kayıt",
+  "web.shell.assistant.no_rows": "Eşleşen kayıt yok",
+  "web.shell.assistant.see_all": "Tümünü gör",
+  "web.shell.assistant.not_understood": "Bu soruyu yanıtlayamadım. Kayıtlarınızı sorabilir ya da gitmek istediğiniz sayfayı yazabilirsiniz.",
+  "web.shell.assistant.notice": "Yapay zeka önerisi: sorunuz bu aramaya çevrildi. Sonuçlar yetkinize göre listelenir; kontrol edin.",
   "web.shell.notifications.empty": "Yeni bildiriminiz yok",
   "web.notifications.title": "Bildirimler",
   "web.notifications.subtitle": "Size gönderilen bildirimler. Bir bildirime tıklayınca ilgili sayfa açılır.",
@@ -244,6 +252,7 @@
   "web.dashboard.assistant.title": "Asistan",
   "web.dashboard.assistant.description": "Yakında: işlemlerinizi doğal dille arayın, özet ve öneri alın.",
   "web.dashboard.assistant.badge": "Yakında",
+  "web.dashboard.assistant.ready": "Ctrl/⌘+K ile doğal dille sorun: “onay bekleyen izin taleplerim”, “Ayşe Yılmaz kim?”",
   "web.dashboard.cards.approvals": "Bekleyen onaylar",
   "web.dashboard.cards.notifications": "Okunmamış bildirimler",
   "web.dashboard.cards.quick_links": "Hızlı bağlantılar",
@@ -834,5 +843,6 @@
   "web.ai.features.platform.approval_summary": "Onay özeti",
   "web.ai.features.platform.import_mapping": "İçe aktarma sütun eşleştirme",
   "web.ai.features.platform.document_template_draft": "Belge şablonu taslağı",
-  "web.ai.features.hr.leave_request_draft": "Doğal dille izin talebi"
+  "web.ai.features.hr.leave_request_draft": "Doğal dille izin talebi",
+  "web.ai.features.platform.assistant": "Asistan"
 }

@@ -34,8 +34,10 @@ import type {
   ApprovalTaskCount,
   ApprovalUserOption,
   ApproverResolverItem,
+  AskAssistantRequest,
   AssignApproversCommand,
   AssignRoleCommand,
+  AssistantResponse,
   AttachmentList,
   AuditEntityType,
   BranchDetails,
@@ -2687,6 +2689,94 @@ export function useListImports<TData = Awaited<ReturnType<typeof listImports>>, 
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getAskAssistantUrl = () => {
+  return `/api/platform/assistant/ask`;
+};
+
+/**
+ * The model only picks the action or page; the action runs as the caller with their permissions and data scope, and its rows are not sent to the model. Every signed-in user may ask (D22).
+ * @summary Answer a question in natural language with one read-only action or a page to open (A12, D65)
+ */
+export const askAssistant = async (
+  askAssistantRequest: AskAssistantRequest,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<AssistantResponse> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<AssistantResponse>(getAskAssistantUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(askAssistantRequest),
+  });
+};
+
+export const getAskAssistantMutationKey = () => ['askAssistant'] as const;
+
+export const getAskAssistantMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof askAssistant>>,
+    TError,
+    AskAssistantMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<Awaited<ReturnType<typeof askAssistant>>, TError, AskAssistantMutationVariables, TContext> => {
+  const mutationKey = getAskAssistantMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof askAssistant>>, AskAssistantMutationVariables> = (
+    props,
+  ) => {
+    const { data } = props ?? {};
+
+    return askAssistant(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AskAssistantMutationResult = NonNullable<Awaited<ReturnType<typeof askAssistant>>>;
+export type AskAssistantMutationBody = AskAssistantRequest;
+export type AskAssistantMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type AskAssistantMutationVariables = { data: AskAssistantRequest };
+
+/**
+ * @summary Answer a question in natural language with one read-only action or a page to open (A12, D65)
+ */
+export const useAskAssistant = <TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof askAssistant>>,
+      TError,
+      AskAssistantMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<Awaited<ReturnType<typeof askAssistant>>, TError, AskAssistantMutationVariables, TContext> => {
+  return useMutation(getAskAssistantMutationOptions(options), queryClient);
+};
 export const getListCulturesUrl = () => {
   return `/api/platform/localization/cultures`;
 };
