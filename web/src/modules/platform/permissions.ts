@@ -34,4 +34,5 @@ export const platformPermissions = {
 /** Mirrors Merp.Modules.Platform.Application.PlatformAiFeatures. */
 export const platformAiFeatures = {
   translationDrafts: 'platform.translation_drafts',
+  approvalSummary: 'platform.approval_summary',
 } as const;

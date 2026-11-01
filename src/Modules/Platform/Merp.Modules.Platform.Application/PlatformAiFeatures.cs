@@ -5,4 +5,7 @@ public static class PlatformAiFeatures
 {
     /// <summary>Drafts of the missing translations of a language (docs/domain/yapay-zeka.md §3.7, D60).</summary>
     public const string TranslationDrafts = "platform.translation_drafts";
+
+    /// <summary>A summary of an approval request with its attention points for the approver (docs/domain/yapay-zeka.md §3.8, D61).</summary>
+    public const string ApprovalSummary = "platform.approval_summary";
 }

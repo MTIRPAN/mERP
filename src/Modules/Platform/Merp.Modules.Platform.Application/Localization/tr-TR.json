@@ -236,6 +236,7 @@
   "permissions.platform.approvals.definitions.read": "Görüntüleme",
   "permissions.platform.approvals.definitions.manage": "Tanımlama ve düzenleme",
   "platform.approvals.errors.tenant_scope_required": "Onay akışları ve onay yönetimi yalnızca tüm şirketlerde yetkisi olan kullanıcılar tarafından kullanılabilir.",
+  "platform.approvals.errors.summary_approvers_only": "Özeti yalnızca talebi şu anda onaylayacak kişi ya da onay yöneticisi isteyebilir.",
   "platform.approvals.errors.invalid_condition": "Koşul geçersiz: her düğüm \"all\", \"any\" ya da olgu, işlem ve değer içeren bir kural olmalı.",
   "platform.approvals.errors.unknown_fact": "\"{fact}\" bu belge türünde koşullarda kullanılabilen bir olgu değil.",
   "platform.approvals.errors.invalid_operator": "\"{op}\" işlemi \"{fact}\" olgusunun türüyle kullanılamaz.",

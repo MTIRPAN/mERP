@@ -7,6 +7,7 @@ using Merp.Modules.Platform.Domain.Approvals;
 using Merp.SharedKernel.Results;
 using Merp.Web.Endpoints;
 using Merp.Web.Errors;
+using Merp.Web.RateLimiting;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -111,6 +112,16 @@ internal static class ApprovalEndpoints
             .WithName("GetApprovalRequest")
             .WithSummary("A request with its tasks and timeline")
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        approvals.MapPost("/requests/{id:guid}/summary", SummarizeAsync)
+            .RequireAuthenticatedUser()
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("SummarizeApprovalRequest")
+            .WithSummary("Summarize a request with its attention points with AI for the approver who decides it (A8, D61)")
+            .WithDescription("Nothing is stored. Names are replaced and identifier facts are left out before the request reaches the AI provider.")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         approvals.MapGet("/timeline", GetTimelineAsync)
             .RequireAuthenticatedUser()
@@ -250,6 +261,9 @@ internal static class ApprovalEndpoints
 
     private static async Task<Results<Ok<ApprovalRequestDetails>, ProblemHttpResult>> GetRequestAsync(Guid id, ISender sender, CancellationToken cancellationToken) =>
         Respond(await sender.Send(new GetApprovalRequestQuery(id), cancellationToken));
+
+    private static async Task<Results<Ok<ApprovalSummaryResponse>, ProblemHttpResult>> SummarizeAsync(Guid id, ISender sender, CancellationToken cancellationToken) =>
+        Respond(await sender.Send(new SummarizeApprovalRequestQuery(id), cancellationToken));
 
     private static async Task<Results<Ok<ApprovalRequestDetails>, ProblemHttpResult>> GetTimelineAsync(
         string? documentType,

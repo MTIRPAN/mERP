@@ -575,6 +575,12 @@
   "web.approvals.condition.remove_group": "Grubu kaldır",
   "web.approvals.condition.remove_rule": "Kuralı kaldır",
   "web.approvals.inbox.title": "Onay Kutum",
+  "web.approvals.summary.title": "Talep özeti",
+  "web.approvals.summary.create": "Özetle",
+  "web.approvals.summary.again": "Yeniden özetle",
+  "web.approvals.summary.hint": "Talebin bilgilerinden ve onay geçmişinden kısa bir özet ile dikkat noktaları hazırlanır. Adlar sağlayıcıya gönderilmez.",
+  "web.approvals.summary.notice": "Bu bir yapay zeka önerisidir; karar sizindir. Talebin ayrıntılarını da inceleyin.",
+  "web.approvals.summary.attention": "Dikkat noktaları",
   "web.approvals.inbox.subtitle": "Onayınızı bekleyen talepler ve vekili olduğunuz kişilerin talepleri",
   "web.approvals.inbox.empty": "Onayınızı bekleyen talep yok.",
   "web.approvals.inbox.document": "Talep",
@@ -804,5 +810,6 @@
   "web.ai.features.recruitment.feedback_summary": "Mülakat geri bildirim özeti",
   "web.ai.features.recruitment.candidate_email": "Aday e-postası kişiselleştirme",
   "web.ai.features.recruitment.batch_screening": "Toplu ön tarama",
-  "web.ai.features.platform.translation_drafts": "Çeviri taslakları"
+  "web.ai.features.platform.translation_drafts": "Çeviri taslakları",
+  "web.ai.features.platform.approval_summary": "Onay özeti"
 }

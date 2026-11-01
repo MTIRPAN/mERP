@@ -53,6 +53,7 @@ export * from './approvalStepInput';
 export * from './approvalStepInputName';
 export * from './approvalStepItem';
 export * from './approvalStepItemName';
+export * from './approvalSummaryResponse';
 export * from './approvalTaskCount';
 export * from './approvalTaskItem';
 export * from './approvalTaskStatus';

@@ -1155,7 +1155,7 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 - Kabul: sonuçlar sıralama değil, gereksinim bazında kanıt olarak gösterilir; otomatik ret yoktur.
 
 ### [x] A7 Çeviri taslakları — S (P4 ile)
-### [ ] A8 Onay özeti — S (P10 ile)
+### [x] A8 Onay özeti — S (P10 ile)
 ### [ ] A9 İçe aktarma kolon eşleştirme önerisi — S (P11 ile)
 ### [ ] A10 Belge şablonu taslağı — S (P12 ile)
 ### [ ] A11 Doğal dille izin talebi taslağı — S (L4 ile)
