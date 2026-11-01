@@ -13,6 +13,7 @@ internal sealed class ImportJobConfiguration : IEntityTypeConfiguration<ImportJo
         builder.HasKey(j => j.Id);
         builder.Property(j => j.Id).ValueGeneratedNever();
         builder.Property(j => j.ImportKey).HasMaxLength(ImportJob.KeyMaxLength);
+        builder.Property(j => j.ColumnMapping).HasJson();
         builder.Property(j => j.Culture).HasMaxLength(20);
         builder.Property(j => j.FileName).HasMaxLength(ImportJob.FileNameMaxLength);
         builder.Property(j => j.Status).HasConversion<string>().HasMaxLength(30);

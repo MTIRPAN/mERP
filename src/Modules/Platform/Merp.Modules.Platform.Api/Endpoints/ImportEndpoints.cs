@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Merp.Application.Abstractions.Imports;
 using Merp.Application.Abstractions.Messaging;
 using Merp.Modules.Platform.Application.Imports;
@@ -5,6 +6,7 @@ using Merp.SharedKernel.Results;
 using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Files;
+using Merp.Web.RateLimiting;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -47,6 +49,29 @@ internal static class ImportEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        imports.MapPost("/{key}/inspect", InspectAsync)
+            .RequireAuthenticatedUser()
+            .WithMetadata(new RequestSizeLimitAttribute(FileTransfer.RequestLimit(new ImportSettings().MaxBytes)))
+            // Authentication is a bearer token, never a cookie, so cross-site request forgery does not apply.
+            .DisableAntiforgery()
+            .WithName("InspectImportFile")
+            .WithSummary("The headers of a file against the import's columns, before it is uploaded (A9, D62)")
+            .WithDescription("Nothing is stored. Each header comes with a hint of what its values look like; the values are not returned.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        imports.MapPost("/{key}/mapping-suggestion", SuggestMappingAsync)
+            .RequireAuthenticatedUser()
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("SuggestImportMapping")
+            .WithSummary("Suggest with AI where the import's columns are among a file's headers (A9, D62)")
+            .WithDescription("Only the headers and their hints are sent to the AI provider, never a cell.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
         imports.MapGet("/jobs", ListJobsAsync)
             .RequireAuthenticatedUser()
             .WithName("ListImportJobs")
@@ -83,18 +108,47 @@ internal static class ImportEndpoints
     /// <param name="sender">Mediator.</param>
     /// <param name="cancellationToken">Request aborted.</param>
     /// <param name="mode">Create (default) or CreateOrUpdate, for imports that support updates (D40).</param>
+    /// <param name="mapping">JSON object of column key → header index when the headers are not the template's (D62).</param>
     private static async Task<Results<Created<EntityCreatedResponse>, ProblemHttpResult>> StartAsync(
         string key,
         IFormFile? file,
         ISender sender,
         CancellationToken cancellationToken,
-        [FromForm] ImportMode mode = ImportMode.Create)
+        [FromForm] ImportMode mode = ImportMode.Create,
+        [FromForm] string? mapping = null)
     {
-        var result = await sender.Send(new StartImportCommand(key, file.ToUpload(), mode), cancellationToken);
+        Dictionary<string, int>? columns = null;
+        if (!string.IsNullOrWhiteSpace(mapping))
+        {
+            try
+            {
+                columns = JsonSerializer.Deserialize<Dictionary<string, int>>(mapping);
+            }
+            catch (JsonException)
+            {
+                return (ProblemHttpResult)Error.Validation([new FieldError("mapping", ImportErrors.InvalidMappingCode)]).ToProblem();
+            }
+        }
+
+        var result = await sender.Send(new StartImportCommand(key, file.ToUpload(), mode) { Mapping = columns }, cancellationToken);
         return result.IsSuccess
             ? TypedResults.Created($"/api/platform/imports/jobs/{result.Value}", new EntityCreatedResponse(result.Value))
             : (ProblemHttpResult)result.Error.ToProblem();
     }
+
+    /// <param name="key">The import, e.g. platform.branches.</param>
+    /// <param name="file">The file to read the headers of (xlsx).</param>
+    /// <param name="sender">Mediator.</param>
+    /// <param name="cancellationToken">Request aborted.</param>
+    private static async Task<Results<Ok<ImportFileInspection>, ProblemHttpResult>> InspectAsync(string key, IFormFile? file, ISender sender, CancellationToken cancellationToken) =>
+        Respond(await sender.Send(new InspectImportFileQuery(key, file.ToUpload()), cancellationToken));
+
+    private static async Task<Results<Ok<ImportMappingSuggestion>, ProblemHttpResult>> SuggestMappingAsync(
+        string key,
+        SuggestImportMappingQuery query,
+        ISender sender,
+        CancellationToken cancellationToken) =>
+        Respond(await sender.Send(query with { Key = key }, cancellationToken));
 
     /// <param name="key">Only jobs of this import.</param>
     /// <param name="sender">Mediator.</param>

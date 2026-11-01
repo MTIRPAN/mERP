@@ -58,6 +58,8 @@ public static class EndpointRules
         "/api/platform/imports",
         "/api/platform/imports/{key}",
         "/api/platform/imports/{key}/template",
+        "/api/platform/imports/{key}/inspect",
+        "/api/platform/imports/{key}/mapping-suggestion",
         "/api/platform/imports/jobs",
         "/api/platform/imports/jobs/{id:guid}",
         "/api/platform/imports/jobs/{id:guid}/report",

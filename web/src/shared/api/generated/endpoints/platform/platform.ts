@@ -80,9 +80,12 @@ import type {
   HolidayYear,
   HttpValidationProblemDetails,
   ImportDefinitionItem,
+  ImportFileInspection,
   ImportJobDetails,
+  ImportMappingSuggestion,
   ImportTextsBody,
   ImportTextsResult,
+  InspectImportFileBody,
   ListApprovalDefinitionsParams,
   ListApprovalRequestsParams,
   ListAttachmentsParams,
@@ -132,6 +135,7 @@ import type {
   SettingModuleGroup,
   StartImportBody,
   SubmitTestApprovalCommand,
+  SuggestImportMappingQuery,
   SystemInfoResponse,
   TestApprovalDocumentResponse,
   TranslationDraftResponse,
@@ -11507,6 +11511,10 @@ export const startImport = async (
     formData.append(`mode`, startImportBody.mode);
   }
 
+  if (startImportBody.mapping !== undefined) {
+    formData.append(`mapping`, startImportBody.mapping);
+  }
+
   return customFetch<EntityCreatedResponse>(getStartImportUrl(key), {
     ...options,
     method: 'POST',
@@ -11567,6 +11575,202 @@ export const useStartImport = <TError = ErrorType<HttpValidationProblemDetails |
   queryClient?: QueryClient,
 ): UseMutationResult<Awaited<ReturnType<typeof startImport>>, TError, StartImportMutationVariables, TContext> => {
   return useMutation(getStartImportMutationOptions(options), queryClient);
+};
+export const getInspectImportFileUrl = (key: string) => {
+  return `/api/platform/imports/${key}/inspect`;
+};
+
+/**
+ * Nothing is stored. Each header comes with a hint of what its values look like; the values are not returned.
+ * @summary The headers of a file against the import's columns, before it is uploaded (A9, D62)
+ */
+export const inspectImportFile = async (
+  key: string,
+  inspectImportFileBody: InspectImportFileBody,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ImportFileInspection> => {
+  const formData = new FormData();
+  if (inspectImportFileBody.file !== undefined) {
+    formData.append(`file`, inspectImportFileBody.file);
+  }
+
+  return customFetch<ImportFileInspection>(getInspectImportFileUrl(key), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getInspectImportFileMutationKey = () => ['inspectImportFile'] as const;
+
+export const getInspectImportFileMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof inspectImportFile>>,
+    TError,
+    InspectImportFileMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof inspectImportFile>>,
+  TError,
+  InspectImportFileMutationVariables,
+  TContext
+> => {
+  const mutationKey = getInspectImportFileMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof inspectImportFile>>,
+    InspectImportFileMutationVariables
+  > = (props) => {
+    const { key, data } = props ?? {};
+
+    return inspectImportFile(key, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type InspectImportFileMutationResult = NonNullable<Awaited<ReturnType<typeof inspectImportFile>>>;
+export type InspectImportFileMutationBody = InspectImportFileBody;
+export type InspectImportFileMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type InspectImportFileMutationVariables = { key: string; data: InspectImportFileBody };
+
+/**
+ * @summary The headers of a file against the import's columns, before it is uploaded (A9, D62)
+ */
+export const useInspectImportFile = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof inspectImportFile>>,
+      TError,
+      InspectImportFileMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof inspectImportFile>>,
+  TError,
+  InspectImportFileMutationVariables,
+  TContext
+> => {
+  return useMutation(getInspectImportFileMutationOptions(options), queryClient);
+};
+export const getSuggestImportMappingUrl = (key: string) => {
+  return `/api/platform/imports/${key}/mapping-suggestion`;
+};
+
+/**
+ * Only the headers and their hints are sent to the AI provider, never a cell.
+ * @summary Suggest with AI where the import's columns are among a file's headers (A9, D62)
+ */
+export const suggestImportMapping = async (
+  key: string,
+  suggestImportMappingQuery: SuggestImportMappingQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ImportMappingSuggestion> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<ImportMappingSuggestion>(getSuggestImportMappingUrl(key), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(suggestImportMappingQuery),
+  });
+};
+
+export const getSuggestImportMappingMutationKey = () => ['suggestImportMapping'] as const;
+
+export const getSuggestImportMappingMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof suggestImportMapping>>,
+    TError,
+    SuggestImportMappingMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof suggestImportMapping>>,
+  TError,
+  SuggestImportMappingMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSuggestImportMappingMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof suggestImportMapping>>,
+    SuggestImportMappingMutationVariables
+  > = (props) => {
+    const { key, data } = props ?? {};
+
+    return suggestImportMapping(key, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SuggestImportMappingMutationResult = NonNullable<Awaited<ReturnType<typeof suggestImportMapping>>>;
+export type SuggestImportMappingMutationBody = SuggestImportMappingQuery;
+export type SuggestImportMappingMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type SuggestImportMappingMutationVariables = { key: string; data: SuggestImportMappingQuery };
+
+/**
+ * @summary Suggest with AI where the import's columns are among a file's headers (A9, D62)
+ */
+export const useSuggestImportMapping = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof suggestImportMapping>>,
+      TError,
+      SuggestImportMappingMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof suggestImportMapping>>,
+  TError,
+  SuggestImportMappingMutationVariables,
+  TContext
+> => {
+  return useMutation(getSuggestImportMappingMutationOptions(options), queryClient);
 };
 export const getListImportJobsUrl = (params?: ListImportJobsParams) => {
   const normalizedParams = new URLSearchParams();

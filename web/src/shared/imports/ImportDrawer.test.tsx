@@ -4,12 +4,21 @@ import { App as AntApp } from 'antd';
 import type { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ImportStatus, type ImportJobDetails } from '@/shared/api/generated/model';
+import { MeContext } from '@/app/me/meContext';
+import {
+  ImportStatus,
+  type ImportFileInspection,
+  type ImportJobDetails,
+  type ImportMappingSuggestion,
+  type MeResponse,
+} from '@/shared/api/generated/model';
 import { createTestI18n, renderWithProviders } from '@/test/render';
 import { ImportDrawer } from './ImportDrawer';
 
 const startImport = vi.fn<(variables: { key: string; data: { file: File } }) => Promise<{ id: string }>>();
 const commitImport = vi.fn<(variables: { id: string }) => Promise<void>>();
+const inspect = vi.fn<(key: string, body: { file: File }) => Promise<ImportFileInspection>>();
+const suggest = vi.fn<(key: string, body: { headers: unknown[] }) => Promise<ImportMappingSuggestion>>();
 let job: ImportJobDetails | undefined;
 
 vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
@@ -18,7 +27,30 @@ vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
   useGetImportJob: (id: string) => ({ data: id ? job : undefined, refetch: vi.fn() }),
   getImportTemplate: vi.fn(),
   getImportReport: vi.fn(),
+  inspectImportFile: (key: string, body: { file: File }) => inspect(key, body),
+  suggestImportMapping: (key: string, body: { headers: unknown[] }) => suggest(key, body),
 }));
+
+/** A file in the template's form: it goes without a mapping. */
+const templateFile: ImportFileInspection = { headers: [], columns: [], mapping: {}, complete: true };
+
+/** A customer's own headers: the company code matches, the branch code does not. */
+const ownFile: ImportFileInspection = {
+  headers: [
+    { index: 0, text: 'Şirket kodu', hint: 'text up to 6 characters' },
+    { index: 1, text: 'Kod', hint: 'text up to 6 characters' },
+    { index: 2, text: 'Not', hint: 'text up to 40 characters' },
+  ],
+  columns: [
+    { key: 'companyCode', header: 'Şirket kodu', type: 'Text', required: true },
+    { key: 'code', header: 'Şube kodu', type: 'Text', required: true },
+    { key: 'phone', header: 'Telefon', type: 'Text', required: false },
+  ],
+  mapping: { companyCode: 0 },
+  complete: false,
+};
+
+const withAi = { ai: { enabled: true, features: ['platform.import_mapping'] } } as unknown as MeResponse;
 
 const texts: Record<string, string> = {
   'web.imports.title': '{name}: Excel içe aktar',
@@ -37,6 +69,10 @@ const texts: Record<string, string> = {
   'web.imports.commit_valid': 'Hatasız satırları aktar',
   'web.imports.commit_valid_count': 'Hatasız {rows} satırı aktar',
   'web.imports.commit_valid_confirm': '{rows} satır içe aktarılacak, hatalı {skipped} satır atlanacak.',
+  'web.imports.mapping.title': 'Sütunları eşleştirin',
+  'web.imports.mapping.confirm': 'Eşleştirmeyle yükle',
+  'web.imports.mapping.suggested': 'Yapay zeka önerisi',
+  'web.imports.mapping.required_missing': 'Zorunlu alanlar için sütun seçin.',
 };
 
 const details = (status: ImportStatus, overrides: Partial<ImportJobDetails> = {}): ImportJobDetails => ({
@@ -69,6 +105,53 @@ describe('ImportDrawer', () => {
     vi.clearAllMocks();
     job = undefined;
     startImport.mockResolvedValue({ id: 'job-1' });
+    inspect.mockResolvedValue(templateFile);
+  });
+
+  it('maps a file with its own headers, with the AI suggestion, before uploading it', async () => {
+    inspect.mockResolvedValue(ownFile);
+    suggest.mockResolvedValue({
+      mapping: { companyCode: 0, code: 1 },
+      suggested: ['code'],
+      model: 'claude-sonnet-5-5',
+      promptVersion: '2026-11-01',
+    });
+    job = details(ImportStatus.Ready);
+    renderWithProviders(
+      <MeContext.Provider value={withAi}>
+        <ImportDrawer importKey="platform.branches" name="Şubeler" open onClose={vi.fn()} onImported={vi.fn()} />
+      </MeContext.Provider>,
+      texts,
+    );
+    await upload();
+
+    expect(await screen.findByText('Sütunları eşleştirin')).toBeInTheDocument();
+    expect(startImport).not.toHaveBeenCalled();
+    expect(await screen.findByText('Yapay zeka önerisi')).toBeInTheDocument();
+    expect(suggest).toHaveBeenCalledWith('platform.branches', { headers: ownFile.headers });
+    expect(screen.queryByText('Zorunlu alanlar için sütun seçin.')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Eşleştirmeyle yükle' }));
+    await waitFor(() =>
+      expect(startImport).toHaveBeenCalledWith({
+        key: 'platform.branches',
+        data: { file: expect.any(File) as File, mapping: JSON.stringify({ companyCode: 0, code: 1 }) },
+      }),
+    );
+    expect(await screen.findByText('3 satır hazır.')).toBeInTheDocument();
+  });
+
+  it('waits for the required columns when there is no AI', async () => {
+    inspect.mockResolvedValue(ownFile);
+    renderWithProviders(
+      <ImportDrawer importKey="platform.branches" name="Şubeler" open onClose={vi.fn()} onImported={vi.fn()} />,
+      texts,
+    );
+    await upload();
+
+    expect(await screen.findByText('Zorunlu alanlar için sütun seçin.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Eşleştirmeyle yükle' })).toBeDisabled();
+    expect(suggest).not.toHaveBeenCalled();
   });
 
   it('uploads the file and lists the errors with their row and column header', async () => {

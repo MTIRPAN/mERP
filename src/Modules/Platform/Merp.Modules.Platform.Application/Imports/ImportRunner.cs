@@ -167,7 +167,7 @@ public sealed partial class ImportRunner(
         await using var content = await files.OpenReadAsync(file, cancellationToken);
         var cells = spreadsheet.Read(content, int.MaxValue)
             ?? throw new InvalidOperationException($"The file of import job {job.Id.Value} cannot be read.");
-        return reader.Read(cells, definition.Columns, job.Culture);
+        return reader.Read(cells, definition.Columns, job.Culture, job.ColumnMapping);
     }
 
     private async Task SendAsync(ICommand command, CancellationToken cancellationToken)

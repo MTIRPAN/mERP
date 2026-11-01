@@ -97,6 +97,12 @@ public sealed class ImportJob : AuditableAggregateRoot<ImportJobId>
 
     public DateTimeOffset? CompletedAt { get; private set; }
 
+    /// <summary>
+    /// Where each column of the import is in the file, as the user mapped it (column key → header index, D62); null
+    /// when the headers are those of the template.
+    /// </summary>
+    public IReadOnlyDictionary<string, int>? ColumnMapping { get; private set; }
+
     /// <param name="id">Known before the job is saved: the uploaded file is stored under it.</param>
     /// <param name="importKey">The import definition, e.g. platform.branches.</param>
     /// <param name="userId">Who uploaded the file; only they see the job.</param>
@@ -106,6 +112,7 @@ public sealed class ImportJob : AuditableAggregateRoot<ImportJobId>
     /// <param name="totalRows">Data rows of the file.</param>
     /// <param name="queued">Validated in the background, so waiting in the queue first.</param>
     /// <param name="updatesExisting">Rows of existing records update them (D40).</param>
+    /// <param name="columnMapping">The columns as the user mapped them to the file's headers (D62).</param>
     public static ImportJob Create(
         ImportJobId id,
         string importKey,
@@ -115,7 +122,8 @@ public sealed class ImportJob : AuditableAggregateRoot<ImportJobId>
         string fileName,
         int totalRows,
         bool queued,
-        bool updatesExisting = false) => new()
+        bool updatesExisting = false,
+        IReadOnlyDictionary<string, int>? columnMapping = null) => new()
     {
         Id = id,
         ImportKey = Text.Required(importKey, KeyMaxLength, nameof(importKey)),
@@ -126,6 +134,7 @@ public sealed class ImportJob : AuditableAggregateRoot<ImportJobId>
         TotalRows = totalRows,
         Status = queued ? ImportStatus.Queued : ImportStatus.Validating,
         UpdatesExisting = updatesExisting,
+        ColumnMapping = columnMapping is null ? null : new Dictionary<string, int>(columnMapping, StringComparer.Ordinal),
     };
 
     public void StartValidation() => Status = ImportStatus.Validating;

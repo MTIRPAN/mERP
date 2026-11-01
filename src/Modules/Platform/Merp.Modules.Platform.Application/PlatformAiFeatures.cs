@@ -8,4 +8,7 @@ public static class PlatformAiFeatures
 
     /// <summary>A summary of an approval request with its attention points for the approver (docs/domain/yapay-zeka.md §3.8, D61).</summary>
     public const string ApprovalSummary = "platform.approval_summary";
+
+    /// <summary>Where the columns of an import are among an uploaded file's headers (docs/domain/yapay-zeka.md §3.9, D62).</summary>
+    public const string ImportMapping = "platform.import_mapping";
 }
