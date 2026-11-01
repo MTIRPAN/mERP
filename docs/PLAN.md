@@ -1161,6 +1161,11 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 ### [x] A11 Doğal dille izin talebi taslağı — S (L4 ile)
 ### [ ] A12 Asistan (Ctrl+K doğal dil, salt okunur, yetki ve veri kapsamına bağlı) — L (Faz 5)
 
+Kararlar: `docs/DECISIONS.md` D65. Model yalnızca soruyu, kullanıcının kullanabileceği eylemleri ve sayfaları görür; eylem kullanıcı adına çalışır, sonuç modele gitmez.
+
+- [x] **A12a altyapı ve ilk eylemler:** `IAssistantAction` (modüller uygulama katmanında tanımlar, handler'larla kaydolur), `POST /api/platform/assistant/ask`, menüden sayfa listesi, palet arayüzü. Eylemler: onay görevlerim, izin bakiyem, izin taleplerim (durum filtresi), çalışan arama (veri kapsamıyla).
+- [ ] **A12b kalan eylemler:** İK ve yöneticinin izin talepleri (durum, tarih aralığı, kişi), izin takvimi ("bugün kim izinde", tarih parametresi), işe alım (ilanlar, başvurular, mülakatlarım), belge ve profil değişikliği talepleri.
+
 ### [ ] A13 Değerlendirme seti (eval) — M
 
 - Anonimleştirilmiş örnek CV'ler, beklenen alanlar, eşleşme puanı aralıkları ve adalet kontrolleri (yalnızca ad veya cinsiyet değişince sonuç değişmemeli).

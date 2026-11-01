@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router';
 import { useMe } from '@/app/me/meContext';
 import { menuIcon } from '@/app/shell/menuItems';
 import { brand } from '@/app/theme/tokens';
+import { useAiFeature } from '@/shared/ai/useAiFeature';
 import {
   useCountMyApprovalTasks,
   useCountMyUnreadNotifications,
@@ -59,6 +60,7 @@ export const DashboardPage = () => {
   const { token } = theme.useToken();
   const me = useMe();
   const name = me.user.displayName ?? me.user.userName ?? '';
+  const assistant = useAiFeature('platform.assistant');
   const navigate = useNavigate();
   const approvals = useCountMyApprovalTasks().data?.count ?? 0;
   const unread = useCountMyUnreadNotifications().data?.count ?? 0;
@@ -114,11 +116,15 @@ export const DashboardPage = () => {
               <Typography.Text strong className="merp-gradient-text" style={{ fontSize: 16 }}>
                 {t('web.dashboard.assistant.title')}
               </Typography.Text>
-              <Tag variant="filled" color="purple">
-                {t('web.dashboard.assistant.badge')}
-              </Tag>
+              {!assistant && (
+                <Tag variant="filled" color="purple">
+                  {t('web.dashboard.assistant.badge')}
+                </Tag>
+              )}
             </Flex>
-            <Typography.Text type="secondary">{t('web.dashboard.assistant.description')}</Typography.Text>
+            <Typography.Text type="secondary">
+              {t(assistant ? 'web.dashboard.assistant.ready' : 'web.dashboard.assistant.description')}
+            </Typography.Text>
           </div>
         </Col>
       </Row>

@@ -308,6 +308,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/api/platform/approvals/my-tasks`, `/api/platform/approvals/my-tasks/count`, `/api/platform/approvals/tasks/{id}/decision`, `/api/platform/approvals/delegations`, `/api/platform/approvals/delegations/{id}/revoke`, `/api/platform/approvals/preview` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi onay görevleri, kararları, vekaletleri ve kendi belgesinin önizlemesi. Başka kullanıcının görevi ve vekaleti 404 (P10b, D34). |
 | `/api/platform/approvals/requests/{id}`, `/api/platform/approvals/timeline` | Oturum zorunlu; talep eden, onaylayıcılar ve vekilleri, `platform.approvals.admin` (Tenant) ya da belgenin modülündeki `IApprovalDocumentAccessPolicy` erişim verir | Onay geçmişi belgenin kendisini görenlere açıktır; diğerleri 404 alır (P10b, D34). |
 | `/api/platform/approvals/requests/{id}/summary` | Oturum zorunlu; talebi şu anda karara bağlayacak onaycı ya da vekili ve `platform.approvals.admin` (Tenant). Talebi gören diğerleri 403, görmeyenler 404 alır | Onaycının yapay zeka özeti (A8, D61). Onaylayıcı olmak bir yetki değil, görevdir; bu yüzden yetki istenmez. |
+| `/api/platform/assistant/ask` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`); özellik `platform.assistant` kapalıysa 403 | Ctrl+K asistanı (A12, D65). Asistan kendisi veri okumaz: her eylem kendi yetkisini ister ve yalnızca yetkisi olan eylemler modele sunulur, sayfalar `/me` menüsü gibi süzülür. |
 | `/api/platform/approvals/document-types`, `/api/platform/approvals/users` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Vekalet formunda belge türü adları ve vekil seçimi için aktif kullanıcıların adı (en fazla 20). Hassas alan (e-posta, telefon) dönmez (P10b, D34). |
 | `/api/platform/imports`, `/api/platform/imports/{key}`, `/api/platform/imports/{key}/template`, `/api/platform/imports/{key}/inspect`, `/api/platform/imports/{key}/mapping-suggestion` (A9, D62), `/api/platform/imports/jobs`, `/api/platform/imports/jobs/{id}`, `/api/platform/imports/jobs/{id}/report`, `/api/platform/imports/jobs/{id}/commit` | Oturum zorunlu; şablon ve yükleme içe aktarma tanımının yetkisini ister (şubeler için `platform.branches.manage`), liste yalnızca yetkili tanımları döner | İçe aktarma tüm modüllerin ortak altyapısıdır, yetkiyi tanım verir. Kullanıcı yalnızca kendi işlerini görür; başkasının işi 404 (P11b, D35). |
 
@@ -326,7 +327,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 - **Kurumsal taban:** Nötr yüzeyler (açık: `#F5F6FA` zemin ve beyaz kartlar; koyu: `#0B0D14` zemin ve `#12141C` yüzeyler), yoğun tablolar, 8 px köşe yarıçapı, sade tipografi.
 - **Yapay zeka vurgusu:** Birincil renk indigo (`#4F46E5`). İndigo → mor → camgöbeği degradesi sadece marka işaretinde, asistan giriş noktasında, aktif menü göstergesinde ve yapay zeka özelliklerinde (menü öğesi, "Yapay zeka" etiketi, analiz düğmesi, sonuç kartı) kullanılır. Yapay zeka sonuçları her zaman "öneri" uyarısıyla gösterilir (D24).
 - **Tema seçimi:** Açık / Koyu / Sistem. Seçim tarayıcıda saklanır; P2 ile kullanıcı tercihine taşınır.
-- **Hızlı geçiş:** Ctrl/⌘+K komut paleti menü sayfalarında arar. İleride asistanın doğal dil komutlarıyla genişleyeceği giriş noktasıdır. Ana sayfada "Asistan — Yakında" kartı bulunur.
+- **Hızlı geçiş:** Ctrl/⌘+K komut paleti menü sayfalarında arar. Asistan (A12, D65) açıksa son seçenek soruyu doğal dille asistana sorar. Ana sayfadaki "Asistan" kartı asistan kapalıyken "Yakında", açıkken kullanım örneklerini gösterir.
 - **Yazı tipi:** Sistem yazı tipi yığını kullanılır (yüklüyse Inter). Font dosyası paketlenmez; font lisansları (OFL) D19 listesinde yok.
 
 **Not:** TypeScript 6.0 kullanılır. TypeScript 7 yayınlandı ama typescript-eslint henüz desteklemiyor (`<6.1`).
@@ -1995,3 +1996,36 @@ Seçilen kültür `Content-Language` başlığında döner.
 **Web:** Çalışanın yeni izin talebi formunda (özellik açıksa) "Yazarak doldur" kutusu vardır.
 - Taslak dolu gelen alanları değiştirir; boş gelenler formdaki değerini korur.
 - Yapay zeka önerisi uyarısı ve sorular formun üstünde kalır. Gönderme her zamanki önizleme ve "Gönder" ile yapılır.
+
+## D65 — Asistan (Ctrl+K)
+
+**Bağlam:** A12 Ctrl+K paletine doğal dille soru sorma ve gezinme ekler. Kararlar (kullanıcı, 2026-11-01):
+- **Niyet çevirisi, veri gitmez:** Model soruyu yalnızca "şu eylemi şu parametrelerle çalıştır" ya da "şu sayfayı aç" adımına çevirir. Eylemi sunucu kullanıcı adına çalıştırır; sonuç satırları modele hiç gitmez.
+- **Sonuç palette:** İlk satırlar ve sayı palette gösterilir, "Tümünü gör" filtreli sayfayı açar. Seçilen sayfa doğrudan açılır.
+- **Alt PR'lar:** A12a altyapı ve ilk eylemler, A12b kalan modül eylemleri.
+
+**Eylemler:**
+- `IAssistantAction` (`Merp.Application.Abstractions.AI`) modüllerin uygulama katmanında yazılır ve handler'larla aynı taramayla kaydolur.
+- Tanım: anahtar (`{modül}.{eylem}`), modele İngilizce açıklama, gereken yetki (boşsa herkes) ve isteğe bağlı parametreler (`Text` en fazla 100 karakter, `Choice` listedeki değerler).
+- Eylem modülün mevcut sorgusunu `ISender` ile gönderir; yetki, veri kapsamı ve hassas alan maskelemesi her zamanki gibi uygulanır.
+- Cevap: toplam sayı, en fazla 5 satır (başlık, ikinci satır, bağlantı) ve tüm sonuçların sayfası. Metinler sunucuda kullanıcının dilinde biçimlenir.
+- A12a eylemleri: `platform.my_approval_tasks`, `hr.my_leave_balances`, `hr.my_leave_requests` (`status`), `hr.employees` (`search`, aktif kişiler, veri kapsamıyla).
+
+**Soru:**
+- `POST /api/platform/assistant/ask`. Oturum yeterli (D22), özellik `platform.assistant`, hız sınırı `ai`. Soru en fazla 300 karakter.
+- **Sağlayıcıya giden:**
+  - çıktı dili,
+  - kullanıcının yetkisi olan eylemlerin tanımları,
+  - kullanıcının açabileceği menü sayfaları (anahtar, kullanıcının dilinde ad ve grup; `/me` menüsüyle aynı süzme),
+  - soru; e-posta, telefon, TCKN, IBAN ve URL maskelenir.
+- Soru kullanıcının kendi yazdığıdır; içinde bir kişi adı varsa (çalışan arama gibi) sağlayıcıya gider. Kiracının yapay zeka aktarım dayanağı (D24) bunu kapsar; ad aramak istemeyen kiracı özelliği kapatır.
+- **Cevabın denetimi:**
+  - yalnızca sunulan eylem ve sayfa anahtarları kabul edilir, başkası "anlaşılamadı" sayılır,
+  - tanımda olmayan parametreler ve geçersiz seçimler atılır; maskeleme yer tutucusu içeren metin parametresi atılır,
+  - başlık 120, mesaj 500 karakterle sınırlanır.
+- Çıktı: tür (`Answer`, `Page`, `None`), başlık, mesaj (yalnızca `None`), sayfa yolu veya eylemin cevabı.
+- Asistan veri değiştirmez; değişiklik isteyen soruya ilgili sayfayı veya "None" seçer.
+
+**Web:** Palet asistan açıksa en az 3 karakterlik sorguda son seçenek olarak "Asistana sor" gösterir.
+- Cevap paletin içinde başlık, sayı, satırlar, "Tümünü gör" ve "yapay zeka önerisi" uyarısıyla gösterilir. Sorguyu değiştirmek listeye döner.
+- `Page` cevabı sayfayı doğrudan açar.

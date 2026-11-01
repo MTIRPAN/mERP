@@ -39,7 +39,7 @@ Modül handler'ı
 | 3.9 | **İçe aktarma kolon eşleştirme:** Excel başlıklarını alanlara eşleştirme önerisi | Platform | İlk kurulumu hızlandırır | ✅ Hazır (A9) |
 | 3.10 | **Belge şablonu taslağı:** açıklamadan Fluid şablonu taslağı | Platform | Şablon hazırlama süresi | ✅ Hazır (A10) |
 | 3.11 | **Doğal dille izin talebi:** "Gelecek cuma ve pazartesi yıllık izin" → form taslağı | İzin | Self serviste kolaylık | ✅ Hazır (A11) |
-| 3.12 | **Asistan (Ctrl+K):** doğal dille arama ve gezinme; yalnızca kullanıcının yetki ve veri kapsamındaki salt okunur sorgular | Platform | Tek giriş noktası | X fazında (A12) |
+| 3.12 | **Asistan (Ctrl+K):** doğal dille arama ve gezinme; yalnızca kullanıcının yetki ve veri kapsamındaki salt okunur sorgular | Platform | Tek giriş noktası | 🟡 Kısmen (A12a; A12b kalan eylemler) |
 
 **Yapay zekaya bırakılmayacaklar:** otomatik ret veya sıralama, ücret belirleme, performans puanı, izin onayı, işten çıkarma kararı, sağlık raporu veya engellilik belgesi gibi özel nitelikli belgelerin işlenmesi.
 
@@ -135,6 +135,14 @@ Modül handler'ı
 - **Denetim:** Yalnızca çalışanın kendi türleri ve geçerli tarihler forma gelir; saat yalnızca saatlik türde, olay günü yalnızca sabit süreli türde, yarım gün yalnızca yarım gün birimli türde kalır. Belirsiz kalanlar boş bırakılır ve "kontrol edin" soruları olarak döner.
 - **Gönderme kullanıcıda:** Taslak formu doldurur, hiçbir şey saklanmaz; form her zamanki önizleme (süre, bakiye, onaycılar) ile kontrol edilip gönderilir.
 - Kararlar: `docs/DECISIONS.md` D64.
+
+### 3.12 Asistan (A12a yapıldı, A12b kalan eylemler)
+
+- **Soru:** `POST /api/platform/assistant/ask`. Oturum yeterli, özellik `platform.assistant`.
+- **Niyet çevirisi:** Model yalnızca soruyu, kullanıcının yetkisi olan eylemlerin tanımlarını ve açabileceği sayfaları görür; bir eylem (parametreleriyle) veya bir sayfa seçer.
+- **Veri modele gitmez:** Eylem kullanıcı adına modülün kendi sorgusuyla çalışır (yetki ve veri kapsamı); satırlar yalnızca kullanıcıya gösterilir.
+- **Salt okunur:** Asistan veri değiştirmez; değişiklik için ilgili sayfayı açar.
+- Kararlar: `docs/DECISIONS.md` D65.
 
 ## 4. Kişisel veri maskeleme
 

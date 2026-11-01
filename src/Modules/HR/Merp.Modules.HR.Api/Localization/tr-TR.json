@@ -476,6 +476,7 @@
   "web.hr.org.units_import": "Birimler",
   "hr.leave.errors.started_version_locked": "Başlamış bir sürüm değiştirilemez veya silinemez; yeni sürüm en erken yarından başlayabilir.",
   "hr.leave.errors.duplicate_version_date": "Aynı tarihte başlayan iki sürüm olamaz.",
+  "hr.assistant.leave_balance": "Kullanılabilir: {available} · Kullanılan: {used} · Onay bekleyen: {pending}",
   "hr.leave.errors.version_required": "En az bir sürüm gerekir.",
   "hr.leave.errors.default_policy_inactive": "Varsayılan politika pasif yapılamaz. Önce başka bir politikayı varsayılan yapın.",
   "hr.leave.errors.unknown_policy": "Politika bulunamadı, pasif ya da bu şirkete ait değil.",
