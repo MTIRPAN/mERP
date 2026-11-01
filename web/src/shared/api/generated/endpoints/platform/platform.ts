@@ -30,6 +30,7 @@ import type {
   ApprovalDocumentTypeItem,
   ApprovalPreview,
   ApprovalRequestDetails,
+  ApprovalSummaryResponse,
   ApprovalTaskCount,
   ApprovalUserOption,
   ApproverResolverItem,
@@ -10416,6 +10417,89 @@ export function useGetApprovalRequest<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export const getSummarizeApprovalRequestUrl = (id: string) => {
+  return `/api/platform/approvals/requests/${id}/summary`;
+};
+
+/**
+ * Nothing is stored. Names are replaced and identifier facts are left out before the request reaches the AI provider.
+ * @summary Summarize a request with its attention points with AI for the approver who decides it (A8, D61)
+ */
+export const summarizeApprovalRequest = async (
+  id: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<ApprovalSummaryResponse> => {
+  return customFetch<ApprovalSummaryResponse>(getSummarizeApprovalRequestUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getSummarizeApprovalRequestMutationKey = () => ['summarizeApprovalRequest'] as const;
+
+export const getSummarizeApprovalRequestMutationOptions = <
+  TError = ErrorType<ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof summarizeApprovalRequest>>,
+    TError,
+    SummarizeApprovalRequestMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof summarizeApprovalRequest>>,
+  TError,
+  SummarizeApprovalRequestMutationVariables,
+  TContext
+> => {
+  const mutationKey = getSummarizeApprovalRequestMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof summarizeApprovalRequest>>,
+    SummarizeApprovalRequestMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return summarizeApprovalRequest(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SummarizeApprovalRequestMutationResult = NonNullable<Awaited<ReturnType<typeof summarizeApprovalRequest>>>;
+
+export type SummarizeApprovalRequestMutationError = ErrorType<ProblemDetails>;
+export type SummarizeApprovalRequestMutationVariables = { id: string };
+
+/**
+ * @summary Summarize a request with its attention points with AI for the approver who decides it (A8, D61)
+ */
+export const useSummarizeApprovalRequest = <TError = ErrorType<ProblemDetails>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof summarizeApprovalRequest>>,
+      TError,
+      SummarizeApprovalRequestMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof summarizeApprovalRequest>>,
+  TError,
+  SummarizeApprovalRequestMutationVariables,
+  TContext
+> => {
+  return useMutation(getSummarizeApprovalRequestMutationOptions(options), queryClient);
+};
 export const getGetApprovalTimelineUrl = (params?: GetApprovalTimelineParams) => {
   const normalizedParams = new URLSearchParams();
 

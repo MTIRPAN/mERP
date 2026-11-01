@@ -35,7 +35,7 @@ Modül handler'ı
 | 3.5 | **Mülakat soruları ve geri bildirim özeti:** pozisyona göre soru seti; mülakatçı notlarından ortak özet (kör geri bildirim kuralına uyarak) | İşe alım | Yapılandırılmış mülakat, hızlı karar toplantısı | ✅ Hazır (A5) |
 | 3.6 | **Aday e-posta taslakları:** şablonu adaya göre kişiselleştirir (ret, davet) | İşe alım | Aday deneyimi | ✅ Hazır (A5) |
 | 3.7 | **Çeviri taslakları:** yeni dil eklenince eksik metinlerin taslağı | Platform | Çoklu dil maliyetini düşürür | ✅ Hazır (A7) |
-| 3.8 | **Onay özeti:** onaycıya talebin bir paragraflık özeti ve dikkat noktaları | Platform | Onay süresini kısaltır | P10 ile (A8) |
+| 3.8 | **Onay özeti:** onaycıya talebin bir paragraflık özeti ve dikkat noktaları | Platform | Onay süresini kısaltır | ✅ Hazır (A8) |
 | 3.9 | **İçe aktarma kolon eşleştirme:** Excel başlıklarını alanlara eşleştirme önerisi | Platform | İlk kurulumu hızlandırır | P11 ile (A9) |
 | 3.10 | **Belge şablonu taslağı:** açıklamadan Fluid şablonu taslağı | Platform | Şablon hazırlama süresi | P12 ile (A10) |
 | 3.11 | **Doğal dille izin talebi:** "Gelecek cuma ve pazartesi yıllık izin" → form taslağı | İzin | Self serviste kolaylık | L4 ile (A11) |
@@ -105,6 +105,13 @@ Modül handler'ı
   - Yer tutucular ve etiketler korunur; yer tutucusu değişen taslak işaretlenir.
 - **Kaydetme her zaman kullanıcıyla:** Taslak saklanmaz. Kullanıcı gözden geçirdiği satırları `POST .../texts/{culture}/bulk` ile kaydeder.
 - Kararlar: `docs/DECISIONS.md` D60.
+
+### 3.8 Onay özeti (yapıldı)
+
+- **Özet:** `POST /api/platform/approvals/requests/{id}/summary`. Özellik `platform.approval_summary`, hız sınırı `ai`. Yalnızca talebi şu anda karara bağlayacak onaycı ya da onay yöneticisi ister.
+- **Girdi:** Belge türü, kısa özet, olgular (kimlik olguları hariç, etiketleriyle) ve akışın geçmişi. Adlar maskelenir, kişiler rolleriyle anılır.
+- **Çıktı:** Bir paragraf özet ve dikkat noktaları. Karar önermez ve saklanmaz.
+- Kararlar: `docs/DECISIONS.md` D61.
 
 ## 4. Kişisel veri maskeleme
 

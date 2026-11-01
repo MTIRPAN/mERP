@@ -57,5 +57,6 @@ internal sealed class PlatformAiFeatureDefinitions : IAiFeatureDefinitionProvide
     public IEnumerable<AiFeatureDefinition> GetFeatures() =>
     [
         new(PlatformAiFeatures.TranslationDrafts),
+        new(PlatformAiFeatures.ApprovalSummary),
     ];
 }

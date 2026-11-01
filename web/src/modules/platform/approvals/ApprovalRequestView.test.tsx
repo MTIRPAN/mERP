@@ -4,11 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MeContext } from '@/app/me/meContext';
 import type { DecideApprovalTaskMutationVariables } from '@/shared/api/generated/endpoints/platform/platform';
-import type { ApprovalRequestDetails, MeResponse } from '@/shared/api/generated/model';
+import type { ApprovalRequestDetails, ApprovalSummaryResponse, MeResponse } from '@/shared/api/generated/model';
 import { renderWithProviders } from '@/test/render';
 import { ApprovalRequestView } from './ApprovalRequestView';
 
 const decide = vi.fn<(variables: DecideApprovalTaskMutationVariables) => Promise<void>>();
+const summarize = vi.fn<(id: string) => Promise<ApprovalSummaryResponse>>();
 let details: ApprovalRequestDetails;
 
 vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
@@ -18,6 +19,7 @@ vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
   useReassignApprovalTask: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useAssignApprovers: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSearchApprovalUsers: () => ({ data: [], isFetching: false }),
+  summarizeApprovalRequest: (id: string) => summarize(id),
   getGetApprovalRequestQueryKey: (id: string) => [`/api/platform/approvals/requests/${id}`],
   getGetApprovalTimelineQueryKey: () => ['/api/platform/approvals/timeline'],
   getListMyApprovalTasksQueryKey: () => ['/api/platform/approvals/my-tasks'],
@@ -34,9 +36,17 @@ const texts: Record<string, string> = {
   'web.approvals.decision.on_behalf': 'Bu kararı {name} adına vekaleten veriyorsunuz.',
   'web.approvals.admin.title': 'Yönetici işlemleri',
   'web.approvals.status.Pending': 'Onay bekliyor',
+  'web.approvals.summary.create': 'Özetle',
+  'web.approvals.summary.attention': 'Dikkat noktaları',
 };
 
-const me = { user: { id: 'me' }, cultures: [], companies: [] } as unknown as MeResponse;
+const me = {
+  user: { id: 'me' },
+  cultures: [],
+  companies: [],
+  ai: { enabled: false, features: [] },
+} as unknown as MeResponse;
+const meWithAi = { ...me, ai: { enabled: true, features: ['platform.approval_summary'] } };
 
 const request = (assignee: string, allowReturn = false): ApprovalRequestDetails => ({
   id: 'r1',
@@ -78,10 +88,10 @@ const request = (assignee: string, allowReturn = false): ApprovalRequestDetails 
   canAdminister: false,
 });
 
-const render = () =>
+const render = (profile: MeResponse = me) =>
   renderWithProviders(
     <QueryClientProvider client={new QueryClient()}>
-      <MeContext.Provider value={me}>
+      <MeContext.Provider value={profile}>
         <ApprovalRequestView requestId="r1" />
       </MeContext.Provider>
     </QueryClientProvider>,
@@ -112,11 +122,36 @@ describe('ApprovalRequestView', () => {
     render();
     expect(screen.queryByRole('button', { name: /İade et/ })).not.toBeInTheDocument();
     expect(screen.queryByText('Yönetici işlemleri')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Özetle' })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Onayla/ }));
     await waitFor(() =>
       expect(decide).toHaveBeenCalledWith({ id: 't1', data: { decision: 'Approve', comment: null } }),
     );
+  });
+
+  it('summarizes the request for its approver on request', async () => {
+    summarize.mockReset().mockResolvedValue({
+      summary: '7 günlük yıllık izin talebi ilk onay adımında.',
+      attentionPoints: ['Talep beş günden uzun.'],
+      model: 'claude-sonnet-5-5',
+      promptVersion: '2026-11-01',
+    });
+    render(meWithAi);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Özetle' }));
+
+    expect(await screen.findByText('7 günlük yıllık izin talebi ilk onay adımında.')).toBeInTheDocument();
+    expect(screen.getByText('Dikkat noktaları')).toBeInTheDocument();
+    expect(screen.getByText('Talep beş günden uzun.')).toBeInTheDocument();
+    expect(summarize).toHaveBeenCalledWith('r1');
+  });
+
+  it('offers no summary to someone who does not decide the request', () => {
+    details = { ...request('someone-else'), myTaskId: null };
+    render(meWithAi);
+
+    expect(screen.queryByRole('button', { name: 'Özetle' })).not.toBeInTheDocument();
   });
 
   it('tells a delegate whose task they decide', () => {

@@ -307,6 +307,7 @@ Bu liste dışında `AllowAnonymous` kullanılamaz (mimari test denetler).
 | `/api/platform/notifications`, `/api/platform/notifications/unread-count`, `/api/platform/notifications/{id}/read`, `/api/platform/notifications/read-all`, `/api/platform/notifications/preferences`, `/api/platform/notifications/test` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi bildirimleri ve tercihleri; başka kullanıcının bildirimi 404 (P8, D32). |
 | `/api/platform/approvals/my-tasks`, `/api/platform/approvals/my-tasks/count`, `/api/platform/approvals/tasks/{id}/decision`, `/api/platform/approvals/delegations`, `/api/platform/approvals/delegations/{id}/revoke`, `/api/platform/approvals/preview` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Kullanıcının kendi onay görevleri, kararları, vekaletleri ve kendi belgesinin önizlemesi. Başka kullanıcının görevi ve vekaleti 404 (P10b, D34). |
 | `/api/platform/approvals/requests/{id}`, `/api/platform/approvals/timeline` | Oturum zorunlu; talep eden, onaylayıcılar ve vekilleri, `platform.approvals.admin` (Tenant) ya da belgenin modülündeki `IApprovalDocumentAccessPolicy` erişim verir | Onay geçmişi belgenin kendisini görenlere açıktır; diğerleri 404 alır (P10b, D34). |
+| `/api/platform/approvals/requests/{id}/summary` | Oturum zorunlu; talebi şu anda karara bağlayacak onaycı ya da vekili ve `platform.approvals.admin` (Tenant). Talebi gören diğerleri 403, görmeyenler 404 alır | Onaycının yapay zeka özeti (A8, D61). Onaylayıcı olmak bir yetki değil, görevdir; bu yüzden yetki istenmez. |
 | `/api/platform/approvals/document-types`, `/api/platform/approvals/users` | Oturum zorunlu, yetki istenmez (`.RequireAuthenticatedUser()`) | Vekalet formunda belge türü adları ve vekil seçimi için aktif kullanıcıların adı (en fazla 20). Hassas alan (e-posta, telefon) dönmez (P10b, D34). |
 | `/api/platform/imports`, `/api/platform/imports/{key}`, `/api/platform/imports/{key}/template`, `/api/platform/imports/jobs`, `/api/platform/imports/jobs/{id}`, `/api/platform/imports/jobs/{id}/report`, `/api/platform/imports/jobs/{id}/commit` | Oturum zorunlu; şablon ve yükleme içe aktarma tanımının yetkisini ister (şubeler için `platform.branches.manage`), liste yalnızca yetkili tanımları döner | İçe aktarma tüm modüllerin ortak altyapısıdır, yetkiyi tanım verir. Kullanıcı yalnızca kendi işlerini görür; başkasının işi 404 (P11b, D35). |
 
@@ -1893,3 +1894,24 @@ Seçilen kültür `Content-Language` başlığında döner.
   - her satırda anahtar, kaynak metin, düzenlenebilir taslak ve kaydetme onay kutusu,
   - yer tutucular kaynakla aynı değilse uyarı (düzenledikçe yeniden denetlenir),
   - "Seçilenleri kaydet" düğmesi.
+
+## D61 — Onay özeti
+
+**Bağlam:** A8 onaycıya talebin bir paragraflık özetini ve dikkat noktalarını verir. Kullanıcı kararları (2026-11-01):
+- Özet talebin kendi verisinden üretilir; modüllerden ek bilgi alınmaz.
+- Özet onaycı istediğinde üretilir ve saklanmaz.
+
+**Özet:**
+- `POST /api/platform/approvals/requests/{id}/summary`. Özellik `platform.approval_summary`, hız sınırı `ai`.
+- Görünürlük talep detayıyla aynıdır (`RequireAuthenticatedUser`, D34). Ayrıca yalnızca talebi şu anda karara bağlayacak onaycı (ya da vekili) ve onay yöneticisi isteyebilir. Talep eden ve kararını vermiş onaycı 403 `platform.approvals.errors.summary_approvers_only` alır.
+- **Sağlayıcıya giden:**
+  - belge türü, başlık ve modülün kısa özeti,
+  - belge türünün olgu şemasındaki olgular, yerelleştirilmiş etiketleriyle (`Identifier` türündeki olgular gönderilmez),
+  - akış: durum, tur, mevcut adım, adım adları,
+  - geçmiş: olay türü, tur, adım, kişinin rolü (talep eden, onaycı, sistem), tarih ve açıklama.
+- **Maskeleme:** Talep edenin, onaycıların ve vekillerin adları ile başlıktaki kişi adları (`employee`, `candidate`, `name` argümanları) metinlerden maskelenir. Kişiler rolleriyle anılır.
+- Çıktı tiplidir: bir paragraf özet ve en fazla beş dikkat noktası (bütçe üstü gibi bayraklar, yüksek değerler, önceki iade ve gerekçesi, uzun bekleme, atlanan adım).
+- Talimat onaylama, reddetme ya da iade önermemeyi, talep edeni yargılamamayı söyler.
+- Kullanım kaydı talebe bağlanır (`platform.approval-request`).
+
+**Web:** Onay talebi görünümünde (Onay Kutum ve talep sayfası) talep beklerken ve kullanıcı karar veriyorsa ya da yöneticiyse "Talep özeti" kartı vardır. Kartta "Özetle" düğmesi, "yapay zeka önerisidir, karar sizindir" uyarısı, özet ve dikkat noktaları bulunur.

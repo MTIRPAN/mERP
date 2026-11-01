@@ -27,8 +27,11 @@ import {
   useReassignApprovalTask,
 } from '@/shared/api/generated/endpoints/platform/platform';
 import type { ApprovalDecision, ApprovalRequestDetails } from '@/shared/api/generated/model';
+import { useAiFeature } from '@/shared/ai/useAiFeature';
 import { ApprovalTimelineView } from '@/shared/approvals/ApprovalTimeline';
 import { formatDateTime } from '@/shared/format/date';
+import { platformAiFeatures } from '../permissions';
+import { ApprovalSummaryCard } from './ApprovalSummaryCard';
 import { refreshApprovals, statusColors } from './approvalQueries';
 import { UserPicker } from './UserPicker';
 
@@ -52,6 +55,8 @@ const RequestDetails = ({ details }: { details: ApprovalRequestDetails }) => {
   const { t, i18n } = useTranslation();
   const step = details.currentStep !== null ? details.steps[details.currentStep] : undefined;
   const openTasks = details.tasks.filter((task) => task.status === 'Pending');
+  const summaryAi = useAiFeature(platformAiFeatures.approvalSummary);
+  const open = details.status === 'Pending' || details.status === 'NeedsAttention';
 
   return (
     <Flex vertical gap={16}>
@@ -112,12 +117,13 @@ const RequestDetails = ({ details }: { details: ApprovalRequestDetails }) => {
             : []),
         ]}
       />
+      {summaryAi && open && (details.myTaskId || details.canAdminister) && (
+        <ApprovalSummaryCard requestId={details.id} />
+      )}
       {details.myTaskId && (
         <DecisionPanel details={details} taskId={details.myTaskId} allowReturn={!!step?.allowReturn} />
       )}
-      {details.canAdminister && (details.status === 'Pending' || details.status === 'NeedsAttention') && (
-        <AdminPanel details={details} />
-      )}
+      {details.canAdminister && open && <AdminPanel details={details} />}
       <Card size="small" title={t('web.approvals.request.timeline')}>
         {details.history.length > 0 ? <ApprovalTimelineView details={details} /> : <Empty />}
       </Card>
