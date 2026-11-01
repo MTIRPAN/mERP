@@ -50,6 +50,7 @@ public static class EndpointRules
         "/api/platform/approvals/my-tasks/count",
         "/api/platform/approvals/tasks/{id:guid}/decision",
         "/api/platform/approvals/requests/{id:guid}",
+        "/api/platform/approvals/requests/{id:guid}/summary",
         "/api/platform/approvals/timeline",
         "/api/platform/approvals/delegations",
         "/api/platform/approvals/delegations/{id:guid}/revoke",
