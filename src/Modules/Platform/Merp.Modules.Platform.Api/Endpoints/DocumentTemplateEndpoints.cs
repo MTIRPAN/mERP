@@ -4,6 +4,7 @@ using Merp.Modules.Platform.Application.Documents;
 using Merp.SharedKernel.Results;
 using Merp.Web.Endpoints;
 using Merp.Web.Errors;
+using Merp.Web.RateLimiting;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -70,6 +71,16 @@ internal static class DocumentTemplateEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
+        templates.MapPost("/draft", DraftAsync)
+            .RequirePermission(PlatformPermissions.DocumentTemplates.Manage)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("DraftDocumentTemplate")
+            .WithSummary("Draft a template with AI from a description, optionally changing the current one (A10, D63)")
+            .WithDescription("Nothing is saved: the draft fills the editor. It is checked against the type's sample model and asked for once more when it does not render.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
         templates.MapPost("/preview/pdf", PreviewPdfAsync)
             .RequirePermission(PlatformPermissions.DocumentTemplates.Read)
             .WithName("PreviewDocumentPdf")
@@ -117,6 +128,9 @@ internal static class DocumentTemplateEndpoints
         NoContentOrProblem(await sender.Send(new DeleteDocumentTemplateCommand(id), cancellationToken));
 
     private static async Task<Results<Ok<DocumentPreview>, ProblemHttpResult>> PreviewAsync(PreviewDocumentQuery query, ISender sender, CancellationToken cancellationToken) =>
+        Respond(await sender.Send(query, cancellationToken));
+
+    private static async Task<Results<Ok<DocumentTemplateDraft>, ProblemHttpResult>> DraftAsync(DraftDocumentTemplateQuery query, ISender sender, CancellationToken cancellationToken) =>
         Respond(await sender.Send(query, cancellationToken));
 
     private static async Task<Results<FileContentHttpResult, ProblemHttpResult>> PreviewPdfAsync(PreviewDocumentPdfQuery query, ISender sender, CancellationToken cancellationToken)

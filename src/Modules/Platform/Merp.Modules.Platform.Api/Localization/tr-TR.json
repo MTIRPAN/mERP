@@ -744,6 +744,15 @@
   "web.settings.yes": "Açık",
   "web.settings.no": "Kapalı",
   "web.document_templates.title": "Belge şablonları",
+  "web.document_templates.draft.button": "Yapay zeka ile taslak",
+  "web.document_templates.draft.title": "Şablon taslağı",
+  "web.document_templates.draft.description": "Belge nasıl görünsün?",
+  "web.document_templates.draft.description_hint": "Örneğin: üstte antet, sağda tarih ve sayı, ortada konu ve metin, altta iki imza alanı.",
+  "web.document_templates.draft.use_current": "Editördeki şablonu temel al ve yalnızca istenenleri değiştir",
+  "web.document_templates.draft.generate": "Taslak oluştur",
+  "web.document_templates.draft.replace_confirm": "Editördeki şablon taslakla değiştirilsin mi? Kaydedene kadar hiçbir şey değişmez.",
+  "web.document_templates.draft.notice": "Şablon yapay zeka taslağından geldi. Önizlemeyi kontrol edip kaydedin.",
+  "web.document_templates.draft.invalid": "Taslak örnek veriyle hatasız çalışmadı; önizlemedeki hatayı düzeltin.",
   "web.document_templates.subtitle": "Yazdırılan belgelerin görünümü. Şirkete özel şablon tüm şirketler için olandan önce gelir; hiç şablon yoksa yerleşik şablon kullanılır.",
   "web.document_templates.new": "Yeni şablon",
   "web.document_templates.open_editor": "Editörü aç",
@@ -823,5 +832,6 @@
   "web.ai.features.recruitment.batch_screening": "Toplu ön tarama",
   "web.ai.features.platform.translation_drafts": "Çeviri taslakları",
   "web.ai.features.platform.approval_summary": "Onay özeti",
-  "web.ai.features.platform.import_mapping": "İçe aktarma sütun eşleştirme"
+  "web.ai.features.platform.import_mapping": "İçe aktarma sütun eşleştirme",
+  "web.ai.features.platform.document_template_draft": "Belge şablonu taslağı"
 }

@@ -9,7 +9,13 @@ import type {
   PreviewDocumentMutationVariables,
   UpdateDocumentTemplateMutationVariables,
 } from '@/shared/api/generated/endpoints/platform/platform';
-import type { DocumentTemplateDetails, DocumentTypeItem, MeResponse } from '@/shared/api/generated/model';
+import type {
+  DocumentTemplateDetails,
+  DocumentTemplateDraft,
+  DocumentTypeItem,
+  DraftDocumentTemplateQuery,
+  MeResponse,
+} from '@/shared/api/generated/model';
 import { ApiError } from '@/shared/api/problem';
 import { PermissionProvider } from '@/shared/auth/PermissionProvider';
 import type { CodeEditorProps } from '@/shared/components/code-editor/CodeEditor';
@@ -19,6 +25,7 @@ import { DocumentTemplateEditorPage } from './DocumentTemplateEditorPage';
 const preview = vi.fn<(variables: PreviewDocumentMutationVariables) => Promise<{ html: string }>>();
 const create = vi.fn<(variables: CreateDocumentTemplateMutationVariables) => Promise<{ id: string }>>();
 const update = vi.fn<(variables: UpdateDocumentTemplateMutationVariables) => Promise<void>>();
+const draft = vi.fn<(query: DraftDocumentTemplateQuery) => Promise<DocumentTemplateDraft>>();
 
 const letter: DocumentTypeItem = {
   key: 'platform.letter',
@@ -67,6 +74,7 @@ vi.mock('@/shared/api/generated/endpoints/platform/platform', () => ({
   useCreateDocumentTemplate: () => ({ mutateAsync: create, isPending: false }),
   useUpdateDocumentTemplate: () => ({ mutateAsync: update, isPending: false }),
   useDeleteDocumentTemplate: () => ({ mutateAsync: vi.fn() }),
+  draftDocumentTemplate: (query: DraftDocumentTemplateQuery) => draft(query),
 }));
 
 const texts: Record<string, string> = {
@@ -75,20 +83,29 @@ const texts: Record<string, string> = {
   'web.document_templates.all_companies': 'Tüm şirketler',
   'web.document_templates.revision_value': 'Rev. {revision}',
   'web.common.save': 'Kaydet',
+  'web.document_templates.draft.button': 'Yapay zeka ile taslak',
+  'web.document_templates.draft.description': 'Belge nasıl görünsün?',
+  'web.document_templates.draft.use_current': 'Editördeki şablonu temel al',
+  'web.document_templates.draft.generate': 'Taslak oluştur',
+  'web.document_templates.draft.notice': 'Şablon yapay zeka taslağından geldi.',
 };
 
 const me = {
   cultures: [{ code: 'tr-TR', name: 'Türkçe' }],
   companies: [{ id: 'c1', name: 'Acme' }],
+  ai: { enabled: false, features: [] },
 } as unknown as MeResponse;
+
+const meWithAi = { ...me, ai: { enabled: true, features: ['platform.document_template_draft'] } };
 
 const render = (
   route: string,
   permissions = ['platform.document_templates.read', 'platform.document_templates.manage'],
+  profile: MeResponse = me,
 ) =>
   renderWithProviders(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MeContext.Provider value={me}>
+      <MeContext.Provider value={profile}>
         <PermissionProvider permissions={permissions}>
           <Routes>
             <Route path="/system/document-templates/new" element={<DocumentTemplateEditorPage />} />
@@ -173,6 +190,44 @@ describe('DocumentTemplateEditorPage', () => {
         data: { version: 7, body: '<h2>{{ letter.subject }}</h2>', css: null, isActive: true },
       }),
     );
+  });
+
+  it('fills the editor with an AI draft of the description, changing the current template when asked', async () => {
+    draft.mockReset().mockResolvedValue({
+      body: '<h2>{{ letter.subject }}</h2>',
+      css: 'h2 { font-weight: bold; }',
+      notes: ['İmza alanını kontrol edin.'],
+      valid: true,
+      model: 'claude-sonnet-5-5',
+      promptVersion: '2026-11-01',
+    });
+    render('/system/document-templates/t1', undefined, meWithAi);
+
+    await userEvent.click(await screen.findByRole('button', { name: /Yapay zeka ile taslak/ }));
+    await userEvent.type(await screen.findByRole('textbox', { name: 'Belge nasıl görünsün?' }), 'Konuyu kalın yaz');
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Editördeki şablonu temel al' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Taslak oluştur' }));
+
+    await waitFor(() =>
+      expect(draft).toHaveBeenCalledWith({
+        documentType: 'platform.letter',
+        culture: 'tr-TR',
+        description: 'Konuyu kalın yaz',
+        currentBody: '<h1>{{ letter.subject }}</h1>',
+        currentCss: '',
+      }),
+    );
+    expect(await screen.findByRole('textbox', { name: 'Gövde (HTML)' })).toHaveValue('<h2>{{ letter.subject }}</h2>');
+    expect(screen.getByText('Şablon yapay zeka taslağından geldi.')).toBeInTheDocument();
+    expect(screen.getByText('İmza alanını kontrol edin.')).toBeInTheDocument();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('offers no AI draft when the tenant has it off', async () => {
+    render('/system/document-templates/t1');
+
+    await screen.findByRole('textbox', { name: 'Gövde (HTML)' });
+    expect(screen.queryByRole('button', { name: /Yapay zeka ile taslak/ })).not.toBeInTheDocument();
   });
 
   it('is read only without the manage permission', async () => {

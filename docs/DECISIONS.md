@@ -1944,3 +1944,29 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Her alan için dosyanın sütunları arasından seçim yapılır; başka bir alana verilmiş sütunlar seçilemez.
 - Özellik açıksa yapay zeka önerisi otomatik istenir ve "Yapay zeka önerisi" etiketiyle gösterilir. "Yapay zeka ile öner" düğmesiyle yeniden istenebilir.
 - Zorunlu alanların hepsine sütun seçilmeden "Eşleştirmeyle yükle" düğmesi pasif kalır.
+
+## D63 — Belge şablonu taslağı
+
+**Bağlam:** A10 yöneticinin açıklamasından Fluid (Liquid HTML) belge şablonu taslağı üretir. Kararlar (2026-11-01):
+- Taslak editörü doldurur, saklanmaz; yönetici önizler ve kaydeder (D24, "öneri, karar değil").
+- İsteğe bağlı olarak editördeki şablon temel alınır ve yalnızca istenen değişiklik yapılır.
+
+**Taslak:**
+- `POST /api/platform/document-templates/draft`. Yetki `platform.document_templates.manage` (Tenant kapsamı), özellik `platform.document_template_draft`, hız sınırı `ai`.
+- Girdi: belge türü, kültür (boşsa varsayılan dil), açıklama (en fazla 2000 karakter, maskelenmiş), isteğe bağlı mevcut gövde ve CSS.
+- **Sağlayıcıya giden:**
+  - türün adı,
+  - değişkenler (türün alanları ve Platform'un ortak `company.*` ve `document.*` alanları, belgenin dilindeki açıklamalarıyla),
+  - `texts.*` etiketleri ve türün örnek modeli (uydurma veridir),
+  - açıklama ve istenirse mevcut şablon.
+- Talimat yalnızca listelenen değişkenleri, `letterhead` ve `logo` parçalarını, mümkünse `texts.*` etiketlerini kullanmayı söyler. Dış kaynak, script ve form yasaktır.
+- **Denetim:** Taslak, kaydedilen şablon gibi türün örnek modeliyle render edilir.
+  - Render olmazsa hata (kod ve satır) eklenerek bir kez daha istenir.
+  - İkinci deneme de hatalıysa son taslak `Valid = false` ile döner; editördeki önizleme hatayı gösterir.
+  - Her deneme kullanım kaydına yazılır.
+- Çıktı: gövde, CSS ve en fazla beş not (varsayımlar ve kontrol edilecekler).
+
+**Web:** Şablon editöründe (yönetme yetkisi ve özellik açıksa) "Yapay zeka ile taslak" düğmesi vardır.
+- Pencere açıklamayı ister. Editörde içerik varsa "editördeki şablonu temel al" seçeneği sunar.
+- Taslak gövdeyi ve CSS'i değiştirir. Editörde "yapay zeka taslağından geldi" uyarısı ve notlar çıkar; taslak hatalıysa uyarı sarıdır.
+- Kaydetme her zamanki "Kaydet" ile yapılır.

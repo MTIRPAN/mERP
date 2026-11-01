@@ -11,4 +11,7 @@ public static class PlatformAiFeatures
 
     /// <summary>Where the columns of an import are among an uploaded file's headers (docs/domain/yapay-zeka.md §3.9, D62).</summary>
     public const string ImportMapping = "platform.import_mapping";
+
+    /// <summary>A document template drafted from a description (docs/domain/yapay-zeka.md §3.10, D63).</summary>
+    public const string DocumentTemplateDraft = "platform.document_template_draft";
 }
