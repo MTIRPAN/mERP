@@ -833,5 +833,6 @@
   "web.ai.features.platform.translation_drafts": "Çeviri taslakları",
   "web.ai.features.platform.approval_summary": "Onay özeti",
   "web.ai.features.platform.import_mapping": "İçe aktarma sütun eşleştirme",
-  "web.ai.features.platform.document_template_draft": "Belge şablonu taslağı"
+  "web.ai.features.platform.document_template_draft": "Belge şablonu taslağı",
+  "web.ai.features.hr.leave_request_draft": "Doğal dille izin talebi"
 }

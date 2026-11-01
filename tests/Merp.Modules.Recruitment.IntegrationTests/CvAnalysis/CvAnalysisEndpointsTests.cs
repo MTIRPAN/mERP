@@ -6,6 +6,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Merp.Infrastructure.AI;
+using Merp.Modules.HR.Application;
 using Merp.Modules.Platform.Api.Endpoints;
 using Merp.Modules.Platform.Application;
 using Merp.Modules.Recruitment.Application;
@@ -213,6 +214,7 @@ public sealed class CvAnalysisEndpointsTests : IClassFixture<RecruitmentFactory>
                 PlatformAiFeatures.ApprovalSummary,
                 PlatformAiFeatures.ImportMapping,
                 PlatformAiFeatures.DocumentTemplateDraft,
+                HrAiFeatures.LeaveRequestDraft,
             ],
             ignoreOrder: true);
         var item = enabled.Menu.Single(m => m.Key == "recruitment").Children!.ShouldHaveSingleItem();

@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.AI;
 using Merp.Modules.HR.Application;
 using Merp.Web.Navigation;
 
@@ -26,5 +27,13 @@ internal sealed class HrMenu : IMenuContributor
             new("hr-leave-settings", "web.shell.menu.hr_leave_settings", Path: "/hr/leave-settings", Icon: "leave-settings", Permission: HrPermissions.Leave.Settings.Read, Order: 25),
             new("hr-document-types", "web.shell.menu.hr_document_types", Path: "/hr/document-types", Icon: "document-types", Permission: HrPermissions.Employees.Documents.Manage, Order: 30),
         ]),
+    ];
+}
+
+internal sealed class HrAiFeatureDefinitions : IAiFeatureDefinitionProvider
+{
+    public IEnumerable<AiFeatureDefinition> GetFeatures() =>
+    [
+        new(HrAiFeatures.LeaveRequestDraft),
     ];
 }

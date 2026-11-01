@@ -1,3 +1,4 @@
+using Merp.Application.Abstractions.AI;
 using Merp.Modules.HR.Api.Endpoints;
 using Merp.Modules.HR.Infrastructure;
 using Merp.Web.Modules;
@@ -20,6 +21,7 @@ public sealed class HrModule : IModule
     {
         services.AddHrInfrastructure();
         services.AddSingleton<IMenuContributor, HrMenu>();
+        services.AddSingleton<IAiFeatureDefinitionProvider, HrAiFeatureDefinitions>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)

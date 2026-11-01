@@ -2,12 +2,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LeaveRequestDetails, LeaveRequestPreview, LeaveTypeOption } from '@/shared/api/generated/model';
+import { MeContext } from '@/app/me/meContext';
+import type {
+  LeaveRequestDetails,
+  LeaveRequestDraft,
+  LeaveRequestPreview,
+  LeaveTypeOption,
+  MeResponse,
+} from '@/shared/api/generated/model';
 import { renderWithProviders } from '@/test/render';
 import { LeaveRequestDrawer } from './LeaveRequestDrawer';
 
 const update = vi.fn().mockResolvedValue(undefined);
 const preview = vi.fn<() => Promise<LeaveRequestPreview>>();
+const create = vi.fn().mockResolvedValue({ id: 'r2' });
+const draft = vi.fn<(query: { text: string }) => Promise<LeaveRequestDraft>>();
 
 const annual: LeaveTypeOption = {
   id: 't1',
@@ -82,6 +91,8 @@ vi.mock('@/shared/api/generated/endpoints/hr/hr', () => ({
   useListEmployees: () => ({ data: undefined, isFetching: false }),
   previewMyLeaveRequest: () => preview(),
   updateMyLeaveRequest: (...args: unknown[]) => update(...args) as Promise<void>,
+  createMyLeaveRequest: (...args: unknown[]) => create(...args) as Promise<{ id: string }>,
+  draftMyLeaveRequest: (query: { text: string }) => draft(query),
   getListMyLeaveRequestsQueryKey: () => ['/api/hr/me/leave-requests'],
   getListMyLeaveBalancesQueryKey: () => ['/api/hr/me/leave-balances'],
   getListLeaveRequestsQueryKey: () => ['/api/hr/leave-requests'],
@@ -95,7 +106,12 @@ const texts: Record<string, string> = {
   'web.hr.leave_requests.preview.approvers': 'Onaylayacaklar',
   'web.hr.leave_requests.preview.available_after': 'Talep sonrası',
   'web.hr.leave_requests.days_value': '{days} gün',
+  'web.hr.leave_requests.ai.title': 'Yazarak doldur',
+  'web.hr.leave_requests.ai.fill': 'Formu doldur',
+  'web.hr.leave_requests.ai.notice': 'Form yapay zeka önerisiyle dolduruldu.',
 };
+
+const meWithAi = { ai: { enabled: true, features: ['hr.leave_request_draft'] } } as unknown as MeResponse;
 
 const render = () =>
   renderWithProviders(
@@ -105,9 +121,21 @@ const render = () =>
     texts,
   );
 
+const renderNew = (profile?: MeResponse) =>
+  renderWithProviders(
+    <QueryClientProvider client={new QueryClient()}>
+      <MeContext.Provider value={profile}>
+        <LeaveRequestDrawer mode="self" onClose={vi.fn()} />
+      </MeContext.Provider>
+    </QueryClientProvider>,
+    texts,
+  );
+
 describe('LeaveRequestDrawer', () => {
   beforeEach(() => {
     update.mockClear();
+    create.mockClear();
+    draft.mockReset();
     preview.mockReset();
   });
 
@@ -144,5 +172,55 @@ describe('LeaveRequestDrawer', () => {
     expect(await screen.findByText('Kullanılabilir izin bakiyesi yetersiz.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Gönder' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Taslak kaydet' })).toBeEnabled();
+  });
+
+  it('fills a new request from what the employee writes and sends it', async () => {
+    preview.mockResolvedValue(checked({ warnings: [] }));
+    draft.mockResolvedValue({
+      leaveTypeId: 't1',
+      startDate: '2026-11-06',
+      endDate: '2026-11-09',
+      startPart: 'Full',
+      endPart: 'Full',
+      startTime: null,
+      endTime: null,
+      eventDate: null,
+      note: 'Aile ziyareti',
+      questions: ['Yol izni ekleyecek misiniz?'],
+      model: 'model',
+      promptVersion: 'v1',
+    });
+    renderNew(meWithAi);
+
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Yazarak doldur' }),
+      'Gelecek cuma ve pazartesi yıllık izin',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Formu doldur' }));
+
+    expect(await screen.findByText('Yol izni ekleyecek misiniz?')).toBeInTheDocument();
+    expect(screen.getByText('Form yapay zeka önerisiyle dolduruldu.')).toBeInTheDocument();
+    expect(draft).toHaveBeenCalledWith(expect.objectContaining({ text: 'Gelecek cuma ve pazartesi yıllık izin' }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Gönder' }));
+
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          leaveTypeId: 't1',
+          startDate: '2026-11-06',
+          endDate: '2026-11-09',
+          note: 'Aile ziyareti',
+          submit: true,
+        }),
+      ),
+    );
+  });
+
+  it('offers filling by text only when the feature is on', () => {
+    preview.mockResolvedValue(checked());
+    renderNew();
+
+    expect(screen.queryByRole('button', { name: 'Formu doldur' })).not.toBeInTheDocument();
   });
 });

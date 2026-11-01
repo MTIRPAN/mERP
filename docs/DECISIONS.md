@@ -1970,3 +1970,28 @@ Seçilen kültür `Content-Language` başlığında döner.
 - Pencere açıklamayı ister. Editörde içerik varsa "editördeki şablonu temel al" seçeneği sunar.
 - Taslak gövdeyi ve CSS'i değiştirir. Editörde "yapay zeka taslağından geldi" uyarısı ve notlar çıkar; taslak hatalıysa uyarı sarıdır.
 - Kaydetme her zamanki "Kaydet" ile yapılır.
+
+## D64 — Doğal dille izin talebi
+
+**Bağlam:** A11 çalışanın yazdığı cümleden ("Gelecek cuma ve pazartesi yıllık izin") izin talebi formunu doldurur. Kararlar (2026-11-01):
+- Taslak formu doldurur, saklanmaz; çalışan önizlemeyle kontrol edip gönderir (D24, "öneri, karar değil").
+- Sunucu tarafı modelin cevabını formun kabul ettiği değerlere indirger; model takvim hesabı yapmak zorunda kalmaz, tarihleri girdideki takvimden seçer.
+
+**Taslak:**
+- `POST /api/hr/me/leave-requests/draft`. Yetki `hr.self.leave.request`, özellik `hr.leave_request_draft`, hız sınırı `ai`. Kayıt, onay veya bakiye değişikliği yoktur.
+- Girdi: isteğe bağlı istihdam (boşsa ana istihdam; başkasınınki 404) ve metin (en fazla 500 karakter).
+- **Sağlayıcıya giden:**
+  - çıktı dili ve şirketin saat dilimine göre bugün,
+  - bugünden başlayan 70 günlük takvim (tarih ve haftanın günü),
+  - çalışanın talep edebileceği izin türleri (kod, ad, birim, sabit süreli mi),
+  - metin; çalışanın adı, soyadı, e-posta ve telefon gibi bilgileri maskelenir.
+- **Cevabın denetimi:**
+  - tür kodu çalışanın türleri arasında değilse tür boş kalır,
+  - tarih ve saatler biçime uymazsa boş kalır; bitiş başlangıçtan sonra değilse tek gün sayılır,
+  - saat yalnızca saatlik türde, olay günü yalnızca sabit süreli türde, yarım gün yalnızca yarım gün birimli türde (tür belirsizse kalır) korunur,
+  - açıklama talep açıklamasının sınırına (500) kısaltılır.
+- Çıktı: form alanları ve metnin açık bıraktığı noktalar için kısa sorular.
+
+**Web:** Çalışanın yeni izin talebi formunda (özellik açıksa) "Yazarak doldur" kutusu vardır.
+- Taslak dolu gelen alanları değiştirir; boş gelenler formdaki değerini korur.
+- Yapay zeka önerisi uyarısı ve sorular formun üstünde kalır. Gönderme her zamanki önizleme ve "Gönder" ile yapılır.

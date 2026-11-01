@@ -9,6 +9,7 @@ using Merp.SharedKernel.Results;
 using Merp.Web.Endpoints;
 using Merp.Web.Errors;
 using Merp.Web.Files;
+using Merp.Web.RateLimiting;
 using Merp.Web.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -100,6 +101,18 @@ internal static class LeaveRequestEndpoints
             .WithSummary("Check a leave request without saving it: length, balance after it, problems, warnings and approvers")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        me.MapPost("/leave-requests/draft", async Task<Results<Ok<LeaveRequestDraft>, ProblemHttpResult>> (DraftMyLeaveRequestQuery query, ISender sender, CancellationToken ct) =>
+                OkOrProblem(await sender.Send(query, ct)))
+            .RequirePermission(HrPermissions.Self.LeaveRequest)
+            .RequireRateLimiting(RateLimitingExtensions.AiPolicy)
+            .WithName("DraftMyLeaveRequest")
+            .WithSummary("Fill the leave request form with AI from what the employee wrote (A11, D64)")
+            .WithDescription("Nothing is saved: the draft fills the form, which is previewed and sent as usual.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         me.MapPost("/leave-requests", (CreateMyLeaveRequestCommand command, ISender sender, CancellationToken ct) =>
                 CreatedAsync(sender.Send(command, ct), id => $"/api/hr/me/leave-requests/{id}"))

@@ -19,6 +19,7 @@ import {
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAiFeature } from '@/shared/ai/useAiFeature';
 import {
   createLeaveRequestOnBehalf,
   createMyLeaveRequest,
@@ -30,10 +31,11 @@ import {
   useListLeaveRequestTypes,
   useListMyLeaveTypes,
 } from '@/shared/api/generated/endpoints/hr/hr';
-import type { LeaveRequestDetails } from '@/shared/api/generated/model';
+import type { LeaveRequestDetails, LeaveRequestDraft } from '@/shared/api/generated/model';
 import { applyApiErrorsToForm } from '@/shared/api/formErrors';
 import { isApiError } from '@/shared/api/problem';
 import { LeavePreviewPanel } from './LeavePreviewPanel';
+import { LeaveRequestAiFill } from './LeaveRequestAiFill';
 import {
   toLeaveBody,
   useLeavePreview,
@@ -67,6 +69,24 @@ const FORM_FIELDS = [
 ];
 
 const time = (value: string | null | undefined) => (value ? dayjs(`2000-01-01T${value}`) : undefined);
+
+/** The form values an AI draft brings (D64); what it left open keeps what the form has. */
+const draftValues = (draft: LeaveRequestDraft): LeaveRequestValues => {
+  const start = draft.startDate ? dayjs(draft.startDate) : undefined;
+  return {
+    ...(draft.leaveTypeId && { leaveTypeId: draft.leaveTypeId }),
+    ...(start && {
+      startDate: start,
+      endDate: draft.endDate ? dayjs(draft.endDate) : start,
+      startAfternoon: draft.startPart === 'Afternoon',
+      endMorning: draft.endPart === 'Morning',
+    }),
+    ...(draft.startTime && { startTime: time(draft.startTime) }),
+    ...(draft.endTime && { endTime: time(draft.endTime) }),
+    ...(draft.eventDate && { eventDate: dayjs(draft.eventDate) }),
+    ...(draft.note && { note: draft.note }),
+  };
+};
 
 const initialValues = (
   request: LeaveRequestDetails | undefined,
@@ -124,6 +144,7 @@ export const LeaveRequestDrawer = ({
   const [savedId, setSavedId] = useState<string>();
   const required = [{ required: true, message: t('web.platform.fields.required') }];
   const hourly = type?.durationBasis === 'Hours';
+  const aiFill = useAiFeature('hr.leave_request_draft') && self && !request;
 
   const upload = async (id: string) => {
     for (const file of files) {
@@ -225,6 +246,7 @@ export const LeaveRequestDrawer = ({
         requiredMark="optional"
         initialValues={initialValues(request, givenEmployment)}
       >
+        {aiFill && <LeaveRequestAiFill onDraft={(draft) => form.setFieldsValue(draftValues(draft))} />}
         {!self && !givenEmployment && (
           <Form.Item name="employmentId" label={t('web.hr.leave_requests.fields.employee')} rules={required}>
             <EmploymentPicker onChange={() => form.setFieldsValue({ leaveTypeId: undefined })} />
