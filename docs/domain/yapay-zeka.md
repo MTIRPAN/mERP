@@ -37,7 +37,7 @@ Modül handler'ı
 | 3.7 | **Çeviri taslakları:** yeni dil eklenince eksik metinlerin taslağı | Platform | Çoklu dil maliyetini düşürür | ✅ Hazır (A7) |
 | 3.8 | **Onay özeti:** onaycıya talebin bir paragraflık özeti ve dikkat noktaları | Platform | Onay süresini kısaltır | ✅ Hazır (A8) |
 | 3.9 | **İçe aktarma kolon eşleştirme:** Excel başlıklarını alanlara eşleştirme önerisi | Platform | İlk kurulumu hızlandırır | ✅ Hazır (A9) |
-| 3.10 | **Belge şablonu taslağı:** açıklamadan Fluid şablonu taslağı | Platform | Şablon hazırlama süresi | P12 ile (A10) |
+| 3.10 | **Belge şablonu taslağı:** açıklamadan Fluid şablonu taslağı | Platform | Şablon hazırlama süresi | ✅ Hazır (A10) |
 | 3.11 | **Doğal dille izin talebi:** "Gelecek cuma ve pazartesi yıllık izin" → form taslağı | İzin | Self serviste kolaylık | L4 ile (A11) |
 | 3.12 | **Asistan (Ctrl+K):** doğal dille arama ve gezinme; yalnızca kullanıcının yetki ve veri kapsamındaki salt okunur sorgular | Platform | Tek giriş noktası | X fazında (A12) |
 
@@ -119,6 +119,14 @@ Modül handler'ı
 - **Öneri:** `POST /api/platform/imports/{key}/mapping-suggestion`. Özellik `platform.import_mapping`. Yapay zekaya yalnızca başlıklar ve ipuçları gider, hiçbir hücre değeri gitmez. Ada göre eşleşenler kalır; öneri yalnızca kalanları doldurur.
 - **Onay kullanıcıda:** Kullanıcı eşleştirme tablosunda önerileri kontrol eder; içe aktarma iş onun onayladığı eşleştirmeyle okunur.
 - Kararlar: `docs/DECISIONS.md` D62.
+
+### 3.10 Belge şablonu taslağı (yapıldı)
+
+- **Taslak:** `POST /api/platform/document-templates/draft`. Yetki `platform.document_templates.manage`, özellik `platform.document_template_draft`.
+- **Girdi:** Türün değişkenleri, `texts.*` etiketleri ve uydurma örnek modeli, maskelenmiş açıklama, isteğe bağlı mevcut şablon.
+- **Denetim:** Taslak örnek modelle render edilir; olmazsa hatayla bir kez daha istenir.
+- **Kaydetme kullanıcıda:** Taslak editörü doldurur; yönetici önizleyip kaydeder.
+- Kararlar: `docs/DECISIONS.md` D63.
 
 ## 4. Kişisel veri maskeleme
 

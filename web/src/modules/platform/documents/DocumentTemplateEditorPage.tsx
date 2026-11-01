@@ -21,7 +21,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useMe } from '@/app/me/meContext';
-import { platformPermissions } from '@/modules/platform/permissions';
+import { platformAiFeatures, platformPermissions } from '@/modules/platform/permissions';
+import { useAiFeature } from '@/shared/ai/useAiFeature';
 import {
   getGetDocumentTemplateQueryKey,
   getListDocumentTemplatesQueryKey,
@@ -35,7 +36,9 @@ import {
 } from '@/shared/api/generated/endpoints/platform/platform';
 import { useHasPermission } from '@/shared/auth/permissionContext';
 import { CodeEditor } from '@/shared/components/code-editor/CodeEditor';
+import { AiBadge } from '@/shared/components/AiBadge';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { TemplateDraftModal } from './TemplateDraftModal';
 import { otherFieldErrors, templateError, type TemplateError } from './templateErrors';
 
 interface TemplateContent {
@@ -81,6 +84,9 @@ export const DocumentTemplateEditorPage = () => {
   const [html, setHtml] = useState<string>();
   const [error, setError] = useState<TemplateError>();
   const [problems, setProblems] = useState<string[]>([]);
+  const [drafting, setDrafting] = useState(false);
+  const [draft, setDraft] = useState<{ notes: string[]; valid: boolean }>();
+  const draftAi = useAiFeature(platformAiFeatures.documentTemplateDraft);
 
   const saved = template.data ? { body: template.data.body, css: template.data.css ?? '' } : undefined;
   const builtIn = type ? { body: type.defaultBody, css: type.defaultCss } : undefined;
@@ -213,6 +219,14 @@ export const DocumentTemplateEditorPage = () => {
             <Button icon={<ArrowLeftOutlined />} onClick={() => void navigate('/system/document-templates')}>
               {t('web.document_templates.back')}
             </Button>
+            {canManage && draftAi && (
+              <Button onClick={() => setDrafting(true)}>
+                <Space size={4}>
+                  {t('web.document_templates.draft.button')}
+                  <AiBadge />
+                </Space>
+              </Button>
+            )}
             <Button icon={<FilePdfOutlined />} loading={pdf.isPending} onClick={() => void openPdf()}>
               {t('web.document_templates.preview_pdf')}
             </Button>
@@ -271,6 +285,25 @@ export const DocumentTemplateEditorPage = () => {
                 { key: 'css', label: t('web.document_templates.css'), children: editor('css') },
               ]}
             />
+            {draft && (
+              <Alert
+                type={draft.valid ? 'info' : 'warning'}
+                showIcon
+                closable
+                onClose={() => setDraft(undefined)}
+                title={t(draft.valid ? 'web.document_templates.draft.notice' : 'web.document_templates.draft.invalid')}
+                description={
+                  draft.notes.length > 0 && (
+                    <ul style={{ margin: 0, paddingInlineStart: 20 }}>
+                      {draft.notes.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                    </ul>
+                  )
+                }
+                style={{ marginTop: 12 }}
+              />
+            )}
             {error && <Alert type="error" showIcon title={error.message} style={{ marginTop: 12 }} />}
             {problems.map((problem) => (
               <Alert key={problem} type="error" showIcon title={problem} style={{ marginTop: 12 }} />
@@ -338,6 +371,19 @@ export const DocumentTemplateEditorPage = () => {
           </Card>
         </Col>
       </Row>
+      {drafting && (
+        <TemplateDraftModal
+          documentType={type.key}
+          culture={culture}
+          current={content}
+          onDraft={(result) => {
+            change({ body: result.body, css: result.css });
+            setDraft({ notes: result.notes, valid: result.valid });
+            setTab('body');
+          }}
+          onClose={() => setDrafting(false)}
+        />
+      )}
     </>
   );
 };

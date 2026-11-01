@@ -35,4 +35,5 @@ export const platformPermissions = {
 export const platformAiFeatures = {
   translationDrafts: 'platform.translation_drafts',
   approvalSummary: 'platform.approval_summary',
+  documentTemplateDraft: 'platform.document_template_draft',
 } as const;

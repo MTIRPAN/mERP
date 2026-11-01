@@ -59,5 +59,6 @@ internal sealed class PlatformAiFeatureDefinitions : IAiFeatureDefinitionProvide
         new(PlatformAiFeatures.TranslationDrafts),
         new(PlatformAiFeatures.ApprovalSummary),
         new(PlatformAiFeatures.ImportMapping),
+        new(PlatformAiFeatures.DocumentTemplateDraft),
     ];
 }

@@ -63,8 +63,10 @@ import type {
   DelegationItem,
   DocumentPreview,
   DocumentTemplateDetails,
+  DocumentTemplateDraft,
   DocumentTemplateItem,
   DocumentTypeItem,
+  DraftDocumentTemplateQuery,
   DraftTranslationsQuery,
   EntityCreatedResponse,
   ExportBranchesParams,
@@ -12957,6 +12959,108 @@ export const usePreviewDocument = <
   TContext
 > => {
   return useMutation(getPreviewDocumentMutationOptions(options), queryClient);
+};
+export const getDraftDocumentTemplateUrl = () => {
+  return `/api/platform/document-templates/draft`;
+};
+
+/**
+ * Nothing is saved: the draft fills the editor. It is checked against the type's sample model and asked for once more when it does not render. Requires permission: platform.document_templates.manage.
+ * @summary Draft a template with AI from a description, optionally changing the current one (A10, D63)
+ */
+export const draftDocumentTemplate = async (
+  draftDocumentTemplateQuery: DraftDocumentTemplateQuery,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<DocumentTemplateDraft> => {
+  const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return customFetch<DocumentTemplateDraft>(getDraftDocumentTemplateUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(draftDocumentTemplateQuery),
+  });
+};
+
+export const getDraftDocumentTemplateMutationKey = () => ['draftDocumentTemplate'] as const;
+
+export const getDraftDocumentTemplateMutationOptions = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof draftDocumentTemplate>>,
+    TError,
+    DraftDocumentTemplateMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof draftDocumentTemplate>>,
+  TError,
+  DraftDocumentTemplateMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDraftDocumentTemplateMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof draftDocumentTemplate>>,
+    DraftDocumentTemplateMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return draftDocumentTemplate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DraftDocumentTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof draftDocumentTemplate>>>;
+export type DraftDocumentTemplateMutationBody = DraftDocumentTemplateQuery;
+export type DraftDocumentTemplateMutationError = ErrorType<HttpValidationProblemDetails | ProblemDetails>;
+export type DraftDocumentTemplateMutationVariables = { data: DraftDocumentTemplateQuery };
+
+/**
+ * @summary Draft a template with AI from a description, optionally changing the current one (A10, D63)
+ */
+export const useDraftDocumentTemplate = <
+  TError = ErrorType<HttpValidationProblemDetails | ProblemDetails>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof draftDocumentTemplate>>,
+      TError,
+      DraftDocumentTemplateMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof draftDocumentTemplate>>,
+  TError,
+  DraftDocumentTemplateMutationVariables,
+  TContext
+> => {
+  return useMutation(getDraftDocumentTemplateMutationOptions(options), queryClient);
 };
 export const getPreviewDocumentPdfUrl = () => {
   return `/api/platform/document-templates/preview/pdf`;

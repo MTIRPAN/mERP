@@ -203,7 +203,7 @@ internal sealed class GetDocumentTypesQueryHandler(DocumentTypeRegistry types, I
     : IQueryHandler<GetDocumentTypesQuery, IReadOnlyList<DocumentTypeItem>>
 {
     /// <summary>Values Platform adds to every document.</summary>
-    private static readonly string[] CommonFields =
+    internal static readonly string[] CommonFields =
     [
         "company.title", "company.short_name", "company.code", "company.tax_office", "company.tax_number", "company.mersis_number",
         "company.address_lines", "company.phone", "company.email", "company.logo", "document.name", "document.date", "document.revision",

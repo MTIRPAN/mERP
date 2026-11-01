@@ -212,6 +212,7 @@ public sealed class CvAnalysisEndpointsTests : IClassFixture<RecruitmentFactory>
                 PlatformAiFeatures.TranslationDrafts,
                 PlatformAiFeatures.ApprovalSummary,
                 PlatformAiFeatures.ImportMapping,
+                PlatformAiFeatures.DocumentTemplateDraft,
             ],
             ignoreOrder: true);
         var item = enabled.Menu.Single(m => m.Key == "recruitment").Children!.ShouldHaveSingleItem();

@@ -1157,7 +1157,7 @@ Kurallar ve özellik kataloğu: `docs/domain/yapay-zeka.md`. Her yapay zeka gör
 ### [x] A7 Çeviri taslakları — S (P4 ile)
 ### [x] A8 Onay özeti — S (P10 ile)
 ### [x] A9 İçe aktarma kolon eşleştirme önerisi — S (P11 ile)
-### [ ] A10 Belge şablonu taslağı — S (P12 ile)
+### [x] A10 Belge şablonu taslağı — S (P12 ile)
 ### [ ] A11 Doğal dille izin talebi taslağı — S (L4 ile)
 ### [ ] A12 Asistan (Ctrl+K doğal dil, salt okunur, yetki ve veri kapsamına bağlı) — L (Faz 5)
 
